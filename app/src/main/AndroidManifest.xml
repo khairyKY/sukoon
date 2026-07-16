@@ -2,9 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-    BLE/NFC/foreground-service/CALL_PHONE permissions are intentionally not declared yet —
-    they belong to the Phase 1 (BLE) and Phase 2 (emergency-call) tasks, not this scaffold.
+    BLE/foreground-service/CALL_PHONE permissions are intentionally not declared yet — BLE
+    streaming and emergency-call belong to other Phase 1/2 tasks, not this one.
     -->
+
+    <uses-permission android:name="android.permission.NFC" />
+    <!-- required=false: SimulatedSource and future viewer-only clients don't need NFC hardware. -->
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
 
     <application
         android:allowBackup="true"
