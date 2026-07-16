@@ -1,0 +1,4 @@
+<resources>
+    <!-- Pre-Compose window theme only (splash background before SukoonTheme takes over). -->
+    <style name="Theme.Sukoon" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">سكون</string>
+
+    <string name="disclaimer_eyebrow">قبل ما نبدأ</string>
+    <string name="disclaimer_headline">سكون بيساندك، بس مش بديل عن دكتورك.</string>
+    <string name="disclaimer_bullet_1">متاخدش قرار علاج أو إنسولين على قراية سكون لوحدها.</string>
+    <string name="disclaimer_bullet_2">أكّد الهبوط أو الارتفاع بوخزة صباع قبل ما تتصرّف.</string>
+    <string name="disclaimer_bullet_3">في الطوارئ، اتصل برقم الإسعاف عندك على طول.</string>
+    <string name="disclaimer_checkbox_label">قريت وفهمت الكلام ده.</string>
+    <string name="disclaimer_cta">موافق، كمّل</string>
+</resources>

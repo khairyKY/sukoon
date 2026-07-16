@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Sukoon</string>
+
+    <string name="disclaimer_eyebrow">BEFORE WE BEGIN</string>
+    <string name="disclaimer_headline">Sukoon supports you. It doesn\'t replace your doctor.</string>
+    <string name="disclaimer_bullet_1">Don\'t make insulin or treatment decisions on Sukoon readings alone.</string>
+    <string name="disclaimer_bullet_2">Confirm a low or high with a finger-prick before you act.</string>
+    <string name="disclaimer_bullet_3">In an emergency, call your local emergency number.</string>
+    <string name="disclaimer_checkbox_label">I\'ve read and understand this.</string>
+    <string name="disclaimer_cta">Agree &amp; continue</string>
+</resources>

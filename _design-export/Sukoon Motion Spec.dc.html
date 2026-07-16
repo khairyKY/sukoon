@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#E7E3DC;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-family:'Hanken Grotesk',system-ui,sans-serif;color:#221F1A}
+a{color:#3E7A63;text-decoration:none}
+a:hover{opacity:.72}
+:root{
+  --d-instant:90ms; --d-quick:160ms; --d-base:240ms; --d-calm:360ms; --d-slow:560ms; --d-draw:900ms;
+  --loop-pulse:2400ms; --loop-ripple:2400ms;
+  --e-standard:cubic-bezier(.4,0,.2,1);
+  --e-out:cubic-bezier(0,0,.2,1);
+  --e-in:cubic-bezier(.4,0,1,1);
+  --e-calm:cubic-bezier(.22,1,.36,1);
+}
+@keyframes sk-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
+@keyframes sk-ripple{0%{transform:scale(.3);opacity:.65}100%{transform:scale(1.5);opacity:0}}
+@keyframes sk-ringfill{from{stroke-dashoffset:327}to{stroke-dashoffset:110}}
+@keyframes sk-draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes sk-area{from{opacity:0}to{opacity:1}}
+@keyframes sk-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes sk-pushin{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+@keyframes sk-sheetup{from{transform:translateY(104%)}to{transform:none}}
+@keyframes sk-backdrop{from{opacity:0}to{opacity:1}}
+@keyframes sk-bannerdown{from{opacity:0;transform:translateY(-140%)}to{opacity:1;transform:none}}
+@keyframes sk-takeover{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:none}}
+@keyframes sk-run{from{transform:translateX(0)}to{transform:translateX(58px)}}
+@keyframes sk-fill{from{width:6%}to{width:100%}}
+@keyframes sk-toast{0%{opacity:0;transform:translate(-50%,10px)}14%{opacity:1;transform:translate(-50%,0)}86%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-6px)}}
+</style>
+</helmet>
+
+<div style="--spd:{{spd}};--pad:{{pad}};padding-bottom:96px">
+
+  <!-- ============ HEADER ============ -->
+  <header style="max-width:1180px;margin:0 auto;padding:66px 44px 8px">
+    <div style="font:600 11px/1 'JetBrains Mono',monospace;letter-spacing:.24em;text-transform:uppercase;color:#9A9184">Sukoon · Design system</div>
+    <h1 style="font-family:'Newsreader',serif;font-weight:400;font-size:54px;line-height:1.0;letter-spacing:-.015em;color:#1E2B26;margin:20px 0 0">Motion specification</h1>
+    <p style="max-width:680px;font:400 16px/1.62 'Hanken Grotesk';color:#5B554A;margin:18px 0 0">How Sukoon moves — and, more often, how it holds still. Every animation in the app: its trigger, timing, easing and reduced-motion fallback, each with a live demo you can replay. Timings are named tokens so a build reproduces them exactly.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:24px;font:500 12.5px/1 'Hanken Grotesk';color:#7A7264">
+      <span>v1.0 · 16 Jul 2026</span><span style="color:#C2BAAC">·</span>
+      <span>12 motions</span><span style="color:#C2BAAC">·</span>
+      <span>6 duration + 4 easing tokens</span><span style="color:#C2BAAC">·</span>
+      <span>use the <strong style="font-weight:600;color:#3E7A63">Tweaks</strong> panel to slow the demos down</span>
+    </div>
+  </header>
+
+  <!-- ============ PRINCIPLES ============ -->
+  <section style="max-width:1180px;margin:0 auto;padding:40px 44px 8px">
+    <div style="font:600 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A39A8B;margin-bottom:20px">Principles</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px">
+      <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:18px;padding:24px">
+        <div style="font-family:'Newsreader',serif;font-size:34px;line-height:1;color:#3E7A63">01</div>
+        <div style="font:600 15px/1.3 'Hanken Grotesk';color:#1E2B26;margin:14px 0 8px">Stillness is the default</div>
+        <div style="font:400 13px/1.55 'Hanken Grotesk';color:#5B554A">Motion is the exception, not the texture. Most state changes are a near-instant colour or opacity shift. Travel is spent only on real spatial change — navigation, sheets, alerts.</div>
+      </div>
+      <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:18px;padding:24px">
+        <div style="font-family:'Newsreader',serif;font-size:34px;line-height:1;color:#3E7A63">02</div>
+        <div style="font:600 15px/1.3 'Hanken Grotesk';color:#1E2B26;margin:14px 0 8px">One calm curve</div>
+        <div style="font:400 13px/1.55 'Hanken Grotesk';color:#5B554A">A single signature easing — <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--e-calm</code> — carries the emotional moments. Utility moves use the standard curve. Nothing bounces or springs.</div>
+      </div>
+      <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:18px;padding:24px">
+        <div style="font-family:'Newsreader',serif;font-size:34px;line-height:1;color:#3E7A63">03</div>
+        <div style="font:600 15px/1.3 'Hanken Grotesk';color:#1E2B26;margin:14px 0 8px">Slow to arrive, quick to leave</div>
+        <div style="font:400 13px/1.55 'Hanken Grotesk';color:#5B554A">Entrances decelerate and take their time so a reading feels considered. Exits accelerate and get out of the way. Enter with <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--e-out</code>, leave with <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--e-in</code>.</div>
+      </div>
+      <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:18px;padding:24px">
+        <div style="font-family:'Newsreader',serif;font-size:34px;line-height:1;color:#3E7A63">04</div>
+        <div style="font:600 15px/1.3 'Hanken Grotesk';color:#1E2B26;margin:14px 0 8px">Loops are rationed</div>
+        <div style="font:400 13px/1.55 'Hanken Grotesk';color:#5B554A">Only genuinely live or urgent states repeat forever — the live dot, an active scan, an unacknowledged low. Everything else settles once and stops.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TOKENS ============ -->
+  <section style="max-width:1180px;margin:0 auto;padding:44px 44px 8px">
+    <div style="font:600 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A39A8B;margin-bottom:20px">Motion tokens</div>
+    <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:16px">
+
+      <!-- Durations -->
+      <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:18px;padding:26px 28px">
+        <div style="font:600 13px/1 'Hanken Grotesk';color:#1E2B26;margin-bottom:4px">Durations</div>
+        <div style="font:400 12px/1.5 'Hanken Grotesk';color:#8A8275;margin-bottom:20px">Six steps. The bars run in real time — scale them from the Tweaks panel.</div>
+        <div style="display:flex;flex-direction:column;gap:13px">
+          <div style="display:flex;align-items:center;gap:14px"><code style="width:96px;font:600 12px 'JetBrains Mono';color:#3B372F">--d-instant</code><span style="width:52px;font:500 11px 'JetBrains Mono';color:#A39A8B">90ms</span><div style="flex:1;height:8px;background:#E2DCD0;border-radius:4px;overflow:hidden"><div style="height:100%;background:#3E7A63;border-radius:4px;animation:sk-fill calc(90ms*var(--spd,1)) var(--e-standard) infinite alternate"></div></div></div>
+          <div style="display:flex;align-items:center;gap:14px"><code style="width:96px;font:600 12px 'JetBrains Mono';color:#3B372F">--d-quick</code><span style="width:52px;font:500 11px 'JetBrains Mono';color:#A39A8B">160ms</span><div style="flex:1;height:8px;background:#E2DCD0;border-radius:4px;overflow:hidden"><div style="height:100%;background:#3E7A63;border-radius:4px;animation:sk-fill calc(160ms*var(--spd,1)) var(--e-standard) infinite alternate"></div></div></div>
+          <div style="display:flex;align-items:center;gap:14px"><code style="width:96px;font:600 12px 'JetBrains Mono';color:#3B372F">--d-base</code><span style="width:52px;font:500 11px 'JetBrains Mono';color:#A39A8B">240ms</span><div style="flex:1;height:8px;background:#E2DCD0;border-radius:4px;overflow:hidden"><div style="height:100%;background:#3E7A63;border-radius:4px;animation:sk-fill calc(240ms*var(--spd,1)) var(--e-standard) infinite alternate"></div></div></div>
+          <div style="display:flex;align-items:center;gap:14px"><code style="width:96px;font:600 12px 'JetBrains Mono';color:#3B372F">--d-calm</code><span style="width:52px;font:500 11px 'JetBrains Mono';color:#A39A8B">360ms</span><div style="flex:1;height:8px;background:#E2DCD0;border-radius:4px;overflow:hidden"><div style="height:100%;background:#3E7A63;border-radius:4px;animation:sk-fill calc(360ms*var(--spd,1)) var(--e-standard) infinite alternate"></div></div></div>
+          <div style="display:flex;align-items:center;gap:14px"><code style="width:96px;font:600 12px 'JetBrains Mono';color:#3B372F">--d-slow</code><span style="width:52px;font:500 11px 'JetBrains Mono';color:#A39A8B">560ms</span><div style="flex:1;height:8px;background:#E2DCD0;border-radius:4px;overflow:hidden"><div style="height:100%;background:#C88A3E;border-radius:4px;animation:sk-fill calc(560ms*var(--spd,1)) var(--e-standard) infinite alternate"></div></div></div>
+          <div style="display:flex;align-items:center;gap:14px"><code style="width:96px;font:600 12px 'JetBrains Mono';color:#3B372F">--d-draw</code><span style="width:52px;font:500 11px 'JetBrains Mono';color:#A39A8B">900ms</span><div style="flex:1;height:8px;background:#E2DCD0;border-radius:4px;overflow:hidden"><div style="height:100%;background:#C88A3E;border-radius:4px;animation:sk-fill calc(900ms*var(--spd,1)) var(--e-standard) infinite alternate"></div></div></div>
+        </div>
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid #E2DCD0;font:400 12px/1.55 'Hanken Grotesk';color:#8A8275">Two ambient loops sit outside the scale: <code style="font:600 12px 'JetBrains Mono';color:#3B372F">--loop-pulse</code> and <code style="font:600 12px 'JetBrains Mono';color:#3B372F">--loop-ripple</code>, both <strong style="font-weight:600;color:#3B372F">2400ms</strong>.</div>
+      </div>
+
+      <!-- Easings -->
+      <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:18px;padding:26px 28px">
+        <div style="font:600 13px/1 'Hanken Grotesk';color:#1E2B26;margin-bottom:4px">Easings</div>
+        <div style="font:400 12px/1.5 'Hanken Grotesk';color:#8A8275;margin-bottom:20px">Curve, plus a dot travelling under it so the character reads.</div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+
+          <div style="display:flex;align-items:center;gap:16px">
+            <svg width="64" height="44" viewBox="0 0 64 44" style="flex:none"><path d="M0 44 L64 44 M0 0 L0 44" stroke="#DAD3C6" stroke-width="1" fill="none"></path><path d="M0 44 C25.6 44 12.8 0 64 0" stroke="#3E7A63" stroke-width="2.5" fill="none"></path></svg>
+            <div style="width:70px;height:12px;background:#E2DCD0;border-radius:6px;position:relative;flex:none;overflow:hidden"><span style="position:absolute;top:1px;left:1px;width:10px;height:10px;border-radius:50%;background:#3E7A63;animation:sk-run calc(1400ms*var(--spd,1)) cubic-bezier(.4,0,.2,1) infinite alternate"></span></div>
+            <div style="min-width:0"><code style="font:600 12px 'JetBrains Mono';color:#1E2B26">--e-standard</code><div style="font:500 10px 'JetBrains Mono';color:#A39A8B">.4, 0, .2, 1 · utility</div></div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:16px">
+            <svg width="64" height="44" viewBox="0 0 64 44" style="flex:none"><path d="M0 44 L64 44 M0 0 L0 44" stroke="#DAD3C6" stroke-width="1" fill="none"></path><path d="M0 44 C0 44 12.8 0 64 0" stroke="#3E7A63" stroke-width="2.5" fill="none"></path></svg>
+            <div style="width:70px;height:12px;background:#E2DCD0;border-radius:6px;position:relative;flex:none;overflow:hidden"><span style="position:absolute;top:1px;left:1px;width:10px;height:10px;border-radius:50%;background:#3E7A63;animation:sk-run calc(1400ms*var(--spd,1)) cubic-bezier(0,0,.2,1) infinite alternate"></span></div>
+            <div style="min-width:0"><code style="font:600 12px 'JetBrains Mono';color:#1E2B26">--e-out</code><div style="font:500 10px 'JetBrains Mono';color:#A39A8B">0, 0, .2, 1 · entrances</div></div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:16px">
+            <svg width="64" height="44" viewBox="0 0 64 44" style="flex:none"><path d="M0 44 L64 44 M0 0 L0 44" stroke="#DAD3C6" stroke-width="1" fill="none"></path><path d="M0 44 C25.6 44 64 0 64 0" stroke="#C88A3E" stroke-width="2.5" fill="none"></path></svg>
+            <div style="width:70px;height:12px;background:#E2DCD0;border-radius:6px;position:relative;flex:none;overflow:hidden"><span style="position:absolute;top:1px;left:1px;width:10px;height:10px;border-radius:50%;background:#C88A3E;animation:sk-run calc(1400ms*var(--spd,1)) cubic-bezier(.4,0,1,1) infinite alternate"></span></div>
+            <div style="min-width:0"><code style="font:600 12px 'JetBrains Mono';color:#1E2B26">--e-in</code><div style="font:500 10px 'JetBrains Mono';color:#A39A8B">.4, 0, 1, 1 · exits</div></div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:16px">
+            <svg width="64" height="44" viewBox="0 0 64 44" style="flex:none"><path d="M0 44 L64 44 M0 0 L0 44" stroke="#DAD3C6" stroke-width="1" fill="none"></path><path d="M0 44 C14.08 0 23.04 0 64 0" stroke="#1E2B26" stroke-width="2.5" fill="none"></path></svg>
+            <div style="width:70px;height:12px;background:#E2DCD0;border-radius:6px;position:relative;flex:none;overflow:hidden"><span style="position:absolute;top:1px;left:1px;width:10px;height:10px;border-radius:50%;background:#1E2B26;animation:sk-run calc(1400ms*var(--spd,1)) cubic-bezier(.22,1,.36,1) infinite alternate"></span></div>
+            <div style="min-width:0"><code style="font:600 12px 'JetBrains Mono';color:#1E2B26">--e-calm</code><div style="font:500 10px 'JetBrains Mono';color:#A39A8B">.22, 1, .36, 1 · signature settle</div></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- CSS block -->
+    <div style="background:#16211C;border-radius:18px;padding:24px 26px;margin-top:16px;overflow:auto">
+      <div style="font:600 10px/1 'JetBrains Mono';letter-spacing:.14em;text-transform:uppercase;color:#7C9488;margin-bottom:14px">Drop-in · :root</div>
+      <pre style="margin:0;font:500 12.5px/1.7 'JetBrains Mono',monospace;color:#D9E4DD;white-space:pre">:root {
+  --d-instant: 90ms;   --d-quick: 160ms;  --d-base: 240ms;
+  --d-calm:    360ms;  --d-slow:  560ms;  --d-draw: 900ms;
+  --loop-pulse: 2400ms; --loop-ripple: 2400ms;
+
+  --e-standard: cubic-bezier(.4, 0, .2, 1);
+  --e-out:      cubic-bezier(0,  0, .2, 1);
+  --e-in:       cubic-bezier(.4, 0,  1, 1);
+  --e-calm:     cubic-bezier(.22, 1, .36, 1);
+}</pre>
+    </div>
+  </section>
+
+  <!-- ============ INVENTORY ============ -->
+  <section style="max-width:1180px;margin:0 auto;padding:44px 44px 8px">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px">
+      <div style="font:600 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A39A8B">Motion inventory</div>
+      <div style="display:flex;gap:8px;margin-inline-start:auto">
+        <span style="font:700 8.5px/1 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;background:#1E2B26;color:#EAF0EC;padding:5px 8px;border-radius:6px">In build</span>
+        <span style="font:700 8.5px/1 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;background:#E7DFD1;color:#6B6355;padding:5px 8px;border-radius:6px">Spec</span>
+      </div>
+    </div>
+
+    <!-- group: ambient -->
+    <div style="font:600 12px/1 'Hanken Grotesk';color:#7A7264;margin:22px 0 14px;padding-bottom:8px;border-bottom:1px solid #DDD7CC">Ambient — continuous, life-signs</div>
+
+    <!-- 1 live pulse -->
+    <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:22px;padding:var(--pad,30px);display:flex;gap:28px;align-items:stretch;margin-bottom:16px">
+      <div style="width:236px;flex:none;background:#EBE7DE;border:1px solid #E2DCD0;border-radius:16px;display:flex;align-items:center;justify-content:center;min-height:210px">
+        <div style="display:inline-flex;align-items:center;gap:9px;background:#F4F1EA;border:1px solid #E2DCD0;border-radius:999px;padding:11px 16px"><span style="width:12px;height:12px;border-radius:50%;background:#3E7A63;animation:sk-pulse calc(var(--loop-pulse,2400ms)*var(--spd,1)) var(--e-standard) infinite"></span><span style="font:600 12px/1 'Hanken Grotesk';letter-spacing:.06em;color:#1E2B26">Live · 112 mg/dL</span></div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font:700 8.5px/1 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;background:#1E2B26;color:#EAF0EC;padding:5px 8px;border-radius:6px">In build</span><h3 style="font-family:'Newsreader',serif;font-weight:500;font-size:22px;color:#1E2B26;margin:0">Live pulse</h3></div>
+        <p style="font:400 13.5px/1.55 'Hanken Grotesk';color:#5B554A;margin:9px 0 16px;max-width:560px">The connection dot breathes to signal a live sensor link. The one thing on Home that is always in gentle motion — its absence is how a stale reading reads as stale.</p>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:7px 18px;align-items:baseline">
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Trigger</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Sensor connected &amp; streaming</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Moves</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">opacity 1 → .3 → 1, scale 1 → .7 → 1</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Timing</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">2400ms · <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--loop-pulse</code> · <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--e-standard</code></div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Loop</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Infinite while live</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Haptic</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">None</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Reduced</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Dot holds solid; no breathing</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2 scan ripple -->
+    <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:22px;padding:var(--pad,30px);display:flex;gap:28px;align-items:stretch;margin-bottom:16px">
+      <div style="width:236px;flex:none;background:#EBE7DE;border:1px solid #E2DCD0;border-radius:16px;display:flex;align-items:center;justify-content:center;min-height:210px">
+        <div style="position:relative;width:170px;height:170px;display:flex;align-items:center;justify-content:center">
+          <div style="position:absolute;inset:0;margin:auto;width:120px;height:120px;border-radius:50%;border:2px solid #3E7A63;animation:sk-ripple calc(var(--loop-ripple,2400ms)*var(--spd,1)) var(--e-out) infinite"></div>
+          <div style="position:absolute;inset:0;margin:auto;width:120px;height:120px;border-radius:50%;border:2px solid #3E7A63;animation:sk-ripple calc(var(--loop-ripple,2400ms)*var(--spd,1)) var(--e-out) infinite .8s"></div>
+          <div style="position:absolute;inset:0;margin:auto;width:120px;height:120px;border-radius:50%;border:2px solid #3E7A63;animation:sk-ripple calc(var(--loop-ripple,2400ms)*var(--spd,1)) var(--e-out) infinite 1.6s"></div>
+          <div style="position:relative;width:60px;height:60px;border-radius:50%;background:#3E7A63;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(62,122,99,.35)"><span style="font:700 9px/1 'JetBrains Mono';color:#EAF0EC">NFC</span></div>
+        </div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font:700 8.5px/1 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;background:#1E2B26;color:#EAF0EC;padding:5px 8px;border-radius:6px">In build</span><h3 style="font-family:'Newsreader',serif;font-weight:500;font-size:22px;color:#1E2B26;margin:0">Scan ripple</h3></div>
+        <p style="font:400 13.5px/1.55 'Hanken Grotesk';color:#5B554A;margin:9px 0 16px;max-width:560px">Three staggered rings emanate from the NFC target while the phone waits for a sensor tap. Reads as "reaching out." Stops the instant a sensor is found.</p>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:7px 18px;align-items:baseline">
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Trigger</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Scan screen active, awaiting tap</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Moves</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">scale .3 → 1.5, opacity .65 → 0</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Timing</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">2400ms · <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--loop-ripple</code> · <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--e-out</code></div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Loop</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Infinite · 3 rings, 800ms stagger</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Haptic</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Light impact on successful read</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Reduced</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Rings hidden; static target + "Scanning…"</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- group: data reveal -->
+    <div style="font:600 12px/1 'Hanken Grotesk';color:#7A7264;margin:30px 0 14px;padding-bottom:8px;border-bottom:1px solid #DDD7CC">Data reveal — how a reading arrives</div>
+
+    <!-- 3 ring + count -->
+    <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:22px;padding:var(--pad,30px);display:flex;gap:28px;align-items:stretch;margin-bottom:16px">
+      <div style="width:236px;flex:none;background:#EBE7DE;border:1px solid #E2DCD0;border-radius:16px;display:flex;align-items:center;justify-content:center;min-height:210px">
+        <div key="{{ kRing }}" style="position:relative;width:158px;height:158px">
+          <svg width="158" height="158" viewBox="0 0 128 128"><circle cx="64" cy="64" r="52" fill="none" stroke="#E2DCD0" stroke-width="9"></circle><circle cx="64" cy="64" r="52" fill="none" stroke="#3E7A63" stroke-width="9" stroke-linecap="round" stroke-dasharray="327" style="stroke-dashoffset:110;transform:rotate(-90deg);transform-origin:64px 64px;animation:sk-ringfill calc(var(--d-slow,560ms)*var(--spd,1)) var(--e-calm) both"></circle></svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><span style="font-family:'Newsreader',serif;font-weight:500;font-size:44px;line-height:1;color:#1E2B26">{{ hero }}</span><span style="font:600 8.5px/1 'Hanken Grotesk';letter-spacing:.14em;text-transform:uppercase;color:#8A8275;margin-top:4px">mg/dL</span></div>
+        </div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font:700 8.5px/1 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;background:#E7DFD1;color:#6B6355;padding:5px 8px;border-radius:6px">Spec</span><h3 style="font-family:'Newsreader',serif;font-weight:500;font-size:22px;color:#1E2B26;margin:0">Ring fill &amp; count-up</h3><button onClick="{{ replayHero }}" style="margin-inline-start:auto;font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.05em;color:#1E2B26;background:#EDE8DF;border:1px solid #D8D1C4;border-radius:999px;padding:8px 13px;cursor:pointer" style-hover="background:#E3DCCF">↺ Replay</button></div>
+        <p style="font:400 13.5px/1.55 'Hanken Grotesk';color:#5B554A;margin:9px 0 16px;max-width:560px">On Home load the range ring sweeps to position while the number counts up to the reading. The two finish together — the sweep paces the eye, the count lands the value.</p>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:7px 18px;align-items:baseline">
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Trigger</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Home mount / new reading</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Moves</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">stroke-dashoffset sweep + numeric count</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Timing</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">560ms · <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--d-slow</code> · <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--e-calm</code></div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Loop</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Once</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Haptic</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Light impact as it settles</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Reduced</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Final ring + number shown at once; 120ms fade</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 graph draw -->
+    <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:22px;padding:var(--pad,30px);display:flex;gap:28px;align-items:stretch;margin-bottom:16px">
+      <div style="width:236px;flex:none;background:#EBE7DE;border:1px solid #E2DCD0;border-radius:16px;display:flex;align-items:center;justify-content:center;min-height:210px">
+        <div key="{{ kDraw }}" style="width:200px;height:100px">
+          <svg width="200" height="100" viewBox="0 0 220 100"><path d="M10 66 C36 60 48 30 74 36 C96 41 108 74 132 58 C156 42 172 20 210 30 L210 90 L10 90 Z" fill="#3E7A63" opacity="0" style="animation:sk-area calc(var(--d-base,240ms)*var(--spd,1)) var(--e-out) both;animation-delay:calc(.45s*var(--spd,1))"></path><path d="M10 66 C36 60 48 30 74 36 C96 41 108 74 132 58 C156 42 172 20 210 30" pathLength="1" fill="none" stroke="#3E7A63" stroke-width="3" stroke-linecap="round" stroke-dasharray="1" style="animation:sk-draw calc(var(--d-draw,900ms)*var(--spd,1)) var(--e-out) both"></path></svg>
+        </div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font:700 8.5px/1 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;background:#E7DFD1;color:#6B6355;padding:5px 8px;border-radius:6px">Spec</span><h3 style="font-family:'Newsreader',serif;font-weight:500;font-size:22px;color:#1E2B26;margin:0">Graph draw-on</h3><button onClick="{{ rDraw }}" style="margin-inline-start:auto;font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.05em;color:#1E2B26;background:#EDE8DF;border:1px solid #D8D1C4;border-radius:999px;padding:8px 13px;cursor:pointer" style-hover="background:#E3DCCF">↺ Replay</button></div>
+        <p style="font:400 13.5px/1.55 'Hanken Grotesk';color:#5B554A;margin:9px 0 16px;max-width:560px">The trend line draws left-to-right — past to present — then the fill under it fades up. On the RTL build the draw direction mirrors to match reading order.</p>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:7px 18px;align-items:baseline">
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Trigger</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Graph tab open / range change</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Moves</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">line dashoffset 1 → 0, then area opacity 0 → 1</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Timing</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">900ms line · <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--d-draw</code> · <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--e-out</code></div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Loop</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Once</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Haptic</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">None</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Reduced</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Finished chart fades in (opacity only)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- group: navigation & surfaces -->
+    <div style="font:600 12px/1 'Hanken Grotesk';color:#7A7264;margin:30px 0 14px;padding-bottom:8px;border-bottom:1px solid #DDD7CC">Navigation &amp; surfaces</div>
+
+    <!-- 5 push/pop -->
+    <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:22px;padding:var(--pad,30px);display:flex;gap:28px;align-items:stretch;margin-bottom:16px">
+      <div style="width:236px;flex:none;background:#EBE7DE;border:1px solid #E2DCD0;border-radius:16px;display:flex;align-items:center;justify-content:center;min-height:210px">
+        <div style="width:150px;height:224px;background:#1E2B26;border-radius:26px;padding:6px"><div style="width:100%;height:100%;background:#F4F1EA;border-radius:20px;overflow:hidden;position:relative">
+          <div style="position:absolute;inset:0;padding:16px;opacity:.35"><div style="height:9px;width:55%;background:#C6BEAF;border-radius:4px"></div><div style="height:9px;width:80%;background:#DDD6C8;border-radius:4px;margin-top:12px"></div><div style="height:9px;width:70%;background:#DDD6C8;border-radius:4px;margin-top:9px"></div></div>
+          <div key="{{ kPush }}" style="position:absolute;inset:0;background:#F4F1EA;padding:16px;box-shadow:-10px 0 24px rgba(0,0,0,.1);animation:sk-pushin calc(var(--d-calm,360ms)*var(--spd,1)) var(--e-out) both"><div style="font:600 9px/1 'JetBrains Mono';color:#A39A8B">‹ BACK</div><div style="font-family:'Newsreader',serif;font-size:20px;color:#1E2B26;margin-top:14px">Details</div><div style="height:8px;width:90%;background:#E2DCD0;border-radius:4px;margin-top:16px"></div><div style="height:8px;width:75%;background:#E2DCD0;border-radius:4px;margin-top:10px"></div><div style="height:8px;width:82%;background:#E2DCD0;border-radius:4px;margin-top:10px"></div></div>
+        </div></div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font:700 8.5px/1 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;background:#E7DFD1;color:#6B6355;padding:5px 8px;border-radius:6px">Spec</span><h3 style="font-family:'Newsreader',serif;font-weight:500;font-size:22px;color:#1E2B26;margin:0">Screen push / pop</h3><button onClick="{{ rPush }}" style="margin-inline-start:auto;font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.05em;color:#1E2B26;background:#EDE8DF;border:1px solid #D8D1C4;border-radius:999px;padding:8px 13px;cursor:pointer" style-hover="background:#E3DCCF">↺ Replay</button></div>
+        <p style="font:400 13.5px/1.55 'Hanken Grotesk';color:#5B554A;margin:9px 0 16px;max-width:560px">Forward navigation slides the incoming screen in from the trailing edge with a light fade. Pop reverses it. Direction is writing-mode aware — it mirrors on the Arabic build.</p>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:7px 18px;align-items:baseline">
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Trigger</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Route push / pop</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Moves</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">translateX 30px → 0, opacity 0 → 1</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Timing</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">360ms · <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--d-calm</code> · in <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--e-out</code>, out <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--e-in</code></div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Loop</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Once</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Haptic</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">None (OS-owned)</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Reduced</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">120ms opacity crossfade in place</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6 bottom sheet -->
+    <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:22px;padding:var(--pad,30px);display:flex;gap:28px;align-items:stretch;margin-bottom:16px">
+      <div style="width:236px;flex:none;background:#EBE7DE;border:1px solid #E2DCD0;border-radius:16px;display:flex;align-items:center;justify-content:center;min-height:210px">
+        <div style="width:150px;height:224px;background:#1E2B26;border-radius:26px;padding:6px"><div style="width:100%;height:100%;background:#F4F1EA;border-radius:20px;overflow:hidden;position:relative">
+          <div style="position:absolute;inset:0;padding:16px"><div style="height:9px;width:60%;background:#E2DCD0;border-radius:4px"></div><div style="height:9px;width:85%;background:#EAE4D8;border-radius:4px;margin-top:12px"></div></div>
+          <div key="{{ kSheet }}" style="position:absolute;inset:0">
+            <div style="position:absolute;inset:0;background:rgba(20,25,22,.42);animation:sk-backdrop calc(var(--d-base,240ms)*var(--spd,1)) linear both"></div>
+            <div style="position:absolute;left:0;right:0;bottom:0;height:62%;background:#F4F1EA;border-radius:20px 20px 0 0;padding:14px 16px;box-shadow:0 -12px 30px rgba(0,0,0,.18);animation:sk-sheetup calc(var(--d-calm,360ms)*var(--spd,1)) var(--e-out) both"><div style="width:34px;height:4px;border-radius:2px;background:#D8D1C4;margin:0 auto 14px"></div><div style="font-family:'Newsreader',serif;font-size:16px;color:#1E2B26">Log a meal</div><div style="height:8px;width:90%;background:#E2DCD0;border-radius:4px;margin-top:14px"></div><div style="height:8px;width:70%;background:#E2DCD0;border-radius:4px;margin-top:9px"></div></div>
+          </div>
+        </div></div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font:700 8.5px/1 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;background:#E7DFD1;color:#6B6355;padding:5px 8px;border-radius:6px">Spec</span><h3 style="font-family:'Newsreader',serif;font-weight:500;font-size:22px;color:#1E2B26;margin:0">Bottom sheet</h3><button onClick="{{ rSheet }}" style="margin-inline-start:auto;font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.05em;color:#1E2B26;background:#EDE8DF;border:1px solid #D8D1C4;border-radius:999px;padding:8px 13px;cursor:pointer" style-hover="background:#E3DCCF">↺ Replay</button></div>
+        <p style="font:400 13.5px/1.55 'Hanken Grotesk';color:#5B554A;margin:9px 0 16px;max-width:560px">Log entry, share options and picker sheets rise from the bottom edge as the backdrop dims. Dismiss accelerates back down and is a touch quicker than the present.</p>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:7px 18px;align-items:baseline">
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Trigger</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Add / options / picker</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Moves</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">translateY 104% → 0 · backdrop opacity 0 → .42</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Timing</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">present 360ms <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--e-out</code> · dismiss 240ms <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--e-in</code></div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Loop</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Once</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Haptic</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Soft on present</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Reduced</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Sheet + backdrop fade, no travel</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7 notification banner -->
+    <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:22px;padding:var(--pad,30px);display:flex;gap:28px;align-items:stretch;margin-bottom:16px">
+      <div style="width:236px;flex:none;background:#EBE7DE;border:1px solid #E2DCD0;border-radius:16px;display:flex;align-items:center;justify-content:center;min-height:210px">
+        <div style="width:150px;height:224px;background:#1E2B26;border-radius:26px;padding:6px"><div style="width:100%;height:100%;background:#F4F1EA;border-radius:20px;overflow:hidden;position:relative">
+          <div style="position:absolute;inset:0;padding:16px;opacity:.4"><div style="height:9px;width:50%;background:#DDD6C8;border-radius:4px"></div></div>
+          <div key="{{ kBanner }}" style="position:absolute;top:10px;left:10px;right:10px;background:#1E2B26;border-radius:14px;padding:11px 12px;display:flex;align-items:center;gap:8px;box-shadow:0 12px 26px rgba(0,0,0,.28);animation:sk-bannerdown calc(var(--d-calm,360ms)*var(--spd,1)) var(--e-out) both"><span style="width:8px;height:8px;border-radius:50%;background:#82BBA0;flex:none"></span><span style="font:600 10px/1.3 'Hanken Grotesk';color:#EAF0EC">112 mg/dL · steady</span><span style="margin-inline-start:auto;font:500 8px/1 'JetBrains Mono';color:#7C9488">now</span></div>
+        </div></div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font:700 8.5px/1 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;background:#E7DFD1;color:#6B6355;padding:5px 8px;border-radius:6px">Spec</span><h3 style="font-family:'Newsreader',serif;font-weight:500;font-size:22px;color:#1E2B26;margin:0">Notification banner</h3><button onClick="{{ rBanner }}" style="margin-inline-start:auto;font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.05em;color:#1E2B26;background:#EDE8DF;border:1px solid #D8D1C4;border-radius:999px;padding:8px 13px;cursor:pointer" style-hover="background:#E3DCCF">↺ Replay</button></div>
+        <p style="font:400 13.5px/1.55 'Hanken Grotesk';color:#5B554A;margin:9px 0 16px;max-width:560px">In-app alerts drop from the top edge and settle. Informational banners are quiet; a high or low escalates its colour but keeps the same restrained travel — the copy does the shouting, not the motion.</p>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:7px 18px;align-items:baseline">
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Trigger</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Reading update / alert fires</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Moves</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">translateY -140% → 0, opacity 0 → 1</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Timing</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">360ms · <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--d-calm</code> · <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--e-out</code></div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Loop</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Once · auto-dismiss after 4s (info)</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Haptic</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">None (info) · warning (high/low)</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Reduced</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Fades in place, no slide</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8 toast -->
+    <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:22px;padding:var(--pad,30px);display:flex;gap:28px;align-items:stretch;margin-bottom:16px">
+      <div style="width:236px;flex:none;background:#EBE7DE;border:1px solid #E2DCD0;border-radius:16px;display:flex;align-items:center;justify-content:center;min-height:210px">
+        <div style="width:150px;height:224px;background:#1E2B26;border-radius:26px;padding:6px"><div style="width:100%;height:100%;background:#F4F1EA;border-radius:20px;overflow:hidden;position:relative">
+          <div style="position:absolute;inset:0;padding:16px;opacity:.4"><div style="height:9px;width:65%;background:#DDD6C8;border-radius:4px"></div><div style="height:9px;width:45%;background:#EAE4D8;border-radius:4px;margin-top:12px"></div></div>
+          <div key="{{ kToast }}" style="position:absolute;left:50%;bottom:20px;transform:translateX(-50%);display:flex;align-items:center;gap:7px;background:#1E2B26;border-radius:999px;padding:9px 14px;box-shadow:0 10px 24px rgba(0,0,0,.26);animation:sk-toast calc(2600ms*var(--spd,1)) var(--e-standard) both"><span style="width:14px;height:14px;border-radius:50%;background:#3E7A63;display:flex;align-items:center;justify-content:center;font:700 8px/1 'JetBrains Mono';color:#EAF0EC">✓</span><span style="font:600 10px/1 'Hanken Grotesk';color:#EAF0EC;white-space:nowrap">Logged · 12g carbs</span></div>
+        </div></div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font:700 8.5px/1 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;background:#E7DFD1;color:#6B6355;padding:5px 8px;border-radius:6px">Spec</span><h3 style="font-family:'Newsreader',serif;font-weight:500;font-size:22px;color:#1E2B26;margin:0">Toast confirm</h3><button onClick="{{ rToast }}" style="margin-inline-start:auto;font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.05em;color:#1E2B26;background:#EDE8DF;border:1px solid #D8D1C4;border-radius:999px;padding:8px 13px;cursor:pointer" style-hover="background:#E3DCCF">↺ Replay</button></div>
+        <p style="font:400 13.5px/1.55 'Hanken Grotesk';color:#5B554A;margin:9px 0 16px;max-width:560px">A quiet acknowledgement after a log or save. Rises, holds long enough to read, then lifts away on its own — never asks to be dismissed.</p>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:7px 18px;align-items:baseline">
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Trigger</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Entry saved / action confirmed</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Moves</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">rise in → hold → lift out</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Timing</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">240ms in / 240ms out · <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--d-base</code> · ~2.2s hold</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Loop</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Once</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Haptic</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Light impact (success)</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Reduced</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Fade in / out, no travel</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- group: controls -->
+    <div style="font:600 12px/1 'Hanken Grotesk';color:#7A7264;margin:30px 0 14px;padding-bottom:8px;border-bottom:1px solid #DDD7CC">Controls &amp; feedback</div>
+
+    <!-- 9 toggle -->
+    <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:22px;padding:var(--pad,30px);display:flex;gap:28px;align-items:stretch;margin-bottom:16px">
+      <div style="width:236px;flex:none;background:#EBE7DE;border:1px solid #E2DCD0;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:210px">
+        <button onClick="{{ toggle }}" style="width:56px;height:32px;border-radius:999px;border:none;padding:0;cursor:pointer;position:relative;background:{{ onColor }};transition:background calc(var(--d-base,240ms)*var(--spd,1)) var(--e-standard)"><span style="position:absolute;top:3px;left:0;width:26px;height:26px;border-radius:50%;background:#F4F1EA;box-shadow:0 2px 6px rgba(0,0,0,.28);transform:translateX({{ knobX }});transition:transform calc(var(--d-base,240ms)*var(--spd,1)) var(--e-calm)"></span></button>
+        <span style="font:600 10px/1 'JetBrains Mono';letter-spacing:.06em;color:#8A8275">Tap to toggle</span>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font:700 8.5px/1 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;background:#E7DFD1;color:#6B6355;padding:5px 8px;border-radius:6px">Spec</span><h3 style="font-family:'Newsreader',serif;font-weight:500;font-size:22px;color:#1E2B26;margin:0">Toggle switch</h3></div>
+        <p style="font:400 13.5px/1.55 'Hanken Grotesk';color:#5B554A;margin:9px 0 16px;max-width:560px">Alarms, sharing and sensor settings. The knob travels on the signature calm curve while the track colour crossfades on the standard one — a soft, expensive-feeling flip.</p>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:7px 18px;align-items:baseline">
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Trigger</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Tap / drag</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Moves</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">knob translateX + track background</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Timing</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">240ms · <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--d-base</code> · knob <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--e-calm</code></div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Loop</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Once per tap</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Haptic</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Light selection tick</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Reduced</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Knob repositions instantly; colour crossfades ≤90ms</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 10 button press -->
+    <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:22px;padding:var(--pad,30px);display:flex;gap:28px;align-items:stretch;margin-bottom:16px">
+      <div style="width:236px;flex:none;background:#EBE7DE;border:1px solid #E2DCD0;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:210px">
+        <button style="background:#1E2B26;color:#EAF0EC;border:none;padding:13px 24px;border-radius:14px;font:600 14px/1 'Hanken Grotesk';cursor:pointer;box-shadow:0 8px 18px rgba(30,43,38,.28);transition:transform calc(var(--d-quick,160ms)*var(--spd,1)) var(--e-standard),box-shadow calc(var(--d-quick,160ms)*var(--spd,1)) var(--e-standard)" style-active="transform:scale(.96);box-shadow:0 3px 10px rgba(30,43,38,.3)">Log carbs</button>
+        <span style="font:600 10px/1 'JetBrains Mono';letter-spacing:.06em;color:#8A8275">Press &amp; hold</span>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font:700 8.5px/1 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;background:#E7DFD1;color:#6B6355;padding:5px 8px;border-radius:6px">Spec</span><h3 style="font-family:'Newsreader',serif;font-weight:500;font-size:22px;color:#1E2B26;margin:0">Button press</h3></div>
+        <p style="font:400 13.5px/1.55 'Hanken Grotesk';color:#5B554A;margin:9px 0 16px;max-width:560px">Every primary action depresses slightly and pulls its shadow in on touch-down, then releases. Small, fast, physical — confirms the tap landed without drawing attention.</p>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:7px 18px;align-items:baseline">
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Trigger</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Touch-down / release</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Moves</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">scale 1 → .96 + shadow contract</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Timing</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">160ms · <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--d-quick</code> · <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--e-standard</code></div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Loop</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Once per press</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Haptic</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Light impact on down</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Reduced</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Opacity dip only, no scale</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 11 stagger -->
+    <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:22px;padding:var(--pad,30px);display:flex;gap:28px;align-items:stretch;margin-bottom:16px">
+      <div style="width:236px;flex:none;background:#EBE7DE;border:1px solid #E2DCD0;border-radius:16px;display:flex;align-items:center;justify-content:center;min-height:210px">
+        <div key="{{ kStag }}" style="width:170px;display:flex;flex-direction:column;gap:9px">
+          <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:12px;padding:11px 13px;display:flex;align-items:center;gap:9px;animation:sk-rise calc(var(--d-calm,360ms)*var(--spd,1)) var(--e-out) both;animation-delay:0ms"><span style="width:8px;height:8px;border-radius:50%;background:#3E7A63"></span><span style="height:7px;width:70%;background:#E2DCD0;border-radius:4px"></span></div>
+          <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:12px;padding:11px 13px;display:flex;align-items:center;gap:9px;animation:sk-rise calc(var(--d-calm,360ms)*var(--spd,1)) var(--e-out) both;animation-delay:70ms"><span style="width:8px;height:8px;border-radius:50%;background:#C88A3E"></span><span style="height:7px;width:55%;background:#E2DCD0;border-radius:4px"></span></div>
+          <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:12px;padding:11px 13px;display:flex;align-items:center;gap:9px;animation:sk-rise calc(var(--d-calm,360ms)*var(--spd,1)) var(--e-out) both;animation-delay:140ms"><span style="width:8px;height:8px;border-radius:50%;background:#3E7A63"></span><span style="height:7px;width:80%;background:#E2DCD0;border-radius:4px"></span></div>
+          <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:12px;padding:11px 13px;display:flex;align-items:center;gap:9px;animation:sk-rise calc(var(--d-calm,360ms)*var(--spd,1)) var(--e-out) both;animation-delay:210ms"><span style="width:8px;height:8px;border-radius:50%;background:#C9564B"></span><span style="height:7px;width:60%;background:#E2DCD0;border-radius:4px"></span></div>
+        </div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font:700 8.5px/1 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;background:#E7DFD1;color:#6B6355;padding:5px 8px;border-radius:6px">Spec</span><h3 style="font-family:'Newsreader',serif;font-weight:500;font-size:22px;color:#1E2B26;margin:0">List &amp; card stagger</h3><button onClick="{{ rStag }}" style="margin-inline-start:auto;font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.05em;color:#1E2B26;background:#EDE8DF;border:1px solid #D8D1C4;border-radius:999px;padding:8px 13px;cursor:pointer" style-hover="background:#E3DCCF">↺ Replay</button></div>
+        <p style="font:400 13.5px/1.55 'Hanken Grotesk';color:#5B554A;margin:9px 0 16px;max-width:560px">Logbook rows and insight cards rise and fade in sequence, ~70ms apart, so a full list assembles as one calm cascade rather than a hard cut. Cap the stagger at the first ~8 items; the rest appear together.</p>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:7px 18px;align-items:baseline">
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Trigger</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">List / grid mount</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Moves</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">translateY 14px → 0, opacity 0 → 1, per item</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Timing</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">360ms · <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--d-calm</code> · 70ms stagger · <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--e-out</code></div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Loop</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Once</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Haptic</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">None</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Reduced</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">All items fade in together, no offset</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- group: critical -->
+    <div style="font:600 12px/1 'Hanken Grotesk';color:#7A7264;margin:30px 0 14px;padding-bottom:8px;border-bottom:1px solid #DDD7CC">Critical — life-safety takeover</div>
+
+    <!-- 12 takeover -->
+    <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:22px;padding:var(--pad,30px);display:flex;gap:28px;align-items:stretch;margin-bottom:16px">
+      <div style="width:236px;flex:none;background:#EBE7DE;border:1px solid #E2DCD0;border-radius:16px;display:flex;align-items:center;justify-content:center;min-height:210px">
+        <div style="width:150px;height:224px;background:#0A0605;border-radius:26px;padding:6px;box-shadow:0 12px 30px rgba(120,30,20,.3)"><div style="width:100%;height:100%;border-radius:20px;overflow:hidden;position:relative;background:radial-gradient(120% 80% at 50% 34%,#3A160F 0%,#1A0C09 66%,#120706 100%)">
+          <div key="{{ kTake }}" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;animation:sk-takeover calc(var(--d-slow,560ms)*var(--spd,1)) var(--e-out) both"><span style="font:700 7.5px/1 'JetBrains Mono';letter-spacing:.16em;text-transform:uppercase;color:#E4574A">Urgent low</span><span style="font-family:'Newsreader',serif;font-weight:300;font-size:58px;line-height:1;color:#F3E7E3;animation:sk-pulse calc(var(--loop-pulse,2400ms)*var(--spd,1)) var(--e-standard) infinite">54</span><span style="font:600 8px/1 'Hanken Grotesk';letter-spacing:.12em;text-transform:uppercase;color:#C9928B">mg/dL</span><span style="margin-top:12px;font:600 10px/1 'Hanken Grotesk';color:#0A0605;background:#E4574A;border-radius:999px;padding:8px 16px">Treat now</span></div>
+        </div></div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font:700 8.5px/1 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;background:#E7DFD1;color:#6B6355;padding:5px 8px;border-radius:6px">Spec</span><h3 style="font-family:'Newsreader',serif;font-weight:500;font-size:22px;color:#1E2B26;margin:0">Urgent-low takeover</h3><button onClick="{{ rTake }}" style="margin-inline-start:auto;font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.05em;color:#1E2B26;background:#EDE8DF;border:1px solid #D8D1C4;border-radius:999px;padding:8px 13px;cursor:pointer" style-hover="background:#E3DCCF">↺ Replay</button></div>
+        <p style="font:400 13.5px/1.55 'Hanken Grotesk';color:#5B554A;margin:9px 0 16px;max-width:560px">The full-screen dark alert scales in with authority — deliberate, not startling. Only the reading breathes, using the same pulse as the live dot, so urgency reads as a heartbeat rather than a flash. Motion never blocks the "Treat now" action.</p>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:7px 18px;align-items:baseline">
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Trigger</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Urgent low / high threshold crossed</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Moves</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">screen scale .93 → 1 + fade; reading pulses</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Timing</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">560ms in · <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--d-slow</code> · <code style="font:600 12px 'JetBrains Mono';color:#3E7A63">--e-out</code></div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Loop</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Entrance once; reading pulse until acknowledged</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Haptic</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Critical — repeating error pattern until dismissed</div>
+          <div style="font:600 9.5px/1.3 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:#A39A8B">Reduced</div><div style="font:400 13px/1.45 'Hanken Grotesk';color:#3B372F">Appears immediately (fade only); reading holds, no pulse</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ REDUCED MOTION + HAPTICS ============ -->
+  <section style="max-width:1180px;margin:0 auto;padding:44px 44px 8px">
+    <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:16px">
+
+      <div style="background:#1E2B26;border-radius:20px;padding:28px 30px">
+        <div style="font:600 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7C9488;margin-bottom:6px">Reduced motion</div>
+        <div style="font-family:'Newsreader',serif;font-size:22px;color:#EAF0EC;margin-bottom:6px">Honour the system setting, always</div>
+        <p style="font:400 13px/1.55 'Hanken Grotesk';color:#B8C6BE;margin:0 0 20px;max-width:520px">Under <code style="font:600 12px 'JetBrains Mono';color:#9FD9BE">prefers-reduced-motion</code>, six rules replace every animation above. Nothing disappears — information still arrives, just without travel.</p>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;gap:13px"><span style="font:700 11px/1.4 'JetBrains Mono';color:#82BBA0;flex:none;width:16px">1</span><span style="font:400 13px/1.5 'Hanken Grotesk';color:#D9E4DD">Ambient loops (pulse, ripple) freeze at a legible steady state — no breathing.</span></div>
+          <div style="display:flex;gap:13px"><span style="font:700 11px/1.4 'JetBrains Mono';color:#82BBA0;flex:none;width:16px">2</span><span style="font:400 13px/1.5 'Hanken Grotesk';color:#D9E4DD">Spatial transitions (push, sheet, banner, toast) become a 120ms opacity crossfade in place.</span></div>
+          <div style="display:flex;gap:13px"><span style="font:700 11px/1.4 'JetBrains Mono';color:#82BBA0;flex:none;width:16px">3</span><span style="font:400 13px/1.5 'Hanken Grotesk';color:#D9E4DD">Data reveals (ring, count-up, graph) render their final value at once, with one short fade.</span></div>
+          <div style="display:flex;gap:13px"><span style="font:700 11px/1.4 'JetBrains Mono';color:#82BBA0;flex:none;width:16px">4</span><span style="font:400 13px/1.5 'Hanken Grotesk';color:#D9E4DD">Controls change state instantly; only colour crossfades, capped at 90ms.</span></div>
+          <div style="display:flex;gap:13px"><span style="font:700 11px/1.4 'JetBrains Mono';color:#82BBA0;flex:none;width:16px">5</span><span style="font:400 13px/1.5 'Hanken Grotesk';color:#D9E4DD">Staggered lists appear together — no per-item delay or offset.</span></div>
+          <div style="display:flex;gap:13px"><span style="font:700 11px/1.4 'JetBrains Mono';color:#82BBA0;flex:none;width:16px">6</span><span style="font:400 13px/1.5 'Hanken Grotesk';color:#D9E4DD">The urgent-low takeover appears immediately; colour and copy carry the alarm, the reading does not pulse.</span></div>
+        </div>
+      </div>
+
+      <div style="background:#F4F1EA;border:1px solid #E2DCD0;border-radius:20px;padding:28px 30px">
+        <div style="font:600 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A39A8B;margin-bottom:6px">Haptics</div>
+        <div style="font-family:'Newsreader',serif;font-size:22px;color:#1E2B26;margin-bottom:18px">Paired with motion, never alone</div>
+        <div style="display:flex;flex-direction:column;gap:0">
+          <div style="display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #E2DCD0"><span style="font:400 13px/1.4 'Hanken Grotesk';color:#3B372F">Toggle · tab · selection</span><code style="font:600 11px 'JetBrains Mono';color:#3E7A63;white-space:nowrap">light tick</code></div>
+          <div style="display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #E2DCD0"><span style="font:400 13px/1.4 'Hanken Grotesk';color:#3B372F">Button press</span><code style="font:600 11px 'JetBrains Mono';color:#3E7A63;white-space:nowrap">light impact</code></div>
+          <div style="display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #E2DCD0"><span style="font:400 13px/1.4 'Hanken Grotesk';color:#3B372F">Log saved · read complete</span><code style="font:600 11px 'JetBrains Mono';color:#3E7A63;white-space:nowrap">light impact</code></div>
+          <div style="display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #E2DCD0"><span style="font:400 13px/1.4 'Hanken Grotesk';color:#3B372F">Sheet present</span><code style="font:600 11px 'JetBrains Mono';color:#3E7A63;white-space:nowrap">soft</code></div>
+          <div style="display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #E2DCD0"><span style="font:400 13px/1.4 'Hanken Grotesk';color:#3B372F">High / low banner</span><code style="font:600 11px 'JetBrains Mono';color:#C88A3E;white-space:nowrap">warning</code></div>
+          <div style="display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #E2DCD0"><span style="font:400 13px/1.4 'Hanken Grotesk';color:#3B372F">Navigation push / pop</span><code style="font:600 11px 'JetBrains Mono';color:#8A8275;white-space:nowrap">none · OS</code></div>
+          <div style="display:flex;justify-content:space-between;gap:12px;padding:11px 0"><span style="font:400 13px/1.4 'Hanken Grotesk';color:#3B372F">Urgent-low takeover</span><code style="font:600 11px 'JetBrains Mono';color:#C9564B;white-space:nowrap">critical · repeating</code></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="max-width:1180px;margin:32px auto 0;padding-top:22px;border-top:1px solid #DDD7CC;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font:500 11.5px/1.5 'JetBrains Mono',monospace;color:#9A9184">
+      <span>Sukoon · Motion specification · v1.0</span>
+      <span>In build: pulse, ripple. Spec: the remaining ten, for handoff.</span>
+    </div>
+  </section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;speed&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;1× real-time&quot;,&quot;0.5× study&quot;,&quot;0.25× slow-mo&quot;],&quot;default&quot;:&quot;1× real-time&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Demo controls&quot;},&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Comfortable&quot;,&quot;Compact&quot;],&quot;default&quot;:&quot;Comfortable&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Demo controls&quot;}}">
+class Component extends DCLogic {
+  state = { n: {}, on: true, hero: 112 };
+
+  componentWillUnmount() { cancelAnimationFrame(this._raf); }
+
+  bump(id) {
+    this.setState(s => ({ n: Object.assign({}, s.n, { [id]: (s.n[id] || 0) + 1 }) }));
+  }
+
+  replayHero() {
+    this.bump('ring');
+    cancelAnimationFrame(this._raf);
+    var self = this, from = 54, to = 112;
+    var dur = 640 * (this._spd || 1);
+    var start = performance.now();
+    var ease = function (t) { return 1 - Math.pow(1 - t, 4); };
+    self.setState({ hero: from });
+    function step(now) {
+      var t = Math.min(1, (now - start) / dur);
+      self.setState({ hero: Math.round(from + (to - from) * ease(t)) });
+      if (t < 1) self._raf = requestAnimationFrame(step);
+    }
+    self._raf = requestAnimationFrame(step);
+  }
+
+  renderVals() {
+    var n = this.state.n;
+    var speed = this.props.speed || '1× real-time';
+    var spd = speed.indexOf('0.25') === 0 ? 4 : (speed.indexOf('0.5') === 0 ? 2 : 1);
+    this._spd = spd;
+    var pad = this.props.density === 'Compact' ? '20px' : '30px';
+    return {
+      spd: spd,
+      pad: pad,
+      hero: this.state.hero,
+      onColor: this.state.on ? '#3E7A63' : '#C4BCAD',
+      knobX: this.state.on ? '27px' : '3px',
+      toggle: () => this.setState(s => ({ on: !s.on })),
+      replayHero: () => this.replayHero(),
+      rDraw: () => this.bump('draw'),
+      rPush: () => this.bump('push'),
+      rSheet: () => this.bump('sheet'),
+      rBanner: () => this.bump('banner'),
+      rTake: () => this.bump('take'),
+      rStag: () => this.bump('stag'),
+      rToast: () => this.bump('toast'),
+      kRing: 'ring' + (n.ring || 0),
+      kDraw: 'draw' + (n.draw || 0),
+      kPush: 'push' + (n.push || 0),
+      kSheet: 'sheet' + (n.sheet || 0),
+      kBanner: 'ban' + (n.banner || 0),
+      kTake: 'take' + (n.take || 0),
+      kStag: 'stag' + (n.stag || 0),
+      kToast: 'toast' + (n.toast || 0)
+    };
+  }
+}
+</script>
+</body>
+</html>

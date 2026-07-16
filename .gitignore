@@ -1,0 +1,17 @@
+*.iml
+.gradle/
+/local.properties
+/.idea
+.DS_Store
+/build
+/app/build
+/app/release
+/app/schemas
+/captures
+.externalNativeBuild
+.cxx
+*.hprof
+
+# Third-party APKs and their decompiled output — reference material only, never redistributed.
+*.apk
+/_apk-analysis/

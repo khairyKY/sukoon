@@ -1,0 +1,49 @@
+1. First-run / onboarding
+Splash / brand intro — the calm-water moment
+Disclaimer gate — "not a medical device," must-accept
+Sign in / Sign up — needed for cloud sharing (Supabase)
+Permissions priming — Bluetooth, NFC, notifications, battery, phone-call (why each is needed)
+Units & target range setup — mg/dL vs mmol/L, your range
+Sensor pairing — NFC scan to activate → BLE connect
+Warm-up — the 60-min countdown, no reading yet
+2. Home / Now (the hero — one screen, several states)
+In-range (calm)
+High / Low
+Urgent (alarm state)
+Warm-up (no data yet)
+Signal lost / stale (greyed ---)
+No sensor connected
+3. Graph & history
+Full graph view — interactive, time-range toggles (3/6/12/24h)
+4. Logbook
+Logbook list — readings + logged events, timeline
+Quick-entry sheet — add carb / insulin / finger-prick (the one-tap, anti-mySugr flow)
+Empty state
+5. Insights / Reports
+Insights overview — Time-in-Range bar, GMI, variability cards
+AGP view — the 14-day pattern
+Metric explainer — what GVI/PGS mean, "what's a good score"
+PDF export preview — the doctor-shareable report
+6. Alarms & emergency
+Alarm settings — high / low / urgent thresholds, snooze rules
+Active urgent alarm — full-screen, DND-bypassing
+Emergency countdown — "Calling [contact] in 60s — I'm OK" (the L4 screen)
+7. Sharing / contacts
+My contacts — who's following me
+Invite / approve follower — the request flow
+Per-contact settings — share toggle + designate emergency contact
+Follower (viewer) mode — read-only view of someone else's glucose (a stripped-down Home)
+8. Sensor / device
+Sensor status detail — age, time remaining, connection health, stop/re-scan
+Calibration — finger-prick entry with the safety caps
+9. Settings
+Settings home — the menu
+Units & targets
+Theme — light / dark
+Integrations — Nightscout, Health Connect
+Account / profile
+About — re-read the disclaimer, version
+Not screens, but need designing
+Notifications — one look per severity (info / warning / urgent)
+Home-screen / lock-screen widget — with its own in-range / low / stale states
+Persistent service notification — the "Sukoon is running" bar
