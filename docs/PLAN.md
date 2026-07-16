@@ -10,8 +10,13 @@ Sources: two Gemini deep-research reports in `research/` — `report-tech.md` (h
 
 ---
 
-## 0. Strategy in one line
-Build against a `GlucoseSource` abstraction (still valuable for UI dev and testing), but **go straight at direct Libre 2 EU BLE** as the real target — no cloud-bridge detour, since LibreLinkUp doesn't reliably serve EU sensors in Egypt. Add a dedicated realtime backend (separate concern from sensor reading) purely for contact-sharing and emergency alerting.
+## 0. Strategy — two parallel tracks (revised 2026-07-16)
+The `GlucoseSource` abstraction lets two tracks run **in parallel** rather than in strict sequence:
+
+- **Track A — a runnable, polished app on `SimulatedSource`.** Wire the simulator into the real UI so the whole app (Home states, alerts, logbook, insights) can be built, demoed, and shaped into a daily-driver form *without waiting on sensor decoding*. This is the portfolio-visible progress and the fast feedback loop — and the near-term priority.
+- **Track B — the real Libre 2 EU pipeline** (NFC unlock → BLE GATT stream → decrypt → glucose conversion), the genuinely hard part. **Kai is diabetic, always wears an EU Libre 2, has an NFC+Bluetooth Android phone, and can sacrifice an expiring sensor to experiment on** — so Track B's crypto is validatable **in-house** against real BLE captures (see §1 validation loop), not blocked waiting on hardware as earlier assumed.
+
+Both tracks feed the same Room store and the same UI; a data-source toggle switches between them. Contact-sharing + emergency alerting is a separate backend (§7), not part of `GlucoseSource`. No cloud-bridge read path (LibreLinkUp) — it doesn't reliably serve EU sensors in Egypt.
 
 ---
 
@@ -25,7 +30,8 @@ interface GlucoseSource {
 ```
 Implementations:
 1. **SimulatedSource** — replay a recorded CSV or synthetic sine+noise. Kept as a dev/test harness (fast UI iteration without waiting on sensor pairing, doubles as an automated test fixture) — **not** a shipped fallback anymore.
-2. **LibreBleSource** — **primary target, built early and tested thoroughly on real hardware.** Libre 2 EU: one-time NFC unlock (NfcV / ISO 15693 shared-key exchange) → continuous encrypted BLE stream (AES-CFB) → glucose conversion. Reference the **open-source** implementations: xDrip+ (OOP2), Juggluco, GlucoseDirect, DiaBLE (raw hex/GATT testbench).
+2. **LibreBleSource** — **Track B target.** Libre 2 EU: one-time NFC unlock (NfcV / ISO 15693 shared-key exchange) → continuous encrypted BLE stream (AES-CFB) → glucose conversion. Reference the **open-source** implementations: xDrip+ (OOP2), Juggluco, GlucoseDirect, DiaBLE (raw hex/GATT testbench).
+   - **Validation loop (the key-derivation acceptance test):** the clean-room key derivation can't be trusted by inspection — wrong crypto yields plausible-but-wrong numbers. Validate it by: (a) NFC-unlock + BLE-capture from Kai's real EU Libre 2, (b) decrypt with our implementation, (c) compare the decoded mg/dL against what the official LibreLink app (or a finger-prick) shows for the same sensor at the same moment. Iterate until they match. **This loop is now runnable in-house** — Kai has the sensor + phone. A spare/expiring sensor is useful for the NFC-handshake + BLE-connect mechanics even if it no longer streams valid glucose (test the plumbing separately from the numbers).
    - **DiaBox is a dead end as a code reference (confirmed by APK analysis, `research/diabox-apk-analysis.md`):** both APKs are Baidu-Shell-protected — the real BLE/UUID/decryption/calibration logic lives in native `.so` libraries (`libaescfb.so`, `libjniLibre.so`, `libcalibrat2.so`, plus 4 firmware-versioned algorithm libs v112F/v113B/v115G/v116A), not in readable Java/Kotlin. So we build from the open community implementations, not from DiaBox.
    - **Calibration** ("i-Algorithm") is independently reimplementable — DiaBox cites paper **PMC4764224** (least-squares regression); implement as capped time-weighted linear regression (see §8 caps).
    - Adopt DiaBox's **sensor auto-detection** pattern: EU BLE-Direct vs US/CA/Sense vs NFC-only paths (we only need EU BLE-Direct now, but structure for it).
@@ -62,7 +68,7 @@ Deterministic math = clean unit tests. Capture:
 ## 4. Redesigned information architecture — 5 tabs
 Replaces DiaBox's flat chart/log/settings. **Home · Logbook · Insights · Sharing · Settings.**
 
-- **Home / Now** — giant tabular-figure current value + dynamically-angled trend arrow + delta; **sensor status pill** (time left "3d 14h", BLE connection state); range-shaded 3/6/12H graph with predicted-line extension; **FAB** to log carbs/insulin/exercise.
+- **Home / Now** — giant serif current value + trend arrow + delta; **sensor status pill** (time left, BLE connection state); mini 3h bar-graph (per shipped design) with a reassuring plain-language status card; bottom nav Now/Trends/You. (Implemented — see `ui/home/`.)
 - **Logbook** — chronological readings interleaved with event tags (meals, insulin, calibrations); edit/delete manual entries.
 - **Insights** — TIR **stacked bar**; GMI **gauge**; CV/GVI/PGS cards each with a plain-language "what's good" tooltip; **AGP** (14-day median overlay); **Export to PDF** for the endo.
 - **Sharing** *(new)* — manage chosen/emergency contacts; per-contact live-share toggle; emergency-call contact + trigger thresholds; view the shareable follower link.
@@ -71,11 +77,12 @@ Replaces DiaBox's flat chart/log/settings. **Home · Logbook · Insights · Shar
 ---
 
 ## 5. Design system — portfolio-grade & safety-first
-- **Colorblind-safe:** blue = low, teal/neutral = in-range, amber/orange = high — **never red/green alone** (~8% of men are red-green colorblind). **Dual-encode** every state with icon + text, not just color.
-- **Hero number is king:** geometric sans (Inter/Roboto) with **tabular figures** so digits don't jump as they tick.
+> Updated 2026-07-16 to match the **actual shipped design** (`_design-export/`), which supersedes the earlier abstract guesses in this section.
+- **Palette (confirmed):** sage-teal calm family (#3E7A63 / #82BBA0 / #2E5C4A) on a warm-neutral or dark #1E2B26 canvas; **amber #C88A3E = high**, **coral-red #C9564B = both low and urgent** (same red — severity differentiated by banner/copy/buttons, NOT a second hue). Still colorblind-conscious and **dual-encoded** (icon + text + pill label, never hue alone), just warmer than the original blue/teal/amber sketch.
+- **Hero number is king:** a **light-weight serif** (Newsreader / Amiri for Arabic) — NOT the geometric-sans/tabular figures originally assumed. Big, calm, glanceable.
 - **Glanceable in < 0.5s:** big widget, always-on friendly (diabetics check ~50×/day, often half-asleep or driving).
-- **Stale-data guard:** after ~10 min with no data, grey out / strike through / show `---` — never present an old number as current (someone could bolus off it).
-- Dark-first but themeable; **RTL/Arabic-ready** (fits your bilingual experience).
+- **Stale-data guard:** after ~10 min with no data, grey out / show `---` — never present an old number as current (someone could bolus off it). (Home's `Stale` state implements this.)
+- Dark-first but themeable; **RTL/Arabic-ready** — every screen ships EN + Egyptian Arabic via string resources.
 
 ---
 
@@ -110,8 +117,12 @@ Purpose-built for **live sharing with chosen contacts** and **as the transport f
 ---
 
 ## 9. Phased roadmap
-- **Phase 0 — Foundation:** scaffold · `GlucoseSource` abstraction · Room schema · SimulatedSource (dev/test only) · metrics module + unit tests · unit-system handling · disclaimer gate.
-- **Phase 1 — Core BLE + usable app:** **LibreBleSource** (Libre 2 EU direct — the main engineering effort, tested thoroughly on real hardware) · redesigned Home · design system · L1/L2/L3 alerts · Glance widget · self-healing BLE reconnect.
+> Phase 1 now runs as the two parallel tracks from §0. Track A is the near-term priority (get to a runnable, demoable app); Track B (real sensor) proceeds alongside, gated on the §1 validation loop.
+- **Phase 0 — Foundation:** ✅ DONE — scaffold · `GlucoseSource` abstraction · Room schema · SimulatedSource · metrics module + unit tests · unit-system handling · disclaimer gate.
+- **Phase 1 — Core BLE + usable app:**
+  - *Track A (runnable app):* **wire SimulatedSource into the Home UI** (currently MainActivity hardcodes `NoSensor` — this is the immediate next step: a live, cycling demo) · redesigned Home ✅ · design system · L1/L2/L3 alerts · Glance widget.
+  - *Track B (real sensor):* NFC unlock ✅ (ISO15693 layer; key-derivation still stubbed) · **LibreBleSource BLE stream + AES-CFB decode + glucose conversion** (+ the §1 validation loop) · pluggable firmware-variant decoder · self-healing BLE reconnect + foreground service.
+  - *Cross-cutting:* battery-optimization / OEM-killer handling ✅.
 - **Phase 2 — Safety & sharing (the new asks):** L4 emergency-call escalation (unacknowledged-L3 trigger + BLE-silence-after-low path) · Supabase backend (Auth, `readings` table, RLS) · Sharing tab · follow-request/approve flow · in-app viewer mode · calibration flow (capped) · Insights tab (AGP/TIR/metrics).
 - **Phase 3 — Ecosystem:** Wear OS complication · Nightscout + Health Connect export · AGP PDF export · localization.
 - **Phase 4 — Cross-platform viewers (later, only if still wanted):** thin read-only clients of the same Supabase backend — iOS companion, macOS widget, Windows widget. No BLE/NFC involved, so low risk; build when actually needed, not speculatively.
@@ -120,7 +131,7 @@ Purpose-built for **live sharing with chosen contacts** and **as the transport f
 
 ## 10. Biggest risks & unknowns
 1. **Abbott firmware changes** silently break BLE decoding — **confirmed by DiaBox carrying 4 separate firmware-versioned algorithm libs** (v112F/v113B/v115G/v116A) to cope with exactly this (incl. the 301/302 serials). You depend on the open-source RE community keeping pace; expect to hit this since Phase 1 leans entirely on direct BLE with no cloud fallback now. Structure the decoder so a new algorithm variant is a pluggable addition, not a rewrite.
-2. **Android background-BLE instability** (status-19 drops) → needs robust self-healing reconnect — now higher-stakes since it's the only source.
+2. **Android background-BLE instability** (status-19 drops) → needs robust self-healing reconnect — higher-stakes since direct BLE is the only real-data source. (Track A / simulator is unaffected, so app progress never blocks on this.)
 3. **Calibration can be lethal if uncapped** → enforce bounds (§8).
 4. **Emergency auto-call reliability** — `CALL_PHONE` is a sensitive runtime permission; foreground-service timing must stay accurate even with screen off; the unacknowledged-alarm trigger only works if an alarm actually fires, so BLE-drop must be its own escalation path too (§6); test the countdown/cancel flow extensively before trusting it.
 5. **Free-tier cloud limits** — fine at personal scale (1 user, few contacts); revisit if usage grows.
