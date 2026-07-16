@@ -6,13 +6,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.sukoon.app.data.prefs.DisclaimerPrefs
+import com.sukoon.app.ui.home.HomeScreen
+import com.sukoon.app.ui.home.HomeUiState
 import com.sukoon.app.ui.onboarding.DisclaimerGateScreen
 import com.sukoon.app.ui.theme.SukoonTheme
 
@@ -29,8 +30,10 @@ class MainActivity : ComponentActivity() {
 
                 Surface(modifier = Modifier.fillMaxSize()) {
                     if (disclaimerAccepted) {
-                        // Placeholder — real navigation graph + Home screen land in a later task.
-                        Text(text = "Sukoon")
+                        // NoSensor is the honest default — there's no real data pipeline wired
+                        // up yet (that's the LibreBleSource work). Real navigation graph lands
+                        // once Trends/You screens exist.
+                        HomeScreen(state = HomeUiState.NoSensor)
                     } else {
                         DisclaimerGateScreen(
                             onAccept = {

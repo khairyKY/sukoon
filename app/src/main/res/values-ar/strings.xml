@@ -8,4 +8,68 @@
     <string name="disclaimer_bullet_3">في الطوارئ، اتصل برقم الإسعاف عندك على طول.</string>
     <string name="disclaimer_checkbox_label">قريت وفهمت الكلام ده.</string>
     <string name="disclaimer_cta">موافق، كمّل</string>
+
+    <!-- Home — shared chrome -->
+    <string name="home_status_live">مباشر</string>
+    <string name="home_status_warming">بيجهّز</string>
+    <string name="home_status_no_signal">مفيش إشارة</string>
+    <string name="home_status_not_connected">مش متصل</string>
+    <string name="home_nav_now">دلوقتي</string>
+    <string name="home_nav_trends">التقارير</string>
+    <string name="home_nav_you">حسابي</string>
+    <string name="home_last_n_hours">آخر %1$d ساعات</string>
+    <string name="home_unit_mgdl">ملغم/دل</string>
+    <string name="home_updated_now">اتحدّث دلوقتي</string>
+
+    <!-- Home — trend words -->
+    <string name="home_trend_steady">ثابت</string>
+    <string name="home_trend_rising">طالع</string>
+    <string name="home_trend_falling">نازل</string>
+    <string name="home_trend_falling_fast">نازل بسرعة</string>
+
+    <!-- Home — in range -->
+    <string name="home_pill_in_range">في المعدل</string>
+    <string name="home_msg_steady_title">كله تمام.</string>
+    <string name="home_msg_steady_body">مفيش حاجة تشغل بالك دلوقتي. هننبّهك لو حصل أي حاجة.</string>
+
+    <!-- Home — low -->
+    <string name="home_pill_low">السكر واطي · لازم تتصرّف</string>
+    <string name="home_headline_going_low">السكر بينزل.</string>
+    <string name="home_do_this_now">اعمل كده دلوقتي</string>
+    <string name="home_low_action_prefix"></string>
+    <string name="home_low_action_bold">كُل ١٥ جرام سكريات سريعة</string>
+    <string name="home_low_action_suffix"> — كام تمرة، أو نص كوباية عصير. هنطمن عليك تاني بعد ١٥ دقيقة.</string>
+    <string name="home_btn_treated">تصرّفت خلاص</string>
+    <string name="home_btn_snooze_15">فكّرني بعد ١٥ دقيقة</string>
+
+    <!-- Home — high -->
+    <string name="home_pill_high">مرتفع</string>
+    <string name="home_msg_high_title">السكر شوية عالي.</string>
+    <string name="home_msg_high_body">بقالك حوالي ساعة فوق المعدل. مشية خفيفة ساعات بتساعد.</string>
+
+    <!-- Home — urgent -->
+    <string name="home_urgent_banner">هبوط خطير — تصرّف دلوقتي</string>
+    <string name="home_urgent_action_prefix"></string>
+    <string name="home_urgent_action_bold">كُل ١٥ جرام سكريات سريعة</string>
+    <string name="home_urgent_action_suffix"> على طول، وبعدين أكّد بوخزة صباع.</string>
+    <string name="home_btn_alert_emergency">نبّه جهة الطوارئ</string>
+
+    <!-- Home — warm-up -->
+    <string name="home_getting_ready">بيجهّز</string>
+    <string name="home_first_reading_prefix">أول قراية بعد حوالي </string>
+    <string name="home_first_reading_bold">%1$d دقيقة</string>
+    <string name="home_warmup_body">الحساس لسه بيظبط نفسه. ده طبيعي في الحساس الجديد — مفيش حاجة تعملها.</string>
+
+    <!-- Home — stale / signal lost -->
+    <string name="home_pill_signal_lost">الإشارة اتقطعت</string>
+    <string name="home_last_reading_ago">آخر قراية %1$d · من %2$d دقيقة</string>
+    <string name="home_msg_lost_contact_title">فقدنا الاتصال.</string>
+    <string name="home_msg_lost_contact_body">خلّي الموبايل قريّب من الحساس. هنرجّع الاتصال لوحدنا.</string>
+    <string name="home_btn_troubleshoot">حلّ مشكلة الاتصال</string>
+
+    <!-- Home — no sensor -->
+    <string name="home_no_sensor_title">مفيش حساس متوصّل</string>
+    <string name="home_no_sensor_body">وصّل حساس علشان تبدأ تشوف السكر بتاعك، مباشر ومستمر.</string>
+    <string name="home_btn_pair_sensor">وصّل حساس</string>
+    <string name="home_btn_enter_code">دخّل الكود يدوي</string>
 </resources>

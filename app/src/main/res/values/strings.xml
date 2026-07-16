@@ -8,4 +8,68 @@
     <string name="disclaimer_bullet_3">In an emergency, call your local emergency number.</string>
     <string name="disclaimer_checkbox_label">I\'ve read and understand this.</string>
     <string name="disclaimer_cta">Agree &amp; continue</string>
+
+    <!-- Home — shared chrome -->
+    <string name="home_status_live">LIVE</string>
+    <string name="home_status_warming">WARMING UP</string>
+    <string name="home_status_no_signal">NO SIGNAL</string>
+    <string name="home_status_not_connected">NOT CONNECTED</string>
+    <string name="home_nav_now">Now</string>
+    <string name="home_nav_trends">Trends</string>
+    <string name="home_nav_you">You</string>
+    <string name="home_last_n_hours">Last %1$d hours</string>
+    <string name="home_unit_mgdl">mg/dL</string>
+    <string name="home_updated_now">updated now</string>
+
+    <!-- Home — trend words -->
+    <string name="home_trend_steady">steady</string>
+    <string name="home_trend_rising">rising</string>
+    <string name="home_trend_falling">falling</string>
+    <string name="home_trend_falling_fast">falling fast</string>
+
+    <!-- Home — in range -->
+    <string name="home_pill_in_range">In range</string>
+    <string name="home_msg_steady_title">You\'re steady.</string>
+    <string name="home_msg_steady_body">Nothing to do right now. We\'ll tell you when something needs you.</string>
+
+    <!-- Home — low -->
+    <string name="home_pill_low">Low · action needed</string>
+    <string name="home_headline_going_low">You\'re going low.</string>
+    <string name="home_do_this_now">Do this now</string>
+    <string name="home_low_action_prefix">Have </string>
+    <string name="home_low_action_bold">15g of fast carbs</string>
+    <string name="home_low_action_suffix"> — a few dates, or half a glass of juice. We\'ll check on you again in 15 minutes.</string>
+    <string name="home_btn_treated">I\'ve treated it</string>
+    <string name="home_btn_snooze_15">Snooze 15 min</string>
+
+    <!-- Home — high -->
+    <string name="home_pill_high">High</string>
+    <string name="home_msg_high_title">A little high.</string>
+    <string name="home_msg_high_body">You\'ve been above range for about an hour. A short walk often helps.</string>
+
+    <!-- Home — urgent -->
+    <string name="home_urgent_banner">Urgent low — treat now</string>
+    <string name="home_urgent_action_prefix">Take </string>
+    <string name="home_urgent_action_bold">15g of fast carbs</string>
+    <string name="home_urgent_action_suffix"> right away, then confirm with a finger-prick.</string>
+    <string name="home_btn_alert_emergency">Alert my emergency contact</string>
+
+    <!-- Home — warm-up -->
+    <string name="home_getting_ready">Getting ready</string>
+    <string name="home_first_reading_prefix">First reading in about </string>
+    <string name="home_first_reading_bold">%1$d min</string>
+    <string name="home_warmup_body">Your sensor is settling in. This is normal for a new sensor — no action needed.</string>
+
+    <!-- Home — stale / signal lost -->
+    <string name="home_pill_signal_lost">Signal lost</string>
+    <string name="home_last_reading_ago">Last reading %1$d · %2$d min ago</string>
+    <string name="home_msg_lost_contact_title">We\'ve lost contact.</string>
+    <string name="home_msg_lost_contact_body">Keep your phone close to your sensor. We\'ll reconnect on our own.</string>
+    <string name="home_btn_troubleshoot">Troubleshoot connection</string>
+
+    <!-- Home — no sensor -->
+    <string name="home_no_sensor_title">No sensor connected</string>
+    <string name="home_no_sensor_body">Pair a sensor to start seeing your glucose, live and continuous.</string>
+    <string name="home_btn_pair_sensor">Pair a sensor</string>
+    <string name="home_btn_enter_code">Enter code manually</string>
 </resources>
