@@ -14,6 +14,7 @@
     <uses-feature android:name="android.hardware.nfc" android:required="false" />
 
     <application
+        android:name=".SukoonApp"
         android:allowBackup="true"
         android:label="@string/app_name"
         android:theme="@style/Theme.Sukoon"
