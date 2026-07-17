@@ -37,6 +37,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.sukoon.app.R
+import com.sukoon.app.ui.graph.GraphScreen
+import com.sukoon.app.ui.graph.GraphViewModel
 import com.sukoon.app.ui.home.HomeScreen
 import com.sukoon.app.ui.home.HomeViewModel
 import com.sukoon.app.ui.theme.Sage
@@ -72,7 +74,14 @@ fun MainScaffold() {
                 val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
                 HomeScreen(state = homeState)
             }
-            composable(SukoonTab.TRENDS.route) { PlaceholderScreen(R.string.home_nav_trends) }
+            composable(SukoonTab.TRENDS.route) {
+                // Trends currently shows the full graph (A3). When Insights (A9) + Logbook (A4)
+                // land, this becomes a hub and the graph moves to a sub-destination.
+                val repository = (LocalContext.current.applicationContext as SukoonApp).container.glucoseRepository
+                val graphViewModel: GraphViewModel = viewModel(factory = GraphViewModel.factory(repository))
+                val graphState by graphViewModel.uiState.collectAsStateWithLifecycle()
+                GraphScreen(state = graphState, onSelectRange = graphViewModel::selectRange)
+            }
             composable(SukoonTab.YOU.route) { PlaceholderScreen(R.string.home_nav_you) }
         }
     }
