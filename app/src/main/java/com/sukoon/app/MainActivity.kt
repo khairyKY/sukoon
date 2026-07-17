@@ -11,9 +11,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sukoon.app.data.prefs.DisclaimerPrefs
 import com.sukoon.app.ui.home.HomeScreen
-import com.sukoon.app.ui.home.HomeUiState
+import com.sukoon.app.ui.home.HomeViewModel
 import com.sukoon.app.ui.onboarding.DisclaimerGateScreen
 import com.sukoon.app.ui.theme.SukoonTheme
 
@@ -30,10 +32,12 @@ class MainActivity : ComponentActivity() {
 
                 Surface(modifier = Modifier.fillMaxSize()) {
                     if (disclaimerAccepted) {
-                        // NoSensor is the honest default — there's no real data pipeline wired
-                        // up yet (that's the LibreBleSource work). Real navigation graph lands
-                        // once Trends/You screens exist.
-                        HomeScreen(state = HomeUiState.NoSensor)
+                        // Track A: Home is driven by SimulatedSource via HomeViewModel (live,
+                        // cycling demo data). Swaps to LibreBleSource behind the same interface
+                        // once real-sensor reading lands. Real nav graph arrives with Trends/You.
+                        val homeViewModel: HomeViewModel = viewModel()
+                        val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
+                        HomeScreen(state = homeState)
                     } else {
                         DisclaimerGateScreen(
                             onAccept = {
