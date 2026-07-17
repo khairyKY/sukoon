@@ -16,22 +16,19 @@
 
 ---
 
-## A1 — App navigation shell  ◐  · **issue #28**  · (PR open)
+## A1 — App navigation shell  ✅  · **issue #28**  · (merged, PR #44)
 Replace Home's static decorative bottom bar with real Compose Navigation.
 - **The shipped design's bottom nav is 3 tabs — Now / Trends / You** — not the 5 the plan first assumed. Corrected to match the design (which supersedes, as with colors/fonts). Mapping: **Now** = Home (live glucose); **Trends** = Insights + graph + logbook (A3/A4/A9); **You** = settings + sharing + sensor/device (A6/A10).
 - `NavHost` (`ui/navigation/MainScaffold.kt`) + a design-matching bottom bar; Now hosts the live `HomeViewModel`-driven Home; Trends/You are placeholders.
 - Tab state preserved across switches via `popUpTo(saveState)/restoreState`.
 - **Accept:** navigate all 3 tabs; Now shows live sim data; tab state survives switching.
 
-## A2 — Persistence pipeline  ⬜  · *(new issue)* · **architecturally central**
-Right now the sim feeds Home through an in-memory deque; nothing is persisted. Logbook/Insights/Graph all need readings in Room.
-- A `GlucoseRepository`/collector subscribes to the active `GlucoseSource` and writes each reading to `ReadingEntity`; tracks the active `SensorSessionEntity`.
-- Screens read from Room via Flows (single source of truth), not from the source directly.
-- Home's `HomeViewModel` re-pointed at the repository (its rolling window becomes a Room query).
-- **Accept:** kill + relaunch the app → history survives; Home, Graph, Logbook all read the same persisted stream.
-- *Note:* the foreground service that keeps this collector alive is A10; the collector *logic* lands here.
+## A2 — Persistence pipeline  ✅  · **issue #29**  · (merged, PR #45) · **architecturally central**
+`GlucoseRepository` (`data/repository/`) subscribes to the active `GlucoseSource`, persists each reading to `ReadingEntity` via a manual `AppContainer`/`SukoonApp`-owned collector (no DI framework). Screens read from Room via Flows — single source of truth, not the source directly. `HomeViewModel` re-pointed at the repository (factory-injected); its rolling window is now a Room query, not an in-memory deque.
+- *Note:* the foreground service that keeps this collector alive is A11 (not A10 as first drafted); the collector *logic* landed here.
+- Not yet done: `SensorSessionEntity` tracking (waits on real sensor-session semantics, i.e. Track B) and the mapper's corrupt-row tolerance is unit-tested but not yet exercised by an actual bad row in the wild.
 
-## A3 — Graph & history screen  ◐  · **issue #30**  · (PR open) · design 8j
+## A3 — Graph & history screen  ✅  · **issue #30**  · (merged, PR #46) · design 8j
 Full interactive glucose graph from Room (`ui/graph/`), currently the **Trends** tab's content (becomes a sub-destination once Insights/Logbook land).
 - Canvas-drawn (no chart lib) line chart + shaded 70–180 target band + dashed thresholds; **3h/6h/12h/24h** toggles; **tap-to-inspect** (nearest point → value + time readout); empty-range state.
 - Simplified vs design 8j: no numeric y-axis labels yet (band + threshold lines carry the reference); add if wanted.
