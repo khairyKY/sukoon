@@ -117,6 +117,7 @@ Purpose-built for **live sharing with chosen contacts** and **as the transport f
 ---
 
 ## 9. Phased roadmap
+> **Full execution plans:** [`track-a-plan.md`](track-a-plan.md) (full app delivery on the simulator, A1–A12) and [`track-b-plan.md`](track-b-plan.md) (the real Libre 2 pipeline, B1–B11). The phase list below is the strategic view; the track docs are the workable, milestone-by-milestone breakdown with acceptance criteria.
 > Phase 1 now runs as the two parallel tracks from §0. Track A is the near-term priority (get to a runnable, demoable app); Track B (real sensor) proceeds alongside, gated on the §1 validation loop.
 - **Phase 0 — Foundation:** ✅ DONE — scaffold · `GlucoseSource` abstraction · Room schema · SimulatedSource · metrics module + unit tests · unit-system handling · disclaimer gate.
 - **Phase 1 — Core BLE + usable app:**
