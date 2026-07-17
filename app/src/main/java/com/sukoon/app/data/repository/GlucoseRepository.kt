@@ -34,6 +34,10 @@ class GlucoseRepository(
     fun recentReadings(limit: Int): Flow<List<GlucoseReading>> =
         readingDao.latestN(limit).map { rows -> rows.asReversed().map { it.toGlucoseReading() } }
 
+    /** Readings at or after [sinceMillis], chronological — backs the time-ranged graph (A3). */
+    fun readingsSince(sinceMillis: Long): Flow<List<GlucoseReading>> =
+        readingDao.since(sinceMillis).map { rows -> rows.map { it.toGlucoseReading() } }
+
     /** Starts the source and the persist-to-Room collector. Idempotent-safe to call once at app start. */
     fun start() {
         scope.launch { source.connect() }

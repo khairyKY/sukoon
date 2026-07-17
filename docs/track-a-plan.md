@@ -31,10 +31,11 @@ Right now the sim feeds Home through an in-memory deque; nothing is persisted. L
 - **Accept:** kill + relaunch the app → history survives; Home, Graph, Logbook all read the same persisted stream.
 - *Note:* the foreground service that keeps this collector alive is A10; the collector *logic* lands here.
 
-## A3 — Graph & history screen  ⬜  · *(new issue)*  · design 8j
-Full interactive glucose graph from Room.
-- Time-range toggles **3h / 6h / 12h / 24h**; tap-to-inspect a point; range-shaded target band.
-- **Accept:** toggles re-window correctly; renders from persisted sim data; empty range handled.
+## A3 — Graph & history screen  ◐  · **issue #30**  · (PR open) · design 8j
+Full interactive glucose graph from Room (`ui/graph/`), currently the **Trends** tab's content (becomes a sub-destination once Insights/Logbook land).
+- Canvas-drawn (no chart lib) line chart + shaded 70–180 target band + dashed thresholds; **3h/6h/12h/24h** toggles; **tap-to-inspect** (nearest point → value + time readout); empty-range state.
+- Simplified vs design 8j: no numeric y-axis labels yet (band + threshold lines carry the reference); add if wanted.
+- **Accept:** toggles re-window; renders from persisted sim data; tapping shows a reading; empty range handled.
 
 ## A4 — Logbook  ⬜  · *(new issue)*  · design 8k/8l + 6g/7l
 - Timeline list: readings interleaved with logged events (meals/insulin/finger-prick/calibration).

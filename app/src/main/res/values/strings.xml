@@ -18,6 +18,12 @@
     <string name="home_nav_trends">Trends</string>
     <string name="home_nav_you">You</string>
     <string name="placeholder_coming_soon">Coming soon</string>
+
+    <!-- Graph (A3) -->
+    <string name="graph_title">Graph</string>
+    <string name="graph_empty">No data in this range yet</string>
+    <string name="graph_tap_hint">Tap the chart to inspect a reading</string>
+    <string name="graph_range_hours">%1$dh</string>
     <string name="home_last_n_hours">Last %1$d hours</string>
     <string name="home_unit_mgdl">mg/dL</string>
     <string name="home_updated_now">updated now</string>
