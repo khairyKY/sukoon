@@ -16,12 +16,12 @@
 
 ---
 
-## A1 — App navigation shell  ⬜  · *(new issue)*
+## A1 — App navigation shell  ◐  · **issue #28**  · (PR open)
 Replace Home's static decorative bottom bar with real Compose Navigation.
-- `NavHost` + 5-tab bottom nav: **Home · Logbook · Insights · Sharing · Settings** (PLAN §4).
-- Tab state preserved across switches (`rememberSaveable` / nav back-stack).
-- The 4 non-Home tabs land as stub screens, filled in by later milestones.
-- **Accept:** navigate all 5 tabs; Home shows live sim data; back-stack behaves.
+- **The shipped design's bottom nav is 3 tabs — Now / Trends / You** — not the 5 the plan first assumed. Corrected to match the design (which supersedes, as with colors/fonts). Mapping: **Now** = Home (live glucose); **Trends** = Insights + graph + logbook (A3/A4/A9); **You** = settings + sharing + sensor/device (A6/A10).
+- `NavHost` (`ui/navigation/MainScaffold.kt`) + a design-matching bottom bar; Now hosts the live `HomeViewModel`-driven Home; Trends/You are placeholders.
+- Tab state preserved across switches via `popUpTo(saveState)/restoreState`.
+- **Accept:** navigate all 3 tabs; Now shows live sim data; tab state survives switching.
 
 ## A2 — Persistence pipeline  ⬜  · *(new issue)* · **architecturally central**
 Right now the sim feeds Home through an in-memory deque; nothing is persisted. Logbook/Insights/Graph all need readings in Room.
