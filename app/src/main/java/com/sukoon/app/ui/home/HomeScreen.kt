@@ -73,6 +73,7 @@ import com.sukoon.app.ui.theme.UiFontFamily
 @Composable
 fun HomeScreen(
     state: HomeUiState,
+    modifier: Modifier = Modifier,
     onTreated: () -> Unit = {},
     onSnooze: () -> Unit = {},
     onAlertEmergencyContact: () -> Unit = {},
@@ -81,7 +82,7 @@ fun HomeScreen(
     onEnterCodeManually: () -> Unit = {},
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
@@ -223,43 +224,6 @@ private fun MessageCard(title: String?, body: String) {
 }
 
 @Composable
-private fun HomeBottomNav() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(vertical = 13.dp, horizontal = 22.dp),
-        horizontalArrangement = Arrangement.SpaceAround,
-    ) {
-        NavItem(stringResource(R.string.home_nav_now), selected = true)
-        NavItem(stringResource(R.string.home_nav_trends), selected = false)
-        NavItem(stringResource(R.string.home_nav_you), selected = false)
-    }
-}
-
-@Composable
-private fun NavItem(label: String, selected: Boolean) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
-        if (selected) {
-            Box(Modifier.size(7.dp).clip(CircleShape).background(Sage))
-        } else {
-            Box(
-                Modifier
-                    .size(7.dp)
-                    .clip(CircleShape)
-                    .border(1.5.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f), CircleShape),
-            )
-        }
-        Text(
-            text = label,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-            fontSize = 9.5.sp,
-            color = if (selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
-        )
-    }
-}
-
-@Composable
 private fun ActionButton(label: String, filled: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
@@ -315,7 +279,6 @@ private fun ColumnScope.InRangeContent(state: HomeUiState.InRange) {
             MessageCard(stringResource(R.string.home_msg_steady_title), stringResource(R.string.home_msg_steady_body))
         }
     }
-    HomeBottomNav()
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -358,7 +321,6 @@ private fun ColumnScope.LowContent(state: HomeUiState.Low, onTreated: () -> Unit
             ActionButton(stringResource(R.string.home_btn_snooze_15), filled = false, onClick = onSnooze)
         }
     }
-    HomeBottomNav()
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -383,7 +345,6 @@ private fun ColumnScope.HighContent(state: HomeUiState.High) {
             MessageCard(stringResource(R.string.home_msg_high_title), stringResource(R.string.home_msg_high_body))
         }
     }
-    HomeBottomNav()
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -431,7 +392,6 @@ private fun ColumnScope.UrgentContent(state: HomeUiState.Urgent, onTreated: () -
             ActionButton(stringResource(R.string.home_btn_alert_emergency), filled = false, onClick = onAlertEmergencyContact)
         }
     }
-    HomeBottomNav()
 }
 
 @Composable
@@ -508,7 +468,6 @@ private fun ColumnScope.WarmingUpContent(state: HomeUiState.WarmingUp) {
         }
         Spacer(Modifier.height(12.dp))
     }
-    HomeBottomNav()
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -547,7 +506,6 @@ private fun ColumnScope.StaleContent(state: HomeUiState.Stale, onTroubleshoot: (
             ActionButton(stringResource(R.string.home_btn_troubleshoot), filled = false, onClick = onTroubleshoot)
         }
     }
-    HomeBottomNav()
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -610,7 +568,6 @@ private fun ColumnScope.NoSensorContent(onPairSensor: () -> Unit, onEnterCodeMan
             }
         }
     }
-    HomeBottomNav()
 }
 
 // ---------------------------------------------------------------------------------------------

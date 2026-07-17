@@ -17,6 +17,7 @@
     <string name="home_nav_now">دلوقتي</string>
     <string name="home_nav_trends">التقارير</string>
     <string name="home_nav_you">حسابي</string>
+    <string name="placeholder_coming_soon">قريبًا</string>
     <string name="home_last_n_hours">آخر %1$d ساعات</string>
     <string name="home_unit_mgdl">ملغم/دل</string>
     <string name="home_updated_now">اتحدّث دلوقتي</string>
