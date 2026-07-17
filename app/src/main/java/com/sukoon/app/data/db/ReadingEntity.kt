@@ -8,8 +8,8 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
-// Mirrors GlucoseSource's GlucoseReading (data/source/GlucoseSource.kt) — mapping between the
-// two gets wired up when the collector service lands with the Phase 1 BLE task.
+// Mirrors GlucoseSource's GlucoseReading (data/source/GlucoseSource.kt); conversion lives in
+// data/repository/ReadingMappers.kt, wired through GlucoseRepository (A2).
 @Entity(tableName = "readings")
 data class ReadingEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -29,4 +29,8 @@ interface ReadingDao {
 
     @Query("SELECT * FROM readings WHERE timestampMillis >= :sinceMillis ORDER BY timestampMillis ASC")
     fun since(sinceMillis: Long): Flow<List<ReadingEntity>>
+
+    // Most-recent [limit] readings, newest first. Callers that want chronological order reverse it.
+    @Query("SELECT * FROM readings ORDER BY timestampMillis DESC LIMIT :limit")
+    fun latestN(limit: Int): Flow<List<ReadingEntity>>
 }

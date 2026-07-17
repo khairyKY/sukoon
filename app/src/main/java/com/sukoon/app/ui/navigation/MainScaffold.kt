@@ -22,12 +22,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.border
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sukoon.app.SukoonApp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -65,7 +67,8 @@ fun MainScaffold() {
             modifier = Modifier.padding(innerPadding),
         ) {
             composable(SukoonTab.NOW.route) {
-                val homeViewModel: HomeViewModel = viewModel()
+                val repository = (LocalContext.current.applicationContext as SukoonApp).container.glucoseRepository
+                val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModel.factory(repository))
                 val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
                 HomeScreen(state = homeState)
             }
