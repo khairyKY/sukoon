@@ -2,12 +2,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-    NFC/foreground-service/CALL_PHONE permissions are intentionally not declared yet — they
-    belong to the rest of Phase 1 (BLE) and Phase 2 (emergency-call), not this scaffold.
+    BLE-stream / foreground-service / CALL_PHONE permissions are intentionally not declared yet —
+    they belong to later Phase 1 (BLE) and Phase 2 (emergency-call) tasks.
     -->
 
     <!-- Required to fire ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS (see platform/BatteryOptimization.kt) -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <uses-permission android:name="android.permission.NFC" />
+    <!-- required=false: SimulatedSource and future viewer-only clients don't need NFC hardware. -->
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
 
     <application
         android:allowBackup="true"
