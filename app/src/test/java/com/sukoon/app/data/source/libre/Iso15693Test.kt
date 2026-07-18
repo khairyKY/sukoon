@@ -11,7 +11,7 @@ class Iso15693Test {
         // catalog entry. If this fails, the CRC implementation itself is wrong — start here,
         // before suspecting anything sensor-specific.
         val check = "123456789".toByteArray(Charsets.US_ASCII)
-        assertEquals(0xD64E, Iso15693.crc16(check))
+        assertEquals(0x906E, Iso15693.crc16(check))
     }
 
     @Test
