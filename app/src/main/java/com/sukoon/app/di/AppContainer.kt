@@ -3,6 +3,7 @@ package com.sukoon.app.di
 import android.content.Context
 import com.sukoon.app.data.db.AppDatabase
 import com.sukoon.app.data.repository.GlucoseRepository
+import com.sukoon.app.data.repository.LogbookRepository
 import com.sukoon.app.data.source.GlucoseSource
 import com.sukoon.app.data.source.SimulatedSource
 import kotlinx.coroutines.CoroutineScope
@@ -30,6 +31,8 @@ class AppContainer(context: Context) {
         readingDao = database.readingDao(),
         scope = appScope,
     )
+
+    val logbookRepository: LogbookRepository = LogbookRepository(eventDao = database.eventDao())
 
     init {
         glucoseRepository.start()

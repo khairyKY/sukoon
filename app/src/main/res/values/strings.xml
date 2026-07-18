@@ -28,6 +28,27 @@
     <string name="home_unit_mgdl">mg/dL</string>
     <string name="home_updated_now">updated now</string>
 
+    <!-- Logbook (A4) -->
+    <string name="logbook_title">Logbook</string>
+    <string name="logbook_today">Today</string>
+    <string name="logbook_empty_title">Nothing logged yet</string>
+    <string name="logbook_empty_body">Log a meal, insulin, or activity and it\'ll show up here — right beside your readings.</string>
+    <string name="logbook_empty_cta">Log your first entry</string>
+    <string name="logbook_add_entry">Add entry</string>
+    <string name="logbook_sheet_title_new">Add to your day</string>
+    <string name="logbook_sheet_title_edit">Edit entry</string>
+    <string name="logbook_type_carb">Meal</string>
+    <string name="logbook_type_insulin">Insulin</string>
+    <string name="logbook_type_activity">Activity</string>
+    <string name="logbook_type_note">Note</string>
+    <string name="logbook_custom_label">Custom</string>
+    <string name="logbook_note_hint">What\'s on your mind?</string>
+    <string name="logbook_save">Save to timeline</string>
+    <string name="logbook_delete">Delete</string>
+    <string name="logbook_unit_grams">g</string>
+    <string name="logbook_unit_units">u</string>
+    <string name="logbook_unit_minutes">min</string>
+
     <!-- Home — trend words -->
     <string name="home_trend_steady">steady</string>
     <string name="home_trend_rising">rising</string>

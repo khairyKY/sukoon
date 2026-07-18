@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.sukoon.app.data.db.EventEntity
 import com.sukoon.app.data.repository.GlucoseRepository
+import com.sukoon.app.data.repository.LogbookRepository
 import com.sukoon.app.data.source.GlucoseReading
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -26,20 +28,29 @@ enum class GraphRange(val hours: Int) {
 data class GraphUiState(
     val range: GraphRange = GraphRange.H3,
     val readings: List<GlucoseReading> = emptyList(),
+    val events: List<EventEntity> = emptyList(),
 )
 
-class GraphViewModel(repository: GlucoseRepository) : ViewModel() {
+class GraphViewModel(
+    glucoseRepository: GlucoseRepository,
+    logbookRepository: LogbookRepository,
+) : ViewModel() {
 
     private val _range = MutableStateFlow(GraphRange.H3)
     val range: StateFlow<GraphRange> = _range.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val readings = _range.flatMapLatest { range ->
-        repository.readingsSince(System.currentTimeMillis() - range.millis)
+        glucoseRepository.readingsSince(System.currentTimeMillis() - range.millis)
     }
 
-    val uiState: StateFlow<GraphUiState> = combine(_range, readings) { range, readings ->
-        GraphUiState(range = range, readings = readings)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val events = _range.flatMapLatest { range ->
+        logbookRepository.eventsSince(System.currentTimeMillis() - range.millis)
+    }
+
+    val uiState: StateFlow<GraphUiState> = combine(_range, readings, events) { range, readings, events ->
+        GraphUiState(range = range, readings = readings, events = events)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000L),
@@ -51,8 +62,8 @@ class GraphViewModel(repository: GlucoseRepository) : ViewModel() {
     }
 
     companion object {
-        fun factory(repository: GlucoseRepository) = viewModelFactory {
-            initializer { GraphViewModel(repository) }
+        fun factory(glucoseRepository: GlucoseRepository, logbookRepository: LogbookRepository) = viewModelFactory {
+            initializer { GraphViewModel(glucoseRepository, logbookRepository) }
         }
     }
 }
