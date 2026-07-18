@@ -58,6 +58,7 @@ import com.sukoon.app.ui.theme.SukoonTheme
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 // Quick-entry preset amounts per type (design 6g) — tapping one logs immediately, satisfying the
 // "one tap + one number" quick-entry principle (docs/PLAN.md §11) without a stepper. A custom
@@ -213,7 +214,7 @@ private fun LogbookRow(event: EventEntity, onClick: () -> Unit) {
         Column(horizontalAlignment = Alignment.End) {
             event.value?.let {
                 Text(
-                    text = "${formatAmount(it)}${unitLabel(type)}",
+                    text = "${formatAmountLocalized(it)}${unitLabel(type)}",
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 11.5.sp,
                     color = MaterialTheme.colorScheme.onBackground,
@@ -276,7 +277,7 @@ private fun QuickEntrySheet(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     PRESETS.getValue(type).forEach { preset ->
                         AmountChip(
-                            label = "${formatAmount(preset)}$unit",
+                            label = "${formatAmountLocalized(preset)}$unit",
                             onClick = { onSave(type, preset, noteText.ifBlank { null }) },
                         )
                     }
@@ -373,8 +374,19 @@ private fun unitLabel(type: LogEventType): String = when (type) {
     LogEventType.NOTE -> ""
 }
 
+// Plain ASCII-digit formatting for the editable custom-amount field — it must round-trip through
+// String.toDoubleOrNull() to save, which doesn't understand Arabic-Indic digits.
 private fun formatAmount(value: Double): String =
     if (value == value.toLong().toDouble()) value.toLong().toString() else value.toString()
+
+// Locale-aware formatting for display-only amounts (preset chips, timeline values) — matches the
+// app's existing convention (e.g. graph_range_hours) of localizing digits to Arabic-Indic.
+private fun formatAmountLocalized(value: Double): String =
+    if (value == value.toLong().toDouble()) {
+        String.format(Locale.getDefault(), "%d", value.toLong())
+    } else {
+        String.format(Locale.getDefault(), "%s", value)
+    }
 
 @Preview(showBackground = true)
 @Composable
