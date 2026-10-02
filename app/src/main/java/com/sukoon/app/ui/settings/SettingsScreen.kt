@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -33,35 +32,35 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sukoon.app.BuildConfig
 import com.sukoon.app.R
-import com.sukoon.app.data.prefs.SourceConfig
+import com.sukoon.app.data.source.libre.LibreNfc
+import com.sukoon.app.data.source.libre.SensorPairing
 import com.sukoon.app.data.source.SourceKind
 import com.sukoon.app.data.source.SourceStatus
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
 import com.sukoon.app.ui.theme.Sage
-import com.sukoon.app.ui.theme.StateLow
 
 /**
- * You tab (A10, MVP slice): where glucose comes from, the AI key, and the about/disclaimer line.
- * Units, theme, sharing and the rest of A10 land later.
+ * You tab (A10, MVP slice): the paired Libre sensor (Track B), the data source (sensor or demo),
+ * the AI key, and the about/disclaimer line. Units, theme, sharing and the rest of A10 land later.
  */
 @Composable
 fun SettingsScreen(
-    config: SourceConfig,
+    sourceKind: SourceKind,
     status: SourceStatus,
+    pairing: SensorPairing?,
     geminiKey: String,
-    onSaveSource: (SourceConfig) -> Unit,
+    onSelectSource: (SourceKind) -> Unit,
+    onPaired: (LibreNfc.SensorRead, Long) -> Unit,
+    onForgetSensor: () -> Unit,
     onSaveGeminiKey: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var nsUrl by rememberSaveable(config.nightscoutUrl) { mutableStateOf(config.nightscoutUrl) }
-    var nsToken by rememberSaveable(config.nightscoutToken) { mutableStateOf(config.nightscoutToken) }
     var keyInput by rememberSaveable(geminiKey) { mutableStateOf(geminiKey) }
 
     Column(
@@ -74,41 +73,25 @@ fun SettingsScreen(
         Text(stringResource(R.string.home_nav_you), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground)
         Spacer(Modifier.height(20.dp))
 
+        SectionLabel(stringResource(R.string.sensor_title))
+        SensorCard(
+            pairing = pairing,
+            sensorSelected = sourceKind == SourceKind.LIBRE_BLE,
+            status = status,
+            onPaired = onPaired,
+            onForget = onForgetSensor,
+        )
+
+        Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(R.string.settings_source_title))
-        SourceOption(SourceKind.BROADCAST, config.kind, R.string.settings_source_broadcast, R.string.settings_source_broadcast_body) {
-            onSaveSource(config.copy(kind = SourceKind.BROADCAST))
-        }
-        SourceOption(SourceKind.NIGHTSCOUT, config.kind, R.string.settings_source_nightscout, R.string.settings_source_nightscout_body) {
-            onSaveSource(config.copy(kind = SourceKind.NIGHTSCOUT, nightscoutUrl = normalizeUrl(nsUrl), nightscoutToken = nsToken.trim()))
-        }
-        if (config.kind == SourceKind.NIGHTSCOUT) {
-            Column(Modifier.padding(start = 30.dp, top = 4.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = nsUrl,
-                    onValueChange = { nsUrl = it },
-                    label = { Text(stringResource(R.string.settings_ns_url)) },
-                    placeholder = { Text("http://100.x.y.z:1337") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                OutlinedTextField(
-                    value = nsToken,
-                    onValueChange = { nsToken = it },
-                    label = { Text(stringResource(R.string.settings_ns_token)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                PrimaryButton(stringResource(R.string.settings_save)) {
-                    onSaveSource(config.copy(nightscoutUrl = normalizeUrl(nsUrl), nightscoutToken = nsToken.trim()))
-                }
+        if (pairing != null) {
+            SourceOption(SourceKind.LIBRE_BLE, sourceKind, R.string.settings_source_sensor, R.string.settings_source_sensor_body) {
+                onSelectSource(SourceKind.LIBRE_BLE)
             }
         }
-        SourceOption(SourceKind.SIMULATED, config.kind, R.string.settings_source_demo, R.string.settings_source_demo_body) {
-            onSaveSource(config.copy(kind = SourceKind.SIMULATED))
+        SourceOption(SourceKind.SIMULATED, sourceKind, R.string.settings_source_demo, R.string.settings_source_demo_body) {
+            onSelectSource(SourceKind.SIMULATED)
         }
-        Spacer(Modifier.height(6.dp))
-        StatusLine(config.kind, status)
 
         Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(R.string.settings_ai_title))
@@ -132,12 +115,6 @@ fun SettingsScreen(
         SectionLabel(stringResource(R.string.settings_about_title))
         Text(stringResource(R.string.settings_about_body, BuildConfig.VERSION_NAME), fontSize = 12.5.sp, color = CaptionMuted)
     }
-}
-
-/** "100.1.2.3:1337" → "http://100.1.2.3:1337" — most people paste a bare host. */
-fun normalizeUrl(raw: String): String {
-    val url = raw.trim().trimEnd('/')
-    return if (url.isEmpty() || url.startsWith("http://") || url.startsWith("https://")) url else "http://$url"
 }
 
 @Composable
@@ -173,17 +150,6 @@ private fun SourceOption(kind: SourceKind, selected: SourceKind, titleRes: Int, 
             Text(stringResource(bodyRes), fontSize = 12.sp, color = CaptionMuted)
         }
     }
-}
-
-@Composable
-private fun StatusLine(kind: SourceKind, status: SourceStatus) {
-    val (text, color) = when {
-        kind == SourceKind.BROADCAST -> stringResource(R.string.settings_status_listening) to Sage
-        status is SourceStatus.Error -> stringResource(R.string.settings_status_error, status.message) to StateLow
-        status == SourceStatus.Connected -> stringResource(R.string.settings_status_connected) to Sage
-        else -> stringResource(R.string.settings_status_connecting) to CaptionMuted
-    }
-    Text(text, fontSize = 12.sp, color = color)
 }
 
 @Composable

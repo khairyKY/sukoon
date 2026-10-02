@@ -36,9 +36,9 @@ object HomeUiStateMapper {
 
         SourceStatus.Stale -> latest?.let { stale(it, recentMgDl, now) } ?: HomeUiState.NoSensor
 
-        // Freshness comes from the reading's own age, not the status: passive sources (DiaBox
-        // broadcast, Nightscout) stay "Connected" while the upstream app goes quiet, and one failed
-        // Nightscout poll (Error) shouldn't hide a reading that's still minutes old.
+        // Freshness comes from the reading's own age, not the status: a source can report Connected
+        // while no packet has arrived for a while, and a transient Error (one bad BLE packet)
+        // shouldn't hide a reading that's still minutes old.
         SourceStatus.Connecting,
         SourceStatus.Connected,
         is SourceStatus.Error -> when {

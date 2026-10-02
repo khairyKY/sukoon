@@ -6,7 +6,7 @@
 
 **Hardware available in-house (the unblocker):** Kai is diabetic, always wears an EU Libre 2, has an NFC + Bluetooth Android phone, and can sacrifice an expiring sensor to experiment on. So the validation loop (B7) is runnable now — not blocked on hardware as earlier assumed. A spare/expiring sensor is ideal for the *plumbing* stages (B1/B2/B4) even if it no longer streams valid glucose — test the mechanics separately from the numbers.
 
-**Licensing (locked):** clean-room reimplementation from the *publicly documented method* only. Do **not** copy xDrip+/Juggluco/GlucoseDirect source — GPL-3.0 would force Sukoon open. Read them to understand the approach; write ours independently. (PLAN §1.)
+**Licensing — UPDATED (2026-10-03, Kai): port MIT-licensed code with attribution.** The Libre 2 EU decoder is a Kotlin port of GlucoseDirect (MIT), whose Libre 2 code descends from DiaBLE and LibreTools (both MIT) — notices in `THIRD_PARTY_NOTICES.md`. GPL sources (xDrip+, Juggluco, xdripswift) stay off-limits so Sukoon stays fully owned. (Replaces the 2026-07-15 "clean-room only" rule; the goal — no GPL obligations — is unchanged.)
 
 **Overriding safety rule:** nothing in B3–B6 is "done" until the validation loop (B7) shows decoded numbers matching LibreLink/finger-prick. Wrong crypto fails *silently* — it produces plausible-but-wrong glucose, which is a patient-safety risk, not a bug. Code that "runs" is not code that's correct here.
 
@@ -30,7 +30,7 @@ Libre 2 ships with BLE *disabled*; a one-time NFC activation command provisions 
 - Persist activation state to the `SensorSessionEntity` (a sensor is activated once, then streams for its life).
 - **Accept:** after activation, the sensor begins BLE-advertising; the activation response is captured and stored.
 
-## B3 — Key derivation (clean-room) — **the hard part**  ⬜  · *(new issue, replaces the stub)*
+## B3 — Key derivation — ◐ ported (`Libre2.kt`: FRAM/BLE keys, streaming-unlock payload), awaiting B7  · *(new issue, replaces the stub)*
 Implement `LibreKeyDerivation` from the public spec: UID + patch info + activation response → the BLE streaming key + connection PIN.
 - Replace `UnimplementedLibreKeyDerivation`.
 - Pure/testable where possible (known-vector tests once B7 yields a known-good vector from Kai's sensor).
@@ -42,7 +42,7 @@ Implement `LibreKeyDerivation` from the public spec: UID + patch info + activati
 - **Accept:** a stable subscribed connection that delivers raw encrypted notification packets. (Spare sensor fine for connection mechanics.)
 
 ## B5 — Decrypt the BLE stream (AES-CFB)  ⬜  · *(new issue)*
-- Decrypt notification payloads with the B3 key (AES-CFB — confirmed from the DiaBox APK's `libaescfb.so`, reimplemented clean-room).
+- Decrypt notification payloads with the B3 key. ◐ Ported: Libre 2 EU uses the community-documented XOR keystream (not AES — DiaBox's `libaescfb.so` is likely for newer firmware). Every packet is CRC-checked; a sensor whose packets fail CRC is rejected, never displayed.
 - Parse decrypted bytes into raw sensor value(s) + timestamp/counter.
 - **Accept:** decrypted packets parse into a plausible, monotonic-in-time raw series (final correctness is B7).
 

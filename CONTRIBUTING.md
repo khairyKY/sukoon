@@ -40,4 +40,4 @@ Commits, PR descriptions, and code comments stay free of any AI-tool attribution
 
 ## A note on the Libre BLE work specifically
 
-Anything touching sensor decoding is a **clean-room reimplementation** from publicly documented protocol research — never copy code from xDrip+, Juggluco, or similar GPL-licensed projects (see `docs/PLAN.md` §1 for why). Reference them to understand the *method*, then write it independently.
+Sensor decoding is ported from **MIT-licensed** projects only (GlucoseDirect, DiaBLE, LibreTools — keep `THIRD_PARTY_NOTICES.md` current when porting more). Never copy code from xDrip+, Juggluco, or other GPL-licensed projects (see `docs/PLAN.md` §1).

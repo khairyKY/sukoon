@@ -26,8 +26,8 @@ import kotlinx.coroutines.launch
  *
  * Held app-scoped (see di/AppContainer) rather than per-ViewModel, so persistence keeps running
  * while the user is on other tabs. (Surviving full backgrounding/kill is the foreground service,
- * A11.) The active source is a [StateFlow] so the You tab can switch it live (Demo ↔ DiaBox
- * broadcast ↔ Nightscout ↔ later LibreBleSource) — same repository, nothing downstream changes.
+ * A11.) The active source is a [StateFlow] so the You tab can switch it live (Demo ↔ the paired
+ * Libre sensor) — same repository, nothing downstream changes.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class GlucoseRepository(
@@ -50,7 +50,7 @@ class GlucoseRepository(
     fun readingsSince(sinceMillis: Long): Flow<List<GlucoseReading>> =
         readingDao.since(sinceMillis).map { rows -> rows.map { it.toGlucoseReading() } }
 
-    /** For push-style sources (the xDrip broadcast receiver) that deliver outside the collector. */
+    /** For readings that arrive outside the collector — the NFC pairing tap's 8-hour backfill. */
     suspend fun ingest(reading: GlucoseReading) = readingDao.insert(reading.toEntity())
 
     /**

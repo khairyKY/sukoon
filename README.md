@@ -28,7 +28,7 @@ Full rationale for every decision above lives in `docs/PLAN.md`, distilled from 
 - Supabase (Postgres + Realtime + Auth) for cloud sync/sharing
 - Gradle Kotlin DSL with a version catalog (`gradle/libs.versions.toml`)
 
-Direct Libre 2 BLE reading is a clean-room reimplementation from publicly documented protocol research — see `docs/PLAN.md` §1 for the licensing rationale (deliberately not copying GPL'd community code).
+Direct Libre 2 BLE reading is a Kotlin port of MIT-licensed community code (GlucoseDirect / DiaBLE / LibreTools) — see `THIRD_PARTY_NOTICES.md` and `docs/PLAN.md` §1. GPL-licensed projects are deliberately not used.
 
 ## Building
 

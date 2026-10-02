@@ -117,20 +117,10 @@
 
     <!-- You tab / settings -->
     <string name="settings_source_title">مصدر قرايات السكر</string>
-    <string name="settings_source_broadcast">DiaBox على الموبايل ده</string>
-    <string name="settings_source_broadcast_body">في DiaBox: الإعدادات ← Integration ← شغّل “Share data with other apps”. وبيشتغل كمان مع Juggluco أو xDrip+.</string>
-    <string name="settings_source_nightscout">Nightscout</string>
-    <string name="settings_source_nightscout_body">بيقرا من موقع Nightscout بتاعك ويجيب آخر ٢٤ ساعة.</string>
-    <string name="settings_ns_url">رابط Nightscout</string>
-    <string name="settings_ns_token">توكن القراية</string>
     <string name="settings_save">احفظ</string>
     <string name="settings_update">حدّث</string>
     <string name="settings_source_demo">بيانات تجريبية</string>
     <string name="settings_source_demo_body">قرايات وهمية علشان تجرّب الأبلكيشن. بتتمسح لما تختار مصدر حقيقي.</string>
-    <string name="settings_status_listening">مستنيين قرايات من DiaBox.</string>
-    <string name="settings_status_error">مش قادرين نقرا: %1$s</string>
-    <string name="settings_status_connected">متوصّل.</string>
-    <string name="settings_status_connecting">بيتوصّل…</string>
     <string name="settings_ai_title">الذكاء الاصطناعي</string>
     <string name="settings_ai_body">حط مفتاح Gemini API مجاني من aistudio.google.com. لما تسأل سؤال أو تقدّر وجبة، ملخص قراياتك وتسجيلاتك الأخيرة (أو صورة الأكل) بيتبعت لجوجل.</string>
     <string name="settings_ai_key">مفتاح Gemini API</string>
@@ -150,4 +140,34 @@
     <string name="carb_ai_confidence">الثقة: %1$s. %2$s</string>
     <string name="carb_ai_use">استخدم %1$s جم</string>
     <string name="carb_ai_disclaimer">تقدير الذكاء الاصطناعي ممكن يغلط — راجعه قبل الجرعة.</string>
+    <!-- You → Your sensor (direct Libre 2 connection) -->
+    <string name="sensor_title">الحساس بتاعك</string>
+    <string name="sensor_body_unpaired">سكون بيقرا الـ FreeStyle Libre 2 بتاعك مباشرةً: لمسة NFC واحدة للربط، وبعدين بلوتوث كل دقيقة.</string>
+    <string name="sensor_check">افحص الحساس (قراية بس)</string>
+    <string name="sensor_check_hint">بيقرا ويفك الحساس من غير ما يغيّر أي حاجة. DiaBox هيفضل شغّال، فتقدر تقارن الرقمين.</string>
+    <string name="sensor_connect">وصّل الحساس</string>
+    <string name="sensor_repair">اربطه تاني</string>
+    <string name="sensor_connect_hint">بينقل بث البلوتوث بتاع الحساس لسكون. DiaBox (أو أي أبلكيشن تاني) هيبطّل ياخد قرايات وتنبيهات لحد ما تمسح بيه تاني.</string>
+    <string name="sensor_hold">حط ضهر الموبايل على الحساس…</string>
+    <string name="sensor_cancel">إلغاء</string>
+    <string name="sensor_forget">انسَ الحساس</string>
+    <string name="sensor_no_nfc">الموبايل ده مفيهوش NFC، فمش هيقدر يربط حساس Libre.</string>
+    <string name="sensor_nfc_off">الـ NFC مقفول.</string>
+    <string name="sensor_nfc_settings">شغّل الـ NFC</string>
+    <string name="sensor_need_permissions">سكون محتاج إذن البلوتوث علشان يقرا الحساس.</string>
+    <string name="sensor_check_result">الحساس %1$s · يوم %2$s · %3$s · القراية دلوقتي: %4$s مجم/دل</string>
+    <string name="sensor_memory_bad">ذاكرة الحساس ما اتفكّتش صح. سكون مش هيستخدمه.</string>
+    <string name="sensor_unsupported">ده مش حساس Libre 2 أوروبي (patch info %1$s). سكون لسه مش بيقدر يقرا منه.</string>
+    <string name="sensor_failed">مقدرناش نقرا الحساس: %1$s</string>
+    <string name="sensor_connected_now">اتوصّل. سكون بيقرا الحساس ده بالبلوتوث دلوقتي؛ أول قراية مباشرة هتوصل خلال دقيقة أو اتنين.</string>
+    <string name="sensor_paired">Libre 2 · %1$s · يوم %2$s من %3$s</string>
+    <string name="sensor_status_connected">القرايات بتوصل</string>
+    <string name="sensor_status_connecting">بندوّر على الحساس…</string>
+    <string name="sensor_status_warming">الحساس بيسخّن</string>
+    <string name="sensor_status_error">مشكلة: %1$s</string>
+    <string name="settings_source_sensor">حساس Libre</string>
+    <string name="settings_source_sensor_body">قرايات مباشرة من الحساس المربوط.</string>
+    <string name="service_channel">اتصال الحساس</string>
+    <string name="service_title">سكون بيقرا الحساس بتاعك</string>
+    <string name="service_body">بيخلّي اتصال البلوتوث شغّال.</string>
 </resources>

@@ -27,7 +27,7 @@ class AiTest {
             in 1190..1200 -> 60
             else -> 100
         }
-        GlucoseReading(now.minus(Duration.ofMinutes(minutesAgo.toLong())), mgDl, TrendDirection.STEADY, SourceKind.BROADCAST)
+        GlucoseReading(now.minus(Duration.ofMinutes(minutesAgo.toLong())), mgDl, TrendDirection.STEADY, SourceKind.LIBRE_BLE)
     }.reversed()
 
     @Test
@@ -36,7 +36,7 @@ class AiTest {
         val brief = AiPrompts.dataBrief(readings, events, now, zone)
 
         assertTrue(brief, brief.contains("LATEST: 100 mg/dL, trend steady, 0 min ago"))
-        assertTrue(brief, brief.contains("DATA SOURCE: BROADCAST"))
+        assertTrue(brief, brief.contains("DATA SOURCE: LIBRE_BLE"))
         assertTrue(brief, brief.contains("LAST 24H: mean"))
         assertTrue(brief, brief.contains("PER DAY"))
         assertTrue(brief, brief.contains("60 g carbs · koshari"))

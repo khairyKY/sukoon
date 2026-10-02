@@ -43,6 +43,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.sukoon.app.R
+import com.sukoon.app.data.source.SourceKind
 import com.sukoon.app.ui.ai.AskViewModel
 import com.sukoon.app.ui.graph.GraphViewModel
 import com.sukoon.app.ui.home.HomeScreen
@@ -113,14 +114,25 @@ fun MainScaffold() {
             }
             composable(SukoonTab.YOU.route) {
                 val container = (LocalContext.current.applicationContext as SukoonApp).container
-                val config by container.sourceConfig.collectAsStateWithLifecycle()
+                val sourceKind by container.sourceKind.collectAsStateWithLifecycle()
                 val status by container.glucoseRepository.status.collectAsStateWithLifecycle()
+                var pairing by remember { mutableStateOf(container.pairingStore.load()) }
                 var geminiKey by remember { mutableStateOf(container.settings.geminiApiKey) }
                 SettingsScreen(
-                    config = config,
+                    sourceKind = sourceKind,
                     status = status,
+                    pairing = pairing,
                     geminiKey = geminiKey,
-                    onSaveSource = container::updateSourceConfig,
+                    onSelectSource = container::selectSource,
+                    onPaired = { read, scannedAt ->
+                        container.pairSensor(read, scannedAt)
+                        pairing = container.pairingStore.load()
+                    },
+                    onForgetSensor = {
+                        container.pairingStore.clear()
+                        pairing = null
+                        container.selectSource(SourceKind.SIMULATED)
+                    },
                     onSaveGeminiKey = { key ->
                         container.settings.geminiApiKey = key
                         geminiKey = container.settings.geminiApiKey

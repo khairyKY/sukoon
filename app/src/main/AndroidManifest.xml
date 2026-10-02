@@ -1,18 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!--
-    BLE-stream / foreground-service / CALL_PHONE permissions are intentionally not declared yet —
-    they belong to later Phase 1 (BLE) and Phase 2 (emergency-call) tasks.
-    -->
+    <!-- CALL_PHONE (emergency escalation, A8) is intentionally not declared yet. -->
 
     <!-- Required to fire ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS (see platform/BatteryOptimization.kt) -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <uses-permission android:name="android.permission.NFC" />
 
-    <!-- Nightscout source + Gemini AI. -->
+    <!-- Gemini AI. -->
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Direct Libre 2 connection over Bluetooth LE (data/source/libre/LibreBleSource.kt). -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
+
+    <!-- Keeps the sensor connection alive in the background (platform/SensorService.kt). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- required=false: SimulatedSource and future viewer-only clients don't need NFC hardware. -->
     <uses-feature android:name="android.hardware.nfc" android:required="false" />
 
@@ -21,11 +31,7 @@
         android:allowBackup="true"
         android:label="@string/app_name"
         android:theme="@style/Theme.Sukoon"
-        android:supportsRtl="true"
-        android:usesCleartextTraffic="true">
-        <!-- ponytail: cleartext allowed app-wide because self-hosted Nightscout is usually plain
-             http on a LAN/Tailscale IP (Tailscale already encrypts the hop). Narrow it with a
-             network-security-config if a public https-only Nightscout becomes the norm. -->
+        android:supportsRtl="true">
 
         <activity
             android:name=".MainActivity"
@@ -37,15 +43,6 @@
             </intent-filter>
         </activity>
 
-        <!-- DiaBox / Juggluco / xDrip+ "BgEstimate" glucose broadcast (data/source/XDripBroadcastReceiver.kt). -->
-        <receiver
-            android:name=".data.source.XDripBroadcastReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.eveningoutpost.dexdrip.BgEstimate" />
-            </intent-filter>
-        </receiver>
-
         <!-- Lets the camera app write the meal photo for the AI carb estimate. -->
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -56,6 +53,11 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <service
+            android:name=".platform.SensorService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
 
     </application>
 

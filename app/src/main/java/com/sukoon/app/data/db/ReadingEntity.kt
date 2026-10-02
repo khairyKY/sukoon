@@ -11,8 +11,8 @@ import kotlinx.coroutines.flow.Flow
 
 // Mirrors GlucoseSource's GlucoseReading (data/source/GlucoseSource.kt); conversion lives in
 // data/repository/ReadingMappers.kt, wired through GlucoseRepository (A2).
-// Unique timestamp: sources that re-deliver (Nightscout backfill, a broadcast hitting both
-// receivers) are deduped by the DB on insert (IGNORE), not by app code.
+// Unique timestamp: the sensor re-delivers readings (each BLE packet repeats the last 15 min,
+// pairing backfills 8 h from NFC) and the DB drops the repeats on insert (IGNORE), not app code.
 @Entity(tableName = "readings", indices = [Index(value = ["timestampMillis"], unique = true)])
 data class ReadingEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

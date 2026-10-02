@@ -117,20 +117,10 @@
 
     <!-- You tab / settings -->
     <string name="settings_source_title">Glucose source</string>
-    <string name="settings_source_broadcast">DiaBox on this phone</string>
-    <string name="settings_source_broadcast_body">In DiaBox: Settings → Integration → turn on “Share data with other apps”. Also works with Juggluco or xDrip+ broadcasts.</string>
-    <string name="settings_source_nightscout">Nightscout</string>
-    <string name="settings_source_nightscout_body">Reads your Nightscout site and backfills the last 24 hours.</string>
-    <string name="settings_ns_url">Nightscout URL</string>
-    <string name="settings_ns_token">Read token</string>
     <string name="settings_save">Save</string>
     <string name="settings_update">Update</string>
     <string name="settings_source_demo">Demo data</string>
     <string name="settings_source_demo_body">Simulated readings to try the app. Cleared when you switch to a real source.</string>
-    <string name="settings_status_listening">Listening for readings from DiaBox.</string>
-    <string name="settings_status_error">Can\'t read: %1$s</string>
-    <string name="settings_status_connected">Connected.</string>
-    <string name="settings_status_connecting">Connecting…</string>
     <string name="settings_ai_title">AI</string>
     <string name="settings_ai_body">Paste a free Gemini API key from aistudio.google.com. When you ask a question or estimate a meal, a summary of your recent readings and logs (or the meal photo) is sent to Google.</string>
     <string name="settings_ai_key">Gemini API key</string>
@@ -150,4 +140,34 @@
     <string name="carb_ai_confidence">Confidence: %1$s. %2$s</string>
     <string name="carb_ai_use">Use %1$s g</string>
     <string name="carb_ai_disclaimer">AI estimates can be off — check before you dose.</string>
+    <!-- You → Your sensor (direct Libre 2 connection) -->
+    <string name="sensor_title">Your sensor</string>
+    <string name="sensor_body_unpaired">Sukoon reads your FreeStyle Libre 2 directly: one NFC tap to pair, then Bluetooth every minute.</string>
+    <string name="sensor_check">Check sensor (read-only)</string>
+    <string name="sensor_check_hint">Reads and decodes the sensor without changing anything. DiaBox keeps working, so you can compare the two numbers.</string>
+    <string name="sensor_connect">Connect sensor</string>
+    <string name="sensor_repair">Pair again</string>
+    <string name="sensor_connect_hint">Moves the sensor\'s Bluetooth stream to Sukoon. DiaBox (or any other app) stops getting readings and alarms until you scan with it again.</string>
+    <string name="sensor_hold">Hold the back of your phone flat on the sensor…</string>
+    <string name="sensor_cancel">Cancel</string>
+    <string name="sensor_forget">Forget sensor</string>
+    <string name="sensor_no_nfc">This phone has no NFC, so it can\'t pair a Libre sensor.</string>
+    <string name="sensor_nfc_off">NFC is off.</string>
+    <string name="sensor_nfc_settings">Turn on NFC</string>
+    <string name="sensor_need_permissions">Sukoon needs Bluetooth permission to read the sensor.</string>
+    <string name="sensor_check_result">Sensor %1$s · day %2$s · %3$s · decoded now: %4$s mg/dL</string>
+    <string name="sensor_memory_bad">The sensor\'s memory didn\'t decrypt cleanly. Sukoon won\'t use it.</string>
+    <string name="sensor_unsupported">Not a Libre 2 EU sensor (patch info %1$s). Sukoon can\'t stream from it yet.</string>
+    <string name="sensor_failed">Couldn\'t read the sensor: %1$s</string>
+    <string name="sensor_connected_now">Connected. Sukoon now reads this sensor over Bluetooth; the first live reading arrives within a minute or two.</string>
+    <string name="sensor_paired">Libre 2 · %1$s · day %2$s of %3$s</string>
+    <string name="sensor_status_connected">Receiving readings</string>
+    <string name="sensor_status_connecting">Looking for the sensor…</string>
+    <string name="sensor_status_warming">Sensor warming up</string>
+    <string name="sensor_status_error">Problem: %1$s</string>
+    <string name="settings_source_sensor">Libre sensor</string>
+    <string name="settings_source_sensor_body">Live readings from your paired sensor.</string>
+    <string name="service_channel">Sensor connection</string>
+    <string name="service_title">Sukoon is reading your sensor</string>
+    <string name="service_body">Keeps the Bluetooth connection alive.</string>
 </resources>
