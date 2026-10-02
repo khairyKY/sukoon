@@ -18,29 +18,41 @@ import java.time.Instant
  */
 object HomeUiStateMapper {
 
+    /** PLAN.md §5: a reading older than this is never presented as current, whatever the source says. */
+    val STALE_AFTER: Duration = Duration.ofMinutes(10)
+
     fun map(
         status: SourceStatus,
         latest: GlucoseReading?,
         recentMgDl: List<Int>,
         now: Instant,
     ): HomeUiState = when (status) {
-        SourceStatus.Disconnected, is SourceStatus.Error -> HomeUiState.NoSensor
+        SourceStatus.Disconnected -> HomeUiState.NoSensor
 
         // The simulator jumps straight to Connected, so this branch is dead until Track B. A real
         // sensor's warm-up countdown comes from the sensor session (warmupEndsAtMillis), not from
         // this payload-less status — hence the placeholder. LibreBleSource will supply real minutes.
         SourceStatus.WarmingUp -> HomeUiState.WarmingUp(minutesRemaining = 0)
 
-        SourceStatus.Stale -> HomeUiState.Stale(
-            lastGlucoseMgDl = latest?.glucoseMgDl ?: 0,
-            minutesAgo = latest?.let { Duration.between(it.timestamp, now).toMinutes().toInt() } ?: 0,
-            recentReadings = recentMgDl,
-        )
+        SourceStatus.Stale -> latest?.let { stale(it, recentMgDl, now) } ?: HomeUiState.NoSensor
 
-        // Connecting can briefly hold a prior reading; show it if present, else the empty state.
+        // Freshness comes from the reading's own age, not the status: passive sources (DiaBox
+        // broadcast, Nightscout) stay "Connected" while the upstream app goes quiet, and one failed
+        // Nightscout poll (Error) shouldn't hide a reading that's still minutes old.
         SourceStatus.Connecting,
-        SourceStatus.Connected -> latest?.let { connected(it, recentMgDl) } ?: HomeUiState.NoSensor
+        SourceStatus.Connected,
+        is SourceStatus.Error -> when {
+            latest == null -> HomeUiState.NoSensor
+            Duration.between(latest.timestamp, now) > STALE_AFTER -> stale(latest, recentMgDl, now)
+            else -> connected(latest, recentMgDl)
+        }
     }
+
+    private fun stale(latest: GlucoseReading, recentMgDl: List<Int>, now: Instant) = HomeUiState.Stale(
+        lastGlucoseMgDl = latest.glucoseMgDl,
+        minutesAgo = Duration.between(latest.timestamp, now).toMinutes().toInt(),
+        recentReadings = recentMgDl,
+    )
 
     private fun connected(reading: GlucoseReading, recentMgDl: List<Int>): HomeUiState =
         when (GlucoseMetrics.bracketFor(reading.glucoseMgDl)) {

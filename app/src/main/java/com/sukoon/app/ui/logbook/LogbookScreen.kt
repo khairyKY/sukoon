@@ -1,5 +1,9 @@
 package com.sukoon.app.ui.logbook
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,6 +20,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -32,11 +38,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -46,7 +54,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import com.sukoon.app.R
+import com.sukoon.app.ai.CarbEstimate
+import com.sukoon.app.ai.MealPhoto
 import com.sukoon.app.data.db.EventEntity
 import com.sukoon.app.data.db.LogEventType
 import com.sukoon.app.data.db.logType
@@ -59,6 +70,9 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 // Quick-entry preset amounts per type (design 6g) — tapping one logs immediately, satisfying the
 // "one tap + one number" quick-entry principle (docs/PLAN.md §11) without a stepper. A custom
@@ -93,6 +107,7 @@ fun LogbookScreen(
     onUpdateEvent: (EventEntity) -> Unit,
     onDeleteEvent: (EventEntity) -> Unit,
     modifier: Modifier = Modifier,
+    onEstimateCarbs: (suspend (String, ByteArray?) -> CarbEstimate)? = null,
 ) {
     var sheetTarget by remember { mutableStateOf<SheetTarget?>(null) }
 
@@ -148,6 +163,7 @@ fun LogbookScreen(
                 sheetTarget = null
             },
             onDelete = editing?.let { toDelete -> { onDeleteEvent(toDelete); sheetTarget = null } },
+            onEstimateCarbs = onEstimateCarbs,
         )
     }
 }
@@ -232,6 +248,7 @@ private fun QuickEntrySheet(
     onDismiss: () -> Unit,
     onSave: (LogEventType, Double?, String?) -> Unit,
     onDelete: (() -> Unit)?,
+    onEstimateCarbs: (suspend (String, ByteArray?) -> CarbEstimate)?,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var type by remember { mutableStateOf(existing?.logType ?: LogEventType.CARB) }
@@ -243,7 +260,7 @@ private fun QuickEntrySheet(
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.background,
     ) {
-        Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
             Text(
                 text = stringResource(if (existing != null) R.string.logbook_sheet_title_edit else R.string.logbook_sheet_title_new),
                 fontFamily = HeadlineSerifFontFamily,
@@ -290,6 +307,15 @@ private fun QuickEntrySheet(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                 )
+                if (type == LogEventType.CARB && onEstimateCarbs != null) {
+                    CarbEstimator(
+                        estimate = onEstimateCarbs,
+                        onUse = { grams, title ->
+                            amountText = grams.toString()
+                            if (noteText.isBlank()) noteText = title
+                        },
+                    )
+                }
             }
 
             Spacer(Modifier.height(18.dp))
@@ -317,6 +343,106 @@ private fun QuickEntrySheet(
                 }
             }
         }
+    }
+}
+
+/**
+ * AI carb estimate (Gemini): describe the meal and/or attach a photo -> an editable suggestion.
+ * "Use" only fills the amount field; nothing is logged until the user taps Save.
+ */
+@Composable
+private fun CarbEstimator(estimate: suspend (String, ByteArray?) -> CarbEstimate, onUse: (Int, String) -> Unit) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var open by remember { mutableStateOf(false) }
+    var description by remember { mutableStateOf("") }
+    var photo by remember { mutableStateOf<ByteArray?>(null) }
+    var busy by remember { mutableStateOf(false) }
+    var result by remember { mutableStateOf<CarbEstimate?>(null) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    val loadPhoto: (Uri) -> Unit = { uri ->
+        scope.launch {
+            runCatching { withContext(Dispatchers.IO) { MealPhoto.loadScaledJpeg(context, uri) } }
+                .onSuccess { photo = it; error = null }
+                .onFailure { error = it.message }
+        }
+    }
+    val captureUri = remember { FileProvider.getUriForFile(context, "${context.packageName}.files", MealPhoto.newCaptureFile(context)) }
+    val takePhoto = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved -> if (saved) loadPhoto(captureUri) }
+    val pickPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> uri?.let(loadPhoto) }
+
+    Spacer(Modifier.height(10.dp))
+    if (!open) {
+        TextButton(onClick = { open = true }) { Text(stringResource(R.string.carb_ai_open), color = Sage, fontWeight = FontWeight.SemiBold) }
+        return
+    }
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        OutlinedTextField(
+            value = description,
+            onValueChange = { description = it },
+            label = { Text(stringResource(R.string.carb_ai_describe)) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            AmountChip(stringResource(R.string.carb_ai_camera)) { takePhoto.launch(captureUri) }
+            AmountChip(stringResource(R.string.carb_ai_gallery)) {
+                pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+            if (photo != null) Text(stringResource(R.string.carb_ai_photo_added), fontSize = 11.5.sp, color = Sage)
+        }
+        val canEstimate = !busy && (description.isNotBlank() || photo != null)
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(if (canEstimate) Sage else Sage.copy(alpha = 0.4f))
+                .clickable(enabled = canEstimate) {
+                    scope.launch {
+                        busy = true
+                        error = null
+                        runCatching { estimate(description, photo) }
+                            .onSuccess { result = it }
+                            .onFailure { error = it.message }
+                        busy = false
+                    }
+                }
+                .padding(vertical = 12.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                stringResource(if (busy) R.string.carb_ai_busy else R.string.carb_ai_estimate),
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+            )
+        }
+        result?.let { r ->
+            Text(
+                stringResource(R.string.carb_ai_result, formatAmountLocalized(r.carbsGrams.toDouble()), r.title),
+                fontFamily = HeadlineSerifFontFamily,
+                fontSize = 18.sp,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+            if (r.items.isNotEmpty()) {
+                Text(
+                    r.items.joinToString(" · ") { (name, grams) -> "$name ${formatAmountLocalized(grams.toDouble())}g" },
+                    fontSize = 12.sp,
+                    color = CaptionMuted,
+                )
+            }
+            Text(stringResource(R.string.carb_ai_confidence, r.confidence, r.note), fontSize = 11.5.sp, color = CaptionMuted)
+            AmountChip(stringResource(R.string.carb_ai_use, formatAmountLocalized(r.carbsGrams.toDouble()))) { onUse(r.carbsGrams, r.title) }
+        }
+        error?.let { Text(it, fontSize = 12.sp, color = StateLow) }
+        Text(stringResource(R.string.carb_ai_disclaimer), fontSize = 10.5.sp, color = CaptionMuted)
     }
 }
 

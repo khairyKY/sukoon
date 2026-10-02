@@ -4,9 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.sukoon.app.ai.AiPrompts
+import com.sukoon.app.ai.CarbEstimate
+import com.sukoon.app.ai.ChatTurn
+import com.sukoon.app.ai.GeminiClient
 import com.sukoon.app.data.db.EventEntity
 import com.sukoon.app.data.db.LogEventType
 import com.sukoon.app.data.repository.LogbookRepository
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +20,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /** Drives the Logbook screen — today's window of logged events, newest first, from Room via [LogbookRepository]. */
-class LogbookViewModel(private val repository: LogbookRepository) : ViewModel() {
+class LogbookViewModel(private val repository: LogbookRepository, private val gemini: GeminiClient) : ViewModel() {
 
     val uiState: StateFlow<LogbookUiState> = repository
         .eventsSince(System.currentTimeMillis() - WINDOW_MILLIS)
@@ -38,11 +43,19 @@ class LogbookViewModel(private val repository: LogbookRepository) : ViewModel() 
         viewModelScope.launch { repository.delete(event) }
     }
 
+    /** AI carb estimate for the quick-entry sheet — a suggestion only; the sheet's Save logs it. */
+    suspend fun estimateCarbs(description: String, photoJpeg: ByteArray?): CarbEstimate {
+        val prompt = description.ifBlank { "Estimate the carbs in this meal." }
+        val arabic = Locale.getDefault().language == "ar"
+        val reply = gemini.generate(AiPrompts.carbSystemPrompt(arabic), listOf(ChatTurn(fromUser = true, text = prompt)), photoJpeg, jsonOutput = true)
+        return CarbEstimate.parse(reply)
+    }
+
     companion object {
         private val WINDOW_MILLIS = TimeUnit.HOURS.toMillis(24)
 
-        fun factory(repository: LogbookRepository) = viewModelFactory {
-            initializer { LogbookViewModel(repository) }
+        fun factory(repository: LogbookRepository, gemini: GeminiClient) = viewModelFactory {
+            initializer { LogbookViewModel(repository, gemini) }
         }
     }
 }

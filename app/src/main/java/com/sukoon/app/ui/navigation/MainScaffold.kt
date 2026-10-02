@@ -22,6 +22,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,17 +43,19 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.sukoon.app.R
+import com.sukoon.app.ui.ai.AskViewModel
 import com.sukoon.app.ui.graph.GraphViewModel
 import com.sukoon.app.ui.home.HomeScreen
 import com.sukoon.app.ui.home.HomeViewModel
 import com.sukoon.app.ui.logbook.LogbookViewModel
+import com.sukoon.app.ui.settings.SettingsScreen
 import com.sukoon.app.ui.theme.Sage
 
 /**
  * Top-level navigation, per the shipped design's 3-tab bottom bar (Now / Trends / You) — not the
  * 5 tabs the earlier plan assumed. The design consolidates: Logbook + Insights live under Trends;
  * Sharing + Settings under You. Those sub-screens (A3/A4/A9/A10) become nested destinations of
- * these tabs as they land; for now Trends/You are placeholders.
+ * these tabs as they land.
  *
  * State is preserved per-tab via the standard popUpTo(saveState)/restoreState pattern.
  */
@@ -75,7 +80,8 @@ fun MainScaffold() {
                 val repository = (LocalContext.current.applicationContext as SukoonApp).container.glucoseRepository
                 val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModel.factory(repository))
                 val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
-                HomeScreen(state = homeState)
+                val toYou = { navController.navigateToTab(SukoonTab.YOU) }
+                HomeScreen(state = homeState, onPairSensor = toYou, onEnterCodeManually = toYou, onTroubleshoot = toYou)
             }
             composable(SukoonTab.TRENDS.route) {
                 // Hub over Graph (A3) + Logbook (A4); Insights (A9) slots in as a third sub-tab later.
@@ -84,8 +90,12 @@ fun MainScaffold() {
                     factory = GraphViewModel.factory(container.glucoseRepository, container.logbookRepository),
                 )
                 val graphState by graphViewModel.uiState.collectAsStateWithLifecycle()
-                val logbookViewModel: LogbookViewModel = viewModel(factory = LogbookViewModel.factory(container.logbookRepository))
+                val logbookViewModel: LogbookViewModel = viewModel(factory = LogbookViewModel.factory(container.logbookRepository, container.gemini))
                 val logbookState by logbookViewModel.uiState.collectAsStateWithLifecycle()
+                val askViewModel: AskViewModel = viewModel(
+                    factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini),
+                )
+                val askState by askViewModel.uiState.collectAsStateWithLifecycle()
                 TrendsHub(
                     graphState = graphState,
                     onSelectRange = graphViewModel::selectRange,
@@ -93,9 +103,30 @@ fun MainScaffold() {
                     onQuickLog = logbookViewModel::log,
                     onUpdateEvent = logbookViewModel::updateEvent,
                     onDeleteEvent = logbookViewModel::deleteEvent,
+                    onEstimateCarbs = logbookViewModel::estimateCarbs,
+                    askState = askState,
+                    hasAiKey = askViewModel.hasKey,
+                    onAsk = askViewModel::ask,
+                    onClearAsk = askViewModel::clear,
+                    onOpenSettings = { navController.navigateToTab(SukoonTab.YOU) },
                 )
             }
-            composable(SukoonTab.YOU.route) { PlaceholderScreen(R.string.home_nav_you) }
+            composable(SukoonTab.YOU.route) {
+                val container = (LocalContext.current.applicationContext as SukoonApp).container
+                val config by container.sourceConfig.collectAsStateWithLifecycle()
+                val status by container.glucoseRepository.status.collectAsStateWithLifecycle()
+                var geminiKey by remember { mutableStateOf(container.settings.geminiApiKey) }
+                SettingsScreen(
+                    config = config,
+                    status = status,
+                    geminiKey = geminiKey,
+                    onSaveSource = container::updateSourceConfig,
+                    onSaveGeminiKey = { key ->
+                        container.settings.geminiApiKey = key
+                        geminiKey = container.settings.geminiApiKey
+                    },
+                )
+            }
         }
     }
 }
@@ -123,18 +154,20 @@ private fun SukoonBottomBar(navController: NavHostController) {
                     label = stringResource(tab.labelRes),
                     selected = selected,
                     onClick = {
-                        if (!selected) {
-                            navController.navigate(tab.route) {
-                                // Preserve each tab's state across switches; avoid stacking duplicates.
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        }
+                        if (!selected) navController.navigateToTab(tab)
                     },
                 )
             }
         }
+    }
+}
+
+private fun NavHostController.navigateToTab(tab: SukoonTab) {
+    navigate(tab.route) {
+        // Preserve each tab's state across switches; avoid stacking duplicates.
+        popUpTo(graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
     }
 }
 
@@ -167,30 +200,6 @@ private fun BottomBarItem(label: String, selected: Boolean, onClick: () -> Unit)
             } else {
                 MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
             },
-        )
-    }
-}
-
-/** Temporary stub for tabs whose screens land in later milestones (Trends → A3/A4/A9, You → A10). */
-@Composable
-private fun PlaceholderScreen(@StringRes titleRes: Int) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = stringResource(titleRes),
-            fontSize = 22.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-        Text(
-            text = stringResource(R.string.placeholder_coming_soon),
-            fontSize = 13.sp,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
         )
     }
 }

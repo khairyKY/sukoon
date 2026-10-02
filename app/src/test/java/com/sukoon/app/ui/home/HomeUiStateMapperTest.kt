@@ -23,8 +23,22 @@ class HomeUiStateMapperTest {
     }
 
     @Test
-    fun `error maps to NoSensor`() {
-        assertEquals(HomeUiState.NoSensor, HomeUiStateMapper.map(SourceStatus.Error("boom"), reading(110), recent, now))
+    fun `error with no reading maps to NoSensor`() {
+        assertEquals(HomeUiState.NoSensor, HomeUiStateMapper.map(SourceStatus.Error("boom"), null, emptyList(), now))
+    }
+
+    @Test
+    fun `error with a fresh reading still shows it (one failed poll must not blank the screen)`() {
+        assertTrue(HomeUiStateMapper.map(SourceStatus.Error("timeout"), reading(110, now.minusSeconds(120)), recent, now) is HomeUiState.InRange)
+    }
+
+    @Test
+    fun `connected but older than 10 min is Stale, never shown as current`() {
+        val state = HomeUiStateMapper.map(SourceStatus.Connected, reading(60, now.minusSeconds(11 * 60)), recent, now)
+        assertTrue(state is HomeUiState.Stale)
+        assertEquals(11, (state as HomeUiState.Stale).minutesAgo)
+        // ...and exactly 10 min old is still current.
+        assertTrue(HomeUiStateMapper.map(SourceStatus.Connected, reading(110, now.minusSeconds(10 * 60)), recent, now) is HomeUiState.InRange)
     }
 
     @Test
@@ -80,5 +94,12 @@ class HomeUiStateMapperTest {
         state as HomeUiState.Stale
         assertEquals(104, state.lastGlucoseMgDl)
         assertEquals(12, state.minutesAgo)
+    }
+
+    @Test
+    fun `mini-graph window is averaged into at most 12 bars`() {
+        assertEquals(12, HomeViewModel.toBars(List(180) { 100 }).size)
+        assertEquals(listOf(100, 200), HomeViewModel.toBars(List(12) { 100 } + List(12) { 200 }).let { listOf(it.first(), it.last()) })
+        assertEquals(listOf(90, 110), HomeViewModel.toBars(listOf(90, 110))) // fewer than 12 → one bar each
     }
 }

@@ -2,6 +2,7 @@ package com.sukoon.app.data.db
 
 import androidx.room.Dao
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
@@ -10,7 +11,9 @@ import kotlinx.coroutines.flow.Flow
 
 // Mirrors GlucoseSource's GlucoseReading (data/source/GlucoseSource.kt); conversion lives in
 // data/repository/ReadingMappers.kt, wired through GlucoseRepository (A2).
-@Entity(tableName = "readings")
+// Unique timestamp: sources that re-deliver (Nightscout backfill, a broadcast hitting both
+// receivers) are deduped by the DB on insert (IGNORE), not by app code.
+@Entity(tableName = "readings", indices = [Index(value = ["timestampMillis"], unique = true)])
 data class ReadingEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val timestampMillis: Long,
@@ -23,6 +26,10 @@ data class ReadingEntity(
 interface ReadingDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(reading: ReadingEntity)
+
+    /** Leaving demo mode: simulated rows must never mix into real history, graphs, or AI context. */
+    @Query("DELETE FROM readings WHERE source = :source")
+    suspend fun deleteBySource(source: String)
 
     @Query("SELECT * FROM readings ORDER BY timestampMillis DESC LIMIT 1")
     fun latest(): Flow<ReadingEntity?>

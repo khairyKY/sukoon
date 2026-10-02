@@ -17,7 +17,6 @@
     <string name="home_nav_now">دلوقتي</string>
     <string name="home_nav_trends">التقارير</string>
     <string name="home_nav_you">حسابي</string>
-    <string name="placeholder_coming_soon">قريبًا</string>
 
     <!-- Graph (A3) -->
     <string name="graph_title">الرسم البياني</string>
@@ -100,4 +99,55 @@
     <string name="home_no_sensor_body">وصّل حساس علشان تبدأ تشوف السكر بتاعك، مباشر ومستمر.</string>
     <string name="home_btn_pair_sensor">وصّل حساس</string>
     <string name="home_btn_enter_code">دخّل الكود يدوي</string>
+    <!-- Trends → Ask (AI) -->
+    <string name="ask_tab">اسأل</string>
+    <string name="ask_title">اسأل سكون</string>
+    <string name="ask_subtitle">الإجابات من قرايات وتسجيلات آخر ٧ أيام. مش نصيحة طبية.</string>
+    <string name="ask_clear">امسح</string>
+    <string name="ask_thinking">بنبص على بياناتك…</string>
+    <string name="ask_hint">اسأل عن السكر بتاعك…</string>
+    <string name="ask_send">ابعت</string>
+    <string name="ask_suggest_24h">آخر ٢٤ ساعة كانوا عاملين إزاي؟</string>
+    <string name="ask_suggest_highs">إمتى السكر بيعلى عندي عادةً؟</string>
+    <string name="ask_suggest_meal">إيه اللي حصل بعد آخر وجبة؟</string>
+    <string name="ask_suggest_week">لخّصلي الأسبوع</string>
+    <string name="ask_no_key_title">ضيف مفتاح Gemini علشان تبدأ</string>
+    <string name="ask_no_key_body">الذكاء الاصطناعي في سكون شغّال بـ Google Gemini بمفتاحك المجاني من aistudio.google.com. حطّه في أنت ← الذكاء الاصطناعي.</string>
+    <string name="ask_open_settings">افتح الإعدادات</string>
+
+    <!-- You tab / settings -->
+    <string name="settings_source_title">مصدر قرايات السكر</string>
+    <string name="settings_source_broadcast">DiaBox على الموبايل ده</string>
+    <string name="settings_source_broadcast_body">في DiaBox: الإعدادات ← Integration ← شغّل “Share data with other apps”. وبيشتغل كمان مع Juggluco أو xDrip+.</string>
+    <string name="settings_source_nightscout">Nightscout</string>
+    <string name="settings_source_nightscout_body">بيقرا من موقع Nightscout بتاعك ويجيب آخر ٢٤ ساعة.</string>
+    <string name="settings_ns_url">رابط Nightscout</string>
+    <string name="settings_ns_token">توكن القراية</string>
+    <string name="settings_save">احفظ</string>
+    <string name="settings_update">حدّث</string>
+    <string name="settings_source_demo">بيانات تجريبية</string>
+    <string name="settings_source_demo_body">قرايات وهمية علشان تجرّب الأبلكيشن. بتتمسح لما تختار مصدر حقيقي.</string>
+    <string name="settings_status_listening">مستنيين قرايات من DiaBox.</string>
+    <string name="settings_status_error">مش قادرين نقرا: %1$s</string>
+    <string name="settings_status_connected">متوصّل.</string>
+    <string name="settings_status_connecting">بيتوصّل…</string>
+    <string name="settings_ai_title">الذكاء الاصطناعي</string>
+    <string name="settings_ai_body">حط مفتاح Gemini API مجاني من aistudio.google.com. لما تسأل سؤال أو تقدّر وجبة، ملخص قراياتك وتسجيلاتك الأخيرة (أو صورة الأكل) بيتبعت لجوجل.</string>
+    <string name="settings_ai_key">مفتاح Gemini API</string>
+    <string name="settings_ai_saved">المفتاح اتحفظ.</string>
+    <string name="settings_about_title">عن الأبلكيشن</string>
+    <string name="settings_about_body">سكون %1$s · مش جهاز طبي. أكّد دايمًا بوخزة صباع قبل ما تعالج، وامشي على خطة فريقك الطبي.</string>
+
+    <!-- Logbook → AI carb estimate -->
+    <string name="carb_ai_open">✨ قدّر الكربوهيدرات بالذكاء الاصطناعي</string>
+    <string name="carb_ai_describe">بتاكل إيه؟</string>
+    <string name="carb_ai_camera">صوّر</string>
+    <string name="carb_ai_gallery">من المعرض</string>
+    <string name="carb_ai_photo_added">الصورة اتضافت ✓</string>
+    <string name="carb_ai_estimate">قدّر</string>
+    <string name="carb_ai_busy">بنقدّر…</string>
+    <string name="carb_ai_result">≈ %1$s جم · %2$s</string>
+    <string name="carb_ai_confidence">الثقة: %1$s. %2$s</string>
+    <string name="carb_ai_use">استخدم %1$s جم</string>
+    <string name="carb_ai_disclaimer">تقدير الذكاء الاصطناعي ممكن يغلط — راجعه قبل الجرعة.</string>
 </resources>

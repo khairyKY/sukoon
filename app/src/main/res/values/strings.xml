@@ -17,7 +17,6 @@
     <string name="home_nav_now">Now</string>
     <string name="home_nav_trends">Trends</string>
     <string name="home_nav_you">You</string>
-    <string name="placeholder_coming_soon">Coming soon</string>
 
     <!-- Graph (A3) -->
     <string name="graph_title">Graph</string>
@@ -100,4 +99,55 @@
     <string name="home_no_sensor_body">Pair a sensor to start seeing your glucose, live and continuous.</string>
     <string name="home_btn_pair_sensor">Pair a sensor</string>
     <string name="home_btn_enter_code">Enter code manually</string>
+    <!-- Trends → Ask (AI) -->
+    <string name="ask_tab">Ask</string>
+    <string name="ask_title">Ask Sukoon</string>
+    <string name="ask_subtitle">Answers come from your last 7 days of readings and logs. Not medical advice.</string>
+    <string name="ask_clear">Clear</string>
+    <string name="ask_thinking">Looking at your data…</string>
+    <string name="ask_hint">Ask about your glucose…</string>
+    <string name="ask_send">Send</string>
+    <string name="ask_suggest_24h">How were my last 24 hours?</string>
+    <string name="ask_suggest_highs">When do I usually go high?</string>
+    <string name="ask_suggest_meal">What happened after my last meal?</string>
+    <string name="ask_suggest_week">Summarize my week</string>
+    <string name="ask_no_key_title">Add a Gemini key to start</string>
+    <string name="ask_no_key_body">Sukoon\'s AI runs on Google Gemini with your own free key from aistudio.google.com. Paste it in You → AI.</string>
+    <string name="ask_open_settings">Open settings</string>
+
+    <!-- You tab / settings -->
+    <string name="settings_source_title">Glucose source</string>
+    <string name="settings_source_broadcast">DiaBox on this phone</string>
+    <string name="settings_source_broadcast_body">In DiaBox: Settings → Integration → turn on “Share data with other apps”. Also works with Juggluco or xDrip+ broadcasts.</string>
+    <string name="settings_source_nightscout">Nightscout</string>
+    <string name="settings_source_nightscout_body">Reads your Nightscout site and backfills the last 24 hours.</string>
+    <string name="settings_ns_url">Nightscout URL</string>
+    <string name="settings_ns_token">Read token</string>
+    <string name="settings_save">Save</string>
+    <string name="settings_update">Update</string>
+    <string name="settings_source_demo">Demo data</string>
+    <string name="settings_source_demo_body">Simulated readings to try the app. Cleared when you switch to a real source.</string>
+    <string name="settings_status_listening">Listening for readings from DiaBox.</string>
+    <string name="settings_status_error">Can\'t read: %1$s</string>
+    <string name="settings_status_connected">Connected.</string>
+    <string name="settings_status_connecting">Connecting…</string>
+    <string name="settings_ai_title">AI</string>
+    <string name="settings_ai_body">Paste a free Gemini API key from aistudio.google.com. When you ask a question or estimate a meal, a summary of your recent readings and logs (or the meal photo) is sent to Google.</string>
+    <string name="settings_ai_key">Gemini API key</string>
+    <string name="settings_ai_saved">Key saved.</string>
+    <string name="settings_about_title">About</string>
+    <string name="settings_about_body">Sukoon %1$s · Not a medical device. Always confirm with a finger-prick before treating, and follow your diabetes team\'s plan.</string>
+
+    <!-- Logbook → AI carb estimate -->
+    <string name="carb_ai_open">✨ Estimate carbs with AI</string>
+    <string name="carb_ai_describe">What are you eating?</string>
+    <string name="carb_ai_camera">Take photo</string>
+    <string name="carb_ai_gallery">Gallery</string>
+    <string name="carb_ai_photo_added">Photo added ✓</string>
+    <string name="carb_ai_estimate">Estimate</string>
+    <string name="carb_ai_busy">Estimating…</string>
+    <string name="carb_ai_result">≈ %1$s g · %2$s</string>
+    <string name="carb_ai_confidence">Confidence: %1$s. %2$s</string>
+    <string name="carb_ai_use">Use %1$s g</string>
+    <string name="carb_ai_disclaimer">AI estimates can be off — check before you dose.</string>
 </resources>

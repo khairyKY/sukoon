@@ -10,6 +10,9 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <uses-permission android:name="android.permission.NFC" />
+
+    <!-- Nightscout source + Gemini AI. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- required=false: SimulatedSource and future viewer-only clients don't need NFC hardware. -->
     <uses-feature android:name="android.hardware.nfc" android:required="false" />
 
@@ -18,7 +21,11 @@
         android:allowBackup="true"
         android:label="@string/app_name"
         android:theme="@style/Theme.Sukoon"
-        android:supportsRtl="true">
+        android:supportsRtl="true"
+        android:usesCleartextTraffic="true">
+        <!-- ponytail: cleartext allowed app-wide because self-hosted Nightscout is usually plain
+             http on a LAN/Tailscale IP (Tailscale already encrypts the hop). Narrow it with a
+             network-security-config if a public https-only Nightscout becomes the norm. -->
 
         <activity
             android:name=".MainActivity"
@@ -29,6 +36,26 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- DiaBox / Juggluco / xDrip+ "BgEstimate" glucose broadcast (data/source/XDripBroadcastReceiver.kt). -->
+        <receiver
+            android:name=".data.source.XDripBroadcastReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.eveningoutpost.dexdrip.BgEstimate" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Lets the camera app write the meal photo for the AI carb estimate. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 

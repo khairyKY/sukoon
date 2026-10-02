@@ -16,6 +16,14 @@
 
 ---
 
+## MVP bridge — real data + AI before Track B  ✅  · **issue #49**
+Makes the app usable day-to-day while the Libre decoder (Track B) is unfinished, by reading glucose another app already decodes:
+- **Sources** (You tab picker, `AppContainer.sourceFor`): *DiaBox on this phone* — the xDrip+-compatible `BgEstimate` broadcast DiaBox sends with *Settings → Integration → Share data with other apps* (also Juggluco/xDrip+); *Nightscout* — polls `entries/sgv.json`, backfills 24h; *Demo* — SimulatedSource, its rows deleted on switching to a real source.
+- Readings table got a unique timestamp index (DB v2 + migration) so re-delivered readings dedupe in the DB.
+- Home greys out (Stale) when the newest reading is >10 min old regardless of source status — a passive source can't report its own silence.
+- **AI (Gemini, user's own free key):** Trends → *Ask* chat over a compact 7-day data brief (`ai/AiPrompts.kt`); Logbook → *Estimate carbs with AI* from text and/or photo, which only pre-fills the amount. Never doses.
+- Not in the MVP: alarms (DiaBox still alarms), foreground service (Nightscout polls only while the app is open; the broadcast receiver works without it).
+
 ## A1 — App navigation shell  ✅  · **issue #28**  · (merged, PR #44)
 Replace Home's static decorative bottom bar with real Compose Navigation.
 - **The shipped design's bottom nav is 3 tabs — Now / Trends / You** — not the 5 the plan first assumed. Corrected to match the design (which supersedes, as with colors/fonts). Mapping: **Now** = Home (live glucose); **Trends** = Insights + graph + logbook (A3/A4/A9); **You** = settings + sharing + sensor/device (A6/A10).

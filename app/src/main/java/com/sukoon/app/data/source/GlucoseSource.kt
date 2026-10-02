@@ -33,7 +33,9 @@ enum class TrendDirection {
     RISING_FAST,  // > 2
 }
 
-enum class SourceKind { SIMULATED, LIBRE_BLE }
+// NIGHTSCOUT / BROADCAST read glucose another app already decoded (DiaBox, Juggluco, xDrip+) —
+// the bridge that makes the app usable on real data before LibreBleSource (Track B) lands.
+enum class SourceKind { SIMULATED, LIBRE_BLE, NIGHTSCOUT, BROADCAST }
 
 sealed interface SourceStatus {
     data object Disconnected : SourceStatus

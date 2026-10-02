@@ -16,7 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,6 +26,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sukoon.app.R
+import com.sukoon.app.ai.CarbEstimate
+import com.sukoon.app.ui.ai.AskScreen
+import com.sukoon.app.ui.ai.AskUiState
 import com.sukoon.app.data.db.EventEntity
 import com.sukoon.app.data.db.LogEventType
 import com.sukoon.app.ui.graph.GraphRange
@@ -36,13 +39,14 @@ import com.sukoon.app.ui.logbook.LogbookUiState
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.Sage
 
-private enum class TrendsSubTab { GRAPH, LOGBOOK }
+private enum class TrendsSubTab { GRAPH, LOGBOOK, ASK }
 
 /**
  * The Trends tab's content (A1 comment in MainScaffold): a hub over Graph (A3) and Logbook (A4),
  * switched by a small in-tab toggle. Not a nested Compose-Navigation graph — there's no back-stack
  * or deep-link need yet (e.g. "tap a graph pin → jump to its Logbook entry"); add real sub-routes
- * if/when that lands. Insights (A9) slots in here too as a third toggle option.
+ * if/when that lands. Ask (AI chat about these same readings + logs) is the third option; Insights
+ * (A9) slots in here too.
  */
 @Composable
 fun TrendsHub(
@@ -52,9 +56,15 @@ fun TrendsHub(
     onQuickLog: (LogEventType, Double?, String?) -> Unit,
     onUpdateEvent: (EventEntity) -> Unit,
     onDeleteEvent: (EventEntity) -> Unit,
+    onEstimateCarbs: suspend (String, ByteArray?) -> CarbEstimate,
+    askState: AskUiState,
+    hasAiKey: Boolean,
+    onAsk: (String) -> Unit,
+    onClearAsk: () -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var subTab by remember { mutableStateOf(TrendsSubTab.GRAPH) }
+    var subTab by rememberSaveable { mutableStateOf(TrendsSubTab.GRAPH) }
 
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Row(
@@ -63,6 +73,7 @@ fun TrendsHub(
         ) {
             SubTabChip(stringResource(R.string.graph_title), subTab == TrendsSubTab.GRAPH) { subTab = TrendsSubTab.GRAPH }
             SubTabChip(stringResource(R.string.logbook_title), subTab == TrendsSubTab.LOGBOOK) { subTab = TrendsSubTab.LOGBOOK }
+            SubTabChip(stringResource(R.string.ask_tab), subTab == TrendsSubTab.ASK) { subTab = TrendsSubTab.ASK }
         }
         when (subTab) {
             TrendsSubTab.GRAPH -> GraphScreen(state = graphState, onSelectRange = onSelectRange, modifier = Modifier.weight(1f))
@@ -71,6 +82,15 @@ fun TrendsHub(
                 onQuickLog = onQuickLog,
                 onUpdateEvent = onUpdateEvent,
                 onDeleteEvent = onDeleteEvent,
+                modifier = Modifier.weight(1f),
+                onEstimateCarbs = onEstimateCarbs,
+            )
+            TrendsSubTab.ASK -> AskScreen(
+                state = askState,
+                hasKey = hasAiKey,
+                onAsk = onAsk,
+                onClear = onClearAsk,
+                onOpenSettings = onOpenSettings,
                 modifier = Modifier.weight(1f),
             )
         }

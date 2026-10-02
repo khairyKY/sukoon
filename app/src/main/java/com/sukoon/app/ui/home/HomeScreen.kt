@@ -125,10 +125,9 @@ private fun HomeStatusBar(statusLabel: String, dotColor: Color, pulsing: Boolean
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
             .padding(top = 16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.End, // the design mock's fake "9:41" clock is gone; the system bar shows real time
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = "9:41", fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = MaterialTheme.colorScheme.onBackground)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             PulsingDot(color = dotColor, pulsing = pulsing)
             Text(text = statusLabel, fontWeight = FontWeight.SemiBold, fontSize = 9.sp, letterSpacing = 1.sp, color = labelColor)
@@ -515,8 +514,7 @@ private fun ColumnScope.StaleContent(state: HomeUiState.Stale, onTroubleshoot: (
 @Composable
 private fun ColumnScope.NoSensorContent(onPairSensor: () -> Unit, onEnterCodeManually: () -> Unit) {
     Column(modifier = Modifier.weight(1f)) {
-        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(top = 16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(text = "9:41", fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = MaterialTheme.colorScheme.onBackground)
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(top = 16.dp), horizontalArrangement = Arrangement.End) {
             Text(
                 text = stringResource(R.string.home_status_not_connected),
                 fontWeight = FontWeight.SemiBold,
