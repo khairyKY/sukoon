@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Glucose widget (ui/widget/GlucoseWidget.kt). Resizable from a single cell (40dp minimum) to as
+  large as the launcher allows — no max, so half the screen and beyond; the layout adapts.
+  Placed at 2×2 by default. configuration_optional: on Android 12+ it lands working with default
+  options and settings live behind long-press → reconfigure. (Launching the configure screen at drop
+  time is also what Android 14's background-activity-launch rules block on some launchers, which
+  makes the launcher cancel the widget.) Below Android 12 the configure screen still opens on add.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_description"
+    android:minWidth="110dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="40dp"
+    android:minResizeHeight="40dp"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/glance_default_loading_layout"
+    android:previewLayout="@layout/widget_preview"
+    android:configure="com.sukoon.app.ui.widget.WidgetConfigActivity"
+    android:widgetFeatures="reconfigurable|configuration_optional" />

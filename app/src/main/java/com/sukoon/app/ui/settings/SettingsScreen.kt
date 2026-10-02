@@ -44,6 +44,7 @@ import com.sukoon.app.data.source.SourceStatus
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
 import com.sukoon.app.ui.theme.Sage
+import com.sukoon.app.ui.widget.WidgetsCard
 
 /**
  * You tab (A10, MVP slice): the paired Libre sensor (Track B), the data source (sensor or demo),
@@ -92,6 +93,10 @@ fun SettingsScreen(
         SourceOption(SourceKind.SIMULATED, sourceKind, R.string.settings_source_demo, R.string.settings_source_demo_body) {
             onSelectSource(SourceKind.SIMULATED)
         }
+
+        Spacer(Modifier.height(28.dp))
+        SectionLabel(stringResource(R.string.widgets_title))
+        WidgetsCard()
 
         Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(R.string.settings_ai_title))

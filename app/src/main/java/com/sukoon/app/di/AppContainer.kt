@@ -17,10 +17,16 @@ import com.sukoon.app.data.source.libre.LibreNfc
 import com.sukoon.app.data.source.libre.SensorPairing
 import com.sukoon.app.data.source.libre.SensorPairingStore
 import com.sukoon.app.platform.SensorService
+import com.sukoon.app.ui.widget.GlucoseWidget
 import java.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -61,6 +67,27 @@ class AppContainer(private val context: Context) {
     init {
         glucoseRepository.start()
         if (_sourceKind.value == SourceKind.LIBRE_BLE) SensorService.start(context)
+        refreshWidgets()
+    }
+
+    /**
+     * Keeps home-screen widgets current: on every new reading, and once a minute so "x min ago"
+     * and the stale grey-out move on even when no reading arrives. conflate + delay caps it at one
+     * re-render per 15 s (demo data ticks every 2 s) while always ending on the latest state.
+     */
+    private fun refreshWidgets() {
+        val minuteTicks = flow {
+            while (true) {
+                emit(Unit)
+                delay(MINUTE_MS)
+            }
+        }
+        appScope.launch {
+            merge(glucoseRepository.latestReading.map { }, minuteTicks).conflate().collect {
+                runCatching { GlucoseWidget.refreshAll(context) }
+                delay(WIDGET_MIN_INTERVAL_MS)
+            }
+        }
     }
 
     fun selectSource(kind: SourceKind) {
@@ -86,6 +113,11 @@ class AppContainer(private val context: Context) {
             }
         }
         selectSource(SourceKind.LIBRE_BLE)
+    }
+
+    private companion object {
+        const val MINUTE_MS = 60_000L
+        const val WIDGET_MIN_INTERVAL_MS = 15_000L
     }
 
     private fun sourceFor(kind: SourceKind): GlucoseSource = when (kind) {

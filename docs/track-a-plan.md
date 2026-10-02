@@ -82,11 +82,13 @@ Full interactive glucose graph from Room (`ui/graph/`), currently the **Trends**
 - **Data-source picker** (Simulated ↔ Libre) — the toggle that makes Track B swappable.
 - **Accept:** flip units mg/dL↔mmol/L updates everywhere; theme switch works; calibration entry rejects out-of-cap values.
 
-## A11 — Widget + system surfaces  ⬜  · **issue #9** + *(new issue)*  · design 8ad, 8ae, 8ac
-- **Glance** home/lock-screen widget with in-range/low/stale states.
-- Persistent **foreground-service** notification ("Sukoon is running") that hosts the A2 collector.
-- Notification looks per severity (ties to A5).
-- **Accept:** widget updates as sim moves; service survives screen-off; stale state greys out per PLAN §5.
+## A11 — Widget + system surfaces  ◐  · **issue #9** + *(new issue)*  · design 8ad, 8ae, 8ac
+- ✅ **Glance home-screen widget** (`ui/widget/`): resizable from **1×1 to half the screen and beyond** (no max). `SizeMode.Exact` → `layoutFor()` picks TINY (big number; arrow stacks under it in tall cells) / STRIP (number + details + sparkline) / CARD (number, details, graph that grows to fill, time-in-range today; narrow cards stack details). Graph is a bitmap drawn at the exact pixel size. Stale (>10 min) → "---" + "last N", never shown as current.
+- ✅ **Per-widget options** (Glance state): graph off/1/3/6/12/24 h, details on/off, background Auto/Light/Dark/Clear. `configuration_optional` — drops in working; settings via launcher reconfigure **and** You → Home-screen widgets → Edit, because Android 14's background-activity-launch rules block the launcher's configure/reconfigure launch on some launchers (seen on the AOSP emulator launcher). You → *Add widget* pins one via `requestPinAppWidget`.
+- ✅ Refresh: every new reading + once a minute (for "x min ago"/stale), throttled to one re-render per 15 s; `updatePeriodMillis` 30 min fallback.
+- ✅ Foreground service (`platform/SensorService`) hosting the sensor connection.
+- ✅ App icon (adaptive, from the Sukoon mark) + widget picker preview.
+- ⬜ Lock-screen widget (Android phones don't support third-party lock-screen widgets yet); per-severity notification looks (with A5).
 
 ## A12 — Localization sweep + motion polish  ⬜  · **issue #20** + *(new issue)*
 - Audit every screen for EN + AR string parity + RTL correctness (we build bilingual per-screen, so this is a sweep, not a rebuild).

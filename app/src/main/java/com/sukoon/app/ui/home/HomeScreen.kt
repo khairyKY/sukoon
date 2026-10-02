@@ -58,6 +58,7 @@ import com.sukoon.app.ui.theme.SageMist
 import com.sukoon.app.ui.theme.StateHigh
 import com.sukoon.app.ui.theme.StateLow
 import com.sukoon.app.ui.theme.SukoonTheme
+import com.sukoon.app.ui.widget.arrow
 import com.sukoon.app.ui.theme.TextMuted
 import com.sukoon.app.ui.theme.UiFontFamily
 
@@ -190,11 +191,7 @@ private fun HeroNumber(value: String, trend: TrendDirection?, color: Color, font
     }
 }
 
-private fun trendArrow(trend: TrendDirection): String = when (trend) {
-    TrendDirection.FALLING_FAST, TrendDirection.FALLING -> "↓"
-    TrendDirection.STEADY -> "→"
-    TrendDirection.RISING, TrendDirection.RISING_FAST -> "↗"
-}
+private fun trendArrow(trend: TrendDirection): String = trend.arrow
 
 @Composable
 private fun trendLabel(trend: TrendDirection): String = when (trend) {

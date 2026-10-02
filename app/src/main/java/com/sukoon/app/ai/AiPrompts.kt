@@ -77,8 +77,8 @@ object AiPrompts {
             val minutesAgo = Duration.between(latest.timestamp, now).toMinutes()
             appendLine("DATA SOURCE: ${latest.source}")
             appendLine("LATEST: ${latest.glucoseMgDl} mg/dL, trend ${latest.trend.name.lowercase()}, $minutesAgo min ago")
-            appendLine(summary("LAST 24H", readings.filter { it.timestamp >= now.minus(Duration.ofHours(24)) }))
-            appendLine(summary("ALL ${readings.size} READINGS SHOWN (up to 7 days)", readings))
+            appendLine(summary("LAST 24H", readings.filter { it.timestamp >= now.minus(Duration.ofHours(24)) }, dayTime))
+            appendLine(summary("ALL ${readings.size} READINGS SHOWN (up to 7 days)", readings, dayTime))
 
             appendLine("PER DAY (date: mean, % in range, min–max, readings < 70):")
             readings.groupBy { it.timestamp.atZone(zone).toLocalDate() }.forEach { (date, day) ->
@@ -117,8 +117,11 @@ object AiPrompts {
         }
     }.trim()
 
-    private fun summary(label: String, readings: List<GlucoseReading>): String {
+    // Exact extremes (with times) matter: the 15-minute averages below smooth away short lows.
+    private fun summary(label: String, readings: List<GlucoseReading>, time: DateTimeFormatter): String {
         if (readings.isEmpty()) return "$label: no readings"
+        val lowest = readings.minBy { it.glucoseMgDl }
+        val highest = readings.maxBy { it.glucoseMgDl }
         val samples = readings.map { GlucoseSample(it.timestamp, it.glucoseMgDl) }
         val tir = GlucoseMetrics.timeInRange(samples)
         val mean = GlucoseMetrics.mean(samples)
@@ -126,7 +129,8 @@ object AiPrompts {
         return "$label: mean ${mean.roundToInt()} mg/dL, GMI ${String.format(Locale.US, "%.1f", GlucoseMetrics.gmiPercent(mean))}%, " +
             "CV ${GlucoseMetrics.coefficientOfVariationPercent(samples).roundToInt()}%, " +
             "very low ${pct(RangeBracket.VERY_LOW)}% / low ${pct(RangeBracket.LOW)}% / in range ${pct(RangeBracket.IN_RANGE)}% / " +
-            "high ${pct(RangeBracket.HIGH)}% / very high ${pct(RangeBracket.VERY_HIGH)}%"
+            "high ${pct(RangeBracket.HIGH)}% / very high ${pct(RangeBracket.VERY_HIGH)}%, " +
+            "lowest ${lowest.glucoseMgDl} at ${time.format(lowest.timestamp)}, highest ${highest.glucoseMgDl} at ${time.format(highest.timestamp)}"
     }
 }
 

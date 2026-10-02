@@ -30,6 +30,8 @@
         android:name=".SukoonApp"
         android:allowBackup="true"
         android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
         android:theme="@style/Theme.Sukoon"
         android:supportsRtl="true">
 
@@ -53,6 +55,28 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- Home-screen glucose widget, resizable 1×1 up to half the screen (ui/widget/). -->
+        <receiver
+            android:name=".ui.widget.GlucoseWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/glucose_widget_info" />
+        </receiver>
+
+        <activity
+            android:name=".ui.widget.WidgetConfigActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Sukoon">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
 
         <service
             android:name=".platform.SensorService"

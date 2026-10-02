@@ -170,4 +170,34 @@
     <string name="service_channel">اتصال الحساس</string>
     <string name="service_title">سكون بيقرا الحساس بتاعك</string>
     <string name="service_body">بيخلّي اتصال البلوتوث شغّال.</string>
+    <!-- Home-screen widget -->
+    <string name="widget_label">السكر</string>
+    <string name="widget_description">آخر قراية والاتجاه والرسم. كبّره من مربع واحد لحد نص الشاشة.</string>
+    <string name="widget_now">دلوقتي</string>
+    <string name="widget_minutes_ago">من %1$d دقيقة</string>
+    <string name="widget_no_readings">لسه مفيش قرايات</string>
+    <string name="widget_last_value">آخر قراية %1$d</string>
+    <string name="widget_tir_today">في المدى النهارده %1$d%%</string>
+    <string name="widget_last_hours">آخر %1$d ساعة</string>
+    <string name="widget_graph_description">رسم السكر، آخر %1$d ساعة</string>
+    <string name="widget_config_title">الويدجت</string>
+    <string name="widget_config_resize_hint">اسحب الويدجت لأي حجم، من مربع واحد لحد نص الشاشة. الشكل بيتظبط على المساحة اللي تديهاله.</string>
+    <string name="widget_config_graph">الرسم</string>
+    <string name="widget_config_graph_off">مقفول</string>
+    <string name="widget_config_hours">%1$d س</string>
+    <string name="widget_config_background">الخلفية</string>
+    <string name="widget_config_bg_auto">تلقائي</string>
+    <string name="widget_config_bg_light">فاتح</string>
+    <string name="widget_config_bg_dark">غامق</string>
+    <string name="widget_config_bg_clear">شفاف</string>
+    <string name="widget_config_details">التفاصيل</string>
+    <string name="widget_config_details_body">الوقت من آخر قراية، والتغيير في آخر ٥ دقايق، ونسبة الوقت في المدى النهارده.</string>
+    <string name="widget_config_save">احفظ</string>
+    <!-- You → Home-screen widgets -->
+    <string name="widgets_title">ويدجت الشاشة الرئيسية</string>
+    <string name="widgets_body">حط السكر بتاعك على الشاشة الرئيسية وكبّره من مربع واحد لحد نص الشاشة.</string>
+    <string name="widgets_item">ويدجت %1$d</string>
+    <string name="widgets_edit">عدّل</string>
+    <string name="widgets_add">ضيف ويدجت</string>
+    <string name="widgets_add_manually">دوس مطوّل على الشاشة الرئيسية ← Widgets ← سكون.</string>
 </resources>

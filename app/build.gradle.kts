@@ -58,6 +58,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
+    // Home-screen widgets (ui/widget/): Compose-style RemoteViews that know their exact resized size.
+    implementation(libs.androidx.glance.appwidget)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)

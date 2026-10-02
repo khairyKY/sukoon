@@ -170,4 +170,34 @@
     <string name="service_channel">Sensor connection</string>
     <string name="service_title">Sukoon is reading your sensor</string>
     <string name="service_body">Keeps the Bluetooth connection alive.</string>
+    <!-- Home-screen widget -->
+    <string name="widget_label">Glucose</string>
+    <string name="widget_description">Your latest reading, trend and graph. Resize it from one tile up to half the screen.</string>
+    <string name="widget_now">now</string>
+    <string name="widget_minutes_ago">%1$d min ago</string>
+    <string name="widget_no_readings">No readings yet</string>
+    <string name="widget_last_value">last %1$d</string>
+    <string name="widget_tir_today">In range today %1$d%%</string>
+    <string name="widget_last_hours">last %1$d h</string>
+    <string name="widget_graph_description">Glucose graph, last %1$d hours</string>
+    <string name="widget_config_title">Widget</string>
+    <string name="widget_config_resize_hint">Drag the widget to any size, from a single tile up to half your screen. The layout adapts to the space you give it.</string>
+    <string name="widget_config_graph">Graph</string>
+    <string name="widget_config_graph_off">Off</string>
+    <string name="widget_config_hours">%1$d h</string>
+    <string name="widget_config_background">Background</string>
+    <string name="widget_config_bg_auto">Auto</string>
+    <string name="widget_config_bg_light">Light</string>
+    <string name="widget_config_bg_dark">Dark</string>
+    <string name="widget_config_bg_clear">Clear</string>
+    <string name="widget_config_details">Details</string>
+    <string name="widget_config_details_body">Time since the reading, change in the last 5 minutes, and today\'s time in range.</string>
+    <string name="widget_config_save">Save</string>
+    <!-- You → Home-screen widgets -->
+    <string name="widgets_title">Home-screen widgets</string>
+    <string name="widgets_body">Put your glucose on the home screen and resize it from one tile up to half the screen.</string>
+    <string name="widgets_item">Widget %1$d</string>
+    <string name="widgets_edit">Edit</string>
+    <string name="widgets_add">Add widget</string>
+    <string name="widgets_add_manually">Long-press your home screen → Widgets → Sukoon.</string>
 </resources>
