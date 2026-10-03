@@ -42,6 +42,7 @@ import com.sukoon.app.BuildConfig
 import com.sukoon.app.sharing.Supabase
 import com.sukoon.app.sharing.Sharing
 import com.sukoon.app.sharing.FollowerWatch
+import com.sukoon.app.health.HealthConnectSync
 
 /**
  * Manual dependency container (ponytail: no Hilt/Koin for a graph this small). Owns the
@@ -97,6 +98,8 @@ class AppContainer(private val context: Context) {
 
     val followerWatch = FollowerWatch(context, sharing, settings, notifier, appScope)
 
+    val healthConnect = HealthConnectSync(context, glucoseRepository, logbookRepository, appScope)
+
     init {
         glucoseRepository.start()
         if (_sourceKind.value == SourceKind.LIBRE_BLE) SensorService.start(context)
@@ -105,6 +108,7 @@ class AppContainer(private val context: Context) {
         nightscout.start()
         sharing.start()
         followerWatch.start()
+        healthConnect.start()
     }
 
     /** CSV of the last [days] days (0 = everything) → (text, data rows). */

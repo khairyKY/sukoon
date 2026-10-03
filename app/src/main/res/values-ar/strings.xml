@@ -495,4 +495,25 @@
     <string name="follow_alarm_signal_body">مفيش قرايات من %1$s بقالها %2$d دقيقة.</string>
     <string name="sharing_alerts">نبّهني عليهم</string>
     <string name="sharing_alerts_body">الهبوط والارتفاع وانقطاع الإشارة، بنفس مستويات وأصوات المنبّهات بتاعتك. بيفضل فيه إشعار صغير بآخر قراية ليهم.</string>
+    <string name="hc_title">Health Connect</string>
+    <string name="hc_body">هات الوجبات اللي التطبيقات التانية بتسجّلها (MyFitnessPal بيبعت كربوهيدرات كل وجبة هناك)، وشارك قرايات السكر مع تطبيقات الصحة التانية.</string>
+    <string name="hc_unavailable">Health Connect مش موجود على الموبايل ده.</string>
+    <string name="hc_update">Health Connect محتاج تحديث الأول.</string>
+    <string name="hc_update_button">حدّث</string>
+    <string name="hc_connect">اربط Health Connect</string>
+    <string name="hc_import">هات الوجبات</string>
+    <string name="hc_import_body">الوجبات من MyFitnessPal والتطبيقات التانية بتبقى تسجيلات في السجل، وبتتحدث لو عدّلتها هناك.</string>
+    <string name="hc_export">شارك قرايات السكر</string>
+    <string name="hc_export_body">قرايات الحساس بتروح Health Connect للتطبيقات التانية.</string>
+    <string name="hc_sync_now">زامن دلوقتي</string>
+    <string name="hc_syncing">بنزامن…</string>
+    <string name="hc_permissions">الصلاحيات</string>
+    <string name="hc_mfp_hint">في MyFitnessPal، شغّل المزامنة مع Health Connect (التغذية).</string>
+    <string name="hc_meal_breakfast">فطار</string>
+    <string name="hc_meal_lunch">غدا</string>
+    <string name="hc_meal_dinner">عشا</string>
+    <string name="hc_meal_snack">سناك</string>
+    <string name="toast_hc_synced">اتزامن: %1$d وجبة جديدة، %2$d اتحدثت، %3$d قراية اتشاركت.</string>
+    <string name="toast_hc_denied">مفيش صلاحية لـ Health Connect.</string>
+    <string name="toast_hc_failed">المزامنة مع Health Connect فشلت: %1$s</string>
 </resources>

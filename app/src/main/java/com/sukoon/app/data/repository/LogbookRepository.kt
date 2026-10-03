@@ -23,4 +23,9 @@ class LogbookRepository(private val eventDao: EventDao) {
     suspend fun update(event: EventEntity) = eventDao.update(event)
 
     suspend fun delete(event: EventEntity) = eventDao.delete(event)
+
+    /** For entries other apps own (Health Connect meals): insert returns the new id so later edits find it. */
+    suspend fun insert(event: EventEntity): Long = eventDao.insert(event)
+
+    suspend fun deleteById(id: Long) = eventDao.deleteById(id)
 }

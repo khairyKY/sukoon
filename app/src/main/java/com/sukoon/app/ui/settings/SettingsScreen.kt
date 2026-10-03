@@ -57,6 +57,7 @@ import com.sukoon.app.emergency.EmergencySettings
 import com.sukoon.app.sharing.Sharing
 import com.sukoon.app.ui.sharing.SharingSection
 import com.sukoon.app.sharing.FollowerWatch
+import com.sukoon.app.health.HealthConnectSync
 
 /**
  * You tab (A10, MVP slice): the paired Libre sensor (Track B), the data source (sensor or demo),
@@ -81,6 +82,7 @@ fun SettingsScreen(
     onEmergency: (EmergencySettings) -> Unit,
     sharing: Sharing,
     followerWatch: FollowerWatch,
+    healthConnect: HealthConnectSync,
     saveIntervalMinutes: Int,
     onSaveInterval: (Int) -> Unit,
     nightscout: NightscoutConfig,
@@ -143,6 +145,10 @@ fun SettingsScreen(
         Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(R.string.sharing_title))
         SharingSection(sharing, followerWatch)
+
+        Spacer(Modifier.height(28.dp))
+        SectionLabel(stringResource(R.string.hc_title))
+        HealthConnectSection(healthConnect)
 
         Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(R.string.readings_title))

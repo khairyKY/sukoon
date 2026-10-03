@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     // Home-screen widgets (ui/widget/): Compose-style RemoteViews that know their exact resized size.
     implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.health.connect) // MyFitnessPal meals in, glucose out (health/)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)

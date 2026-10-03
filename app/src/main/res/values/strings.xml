@@ -495,4 +495,25 @@
     <string name="follow_alarm_signal_body">No readings from %1$s for %2$d min.</string>
     <string name="sharing_alerts">Alert me about them</string>
     <string name="sharing_alerts_body">Lows, highs and lost signal, with your alarm levels and sounds. Keeps a small notification with their latest reading.</string>
+    <string name="hc_title">Health Connect</string>
+    <string name="hc_body">Bring in meals other apps log (MyFitnessPal sends each meal\'s carbs there) and share your glucose readings with other health apps.</string>
+    <string name="hc_unavailable">Health Connect isn\'t available on this phone.</string>
+    <string name="hc_update">Health Connect needs an update first.</string>
+    <string name="hc_update_button">Update</string>
+    <string name="hc_connect">Connect Health Connect</string>
+    <string name="hc_import">Import meals</string>
+    <string name="hc_import_body">Meals from MyFitnessPal and other apps become Logbook entries, and follow your edits there.</string>
+    <string name="hc_export">Share my glucose</string>
+    <string name="hc_export_body">Your sensor readings go to Health Connect for other apps.</string>
+    <string name="hc_sync_now">Sync now</string>
+    <string name="hc_syncing">Syncing…</string>
+    <string name="hc_permissions">Permissions</string>
+    <string name="hc_mfp_hint">In MyFitnessPal, turn on syncing with Health Connect (nutrition).</string>
+    <string name="hc_meal_breakfast">Breakfast</string>
+    <string name="hc_meal_lunch">Lunch</string>
+    <string name="hc_meal_dinner">Dinner</string>
+    <string name="hc_meal_snack">Snack</string>
+    <string name="toast_hc_synced">Synced: %1$d new meals, %2$d updated, %3$d readings shared.</string>
+    <string name="toast_hc_denied">Health Connect access wasn\'t granted.</string>
+    <string name="toast_hc_failed">Health Connect sync failed: %1$s</string>
 </resources>

@@ -9,7 +9,7 @@ import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
-// User-logged timeline items (carb / insulin / finger-prick / activity / note), shown as pins on
+// Timeline items logged in Sukoon or brought in from Health Connect (MyFitnessPal meals) (carb / insulin / finger-prick / activity / note), shown as pins on
 // the glucose graph (A4). Quick-entry-first per docs/PLAN.md §11 — value/note are optional, type +
 // timestamp are all that's required to log something. A finger-prick (FINGERSTICK, value = mg/dL
 // from a blood meter) is a record only: it never changes sensor readings. Calibration (B10) is a
@@ -33,13 +33,16 @@ val EventEntity.logType: LogEventType
 @Dao
 interface EventDao {
     @Insert
-    suspend fun insert(event: EventEntity)
+    suspend fun insert(event: EventEntity): Long
 
     @Update
     suspend fun update(event: EventEntity)
 
     @Delete
     suspend fun delete(event: EventEntity)
+
+    @Query("DELETE FROM events WHERE id = :id")
+    suspend fun deleteById(id: Long)
 
     @Query("SELECT * FROM events WHERE timestampMillis >= :sinceMillis ORDER BY timestampMillis ASC")
     fun since(sinceMillis: Long): Flow<List<EventEntity>>

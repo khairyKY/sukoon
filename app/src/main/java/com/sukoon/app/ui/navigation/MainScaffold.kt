@@ -63,6 +63,10 @@ import com.sukoon.app.ui.settings.SettingsScreen
 import com.sukoon.app.ui.theme.Sage
 import com.sukoon.app.ui.settings.EmergencyActionsDialog
 import com.sukoon.app.ui.components.toast
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 
 /**
  * Top-level navigation, per the shipped design's 3-tab bottom bar (Now / Trends / You) — not the
@@ -81,6 +85,12 @@ enum class SukoonTab(val route: String, @StringRes val labelRes: Int) {
 @Composable
 fun MainScaffold() {
     val navController = rememberNavController()
+    // Health Connect only lets most phones read while Sukoon is on screen: sync on every return.
+    val appContainer = (LocalContext.current.applicationContext as SukoonApp).container
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) { runCatching { appContainer.healthConnect.sync() } }
+    }
     // Home's food/insulin shortcuts: which new entry the Logbook should open on arrival.
     var pendingEntry by rememberSaveable { mutableStateOf<LogEventType?>(null) }
     Scaffold(
@@ -215,6 +225,7 @@ fun MainScaffold() {
                     emergencyAlerts = container.emergency,
                     sharing = container.sharing,
                     followerWatch = container.followerWatch,
+                    healthConnect = container.healthConnect,
                     onEmergency = { changed ->
                         container.settings.emergency = changed.sanitized()
                         emergency = container.settings.emergency
