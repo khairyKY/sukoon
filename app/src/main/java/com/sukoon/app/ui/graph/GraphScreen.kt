@@ -85,6 +85,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.LaunchedEffect
 import com.sukoon.app.ui.theme.Motion
+import androidx.compose.ui.graphics.graphicsLayer
 
 // Fixed bottom of the y-axis; the top adapts to the data (see yMaxFor). Target band is 70–180.
 private const val Y_MIN = 40
@@ -241,6 +242,7 @@ private fun GlucoseChart(readings: List<GlucoseReading>, range: GraphRange, even
                 .fillMaxWidth()
                 .height(CHART_HEIGHT)
                 .clipToBounds()
+                .graphicsLayer() // its own layer: scrolling the readings list moves it instead of redrawing every point each frame
                 .pointerInput(points, range) {
                     detectTapGestures { offset ->
                         val t = tStart + (offset.x / size.width * span).toLong()

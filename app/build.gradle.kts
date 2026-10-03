@@ -30,6 +30,9 @@ android {
 
     buildTypes {
         release {
+            // Phone test installs: non-debuggable runs Compose at full speed (ART optimisation + baseline
+            // profiles); signed with the debug key so it updates the existing install in place.
+            signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }

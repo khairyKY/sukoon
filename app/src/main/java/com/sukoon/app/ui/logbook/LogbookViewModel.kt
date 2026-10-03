@@ -32,6 +32,7 @@ import com.sukoon.app.data.repository.EntryPhotos
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.flowOn
 
 /** Drives the Logbook screen — today's window of logged events, newest first, from Room via [LogbookRepository]. */
 class LogbookViewModel(
@@ -60,6 +61,7 @@ class LogbookViewModel(
             glucoseNow = readings.lastOrNull()?.takeIf { Duration.between(it.timestamp, Instant.now()) <= HomeUiStateMapper.STALE_AFTER },
         )
     }
+        .flowOn(Dispatchers.Default) // nearest-reading lookups and the photo folder stay off the main thread
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000L),
