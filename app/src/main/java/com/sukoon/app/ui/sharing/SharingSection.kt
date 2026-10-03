@@ -65,10 +65,11 @@ import java.time.Instant
 import java.util.Locale
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.sukoon.app.sharing.FollowerWatch
 
 /** You → Sharing: an account, sharing your readings with people you invite, and following others. */
 @Composable
-fun SharingSection(sharing: Sharing) {
+fun SharingSection(sharing: Sharing, watch: FollowerWatch) {
     val session by sharing.supabase.session.collectAsStateWithLifecycle()
     Column(
         Modifier
@@ -81,14 +82,14 @@ fun SharingSection(sharing: Sharing) {
         val current = session
         when {
             !sharing.supabase.configured -> Text(stringResource(R.string.sharing_not_configured), fontSize = 12.5.sp, color = CaptionMuted)
-            current == null -> SignIn(sharing)
-            else -> SignedIn(sharing, current)
+            current == null -> SignIn(sharing, watch)
+            else -> SignedIn(sharing, watch, current)
         }
     }
 }
 
 @Composable
-private fun SignIn(sharing: Sharing) {
+private fun SignIn(sharing: Sharing, watch: FollowerWatch) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var creating by rememberSaveable { mutableStateOf(false) }
@@ -131,6 +132,7 @@ private fun SignIn(sharing: Sharing) {
                         if (session == null) creating = false
                     } else {
                         sharing.supabase.signIn(email, password)
+                        watch.refreshNow()
                         context.toast(context.getString(R.string.toast_sharing_signed_in))
                     }
                 } catch (e: Exception) {
@@ -147,7 +149,7 @@ private fun SignIn(sharing: Sharing) {
 }
 
 @Composable
-private fun SignedIn(sharing: Sharing, session: Session) {
+private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var shareOn by remember { mutableStateOf(sharing.shareOn) }
@@ -159,6 +161,7 @@ private fun SignedIn(sharing: Sharing, session: Session) {
     var invite by rememberSaveable { mutableStateOf<String?>(null) }
     var enteringCode by rememberSaveable { mutableStateOf(false) }
     var viewing by remember { mutableStateOf<Followed?>(null) }
+    var alertsOn by remember { mutableStateOf(watch.alertsOn) }
 
     LaunchedEffect(session.userId, refresh) {
         try {
@@ -184,6 +187,7 @@ private fun SignedIn(sharing: Sharing, session: Session) {
         Text(stringResource(R.string.sharing_signed_in_as, session.email), fontSize = 12.5.sp, color = CaptionMuted, modifier = Modifier.weight(1f))
         TextButton(onClick = {
             sharing.supabase.signOut()
+            watch.refreshNow()
             context.toast(context.getString(R.string.toast_sharing_signed_out))
         }) { Text(stringResource(R.string.sharing_sign_out), color = StateLow, fontSize = 12.sp) }
     }
@@ -261,11 +265,28 @@ private fun SignedIn(sharing: Sharing, session: Session) {
                 TextButton(onClick = {
                     act {
                         sharing.stopFollowing(person.id)
+                        watch.refreshNow()
                         refresh++
                         context.getString(R.string.toast_sharing_unfollowed, person.name)
                     }
                 }) { Text(stringResource(R.string.sharing_stop_following), color = StateLow, fontSize = 12.sp) }
             }
+        }
+    }
+    if (!followed.isNullOrEmpty()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.sharing_alerts), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                Text(stringResource(R.string.sharing_alerts_body), fontSize = 12.sp, color = CaptionMuted)
+            }
+            Switch(
+                checked = alertsOn,
+                onCheckedChange = {
+                    alertsOn = it
+                    watch.alertsOn = it
+                },
+                colors = SwitchDefaults.colors(checkedTrackColor = Sage),
+            )
         }
     }
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -279,6 +300,7 @@ private fun SignedIn(sharing: Sharing, session: Session) {
                 enteringCode = false
                 act {
                     val owner = sharing.redeem(code)
+                    watch.refreshNow()
                     refresh++
                     context.getString(R.string.toast_sharing_now_following, owner.ifBlank { "…" })
                 }

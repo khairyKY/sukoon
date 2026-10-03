@@ -488,4 +488,11 @@
     <string name="toast_sharing_follower_removed">%1$s اتشال من المتابعين.</string>
     <string name="toast_sharing_unfollowed">وقفت متابعة %1$s.</string>
     <string name="toast_sharing_now_following">دلوقتي بتتابع %1$s.</string>
+    <string name="follow_service_channel">المتابعة</string>
+    <string name="follow_service_title">بتتابع</string>
+    <string name="follow_service_body">بنراقب اللي بتتابعهم.</string>
+    <string name="follow_alarm_body">اطمّن على %1$s دلوقتي.</string>
+    <string name="follow_alarm_signal_body">مفيش قرايات من %1$s بقالها %2$d دقيقة.</string>
+    <string name="sharing_alerts">نبّهني عليهم</string>
+    <string name="sharing_alerts_body">الهبوط والارتفاع وانقطاع الإشارة، بنفس مستويات وأصوات المنبّهات بتاعتك. بيفضل فيه إشعار صغير بآخر قراية ليهم.</string>
 </resources>

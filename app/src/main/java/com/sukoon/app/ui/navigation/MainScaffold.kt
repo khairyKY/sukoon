@@ -214,6 +214,7 @@ fun MainScaffold() {
                     emergency = emergency,
                     emergencyAlerts = container.emergency,
                     sharing = container.sharing,
+                    followerWatch = container.followerWatch,
                     onEmergency = { changed ->
                         container.settings.emergency = changed.sanitized()
                         emergency = container.settings.emergency

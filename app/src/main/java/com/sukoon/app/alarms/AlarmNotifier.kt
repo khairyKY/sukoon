@@ -39,11 +39,13 @@ class AlarmNotifier(private val context: Context) {
     private val main = Handler(Looper.getMainLooper())
     private var player: MediaPlayer? = null
     private var playing: AlarmType? = null
+    private var playingFor: String? = null // whose alarm is sounding: a followed person's id, or null for this phone's own
     private val wakeLock = context.getSystemService(PowerManager::class.java)
         .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "sukoon:emergency")
         .apply { setReferenceCounted(false) }
 
-    fun show(alert: Alert, settings: AlarmSettings, test: Boolean = false) {
+    /** [who] + [person]: an alarm about someone this phone follows (their name and user id); null = your own. */
+    fun show(alert: Alert, settings: AlarmSettings, test: Boolean = false, who: String? = null, person: String? = null) {
         val (titleRes, bodyRes) = when (alert.type) {
             AlarmType.URGENT_LOW -> R.string.alarm_urgent_title to R.string.alarm_urgent_body
             AlarmType.LOW -> R.string.alarm_low_title to R.string.alarm_low_body
@@ -52,12 +54,21 @@ class AlarmNotifier(private val context: Context) {
             AlarmType.SIGNAL_LOSS -> R.string.alarm_signal_title to R.string.alarm_signal_body
         }
         val value = alert.mgDl?.let { context.getString(R.string.alarm_value, it) }
-        val title = listOfNotNull(if (test) context.getString(R.string.alarm_test_prefix) else null, context.getString(titleRes), value.takeIf { alert.type != AlarmType.SIGNAL_LOSS })
-            .joinToString(" ")
-        val body = if (alert.type == AlarmType.SIGNAL_LOSS) context.getString(bodyRes, alert.minutesSinceReading ?: 0) else context.getString(bodyRes)
+        val title = listOfNotNull(
+            if (test) context.getString(R.string.alarm_test_prefix) else null,
+            who?.let { "$it ·" },
+            context.getString(titleRes),
+            value.takeIf { alert.type != AlarmType.SIGNAL_LOSS },
+        ).joinToString(" ")
+        val body = when {
+            who != null && alert.type == AlarmType.SIGNAL_LOSS -> context.getString(R.string.follow_alarm_signal_body, who, alert.minutesSinceReading ?: 0)
+            who != null -> context.getString(R.string.follow_alarm_body, who)
+            alert.type == AlarmType.SIGNAL_LOSS -> context.getString(bodyRes, alert.minutesSinceReading ?: 0)
+            else -> context.getString(bodyRes)
+        }
 
         val (snoozeMinutes, snoozeLabel) = when (alert.type) {
-            AlarmType.URGENT_LOW -> 5 to context.getString(R.string.alarm_action_treating)
+            AlarmType.URGENT_LOW -> 5 to context.getString(if (person == null) R.string.alarm_action_treating else R.string.alarm_action_ok)
             AlarmType.LOW -> settings.lowSnoozeMinutes to context.getString(R.string.alarm_action_snooze, settings.lowSnoozeMinutes)
             AlarmType.GOING_LOW -> 60 to context.getString(R.string.alarm_action_ok)
             AlarmType.HIGH -> settings.highSnoozeMinutes to context.getString(R.string.alarm_action_snooze, settings.highSnoozeMinutes)
@@ -73,10 +84,10 @@ class AlarmNotifier(private val context: Context) {
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE))
-            .setDeleteIntent(actionIntent(alert.type, minutes = 0, requestCode = alert.type.ordinal + 100))
-            .addAction(0, snoozeLabel, actionIntent(alert.type, snoozeMinutes, requestCode = alert.type.ordinal))
+            .setDeleteIntent(actionIntent(alert.type, minutes = 0, requestCode = alert.type.ordinal + 100, person = person))
+            .addAction(0, snoozeLabel, actionIntent(alert.type, snoozeMinutes, requestCode = alert.type.ordinal, person = person))
 
-        if (alert.type == AlarmType.URGENT_LOW) {
+        if (alert.type == AlarmType.URGENT_LOW && person == null) {
             val fullScreen = PendingIntent.getActivity(
                 context, 1,
                 UrgentAlarmActivity.intent(context, alert.mgDl),
@@ -90,11 +101,11 @@ class AlarmNotifier(private val context: Context) {
         }
         val posted = NotificationManagerCompat.from(context).areNotificationsEnabled() &&
             manager.getNotificationChannel(channel)?.importance != NotificationManager.IMPORTANCE_NONE
-        if (posted) manager.notify(notificationId(alert.type), builder.build())
+        if (posted) manager.notify(person, notificationId(alert.type), builder.build())
         // Lows always sound; highs and signal loss stay quiet if the user blocked their notifications.
         when {
-            alert.type == AlarmType.URGENT_LOW -> play(alert.type, settings, loop = true, URGENT_SOUND_MS)
-            alert.type.loud || posted -> play(alert.type, settings, loop = false, SOUND_MS)
+            alert.type == AlarmType.URGENT_LOW -> play(alert.type, settings, loop = true, URGENT_SOUND_MS, person)
+            alert.type.loud || posted -> play(alert.type, settings, loop = false, SOUND_MS, person)
         }
     }
 
@@ -159,9 +170,9 @@ class AlarmNotifier(private val context: Context) {
     fun preview(type: AlarmType, settings: AlarmSettings) = play(type, settings, loop = true, PREVIEW_MS)
 
     @Synchronized
-    fun cancel(type: AlarmType) {
-        manager.cancel(notificationId(type))
-        if (type == playing) stopSound()
+    fun cancel(type: AlarmType, person: String? = null) {
+        manager.cancel(person, notificationId(type))
+        if (type == playing && person == playingFor) stopSound()
     }
 
     @Synchronized
@@ -170,6 +181,7 @@ class AlarmNotifier(private val context: Context) {
         player?.release()
         player = null
         playing = null
+        playingFor = null
     }
 
     /**
@@ -178,7 +190,7 @@ class AlarmNotifier(private val context: Context) {
      * leave an alarm silent. Lows use the alarm stream; highs and signal loss the notification one.
      */
     @Synchronized
-    private fun play(type: AlarmType, settings: AlarmSettings, loop: Boolean, durationMs: Long) {
+    private fun play(type: AlarmType, settings: AlarmSettings, loop: Boolean, durationMs: Long, person: String? = null) {
         stopSound()
         val attributes = AudioAttributes.Builder()
             .setUsage(if (type.loud) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_NOTIFICATION_EVENT)
@@ -189,15 +201,19 @@ class AlarmNotifier(private val context: Context) {
         val candidates = (listOfNotNull(settings.sounds[type]?.uri?.let(Uri::parse)) + defaults).distinct()
         player = candidates.firstNotNullOfOrNull { start(context, it, attributes, loop) }
         playing = type
+        playingFor = person
         main.postDelayed(::stopSound, durationMs)
     }
 
-    private fun actionIntent(type: AlarmType, minutes: Int, requestCode: Int): PendingIntent = PendingIntent.getBroadcast(
+    private fun actionIntent(type: AlarmType, minutes: Int, requestCode: Int, person: String?): PendingIntent = PendingIntent.getBroadcast(
         context, requestCode,
         Intent(context, AlarmActionReceiver::class.java)
             .setAction(AlarmActionReceiver.ACTION_SNOOZE)
+            // Distinct data per person and button, so one person's snooze can't overwrite another's.
+            .setData(Uri.parse("sukoon://alarm/${person ?: "me"}/${type.name}/$minutes"))
             .putExtra(AlarmActionReceiver.EXTRA_TYPE, type.name)
-            .putExtra(AlarmActionReceiver.EXTRA_MINUTES, minutes),
+            .putExtra(AlarmActionReceiver.EXTRA_MINUTES, minutes)
+            .putExtra(AlarmActionReceiver.EXTRA_PERSON, person),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
 

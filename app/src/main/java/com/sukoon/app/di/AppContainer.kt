@@ -41,6 +41,7 @@ import com.sukoon.app.emergency.EmergencyAlerts
 import com.sukoon.app.BuildConfig
 import com.sukoon.app.sharing.Supabase
 import com.sukoon.app.sharing.Sharing
+import com.sukoon.app.sharing.FollowerWatch
 
 /**
  * Manual dependency container (ponytail: no Hilt/Koin for a graph this small). Owns the
@@ -83,14 +84,18 @@ class AppContainer(private val context: Context) {
 
     val sharing = Sharing(context, supabase, glucoseRepository, appScope)
 
+    private val notifier = AlarmNotifier(context)
+
     val alarms = AlarmMonitor(
         repository = glucoseRepository,
         settings = settings,
-        notifier = AlarmNotifier(context),
+        notifier = notifier,
         emergency = emergency,
         scope = appScope,
         enabled = { _sourceKind.value == SourceKind.LIBRE_BLE },
     )
+
+    val followerWatch = FollowerWatch(context, sharing, settings, notifier, appScope)
 
     init {
         glucoseRepository.start()
@@ -99,6 +104,7 @@ class AppContainer(private val context: Context) {
         alarms.start()
         nightscout.start()
         sharing.start()
+        followerWatch.start()
     }
 
     /** CSV of the last [days] days (0 = everything) → (text, data rows). */

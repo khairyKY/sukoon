@@ -488,4 +488,11 @@
     <string name="toast_sharing_follower_removed">%1$s removed from your followers.</string>
     <string name="toast_sharing_unfollowed">You stopped following %1$s.</string>
     <string name="toast_sharing_now_following">You now follow %1$s.</string>
+    <string name="follow_service_channel">Following</string>
+    <string name="follow_service_title">Following</string>
+    <string name="follow_service_body">Watching the people you follow.</string>
+    <string name="follow_alarm_body">Check on %1$s now.</string>
+    <string name="follow_alarm_signal_body">No readings from %1$s for %2$d min.</string>
+    <string name="sharing_alerts">Alert me about them</string>
+    <string name="sharing_alerts_body">Lows, highs and lost signal, with your alarm levels and sounds. Keeps a small notification with their latest reading.</string>
 </resources>

@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- CALL_PHONE (emergency escalation, A8) is intentionally not declared yet. -->
-
     <!-- Required to fire ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS (see platform/BatteryOptimization.kt) -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
@@ -24,6 +22,8 @@
     <!-- Keeps the sensor connection alive in the background (platform/SensorService.kt). -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <!-- Watching someone you follow (platform/FollowService.kt): no device involved, hence "special use". -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Alarms (alarms/): urgent low takes over the screen and may bypass Do Not Disturb. -->
@@ -110,6 +110,14 @@
             android:name=".alarms.AlarmActionReceiver"
             android:exported="false" />
 
+        <service
+            android:name=".platform.FollowService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Watches a family member's live glucose readings and sounds alarms when they are dangerously low or stop arriving." />
+        </service>
         <service
             android:name=".platform.SensorService"
             android:exported="false"

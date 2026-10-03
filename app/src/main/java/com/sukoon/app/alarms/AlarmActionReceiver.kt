@@ -16,11 +16,16 @@ class AlarmActionReceiver : BroadcastReceiver() {
         val type = AlarmType.entries.firstOrNull { it.name == intent.getStringExtra(EXTRA_TYPE) }
         if (!imOk && (intent.action != ACTION_SNOOZE || type == null)) return
         val minutes = intent.getIntExtra(EXTRA_MINUTES, 0)
+        val person = intent.getStringExtra(EXTRA_PERSON) // set on alerts about someone this phone follows
         val container = (context.applicationContext as SukoonApp).container
         val pending = goAsync()
         container.appScope.launch {
             try {
-                if (imOk) container.alarms.imOk() else container.alarms.acknowledge(requireNotNull(type), minutes)
+                when {
+                    imOk -> container.alarms.imOk()
+                    person != null -> container.followerWatch.acknowledge(person, requireNotNull(type), minutes)
+                    else -> container.alarms.acknowledge(requireNotNull(type), minutes)
+                }
             } finally {
                 pending.finish()
             }
@@ -32,5 +37,6 @@ class AlarmActionReceiver : BroadcastReceiver() {
         const val ACTION_IM_OK = "com.sukoon.app.alarms.IM_OK"
         const val EXTRA_TYPE = "type"
         const val EXTRA_MINUTES = "minutes"
+        const val EXTRA_PERSON = "person"
     }
 }
