@@ -2,6 +2,8 @@ package com.sukoon.app.di
 
 import android.content.Context
 import com.sukoon.app.ai.GeminiClient
+import com.sukoon.app.alarms.AlarmMonitor
+import com.sukoon.app.alarms.AlarmNotifier
 import com.sukoon.app.data.db.AppDatabase
 import com.sukoon.app.data.prefs.SettingsPrefs
 import com.sukoon.app.data.repository.GlucoseRepository
@@ -58,16 +60,26 @@ class AppContainer(private val context: Context) {
         sources = source,
         readingDao = database.readingDao(),
         scope = appScope,
+        saveIntervalMinutes = { settings.saveIntervalMinutes },
     )
 
     val logbookRepository: LogbookRepository = LogbookRepository(eventDao = database.eventDao())
 
     val gemini = GeminiClient(apiKey = { settings.geminiApiKey })
 
+    val alarms = AlarmMonitor(
+        repository = glucoseRepository,
+        settings = settings,
+        notifier = AlarmNotifier(context),
+        scope = appScope,
+        enabled = { _sourceKind.value == SourceKind.LIBRE_BLE },
+    )
+
     init {
         glucoseRepository.start()
         if (_sourceKind.value == SourceKind.LIBRE_BLE) SensorService.start(context)
         refreshWidgets()
+        alarms.start()
     }
 
     /**

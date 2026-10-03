@@ -31,6 +31,10 @@ interface ReadingDao {
     @Query("DELETE FROM readings WHERE source = :source")
     suspend fun deleteBySource(source: String)
 
+    /** Saved readings strictly inside (from, to) — backs the save-interval spacing rule. */
+    @Query("SELECT COUNT(*) FROM readings WHERE timestampMillis > :from AND timestampMillis < :to")
+    suspend fun countBetween(from: Long, to: Long): Int
+
     @Query("SELECT * FROM readings ORDER BY timestampMillis DESC LIMIT 1")
     fun latest(): Flow<ReadingEntity?>
 

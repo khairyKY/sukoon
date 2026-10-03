@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sukoon.app.BuildConfig
 import com.sukoon.app.R
+import com.sukoon.app.alarms.AlarmSettings
 import com.sukoon.app.data.source.libre.LibreNfc
 import com.sukoon.app.data.source.libre.SensorPairing
 import com.sukoon.app.data.source.SourceKind
@@ -60,6 +61,11 @@ fun SettingsScreen(
     onPaired: (LibreNfc.SensorRead, Long) -> Unit,
     onForgetSensor: () -> Unit,
     onSaveGeminiKey: (String) -> Unit,
+    alarmSettings: AlarmSettings,
+    onAlarmSettings: (AlarmSettings) -> Unit,
+    onTestAlarm: () -> Unit,
+    saveIntervalMinutes: Int,
+    onSaveInterval: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var keyInput by rememberSaveable(geminiKey) { mutableStateOf(geminiKey) }
@@ -74,6 +80,10 @@ fun SettingsScreen(
         Text(stringResource(R.string.home_nav_you), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground)
         Spacer(Modifier.height(20.dp))
 
+        SectionLabel(stringResource(R.string.setup_title))
+        SetupChecklist()
+
+        Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(R.string.sensor_title))
         SensorCard(
             pairing = pairing,
@@ -93,6 +103,14 @@ fun SettingsScreen(
         SourceOption(SourceKind.SIMULATED, sourceKind, R.string.settings_source_demo, R.string.settings_source_demo_body) {
             onSelectSource(SourceKind.SIMULATED)
         }
+
+        Spacer(Modifier.height(28.dp))
+        SectionLabel(stringResource(R.string.alarms_title))
+        AlarmSettingsSection(alarmSettings, onAlarmSettings, onTestAlarm)
+
+        Spacer(Modifier.height(28.dp))
+        SectionLabel(stringResource(R.string.readings_title))
+        ReadingsSection(saveIntervalMinutes, onSaveInterval)
 
         Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(R.string.widgets_title))

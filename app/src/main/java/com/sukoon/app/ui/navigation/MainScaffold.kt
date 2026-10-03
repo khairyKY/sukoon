@@ -22,6 +22,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,6 +47,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.sukoon.app.R
+import com.sukoon.app.alarms.AlarmType
+import com.sukoon.app.ui.home.HomeUiState
+import com.sukoon.app.ui.settings.SetupBanner
+import com.sukoon.app.ui.settings.rememberMissingSetup
 import com.sukoon.app.data.source.SourceKind
 import com.sukoon.app.ui.ai.AskViewModel
 import com.sukoon.app.ui.graph.GraphViewModel
@@ -82,7 +90,31 @@ fun MainScaffold() {
                 val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModel.factory(repository))
                 val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
                 val toYou = { navController.navigateToTab(SukoonTab.YOU) }
-                HomeScreen(state = homeState, onPairSensor = toYou, onEnterCodeManually = toYou, onTroubleshoot = toYou)
+                val alarms = (LocalContext.current.applicationContext as SukoonApp).container.alarms
+                val settings = (LocalContext.current.applicationContext as SukoonApp).container.settings
+                val scope = rememberCoroutineScope()
+                val missingSetup = rememberMissingSetup()
+                var setupLater by rememberSaveable { mutableStateOf(false) }
+                Column {
+                    if (missingSetup.isNotEmpty() && !setupLater) {
+                        SetupBanner(missingSetup, onFix = toYou, onLater = { setupLater = true })
+                    }
+                    HomeScreen(
+                        state = homeState,
+                        modifier = Modifier.weight(1f),
+                        onPairSensor = toYou,
+                        onEnterCodeManually = toYou,
+                        onTroubleshoot = toYou,
+                        // "I've treated it": urgent re-checks in 5 min; a plain low after its usual snooze.
+                        onTreated = {
+                            scope.launch {
+                                if (homeState is HomeUiState.Urgent) alarms.acknowledge(AlarmType.URGENT_LOW, 5)
+                                else alarms.acknowledge(AlarmType.LOW, settings.alarmSettings.lowSnoozeMinutes)
+                            }
+                        },
+                        onSnooze = { scope.launch { alarms.acknowledge(AlarmType.LOW, 15) } },
+                    )
+                }
             }
             composable(SukoonTab.TRENDS.route) {
                 // Hub over Graph (A3) + Logbook (A4); Insights (A9) slots in as a third sub-tab later.
@@ -118,6 +150,8 @@ fun MainScaffold() {
                 val status by container.glucoseRepository.status.collectAsStateWithLifecycle()
                 var pairing by remember { mutableStateOf(container.pairingStore.load()) }
                 var geminiKey by remember { mutableStateOf(container.settings.geminiApiKey) }
+                var alarmSettings by remember { mutableStateOf(container.settings.alarmSettings) }
+                var saveInterval by remember { mutableIntStateOf(container.settings.saveIntervalMinutes) }
                 SettingsScreen(
                     sourceKind = sourceKind,
                     status = status,
@@ -136,6 +170,17 @@ fun MainScaffold() {
                     onSaveGeminiKey = { key ->
                         container.settings.geminiApiKey = key
                         geminiKey = container.settings.geminiApiKey
+                    },
+                    alarmSettings = alarmSettings,
+                    onAlarmSettings = { changed ->
+                        container.settings.alarmSettings = changed.sanitized()
+                        alarmSettings = container.settings.alarmSettings
+                    },
+                    onTestAlarm = container.alarms::test,
+                    saveIntervalMinutes = saveInterval,
+                    onSaveInterval = { minutes ->
+                        container.settings.saveIntervalMinutes = minutes
+                        saveInterval = container.settings.saveIntervalMinutes
                     },
                 )
             }

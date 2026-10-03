@@ -68,6 +68,10 @@ class LibreBleSource(
     private var gatt: BluetoothGatt? = null
     private val chunks = HashMap<Int, ByteArray>()
     private var badPackets = 0
+    private var lastPacketAt = 0L
+    private var attemptStartedAt = 0L
+    private var connectedThisAttempt = false
+    private var directFailures = 0
 
     override suspend fun connect() {
         main.post {
@@ -78,6 +82,7 @@ class LibreBleSource(
             }
             active = true
             startScan()
+            main.postDelayed(::watchdog, WATCHDOG_MS)
         }
     }
 
@@ -109,8 +114,13 @@ class LibreBleSource(
             // with the screen off, and doesn't depend on what the advertisement contains.
             val address = store.bleAddress
             if (address != null && BluetoothAdapter.checkBluetoothAddress(address)) {
-                Log.i(TAG, "Connecting directly to $address")
-                gatt = remoteDevice(adapter, address).connectGatt(context, true, gattCallback, BluetoothDevice.TRANSPORT_LE)
+                // Direct connect first (fast, ~30 s timeout); after a failed direct attempt let the
+                // stack wait for the sensor in the background (autoConnect) until the watchdog cycles.
+                val auto = directFailures > 0
+                Log.i(TAG, "Connecting ${if (auto) "(background)" else "directly"} to $address")
+                attemptStartedAt = System.currentTimeMillis()
+                connectedThisAttempt = false
+                gatt = remoteDevice(adapter, address).connectGatt(context, auto, gattCallback, BluetoothDevice.TRANSPORT_LE)
                 return
             }
             // No address yet: unfiltered scan, matched on the advertised UID (some firmware doesn't
@@ -187,16 +197,37 @@ class LibreBleSource(
         return result.scanRecord?.deviceName.equals("abbott${p.serial}", ignoreCase = true)
     }
 
+    /**
+     * Once a minute: if no packet has arrived for [STALL_MS] and the current attempt is at least
+     * that old, the link is stuck (half-open connection, or a background connect that never
+     * fires) — tear it down and start over with a fast direct attempt.
+     */
+    private fun watchdog() {
+        if (!active) return
+        val now = System.currentTimeMillis()
+        if (gatt != null && now - lastPacketAt > STALL_MS && now - attemptStartedAt > STALL_MS) {
+            Log.w(TAG, "No packet for ${(now - lastPacketAt) / 1000} s — restarting the connection")
+            gatt?.close()
+            gatt = null
+            chunks.clear()
+            directFailures = 0
+            startScan()
+        }
+        main.postDelayed(::watchdog, WATCHDOG_MS)
+    }
+
     // --- GATT --------------------------------------------------------------------------------
 
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(g: BluetoothGatt, status: Int, newState: Int) {
             main.post {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    connectedThisAttempt = true
                     Log.i(TAG, "Connected, discovering services")
                     g.discoverServices()
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                     Log.i(TAG, "Disconnected (status $status)")
+                    if (!connectedThisAttempt) directFailures++
                     g.close()
                     if (gatt === g) gatt = null
                     chunks.clear()
@@ -291,6 +322,8 @@ class LibreBleSource(
             return
         }
         badPackets = 0
+        lastPacketAt = System.currentTimeMillis()
+        directFailures = 0
         val (age, points) = Libre2.parseBle(p.calibration, decrypted)
         val now = System.currentTimeMillis()
         Log.i(TAG, "Packet: age $age min, ${points.joinToString { "${it.minute}:${it.mgDl}" }}")
@@ -337,6 +370,8 @@ class LibreBleSource(
         private const val WARMUP_MINUTES = 60
         private const val RETRY_MS = 15_000L
         private const val RECONNECT_MS = 2_000L
+        private const val WATCHDOG_MS = 60_000L
+        private const val STALL_MS = 3 * 60_000L
         private const val SCAN_RESTART_MS = 10 * 60_000L
         // ponytail: fixed tolerance; tune if real sensors drift faster than ~2 min over a session.
         private const val DRIFT_TOLERANCE_MS = 2 * 60_000L

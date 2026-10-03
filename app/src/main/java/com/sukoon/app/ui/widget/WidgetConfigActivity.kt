@@ -6,13 +6,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -45,6 +42,7 @@ import androidx.glance.appwidget.state.getAppWidgetState
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.lifecycle.lifecycleScope
 import com.sukoon.app.R
+import com.sukoon.app.ui.components.ChoiceChips
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
 import com.sukoon.app.ui.theme.Sage
@@ -106,14 +104,14 @@ private fun WidgetConfigScreen(initial: WidgetOptions, onSave: (WidgetOptions) -
         Text(stringResource(R.string.widget_config_resize_hint), fontSize = 12.5.sp, color = CaptionMuted)
 
         Label(stringResource(R.string.widget_config_graph))
-        Chips(
+        ChoiceChips(
             choices = WidgetOptions.GRAPH_CHOICES,
             selected = options.graphHours,
             label = { if (it == 0) stringResource(R.string.widget_config_graph_off) else stringResource(R.string.widget_config_hours, it) },
         ) { options = options.copy(graphHours = it) }
 
         Label(stringResource(R.string.widget_config_background))
-        Chips(
+        ChoiceChips(
             choices = WidgetBackground.entries,
             selected = options.background,
             label = {
@@ -161,28 +159,4 @@ private fun Label(text: String) {
     Spacer(Modifier.height(22.dp))
     Text(text.uppercase(), fontSize = 10.5.sp, letterSpacing = 1.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted)
     Spacer(Modifier.height(8.dp))
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun <T> Chips(choices: List<T>, selected: T, label: @Composable (T) -> String, onPick: (T) -> Unit) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        choices.forEach { choice ->
-            val isSelected = choice == selected
-            Text(
-                label(choice),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = if (isSelected) Color.White else MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .then(
-                        if (isSelected) Modifier.background(Sage)
-                        else Modifier.border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f), RoundedCornerShape(10.dp)),
-                    )
-                    .clickable { onPick(choice) }
-                    .padding(horizontal = 14.dp, vertical = 9.dp),
-            )
-        }
-    }
 }

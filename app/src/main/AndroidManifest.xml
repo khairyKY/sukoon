@@ -23,6 +23,12 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Alarms (alarms/): urgent low takes over the screen and may bypass Do Not Disturb. -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <!-- required=false: SimulatedSource and future viewer-only clients don't need NFC hardware. -->
     <uses-feature android:name="android.hardware.nfc" android:required="false" />
 
@@ -77,6 +83,20 @@
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".alarms.UrgentAlarmActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:showWhenLocked="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Sukoon"
+            android:turnScreenOn="true" />
+
+        <receiver
+            android:name=".alarms.AlarmActionReceiver"
+            android:exported="false" />
 
         <service
             android:name=".platform.SensorService"

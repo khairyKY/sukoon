@@ -10,8 +10,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -34,7 +37,17 @@ class GlucoseRepository(
     private val sources: StateFlow<GlucoseSource>,
     private val readingDao: ReadingDao,
     private val scope: CoroutineScope,
+    /** Minimum minutes between saved readings (You → Readings: 1, 2, 3, 5 or 15). */
+    private val saveIntervalMinutes: () -> Int = { 1 },
 ) {
+    private val _live = MutableSharedFlow<GlucoseReading>(extraBufferCapacity = 64)
+
+    /**
+     * Every reading the source delivers, before the save-interval filter. Alarms watch this, so a
+     * sparser saved log can never delay an urgent-low alert.
+     */
+    val liveReadings: SharedFlow<GlucoseReading> = _live.asSharedFlow()
+
     val status: StateFlow<SourceStatus> = sources
         .flatMapLatest { it.status }
         .stateIn(scope, SharingStarted.Eagerly, SourceStatus.Disconnected)
@@ -67,10 +80,28 @@ class GlucoseRepository(
                 if (source !is SimulatedSource) readingDao.deleteBySource(SourceKind.SIMULATED.name)
                 // coroutineScope (not the outer launch's scope) so collectLatest's cancel reaches it.
                 coroutineScope {
-                    launch { source.readings.collect { readingDao.insert(it.toEntity()) } }
+                    launch {
+                        source.readings.collect { reading ->
+                            _live.tryEmit(reading)
+                            if (shouldSave(reading, saveIntervalMinutes())) readingDao.insert(reading.toEntity())
+                        }
+                    }
                     source.connect()
                 }
             }
         }
+    }
+
+    /**
+     * Spacing rule: save a reading only if no saved reading lies within (interval − 30 s) of it.
+     * Works for any interval (unlike aligning to a clock grid), keeps one live reading every N
+     * minutes, and still lets a reconnect's backfill fill a real gap — without re-adding the minutes
+     * that were skipped live. Duplicates of an already-saved reading fall out the same way.
+     */
+    private suspend fun shouldSave(reading: GlucoseReading, intervalMinutes: Int): Boolean {
+        if (intervalMinutes <= 1) return true // every reading; the unique index drops exact repeats
+        val t = reading.timestamp.toEpochMilli()
+        val margin = intervalMinutes * 60_000L - 30_000L
+        return readingDao.countBetween(t - margin, t + margin) == 0
     }
 }
