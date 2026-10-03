@@ -105,6 +105,7 @@ class AppContainer(private val context: Context) {
         val fram = read.fram ?: return
         val pairing = SensorPairing(read.uid, read.patchInfo, fram, scannedAtMillis - Libre2.sensorInfo(fram).ageMinutes * LibreBleSource.MINUTE_MS)
         pairingStore.save(pairing)
+        pairingStore.bleAddress = read.bleMac
         appScope.launch {
             for (point in Libre2.parseFram(pairing.calibration, fram)) {
                 if (point.mgDl !in LibreBleSource.PLAUSIBLE_MG_DL) continue

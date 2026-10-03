@@ -46,6 +46,11 @@ class SensorPairingStore(context: Context) {
         prefs.edit().putLong(KEY_START, startMillis).apply()
     }
 
+    /** The sensor's BLE address (from Enable Streaming, or the first scan match) — lets us connect without scanning. */
+    var bleAddress: String?
+        get() = prefs.getString(KEY_MAC, null)
+        set(value) = prefs.edit().putString(KEY_MAC, value).apply()
+
     fun nextUnlockCount(): Int {
         val next = prefs.getInt(KEY_UNLOCK_COUNT, 0) + 1
         prefs.edit().putInt(KEY_UNLOCK_COUNT, next).commit()
@@ -53,7 +58,7 @@ class SensorPairingStore(context: Context) {
     }
 
     fun clear() {
-        prefs.edit().remove(KEY_UID).remove(KEY_PATCH).remove(KEY_FRAM).remove(KEY_START).remove(KEY_UNLOCK_COUNT).apply()
+        prefs.edit().remove(KEY_UID).remove(KEY_PATCH).remove(KEY_FRAM).remove(KEY_START).remove(KEY_UNLOCK_COUNT).remove(KEY_MAC).apply()
     }
 
     private fun String.unhex(): ByteArray? =
@@ -65,5 +70,6 @@ class SensorPairingStore(context: Context) {
         const val KEY_FRAM = "libre_fram"
         const val KEY_START = "libre_start_millis"
         const val KEY_UNLOCK_COUNT = "libre_unlock_count"
+        const val KEY_MAC = "libre_ble_address"
     }
 }

@@ -1,6 +1,7 @@
 package com.sukoon.app.data.source.libre
 
 import android.annotation.SuppressLint
+import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
@@ -16,7 +17,6 @@ import android.content.Context
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.os.ParcelUuid
 import android.util.Log
 import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.data.source.GlucoseSource
@@ -37,8 +37,8 @@ import kotlinx.coroutines.flow.asStateFlow
 /**
  * Live glucose straight from a paired Libre 2 EU sensor over Bluetooth LE (Track B, B4–B6).
  *
- * Flow per connection (as GlucoseDirect does it): scan for service FDE3 → match the advertised
- * manufacturer data to the paired UID → connect → enable notifications on F002 → write the
+ * Flow per connection: connect to the sensor's BLE address (from Enable Streaming; or found once
+ * by an unfiltered scan matching the advertised UID) → enable notifications on F002 → write the
  * 12-byte login (Libre2.streamingUnlockPayload, counter bumped every time) to F001 → the sensor
  * then sends one 46-byte packet a minute in three notifications (20 + 18 + 8 bytes) →
  * [Libre2.decryptBle] (CRC-checked) → [Libre2.parseBle] → readings.
@@ -103,17 +103,41 @@ class LibreBleSource(
             return
         }
         try {
+            _status.value = SourceStatus.Connecting
+            // Known address (from Enable Streaming): connect straight to it. autoConnect=true lets
+            // the stack wait for the sensor to advertise and keep retrying — no scan filters, works
+            // with the screen off, and doesn't depend on what the advertisement contains.
+            val address = store.bleAddress
+            if (address != null && BluetoothAdapter.checkBluetoothAddress(address)) {
+                Log.i(TAG, "Connecting directly to $address")
+                gatt = remoteDevice(adapter, address).connectGatt(context, true, gattCallback, BluetoothDevice.TRANSPORT_LE)
+                return
+            }
+            // No address yet: unfiltered scan, matched on the advertised UID (some firmware doesn't
+            // advertise the FDE3 service UUID, so a service filter can miss the sensor entirely).
             adapter.bluetoothLeScanner?.startScan(
-                listOf(ScanFilter.Builder().setServiceUuid(ParcelUuid(SERVICE)).build()),
+                emptyList<ScanFilter>(),
                 ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build(),
                 scanCallback,
             ) ?: return
             scanning = true
-            _status.value = SourceStatus.Connecting
             // Android quietly stops long-running scans; restart periodically while still looking.
             main.postDelayed({ if (scanning) { stopScan(); startScan() } }, SCAN_RESTART_MS)
         } catch (e: SecurityException) {
             _status.value = SourceStatus.Error("Bluetooth permission needed")
+        }
+    }
+
+    /**
+     * Libre sensors use random static addresses (top two bits 11). Android ≥ 13 lets us say so;
+     * otherwise a never-scanned random address would be dialled as a public one and never connect.
+     */
+    private fun remoteDevice(adapter: BluetoothAdapter, address: String): BluetoothDevice {
+        val randomStatic = address.substring(0, 2).toInt(16) and 0xC0 == 0xC0
+        return if (Build.VERSION.SDK_INT >= 33 && randomStatic) {
+            adapter.getRemoteLeDevice(address, BluetoothDevice.ADDRESS_TYPE_RANDOM)
+        } else {
+            adapter.getRemoteDevice(address)
         }
     }
 
@@ -130,8 +154,15 @@ class LibreBleSource(
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             main.post {
                 val p = pairing ?: return@post
-                if (!scanning || !isPairedSensor(result, p)) return@post
+                if (!scanning) return@post
+                if (!isPairedSensor(result, p)) {
+                    if (result.scanRecord?.deviceName?.startsWith("abbott", ignoreCase = true) == true) {
+                        Log.i(TAG, "Saw ${result.scanRecord?.deviceName} ${result.device.address} (not the paired sensor)")
+                    }
+                    return@post
+                }
                 Log.i(TAG, "Found paired sensor ${result.device.address}")
+                store.bleAddress = result.device.address
                 stopScan()
                 gatt = result.device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
             }
