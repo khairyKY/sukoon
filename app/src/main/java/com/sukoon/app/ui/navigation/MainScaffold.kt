@@ -74,6 +74,10 @@ import java.time.Instant
 import com.sukoon.app.ui.reports.ReportViewModel
 import com.sukoon.app.ui.help.GettingStartedCard
 import com.sukoon.app.ui.help.HelpDialog
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import com.sukoon.app.ui.theme.Motion
 
 /**
  * Top-level navigation, per the shipped design's 3-tab bottom bar (Now / Trends / You) — not the
@@ -109,6 +113,9 @@ fun MainScaffold() {
             navController = navController,
             startDestination = SukoonTab.NOW.route,
             modifier = Modifier.padding(innerPadding),
+            // Stillness first (motion spec): switching tabs is a short fade, not travel.
+            enterTransition = { fadeIn(tween(Motion.BASE, easing = Motion.Out)) },
+            exitTransition = { fadeOut(tween(Motion.QUICK, easing = Motion.In)) },
         ) {
             composable(SukoonTab.NOW.route) {
                 val repository = (LocalContext.current.applicationContext as SukoonApp).container.glucoseRepository

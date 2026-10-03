@@ -38,6 +38,7 @@ import com.sukoon.app.ui.theme.Sage
 import com.sukoon.app.ui.theme.StateHigh
 import com.sukoon.app.ui.theme.StateLow
 import java.util.Locale
+import com.sukoon.app.ui.theme.Motion.staggerIn
 
 /**
  * Trends → Insights. Gated by a one-time acknowledgement; afterwards a standing one-line reminder
@@ -60,7 +61,7 @@ fun InsightsScreen(state: InsightsUiState, onAcknowledge: () -> Unit, modifier: 
             return@Column
         }
         Text(stringResource(R.string.insights_banner), fontSize = 12.sp, color = CaptionMuted)
-        state.insights?.forEach { InsightCard(it) }
+        state.insights?.forEachIndexed { i, insight -> Box(Modifier.staggerIn(i)) { InsightCard(insight) } }
     }
 }
 

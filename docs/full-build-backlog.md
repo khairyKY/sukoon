@@ -35,10 +35,10 @@ Legend: ✅ done · ◐ in progress · ⬜ to do · ⏸ blocked (reason)
 - ✅ Glucose in the status bar: the sensor notification shows value + arrow + age; the number is the status-bar icon.
 - ✅ User guide: You → Guide (12 topics, EN/AR) + a getting-started card on Now.
 - ✅ Insights into the AI brief (dose rules deliberately left out); active insulin in the brief; glucose-at-entry in the CSV and the brief; "glucose now" on the entry sheet.
-- ◐ Settings completion (A10): ✅ theme (like the phone / light / dark), ✅ quiet hours for highs (lows always sound); ⬜ units mg/dL ↔ mmol/L everywhere.
+- ✅ Settings completion (A10): theme (like the phone / light / dark), quiet hours for highs (lows always sound). mmol/L dropped: Kai and his father use mg/dL (2026-10-03).
 - ✅ Logbook polish: when it happened (now, 15/30/60 min ago, or a picked time; edits can move it); meal photos (taken or picked, also used by the AI estimate; thumbnails in the list; replace/remove).
-- ◐ Localization + motion sweep (A12): ✅ EN/AR parity checked (589 strings each, placeholders match, no hard-coded UI text); ⬜ motion pass against the design's motion spec.
-- ⬜ Wear OS complication/tile (#16).
+- ✅ Localization + motion sweep (A12): EN/AR parity checked (589 strings each); motion per the design's spec — tokens (ui/theme/Motion.kt), live pulse, reading count-up, graph draw-on, list/card cascade, urgent-low entrance + breathing reading, button press dip, quick tab fades, haptic on save; all honour the phone's "Remove animations".
+- ✖ Wear OS: dropped, no Wear OS watch (Kai, 2026-10-03).
 
 Rules: no APK builds or installs unless Kai asks (compile + unit tests only); no AI attribution in commits or PRs.
 

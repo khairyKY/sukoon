@@ -45,6 +45,15 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.graphicsLayer
+import com.sukoon.app.ui.theme.Motion
 
 /**
  * The urgent-low takeover: shown over the lock screen (full-screen intent) or straight over
@@ -121,13 +130,33 @@ class UrgentAlarmActivity : ComponentActivity() {
 
 @Composable
 private fun Takeover(title: String, big: String, body: String, action: String, onAction: () -> Unit) {
+    // Motion spec: scales in from 93 % over 560 ms; the reading breathes with the live-dot rhythm.
+    // "Remove animations": it simply appears and holds still. Never blocks the button.
+    val reduced = Motion.reduced()
+    val entrance = remember { Animatable(if (reduced) 1f else 0f) }
+    LaunchedEffect(Unit) { entrance.animateTo(1f, tween(Motion.SLOW, easing = Motion.Out)) }
+    val breath by rememberInfiniteTransition(label = "reading").animateFloat(
+        initialValue = 1f,
+        targetValue = 0.55f,
+        animationSpec = infiniteRepeatable(tween(Motion.LOOP / 2, easing = Motion.Standard), RepeatMode.Reverse),
+        label = "breath",
+    )
     Column(
-        Modifier.fillMaxSize().background(StateUrgent).safeDrawingPadding().padding(28.dp),
+        Modifier
+            .fillMaxSize()
+            .background(StateUrgent)
+            .graphicsLayer {
+                alpha = entrance.value
+                scaleX = 0.93f + 0.07f * entrance.value
+                scaleY = 0.93f + 0.07f * entrance.value
+            }
+            .safeDrawingPadding()
+            .padding(28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Text(title, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
-        Text(big, color = Color.White, fontSize = 120.sp, fontFamily = HeadlineSerifFontFamily)
+        Text(big, color = Color.White, fontSize = 120.sp, fontFamily = HeadlineSerifFontFamily, modifier = Modifier.graphicsLayer { alpha = if (reduced) 1f else breath })
         Text(body, color = Color.White, fontSize = 17.sp, textAlign = TextAlign.Center)
         Spacer(Modifier.height(48.dp))
         Box(

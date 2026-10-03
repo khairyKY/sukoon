@@ -66,6 +66,13 @@ import com.sukoon.app.ui.widget.arrow
 import com.sukoon.app.ui.theme.TextMuted
 import com.sukoon.app.ui.theme.UiFontFamily
 import java.util.Locale
+import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.runtime.LaunchedEffect
+import com.sukoon.app.ui.theme.Motion
+import com.sukoon.app.ui.theme.Motion.pressScale
+import kotlin.math.roundToInt
 
 /**
  * The Home/Now screen, in every state it can be in (docs/design-screens.md §2). Copy, colors,
@@ -136,11 +143,12 @@ private fun HomeContent(
 @Composable
 private fun PulsingDot(color: Color, pulsing: Boolean, size: androidx.compose.ui.unit.Dp = 6.dp) {
     val transition = rememberInfiniteTransition(label = "pulse")
-    val alpha by if (pulsing) {
+    // Live pulse (motion spec): one 2400 ms breath; with "remove animations" the dot holds solid.
+    val alpha by if (pulsing && !Motion.reduced()) {
         transition.animateFloat(
             initialValue = 1f,
             targetValue = 0.35f,
-            animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Reverse),
+            animationSpec = infiniteRepeatable(tween(Motion.LOOP / 2, easing = Motion.Standard), RepeatMode.Reverse),
             label = "pulseAlpha",
         )
     } else {
@@ -248,6 +256,20 @@ private fun HeroNumber(value: String, trend: TrendDirection?, color: Color, font
 
 private fun trendArrow(trend: TrendDirection): String = trend.arrow
 
+/**
+ * Count-up (motion spec): a new reading counts from the last one shown over 560 ms on the calm
+ * curve (from a little below on first appearance). Lows don't use it: they show at once.
+ */
+@Composable
+private fun countUp(mgDl: Int): Int {
+    val reduced = Motion.reduced()
+    val shown = remember { Animatable(if (reduced) mgDl.toFloat() else mgDl * 0.85f) }
+    LaunchedEffect(mgDl) {
+        if (reduced) shown.snapTo(mgDl.toFloat()) else shown.animateTo(mgDl.toFloat(), tween(Motion.SLOW, easing = Motion.Calm))
+    }
+    return shown.value.roundToInt()
+}
+
 @Composable
 private fun trendLabel(trend: TrendDirection): String = when (trend) {
     TrendDirection.FALLING_FAST -> stringResource(R.string.home_trend_falling_fast)
@@ -276,14 +298,16 @@ private fun MessageCard(title: String?, body: String) {
 
 @Composable
 private fun ActionButton(label: String, filled: Boolean, onClick: () -> Unit) {
+    val press = remember { MutableInteractionSource() }
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .pressScale(press)
             .clip(RoundedCornerShape(14.dp))
             .let {
                 if (filled) it.background(Sage) else it.border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f), RoundedCornerShape(14.dp))
             }
-            .clickable(onClick = onClick)
+            .clickable(interactionSource = press, indication = LocalIndication.current, onClick = onClick)
             .padding(15.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -308,7 +332,7 @@ private fun ColumnScope.InRangeContent(state: HomeUiState.InRange) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 20.dp)) {
             StatusPill(stringResource(R.string.home_pill_in_range), Sage, SageMist, com.sukoon.app.ui.theme.SageDeep)
             Spacer(Modifier.height(8.dp))
-            HeroNumber(state.glucoseMgDl.toString(), state.trend, MaterialTheme.colorScheme.onBackground)
+            HeroNumber(countUp(state.glucoseMgDl).toString(), state.trend, MaterialTheme.colorScheme.onBackground)
             Text(
                 text = "${stringResource(R.string.home_unit_mgdl)} · ${trendLabel(state.trend)} · ${stringResource(R.string.home_updated_now)}",
                 fontSize = 12.sp,
@@ -386,7 +410,7 @@ private fun ColumnScope.HighContent(state: HomeUiState.High) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 20.dp)) {
             StatusPill(stringResource(R.string.home_pill_high), StateHigh, PillHighBg, PillHighText)
             Spacer(Modifier.height(8.dp))
-            HeroNumber(state.glucoseMgDl.toString(), state.trend, StateHigh)
+            HeroNumber(countUp(state.glucoseMgDl).toString(), state.trend, StateHigh)
             Text(text = "${stringResource(R.string.home_unit_mgdl)} · ${trendLabel(state.trend)}", fontSize = 12.sp, color = CaptionMuted)
         }
         Spacer(Modifier.height(22.dp))

@@ -98,6 +98,12 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import java.io.File
+import android.os.Build
+import android.view.HapticFeedbackConstants
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.ui.platform.LocalView
+import com.sukoon.app.ui.theme.Motion.staggerIn
+import kotlinx.coroutines.delay
 
 // Quick-entry preset amounts per type (design 6g) — tapping one logs immediately, satisfying the
 // "one tap + one number" quick-entry principle (docs/PLAN.md §11) without a stepper. A custom
@@ -143,7 +149,13 @@ fun LogbookScreen(
     onOpenedEntry: () -> Unit = {},
 ) {
     val context = LocalContext.current
+    val view = LocalView.current
     var sheetTarget by remember { mutableStateOf<SheetTarget?>(null) }
+    var cascade by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        delay(1_500)
+        cascade = false
+    }
     LaunchedEffect(openNewEntry) {
         if (openNewEntry != null) {
             sheetTarget = SheetTarget.New(openNewEntry)
@@ -169,9 +181,12 @@ fun LogbookScreen(
                 LogbookEmptyState(onLogFirst = { sheetTarget = SheetTarget.New() }, modifier = Modifier.weight(1f))
             } else {
                 LazyColumn(Modifier.weight(1f)) {
-                    items(state.events, key = { it.id }) { event ->
-                        LogbookRow(event, state.meterChecks[event.id], state.glucoseAt[event.id], state.photos[event.id], onClick = { sheetTarget = SheetTarget.Edit(event) })
-                        HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
+                    itemsIndexed(state.events, key = { _, e -> e.id }) { i, event ->
+                        // Only when the list first appears: rows scrolled back into view just show.
+                        Column(if (cascade) Modifier.staggerIn(i) else Modifier) {
+                            LogbookRow(event, state.meterChecks[event.id], state.glucoseAt[event.id], state.photos[event.id], onClick = { sheetTarget = SheetTarget.Edit(event) })
+                            HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
+                        }
                     }
                 }
             }
@@ -205,6 +220,7 @@ fun LogbookScreen(
                 } else {
                     onQuickLog(type, value, note, at, photo)
                 }
+                view.performHapticFeedback(if (Build.VERSION.SDK_INT >= 30) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.KEYBOARD_TAP)
                 context.toast(context.getString(if (editing != null) R.string.toast_entry_updated else R.string.toast_logged))
                 sheetTarget = null
             },

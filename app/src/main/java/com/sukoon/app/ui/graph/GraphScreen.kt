@@ -81,6 +81,10 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.LaunchedEffect
+import com.sukoon.app.ui.theme.Motion
 
 // Fixed bottom of the y-axis; the top adapts to the data (see yMaxFor). Target band is 70–180.
 private const val Y_MIN = 40
@@ -214,6 +218,10 @@ private fun GlucoseChart(readings: List<GlucoseReading>, range: GraphRange, even
     val caption = TextStyle(fontSize = 12.sp, color = CaptionMuted)
     val span = (tEnd - tStart).toFloat()
     var selected by remember(range) { mutableStateOf<GlucoseReading?>(null) }
+    // Graph draw-on (motion spec): 900 ms left to right on each range; "remove animations" shows it whole.
+    val reduced = Motion.reduced()
+    val reveal = remember(range) { Animatable(if (reduced) 1f else 0f) }
+    LaunchedEffect(range) { reveal.animateTo(1f, tween(Motion.DRAW, easing = Motion.Out)) }
 
     Column {
         val sel = selected
@@ -268,9 +276,10 @@ private fun GlucoseChart(readings: List<GlucoseReading>, range: GraphRange, even
                 if (joined(i)) path.lineTo(x(r.timestamp.toEpochMilli()), y(r.glucoseMgDl)) else path.moveTo(x(r.timestamp.toEpochMilli()), y(r.glucoseMgDl))
             }
             val stroke = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
-            clipRect(bottom = y(HIGH)) { drawPath(path, StateHigh, style = stroke) }
-            clipRect(top = y(HIGH), bottom = y(LOW)) { drawPath(path, Sage, style = stroke) }
-            clipRect(top = y(LOW)) { drawPath(path, StateLow, style = stroke) }
+            val drawn = size.width * reveal.value
+            clipRect(right = drawn, bottom = y(HIGH)) { drawPath(path, StateHigh, style = stroke) }
+            clipRect(right = drawn, top = y(HIGH), bottom = y(LOW)) { drawPath(path, Sage, style = stroke) }
+            clipRect(right = drawn, top = y(LOW)) { drawPath(path, StateLow, style = stroke) }
             // A reading with no neighbour on either side would be an invisible path segment: dot it.
             points.indices.filter { !joined(it) && !(it + 1 < points.size && joined(it + 1)) }.forEach { i ->
                 drawCircle(valueColor(points[i].glucoseMgDl, Sage), radius = 2.dp.toPx(), center = Offset(x(points[i].timestamp.toEpochMilli()), y(points[i].glucoseMgDl)))
@@ -291,8 +300,8 @@ private fun GlucoseChart(readings: List<GlucoseReading>, range: GraphRange, even
                 }
             }
 
-            // Where the line ends now.
-            points.lastOrNull()?.let { r ->
+            // Where the line ends now (once the draw-on gets there).
+            points.lastOrNull()?.takeIf { reveal.value >= 1f }?.let { r ->
                 val c = Offset(x(r.timestamp.toEpochMilli()), y(r.glucoseMgDl))
                 drawCircle(background, radius = 6.dp.toPx(), center = c)
                 drawCircle(valueColor(r.glucoseMgDl, Sage), radius = 4.dp.toPx(), center = c)
