@@ -5,6 +5,10 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
+import com.sukoon.app.ui.widget.arrow
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /**
  * Mean per [bucketMillis] window, stamped at the window's middle, so a 14-day chart draws ~1.3k
@@ -18,6 +22,34 @@ internal fun downsample(readings: List<GlucoseReading>, bucketMillis: Long): Lis
             glucoseMgDl = inBucket.map { it.glucoseMgDl }.average().roundToInt(),
         )
     }
+
+/** One row of the readings list, its text ready before it reaches the screen. */
+internal data class ReadingRowText(val key: Long, val time: String, val value: String, val mgDl: Int, val arrow: String, val delta: String?)
+
+/** A day of the readings list: newest day first, newest reading first. */
+internal data class ReadingDay(val date: LocalDate, val rows: List<ReadingRowText>)
+
+/**
+ * The readings list from time-ordered [readings]: grouped by local day, each row with its change
+ * since the reading before it (only when that one is at most 15 minutes older).
+ */
+internal fun readingDays(readings: List<GlucoseReading>, zone: ZoneId, locale: Locale = Locale.getDefault()): List<ReadingDay> {
+    val time = DateTimeFormatter.ofPattern("HH:mm").withZone(zone)
+    return readings.indices.reversed().map { i ->
+        val r = readings[i]
+        val older = readings.getOrNull(i - 1)?.takeIf { r.timestamp.toEpochMilli() - it.timestamp.toEpochMilli() <= DELTA_WINDOW_MS }
+        r.timestamp.atZone(zone).toLocalDate() to ReadingRowText(
+            key = r.timestamp.toEpochMilli(),
+            time = time.format(r.timestamp),
+            value = String.format(locale, "%d", r.glucoseMgDl),
+            mgDl = r.glucoseMgDl,
+            arrow = r.trend.arrow,
+            delta = older?.let { String.format(locale, "%+d", r.glucoseMgDl - it.glucoseMgDl) },
+        )
+    }.groupBy({ it.first }, { it.second }).map { (date, rows) -> ReadingDay(date, rows) }
+}
+
+private const val DELTA_WINDOW_MS = 15 * 60_000L
 
 /** Top of the y-axis: the highest reading plus headroom, rounded up to 50, kept within 250–400 so the 70–180 band keeps its shape. */
 internal fun yMaxFor(readings: List<GlucoseReading>): Int =

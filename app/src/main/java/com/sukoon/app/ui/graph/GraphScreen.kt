@@ -86,12 +86,21 @@ import androidx.compose.animation.core.tween
 import androidx.compose.runtime.LaunchedEffect
 import com.sukoon.app.ui.theme.Motion
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.produceState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 // Fixed bottom of the y-axis; the top adapts to the data (see yMaxFor). Target band is 70–180.
 private const val Y_MIN = 40
 private const val LOW = 70
 private const val HIGH = 180
 private val CHART_HEIGHT = 256.dp
+private val READINGS_HEIGHT = 420.dp // the readings box; it scrolls inside, the page around it
 private const val BUCKET_MS = 15 * 60_000L // 7/14-day charts draw 15-minute means
 private const val GAP_MS = 15 * 60_000L // a longer silence breaks the line instead of bridging it
 
@@ -100,8 +109,8 @@ private val hm = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefa
 /**
  * Trends → Graph (design 8j, overhauled 2026-10-03): the current value and trend, a chart colored by
  * range with only the numbers that matter (70/180 and a few clock times), time in range + average +
- * GMI for the chosen range, then every reading, newest first. Canvas-drawn: one chart doesn't
- * justify a chart library.
+ * GMI for the chosen range, then every reading, newest first, in its own scrolling box.
+ * Canvas-drawn: one chart doesn't justify a chart library.
  */
 @Composable
 fun GraphScreen(
@@ -112,49 +121,58 @@ fun GraphScreen(
     title: String? = null,
 ) {
     val zone = remember { ZoneId.systemDefault() }
-    val newestFirst = remember(state.readings) { state.readings.asReversed() }
-    LazyColumn(
-        modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 24.dp),
+    // A day can be 1,440 readings: their text is built off the main thread, so scrolling only draws.
+    val days by produceState(emptyList<ReadingDay>(), state.readings) {
+        value = withContext(Dispatchers.Default) { readingDays(state.readings, zone) }
+    }
+    Column(
+        modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState())
+            .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 24.dp),
     ) {
-        item { Header(state.readings.lastOrNull(), title) }
-        item {
-            Column {
-                Spacer(Modifier.height(16.dp))
-                if (state.readings.isEmpty()) {
-                    Box(Modifier.fillMaxWidth().height(CHART_HEIGHT), contentAlignment = Alignment.Center) {
-                        Text(stringResource(R.string.graph_empty), color = CaptionMuted, fontSize = 14.sp)
-                    }
-                } else {
-                    GlucoseChart(state.readings, state.range, state.events, zone)
-                }
-                Spacer(Modifier.height(12.dp))
-                RangeSelector(state.range, onSelectRange)
+        Header(state.readings.lastOrNull(), title)
+        Spacer(Modifier.height(16.dp))
+        if (state.readings.isEmpty()) {
+            Box(Modifier.fillMaxWidth().height(CHART_HEIGHT), contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.graph_empty), color = CaptionMuted, fontSize = 14.sp)
             }
+        } else {
+            GlucoseChart(state.readings, state.range, state.events, zone)
         }
+        Spacer(Modifier.height(12.dp))
+        RangeSelector(state.range, onSelectRange)
         state.summary?.let { summary ->
-            item {
-                Column {
-                    Spacer(Modifier.height(16.dp))
-                    RangeStats(summary, stringResource(R.string.graph_tir_title, rangeLabel(state.range)), showGmi = state.range.hours >= 24)
-                }
-            }
+            Spacer(Modifier.height(16.dp))
+            RangeStats(summary, stringResource(R.string.graph_tir_title, rangeLabel(state.range)), showGmi = state.range.hours >= 24)
         }
-        if (newestFirst.isNotEmpty()) {
-            item {
-                Column {
-                    Spacer(Modifier.height(24.dp))
-                    Eyebrow(stringResource(R.string.graph_readings))
-                }
-            }
-            items(newestFirst.size, key = { newestFirst[it].timestamp.toEpochMilli() }) { i ->
-                val reading = newestFirst[i]
-                val day = reading.timestamp.atZone(zone).toLocalDate()
-                Column {
-                    if (i == 0 || newestFirst[i - 1].timestamp.atZone(zone).toLocalDate() != day) DayHeader(day)
-                    ReadingRow(reading, older = newestFirst.getOrNull(i + 1))
-                }
-            }
+        if (days.isNotEmpty()) {
+            Spacer(Modifier.height(24.dp))
+            Eyebrow(stringResource(R.string.graph_readings))
+            Spacer(Modifier.height(8.dp))
+            ReadingsList(days)
+        }
+    }
+}
+
+/**
+ * Every reading in the range, newest first, in its own scrolling box; each day's name stays pinned
+ * at the top while you scroll through it. Reaching either end hands the scroll back to the page.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun ReadingsList(days: List<ReadingDay>) {
+    LazyColumn(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(max = READINGS_HEIGHT)
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface),
+    ) {
+        days.forEach { day ->
+            stickyHeader(key = "day-${day.date}", contentType = "day") { DayHeader(day.date) }
+            items(day.rows, key = { it.key }, contentType = { "reading" }) { ReadingRow(it) }
         }
     }
 }
@@ -412,24 +430,22 @@ private fun DayHeader(day: LocalDate) {
         letterSpacing = 1.sp,
         fontWeight = FontWeight.SemiBold,
         color = CaptionMuted,
-        modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
+        // Opaque, so rows scrolling under the pinned header don't show through.
+        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(horizontal = 16.dp, vertical = 8.dp),
     )
 }
 
 /** One saved reading: time, value, arrow, and the change since the reading before it. */
 @Composable
-private fun ReadingRow(reading: GlucoseReading, older: GlucoseReading?) {
-    val color = valueColor(reading.glucoseMgDl)
-    val delta = older
-        ?.takeIf { reading.timestamp.toEpochMilli() - it.timestamp.toEpochMilli() <= GAP_MS }
-        ?.let { reading.glucoseMgDl - it.glucoseMgDl }
-    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(hm.format(reading.timestamp), fontSize = 14.sp, color = CaptionMuted, modifier = Modifier.width(56.dp))
-        Text(String.format(Locale.getDefault(), "%d", reading.glucoseMgDl), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = color)
+private fun ReadingRow(row: ReadingRowText) {
+    val color = valueColor(row.mgDl)
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(row.time, fontSize = 14.sp, color = CaptionMuted, modifier = Modifier.width(56.dp))
+        Text(row.value, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = color)
         Spacer(Modifier.width(8.dp))
-        Text(reading.trend.arrow, fontSize = 16.sp, color = color)
+        Text(row.arrow, fontSize = 16.sp, color = color)
         Spacer(Modifier.weight(1f))
-        if (delta != null) Text(String.format(Locale.getDefault(), "%+d", delta), fontSize = 12.sp, color = CaptionMuted)
+        if (row.delta != null) Text(row.delta, fontSize = 12.sp, color = CaptionMuted)
     }
     HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f))
 }

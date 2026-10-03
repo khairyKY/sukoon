@@ -7,11 +7,24 @@ import java.time.Instant
 import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.time.LocalDate
+import java.util.Locale
 
 class GraphMathTest {
 
     private val t0 = Instant.parse("2026-10-03T00:00:00Z")
     private fun r(minute: Long, mgDl: Int) = GlucoseReading(t0.plusSeconds(minute * 60), mgDl, TrendDirection.STEADY, SourceKind.LIBRE_BLE)
+
+    @Test
+    fun `readings list groups by day, newest first, with each change`() {
+        // t0 is midnight UTC: two readings the evening before, two after.
+        val days = readingDays(listOf(r(-2, 100), r(-1, 104), r(1, 110), r(40, 120)), ZoneOffset.UTC, Locale.US)
+        assertEquals(listOf(LocalDate.parse("2026-10-03"), LocalDate.parse("2026-10-02")), days.map { it.date })
+        assertEquals(listOf("00:40", "00:01"), days[0].rows.map { it.time })
+        assertEquals(listOf(null, "+6"), days[0].rows.map { it.delta }) // 00:40 is 39 min after 00:01: no change shown
+        assertEquals(listOf("23:59", "23:58"), days[1].rows.map { it.time })
+        assertEquals(listOf("+4", null), days[1].rows.map { it.delta }) // the oldest has nothing before it
+    }
 
     @Test
     fun `downsample averages each bucket and stamps its middle`() {
