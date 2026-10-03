@@ -11,6 +11,7 @@ import android.provider.Settings
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.sukoon.app.R
+import com.sukoon.app.data.prefs.SettingsPrefs
 
 /**
  * Everything Sukoon needs from the OS to be a reliable CGM app, with how to check and how to fix
@@ -23,14 +24,21 @@ enum class SetupItem(val titleRes: Int, val whyRes: Int) {
     FULL_SCREEN(R.string.setup_full_screen, R.string.setup_full_screen_why),
     OVERLAY(R.string.setup_overlay, R.string.setup_overlay_why),
     DND(R.string.setup_dnd, R.string.setup_dnd_why),
+    EMERGENCY(R.string.setup_emergency, R.string.setup_emergency_why),
 }
 
 object SetupCheck {
 
-    /** Items that exist on this Android version (full-screen intent only needs granting on 14+). */
-    fun applicable(): List<SetupItem> = SetupItem.entries.filter { it != SetupItem.FULL_SCREEN || Build.VERSION.SDK_INT >= 34 }
+    /** Items that apply here: full-screen intent only needs granting on 14+; emergency texts once there's a contact. */
+    fun applicable(context: Context): List<SetupItem> = SetupItem.entries.filter {
+        when (it) {
+            SetupItem.FULL_SCREEN -> Build.VERSION.SDK_INT >= 34
+            SetupItem.EMERGENCY -> SettingsPrefs(context).emergency.contacts.isNotEmpty()
+            else -> true
+        }
+    }
 
-    fun missing(context: Context): List<SetupItem> = applicable().filterNot { isDone(context, it) }
+    fun missing(context: Context): List<SetupItem> = applicable(context).filterNot { isDone(context, it) }
 
     fun isDone(context: Context, item: SetupItem): Boolean {
         val notifications = context.getSystemService(NotificationManager::class.java)
@@ -41,6 +49,7 @@ object SetupCheck {
             SetupItem.FULL_SCREEN -> Build.VERSION.SDK_INT < 34 || notifications.canUseFullScreenIntent()
             SetupItem.OVERLAY -> Settings.canDrawOverlays(context)
             SetupItem.DND -> notifications.isNotificationPolicyAccessGranted
+            SetupItem.EMERGENCY -> EMERGENCY_PERMISSIONS.all { granted(context, it) }
         }
     }
 
@@ -48,6 +57,7 @@ object SetupCheck {
     fun runtimePermissions(item: SetupItem): List<String> = when (item) {
         SetupItem.NOTIFICATIONS -> if (Build.VERSION.SDK_INT >= 33) listOf(Manifest.permission.POST_NOTIFICATIONS) else emptyList()
         SetupItem.BLUETOOTH -> bluetoothPermissions()
+        SetupItem.EMERGENCY -> EMERGENCY_PERMISSIONS
         else -> emptyList()
     }
 
@@ -61,11 +71,14 @@ object SetupCheck {
             SetupItem.FULL_SCREEN -> Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, pkg)
             SetupItem.OVERLAY -> Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, pkg)
             SetupItem.DND -> Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+            SetupItem.EMERGENCY -> Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, pkg)
         }.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 
     /** Samsung/Xiaomi/… kill background apps beyond Android's own rules; we can't read that state, only open the page. */
     fun hasOemBackgroundSettings(): Boolean = BatteryOptimization.candidatesFor(Build.MANUFACTURER).isNotEmpty()
+
+    private val EMERGENCY_PERMISSIONS = listOf(Manifest.permission.SEND_SMS, Manifest.permission.CALL_PHONE)
 
     private fun bluetoothPermissions() = if (Build.VERSION.SDK_INT >= 31) {
         listOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)

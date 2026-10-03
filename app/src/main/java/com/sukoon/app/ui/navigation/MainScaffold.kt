@@ -61,6 +61,8 @@ import com.sukoon.app.ui.home.HomeViewModel
 import com.sukoon.app.ui.logbook.LogbookViewModel
 import com.sukoon.app.ui.settings.SettingsScreen
 import com.sukoon.app.ui.theme.Sage
+import com.sukoon.app.ui.settings.EmergencyActionsDialog
+import com.sukoon.app.ui.components.toast
 
 /**
  * Top-level navigation, per the shipped design's 3-tab bottom bar (Now / Trends / You) — not the
@@ -99,6 +101,11 @@ fun MainScaffold() {
                 val scope = rememberCoroutineScope()
                 val missingSetup = rememberMissingSetup()
                 var setupLater by rememberSaveable { mutableStateOf(false) }
+                val context = LocalContext.current
+                val emergencyAlerts = (context.applicationContext as SukoonApp).container.emergency
+                val latest by repository.latestReading.collectAsStateWithLifecycle(initialValue = null)
+                var askingForHelp by remember { mutableStateOf(false) }
+                if (askingForHelp) EmergencyActionsDialog(emergencyAlerts, latest, onDismiss = { askingForHelp = false })
                 Column {
                     if (missingSetup.isNotEmpty() && !setupLater) {
                         SetupBanner(missingSetup, onFix = toYou, onLater = { setupLater = true })
@@ -117,6 +124,14 @@ fun MainScaffold() {
                             }
                         },
                         onSnooze = { scope.launch { alarms.acknowledge(AlarmType.LOW, 15) } },
+                        onAlertEmergencyContact = {
+                            if (emergencyAlerts.contacts.isEmpty()) {
+                                context.toast(context.getString(R.string.toast_emergency_no_contacts), long = true)
+                                toYou()
+                            } else {
+                                askingForHelp = true
+                            }
+                        },
                         onAddFood = { pendingEntry = LogEventType.CARB; navController.navigateToTab(SukoonTab.TRENDS) },
                         onAddInsulin = { pendingEntry = LogEventType.INSULIN; navController.navigateToTab(SukoonTab.TRENDS) },
                     )
@@ -166,6 +181,7 @@ fun MainScaffold() {
                 var pairing by remember { mutableStateOf(container.pairingStore.load()) }
                 var geminiKey by remember { mutableStateOf(container.settings.geminiApiKey) }
                 var alarmSettings by remember { mutableStateOf(container.settings.alarmSettings) }
+                var emergency by remember { mutableStateOf(container.settings.emergency) }
                 var saveInterval by remember { mutableIntStateOf(container.settings.saveIntervalMinutes) }
                 var nightscout by remember { mutableStateOf(container.nightscout.config) }
                 val nightscoutStatus by container.nightscout.status.collectAsStateWithLifecycle()
@@ -195,6 +211,12 @@ fun MainScaffold() {
                     },
                     onTestAlarm = container.alarms::test,
                     onPreviewAlarm = container.alarms::preview,
+                    emergency = emergency,
+                    emergencyAlerts = container.emergency,
+                    onEmergency = { changed ->
+                        container.settings.emergency = changed.sanitized()
+                        emergency = container.settings.emergency
+                    },
                     saveIntervalMinutes = saveInterval,
                     onSaveInterval = { minutes ->
                         container.settings.saveIntervalMinutes = minutes

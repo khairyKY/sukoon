@@ -5,6 +5,7 @@ import com.sukoon.app.alarms.AlarmSettings
 import com.sukoon.app.data.source.SourceKind
 import com.sukoon.app.alarms.AlarmSound
 import com.sukoon.app.alarms.AlarmType
+import com.sukoon.app.emergency.EmergencySettings
 
 /**
  * User settings, in the same prefs file as [DisclaimerPrefs]. ponytail: plain private
@@ -65,6 +66,21 @@ class SettingsPrefs(context: Context) {
             edit.apply()
         }
 
+    /** You → Emergency contacts. Contacts are a small JSON list; a corrupt value reads as none. */
+    var emergency: EmergencySettings
+        get() = EmergencySettings(
+            contacts = EmergencySettings.contactsFromJson(prefs.getString(KEY_EMERGENCY_CONTACTS, null)),
+            yourName = prefs.getString(KEY_EMERGENCY_NAME, "") ?: "",
+            afterMinutes = prefs.getInt(KEY_EMERGENCY_AFTER, 10),
+            shareLocation = prefs.getBoolean(KEY_EMERGENCY_LOCATION, false),
+        ).sanitized()
+        set(value) = prefs.edit()
+            .putString(KEY_EMERGENCY_CONTACTS, EmergencySettings.contactsToJson(value.contacts))
+            .putString(KEY_EMERGENCY_NAME, value.yourName)
+            .putInt(KEY_EMERGENCY_AFTER, value.afterMinutes)
+            .putBoolean(KEY_EMERGENCY_LOCATION, value.shareLocation)
+            .apply()
+
     /** Trends → Insights stays locked until the user has read and accepted what it is (and isn't). */
     var insightsAcknowledged: Boolean
         get() = prefs.getBoolean(KEY_INSIGHTS_ACK, false)
@@ -88,5 +104,9 @@ class SettingsPrefs(context: Context) {
         private const val KEY_HIGH_SNOOZE = "alarm_high_snooze"
         private const val KEY_SOUND = "alarm_sound_"
         private const val KEY_SOUND_NAME = "alarm_sound_name_"
+        private const val KEY_EMERGENCY_CONTACTS = "emergency_contacts"
+        private const val KEY_EMERGENCY_NAME = "emergency_your_name"
+        private const val KEY_EMERGENCY_AFTER = "emergency_after_minutes"
+        private const val KEY_EMERGENCY_LOCATION = "emergency_share_location"
     }
 }

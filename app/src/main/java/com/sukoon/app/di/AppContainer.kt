@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.sukoon.app.emergency.EmergencyAlerts
 
 /**
  * Manual dependency container (ponytail: no Hilt/Koin for a graph this small). Owns the
@@ -73,10 +74,13 @@ class AppContainer(private val context: Context) {
 
     val nightscout = NightscoutUploader(context, glucoseRepository, logbookRepository, appScope)
 
+    val emergency = EmergencyAlerts(context, settings)
+
     val alarms = AlarmMonitor(
         repository = glucoseRepository,
         settings = settings,
         notifier = AlarmNotifier(context),
+        emergency = emergency,
         scope = appScope,
         enabled = { _sourceKind.value == SourceKind.LIBRE_BLE },
     )

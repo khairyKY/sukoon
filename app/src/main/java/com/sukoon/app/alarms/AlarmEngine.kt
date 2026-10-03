@@ -48,6 +48,8 @@ data class AlarmState(
     val activeSince: Map<AlarmType, Instant> = emptyMap(),
     val lastAlertAt: Map<AlarmType, Instant> = emptyMap(),
     val snoozedUntil: Map<AlarmType, Instant> = emptyMap(),
+    /** Last time someone answered each alarm (any button, or swiping it away): the emergency escalation's clock. */
+    val acknowledgedAt: Map<AlarmType, Instant> = emptyMap(),
 )
 
 data class Alert(val type: AlarmType, val mgDl: Int?, val minutesSinceReading: Long?)
@@ -120,8 +122,12 @@ object AlarmEngine {
             }
         }
         val cleared = state.activeSince.keys - active
-        return Evaluation(AlarmState(activeSince, lastAlertAt, snoozedUntil), fire, cleared)
+        return Evaluation(AlarmState(activeSince, lastAlertAt, snoozedUntil, state.acknowledgedAt.filterKeys { it in active }), fire, cleared)
     }
+
+    /** Someone answered [type] (a button, or swiping it away); restarts the emergency escalation clock. */
+    fun acknowledge(state: AlarmState, type: AlarmType, now: Instant): AlarmState =
+        state.copy(acknowledgedAt = state.acknowledgedAt + (type to now))
 
     /** Silence [type] for [minutes]; urgent low is capped at its 5-minute repeat. */
     fun snooze(state: AlarmState, type: AlarmType, minutes: Int, now: Instant): AlarmState {

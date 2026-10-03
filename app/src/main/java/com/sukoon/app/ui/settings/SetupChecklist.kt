@@ -76,7 +76,7 @@ fun SetupChecklist() {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        SetupCheck.applicable().forEach { item ->
+        SetupCheck.applicable(context).forEach { item ->
             val done = item !in missing
             Row(verticalAlignment = Alignment.Top) {
                 Box(Modifier.padding(top = 5.dp).size(10.dp).clip(CircleShape).background(if (done) Sage else StateHigh))

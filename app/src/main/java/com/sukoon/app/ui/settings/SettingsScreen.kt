@@ -52,6 +52,8 @@ import androidx.compose.ui.platform.LocalContext
 import com.sukoon.app.data.export.ConnectionTest
 import com.sukoon.app.ui.components.toast
 import com.sukoon.app.alarms.AlarmType
+import com.sukoon.app.emergency.EmergencyAlerts
+import com.sukoon.app.emergency.EmergencySettings
 
 /**
  * You tab (A10, MVP slice): the paired Libre sensor (Track B), the data source (sensor or demo),
@@ -71,6 +73,9 @@ fun SettingsScreen(
     onAlarmSettings: (AlarmSettings) -> Unit,
     onTestAlarm: () -> Unit,
     onPreviewAlarm: (AlarmType) -> Unit,
+    emergency: EmergencySettings,
+    emergencyAlerts: EmergencyAlerts,
+    onEmergency: (EmergencySettings) -> Unit,
     saveIntervalMinutes: Int,
     onSaveInterval: (Int) -> Unit,
     nightscout: NightscoutConfig,
@@ -125,6 +130,10 @@ fun SettingsScreen(
         Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(R.string.alarms_title))
         AlarmSettingsSection(alarmSettings, onAlarmSettings, onTestAlarm, onPreviewAlarm)
+
+        Spacer(Modifier.height(28.dp))
+        SectionLabel(stringResource(R.string.emergency_title))
+        EmergencySection(emergency, emergencyAlerts, onEmergency)
 
         Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(R.string.readings_title))

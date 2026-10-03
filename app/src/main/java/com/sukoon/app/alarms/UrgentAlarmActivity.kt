@@ -18,6 +18,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,14 +35,24 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import com.sukoon.app.R
 import com.sukoon.app.SukoonApp
+import com.sukoon.app.emergency.EscalationPhase
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
 import com.sukoon.app.ui.theme.StateUrgent
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
  * The urgent-low takeover: shown over the lock screen (full-screen intent) or straight over
  * whatever is open (with "display over other apps"). One big action — "I'm treating it" —
  * silences the alarm for 5 minutes; if glucose is still urgent then, it comes back.
+ *
+ * During an emergency escalation it becomes the countdown ("Alerting Mum, Dad in 43 s" + I'm OK),
+ * and after the texts went out it says so and offers to tell the contacts you're OK.
  */
 class UrgentAlarmActivity : ComponentActivity() {
 
@@ -47,36 +62,46 @@ class UrgentAlarmActivity : ComponentActivity() {
         setTurnScreenOn(true)
         val mgDl = intent.getIntExtra(EXTRA_MG_DL, -1).takeIf { it > 0 }
         val container = (applicationContext as SukoonApp).container
+        fun answer(block: suspend () -> Unit) {
+            lifecycleScope.launch {
+                block()
+                finish()
+            }
+        }
         setContent {
-            Column(
-                Modifier.fillMaxSize().background(StateUrgent).safeDrawingPadding().padding(28.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(stringResource(R.string.alarm_urgent_title), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
-                Text(
-                    mgDl?.toString() ?: "—",
-                    color = Color.White,
-                    fontSize = 120.sp,
-                    fontFamily = HeadlineSerifFontFamily,
-                )
-                Text(stringResource(R.string.alarm_urgent_body), color = Color.White, fontSize = 17.sp, textAlign = TextAlign.Center)
-                Spacer(Modifier.height(48.dp))
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(Color.White)
-                        .clickable {
-                            lifecycleScope.launch {
-                                container.alarms.acknowledge(AlarmType.URGENT_LOW, 5)
-                                finish()
-                            }
+            val phase by container.alarms.escalation.collectAsState()
+            val names = container.emergency.contacts.joinToString { it.name }
+            when (val p = phase) {
+                is EscalationPhase.Countdown -> {
+                    val seconds by produceState(secondsUntil(p.endsAt), p) {
+                        while (value > 0) {
+                            delay(200)
+                            value = secondsUntil(p.endsAt)
                         }
-                        .padding(vertical = 22.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(stringResource(R.string.alarm_action_treating), color = StateUrgent, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Takeover(
+                        title = stringResource(R.string.emergency_countdown_title),
+                        big = String.format(Locale.getDefault(), "%d", seconds),
+                        body = stringResource(R.string.emergency_screen_countdown, names),
+                        action = stringResource(R.string.emergency_im_ok),
+                    ) { answer { container.alarms.imOk() } }
+                }
+                is EscalationPhase.Sent -> Takeover(
+                    title = stringResource(R.string.emergency_sent_title),
+                    big = TIME.format(p.at),
+                    body = stringResource(R.string.emergency_screen_sent, p.to.joinToString().ifBlank { names }),
+                    action = stringResource(R.string.emergency_screen_tell_ok),
+                ) { answer { container.alarms.imOk() } }
+                EscalationPhase.Idle -> if (mgDl == null) {
+                    // Opened for a countdown that has already been answered: nothing left to show.
+                    LaunchedEffect(Unit) { finish() }
+                } else {
+                    Takeover(
+                        title = stringResource(R.string.alarm_urgent_title),
+                        big = String.format(Locale.getDefault(), "%d", mgDl),
+                        body = stringResource(R.string.alarm_urgent_body),
+                        action = stringResource(R.string.alarm_action_treating),
+                    ) { answer { container.alarms.acknowledge(AlarmType.URGENT_LOW, 5) } }
                 }
             }
         }
@@ -84,9 +109,37 @@ class UrgentAlarmActivity : ComponentActivity() {
 
     companion object {
         private const val EXTRA_MG_DL = "mg_dl"
+        private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+
+        private fun secondsUntil(at: Instant) = ((Duration.between(Instant.now(), at).toMillis() + 999) / 1000).coerceAtLeast(0).toInt()
 
         fun intent(context: Context, mgDl: Int?) = Intent(context, UrgentAlarmActivity::class.java)
             .putExtra(EXTRA_MG_DL, mgDl ?: -1)
             .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+    }
+}
+
+@Composable
+private fun Takeover(title: String, big: String, body: String, action: String, onAction: () -> Unit) {
+    Column(
+        Modifier.fillMaxSize().background(StateUrgent).safeDrawingPadding().padding(28.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(title, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+        Text(big, color = Color.White, fontSize = 120.sp, fontFamily = HeadlineSerifFontFamily)
+        Text(body, color = Color.White, fontSize = 17.sp, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(48.dp))
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(18.dp))
+                .background(Color.White)
+                .clickable(onClick = onAction)
+                .padding(vertical = 22.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(action, color = StateUrgent, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        }
     }
 }

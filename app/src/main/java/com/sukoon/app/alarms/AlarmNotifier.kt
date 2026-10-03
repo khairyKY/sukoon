@@ -17,6 +17,10 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.sukoon.app.MainActivity
 import com.sukoon.app.R
+import android.os.PowerManager
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 /**
  * Turns alarm decisions into things a person notices. Urgent low is built to wake someone up:
@@ -35,6 +39,9 @@ class AlarmNotifier(private val context: Context) {
     private val main = Handler(Looper.getMainLooper())
     private var player: MediaPlayer? = null
     private var playing: AlarmType? = null
+    private val wakeLock = context.getSystemService(PowerManager::class.java)
+        .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "sukoon:emergency")
+        .apply { setReferenceCounted(false) }
 
     fun show(alert: Alert, settings: AlarmSettings, test: Boolean = false) {
         val (titleRes, bodyRes) = when (alert.type) {
@@ -90,6 +97,63 @@ class AlarmNotifier(private val context: Context) {
             alert.type.loud || posted -> play(alert.type, settings, loop = false, SOUND_MS)
         }
     }
+
+    /** Keeps the CPU up through the emergency countdown, so sleep can't delay the texts. */
+    fun keepAwake(ms: Long) = wakeLock.acquire(ms)
+
+    /** The emergency countdown: urgent channel and sound, a live countdown, the full-screen alert, and "I'm OK". */
+    fun showCountdown(endsAt: Instant, settings: AlarmSettings) {
+        val screen = PendingIntent.getActivity(context, 2, UrgentAlarmActivity.intent(context, null), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val builder = NotificationCompat.Builder(context, channelFor(AlarmType.URGENT_LOW))
+            .setSmallIcon(R.drawable.ic_stat_sukoon)
+            .setContentTitle(context.getString(R.string.emergency_countdown_title))
+            .setContentText(context.getString(R.string.emergency_countdown_body))
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setOngoing(true)
+            .setWhen(endsAt.toEpochMilli())
+            .setShowWhen(true)
+            .setUsesChronometer(true)
+            .setChronometerCountDown(true)
+            .setContentIntent(screen)
+            .setFullScreenIntent(screen, true)
+            .addAction(0, context.getString(R.string.emergency_im_ok), imOkIntent())
+        if (NotificationManagerCompat.from(context).areNotificationsEnabled()) manager.notify(COUNTDOWN_ID, builder.build())
+        if (Settings.canDrawOverlays(context)) {
+            runCatching { context.startActivity(UrgentAlarmActivity.intent(context, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        }
+        play(AlarmType.URGENT_LOW, settings, loop = true, URGENT_SOUND_MS)
+    }
+
+    fun cancelCountdown() {
+        manager.cancel(COUNTDOWN_ID)
+        stopSound()
+    }
+
+    /** After the texts: who was told and when (or that texting failed), for when the user comes round. */
+    fun showEmergencySent(names: List<String>, at: Instant) {
+        val title = context.getString(if (names.isEmpty()) R.string.emergency_send_failed_title else R.string.emergency_sent_title)
+        val body = if (names.isEmpty()) context.getString(R.string.emergency_send_failed) else context.getString(R.string.emergency_sent_body, names.joinToString(), TIME.format(at))
+        val screen = PendingIntent.getActivity(context, 3, UrgentAlarmActivity.intent(context, null), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val notification = NotificationCompat.Builder(context, channelFor(AlarmType.URGENT_LOW))
+            .setSmallIcon(R.drawable.ic_stat_sukoon)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setContentIntent(screen)
+            .build()
+        if (NotificationManagerCompat.from(context).areNotificationsEnabled()) manager.notify(SENT_ID, notification)
+    }
+
+    private fun imOkIntent(): PendingIntent = PendingIntent.getBroadcast(
+        context, 200,
+        Intent(context, AlarmActionReceiver::class.java).setAction(AlarmActionReceiver.ACTION_IM_OK),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
 
     /** You → Alarms → a sound's "Play it": a few seconds of what this alarm will sound like. */
     fun preview(type: AlarmType, settings: AlarmSettings) = play(type, settings, loop = true, PREVIEW_MS)
@@ -180,6 +244,9 @@ class AlarmNotifier(private val context: Context) {
         private const val URGENT_SOUND_MS = 60_000L
         private const val SOUND_MS = 30_000L
         private const val PREVIEW_MS = 5_000L
+        private const val COUNTDOWN_ID = 2000
+        private const val SENT_ID = 2001
+        private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
         private val URGENT_VIBRATION = longArrayOf(0, 800, 400, 800, 400, 800, 400, 1600)
         private val LOW_VIBRATION = longArrayOf(0, 600, 300, 600)
         private val LEGACY_CHANNELS = listOf("alarm_urgent", "alarm_urgent_dnd", "alarm_low", "alarm_low_dnd", "alarm_high", "alarm_signal")
