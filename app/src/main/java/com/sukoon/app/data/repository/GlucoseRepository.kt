@@ -20,6 +20,9 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.sukoon.app.calibration.Calibration
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 
 /**
  * The single source of truth for glucose data (A2, docs/track-a-plan.md). It runs a collector
@@ -39,28 +42,40 @@ class GlucoseRepository(
     private val scope: CoroutineScope,
     /** Minimum minutes between saved readings (You → Readings: 1, 2, 3, 5 or 15). */
     private val saveIntervalMinutes: () -> Int = { 1 },
+    /**
+     * The finger-prick calibration in force (null = none). Readings are stored raw and adjusted on
+     * the way out, so every screen, alarm and upload sees the same values and turning it off
+     * changes nothing stored.
+     */
+    private val calibration: StateFlow<Calibration?> = MutableStateFlow(null),
 ) {
+    private fun adjust(reading: GlucoseReading) = calibration.value?.apply(reading) ?: reading
+
     private val _live = MutableSharedFlow<GlucoseReading>(extraBufferCapacity = 64)
 
     /**
      * Every reading the source delivers, before the save-interval filter. Alarms watch this, so a
      * sparser saved log can never delay an urgent-low alert.
      */
-    val liveReadings: SharedFlow<GlucoseReading> = _live.asSharedFlow()
+    val liveReadings: Flow<GlucoseReading> = _live.asSharedFlow().map(::adjust)
 
     val status: StateFlow<SourceStatus> = sources
         .flatMapLatest { it.status }
         .stateIn(scope, SharingStarted.Eagerly, SourceStatus.Disconnected)
 
     val latestReading: Flow<GlucoseReading?> =
-        readingDao.latest().map { it?.toGlucoseReading() }
+        combine(readingDao.latest(), calibration) { row, _ -> row?.toGlucoseReading()?.let(::adjust) }
 
     /** Most-recent [limit] readings in chronological order (oldest → newest) for the graph. */
     fun recentReadings(limit: Int): Flow<List<GlucoseReading>> =
-        readingDao.latestN(limit).map { rows -> rows.asReversed().map { it.toGlucoseReading() } }
+        combine(readingDao.latestN(limit), calibration) { rows, _ -> rows.asReversed().map { adjust(it.toGlucoseReading()) } }
 
     /** Readings at or after [sinceMillis], chronological — backs the time-ranged graph (A3). */
     fun readingsSince(sinceMillis: Long): Flow<List<GlucoseReading>> =
+        combine(readingDao.since(sinceMillis), calibration) { rows, _ -> rows.map { adjust(it.toGlucoseReading()) } }
+
+    /** As stored, before calibration: what the calibration itself is fitted on. */
+    fun rawReadingsSince(sinceMillis: Long): Flow<List<GlucoseReading>> =
         readingDao.since(sinceMillis).map { rows -> rows.map { it.toGlucoseReading() } }
 
     /** For readings that arrive outside the collector — the NFC pairing tap's 8-hour backfill. */

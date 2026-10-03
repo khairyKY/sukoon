@@ -46,6 +46,8 @@ import com.sukoon.app.health.HealthConnectSync
 import com.sukoon.app.data.source.libre.SensorLife
 import com.sukoon.app.data.source.libre.SensorLifecycle
 import com.sukoon.app.platform.SensorLifeNotices
+import com.sukoon.app.calibration.Calibration
+import com.sukoon.app.calibration.CalibrationManager
 
 /**
  * Manual dependency container (ponytail: no Hilt/Koin for a graph this small). Owns the
@@ -69,14 +71,19 @@ class AppContainer(private val context: Context) {
 
     private val source = MutableStateFlow(sourceFor(_sourceKind.value))
 
+    private val calibrationInForce = MutableStateFlow<Calibration?>(null)
+
     val glucoseRepository: GlucoseRepository = GlucoseRepository(
         sources = source,
         readingDao = database.readingDao(),
         scope = appScope,
         saveIntervalMinutes = { settings.saveIntervalMinutes },
+        calibration = calibrationInForce,
     )
 
     val logbookRepository: LogbookRepository = LogbookRepository(eventDao = database.eventDao())
+
+    val calibration = CalibrationManager(context, calibrationInForce, glucoseRepository, logbookRepository, appScope)
 
     val gemini = GeminiClient(apiKey = { settings.geminiApiKey })
 
@@ -122,6 +129,7 @@ class AppContainer(private val context: Context) {
         sharing.start()
         followerWatch.start()
         healthConnect.start()
+        calibration.start()
         appScope.launch {
             while (true) {
                 runCatching { sensorNotices.check() }

@@ -536,4 +536,14 @@
     <string name="life_hour_body">هيقف %1$s. ركّب الجديد ووصّله من إنت ← الحساس بتاعك.</string>
     <string name="life_ended_title">الحساس خلص</string>
     <string name="life_ended_body">مفيش قرايات منه تاني. ركّب حساس جديد ووصّله من إنت ← الحساس بتاعك.</string>
+    <string name="calibration_title">المعايرة</string>
+    <string name="calibration_toggle">عايِر بقياسات الصباع</string>
+    <string name="calibration_body">بيظبط القرايات على قياسات الصباع الأخيرة اللي اتاخدت والسكر ثابت. مقفولة من الأول: معايرة المصنع للحساس غالبًا الأحسن.</string>
+    <string name="calibration_waiting">سجّل قياس صباع والسكر ثابت (من غير سهم سريع) علشان تبدأ.</string>
+    <string name="calibration_using">بنستخدم %1$d قياس صباع: القراية × %2$s %3$s ملغم/دل.</string>
+    <string name="calibration_example">الحساس %1$d ← %2$d؛ والهبوط %3$d ← %4$d (الهبوط عمره ما بيترفع).</string>
+    <string name="calibration_skipped">%1$d قياس صباع اتساب: اتاخد والسكر بيتغير بسرعة، أو بعيد قوي عن الحساس.</string>
+    <string name="calibration_caps">الحدود: × %1$s لـ %2$s، ± %3$d ملغم/دل؛ آخر ٤ من آخر ٧ أيام.</string>
+    <string name="toast_calibration_on">المعايرة اشتغلت.</string>
+    <string name="toast_calibration_off">المعايرة اتقفلت: قرايات المصنع.</string>
 </resources>

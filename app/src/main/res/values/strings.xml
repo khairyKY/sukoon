@@ -536,4 +536,14 @@
     <string name="life_hour_body">It stops %1$s. Apply the new one, then connect it in You → Your sensor.</string>
     <string name="life_ended_title">Sensor ended</string>
     <string name="life_ended_body">No more readings from it. Apply a new sensor and connect it in You → Your sensor.</string>
+    <string name="calibration_title">Calibration</string>
+    <string name="calibration_toggle">Calibrate with my finger-pricks</string>
+    <string name="calibration_body">Adjusts readings to match your recent finger-pricks taken while your glucose was steady. Off by default: the sensor\'s factory calibration is usually best.</string>
+    <string name="calibration_waiting">Log a finger-prick while your glucose is steady (no fast arrow) to start.</string>
+    <string name="calibration_using">Using %1$d finger-prick(s): reading × %2$s %3$s mg/dL.</string>
+    <string name="calibration_example">Sensor %1$d → %2$d; a low %3$d → %4$d (lows are never raised).</string>
+    <string name="calibration_skipped">%1$d finger-prick(s) left out: taken while changing fast, or too far from the sensor.</string>
+    <string name="calibration_caps">Limits: × %1$s to %2$s, ± %3$d mg/dL; the newest 4 from the last 7 days.</string>
+    <string name="toast_calibration_on">Calibration on.</string>
+    <string name="toast_calibration_off">Calibration off: factory readings.</string>
 </resources>

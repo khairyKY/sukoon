@@ -26,7 +26,7 @@ Legend: ✅ done · ◐ in progress · ⬜ to do · ⏸ blocked (reason)
 3. ◐ Followers + sharing (A6) on Supabase: ✅ accounts, one-time invite codes, RLS schema (supabase/migrations — Kai runs it once), reading upload, followers/following lists, live follower viewer, background follower alerts (special-use FGS). ⬜ automatic WhatsApp alerts (Edge Function + WhatsApp Cloud API; needs Kai's Meta setup), ⬜ iOS followers via a web app (pending Kai), ⬜ start on boot.
 4. ✅ Health Connect: MyFitnessPal (and other apps') meals in as Logbook carb entries via the change log (edits and deletions follow), sensor readings out as interstitial blood glucose (client ids, no duplicates); syncs every 15 min, on every return to the app, and on "Sync now". Client pinned at 1.1.0-beta01 (1.1.0 needs compileSdk 36 + AGP 8.9.1).
 5. ✅ Sensor lifecycle: real warm-up countdown on Home (from the pairing's start), "sensor ended" Home state with "Connect a new sensor", last-day banner on Home, sensor card shows when it ends; one-time notices: ready after warm-up, a day left, an hour left, ended.
-6. ⬜ Calibration (capped, opt-in) — B10; fits from the logged finger-pricks.
+6. ✅ Calibration (opt-in, B10): weighted least squares on the newest 4 steady finger-pricks from 7 days; slope only with a 40+ mg/dL spread; caps ×0.8–1.25 and ±20 mg/dL; pairs >40 mg/dL/40 % apart or taken on a fast arrow left out; a reading under 70 is never raised. Stored readings stay raw; the repository applies it on the way out (screens, alarms, uploads).
 7. ⬜ Insulin on board on Home (rapid insulin still active).
 8. ⬜ Reports: 14-day AGP percentile chart + PDF export for the doctor (A9 / #19).
 

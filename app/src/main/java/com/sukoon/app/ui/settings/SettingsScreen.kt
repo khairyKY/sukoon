@@ -58,6 +58,7 @@ import com.sukoon.app.sharing.Sharing
 import com.sukoon.app.ui.sharing.SharingSection
 import com.sukoon.app.sharing.FollowerWatch
 import com.sukoon.app.health.HealthConnectSync
+import com.sukoon.app.calibration.CalibrationManager
 
 /**
  * You tab (A10, MVP slice): the paired Libre sensor (Track B), the data source (sensor or demo),
@@ -83,6 +84,7 @@ fun SettingsScreen(
     sharing: Sharing,
     followerWatch: FollowerWatch,
     healthConnect: HealthConnectSync,
+    calibration: CalibrationManager,
     saveIntervalMinutes: Int,
     onSaveInterval: (Int) -> Unit,
     nightscout: NightscoutConfig,
@@ -133,6 +135,10 @@ fun SettingsScreen(
             onSelectSource(SourceKind.SIMULATED)
             context.toast(context.getString(R.string.toast_source_demo))
         }
+
+        Spacer(Modifier.height(28.dp))
+        SectionLabel(stringResource(R.string.calibration_title))
+        CalibrationSection(calibration)
 
         Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(R.string.alarms_title))

@@ -234,6 +234,7 @@ fun MainScaffold() {
                     sharing = container.sharing,
                     followerWatch = container.followerWatch,
                     healthConnect = container.healthConnect,
+                    calibration = container.calibration,
                     onEmergency = { changed ->
                         container.settings.emergency = changed.sanitized()
                         emergency = container.settings.emergency
