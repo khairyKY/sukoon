@@ -578,4 +578,6 @@
     <string name="report_pdf_generated">Generated %1$s</string>
     <string name="report_pdf_footer">Made by Sukoon, which is not a medical device. Readings from a FreeStyle Libre 2 sensor read by Sukoon. Percentiles by time of day over the period; targets from the International Consensus on Time in Range (Battelino et al., Diabetes Care 2019).</string>
     <string name="toast_report_failed">Couldn\'t make the PDF: %1$s</string>
+    <string name="service_stale_title">No reading for %1$d min</string>
+    <string name="service_stale_body">Last: %1$d mg/dL at %2$s. Reconnecting on its own.</string>
 </resources>

@@ -83,10 +83,24 @@ The safety-critical acceptance test. This is where "clean-room from the method" 
 
 ---
 
+## Fallback F1 — bundle DiaBox's native decoder via JNI (only if B3/B7 stalls)  ⬜  · *not planned, documented so it isn't re-litigated*
+
+If the clean-room key derivation (B3) can't be made to pass B7 after real effort, the escape hatch is the xDrip "OOP2" trick: ship DiaBox's native libs (`libjniLibre.so`, `libaescfb.so`, the `v112F/v113B/v115G/v116A` algo libs — all extracted in `_apk-analysis/`) in `app/src/main/jniLibs/` and call them over JNI from `LibreBleSource`, replacing B3+B5+B6 wholesale.
+
+Why it's the fallback and not the plan (decided 2026-07-15):
+- **Redistribution:** they're someone else's binaries from a closed-source APK. Fine for a private daily driver, not for a public repo or a portfolio piece.
+- **Black box:** when a sensor misbehaves you get no stack, no way to fix it, no way to unit-test the decode. B7's regression fixture becomes the only signal you have.
+- **ABI + firmware locked:** ships as-is for four firmware versions and one ABI set; a newer EU firmware means waiting for DiaBox to ship a new lib — i.e. the dependency Sukoon exists to remove.
+- **Kills B8/B10:** the pluggable-variant seam and the calibration math both assume we own the raw→glucose step.
+
+Do NOT reach for this to save time on B3. It's for the case where B7 proves the public key-derivation spec no longer matches EU firmware and fresh reverse-engineering is the only alternative. Reskinning/patching the DiaBox APK itself is *not* an option at all — both APKs are Baidu-Shell-protected with the real classes encrypted at runtime (see `docs/research/diabox-apk-analysis.md`); the native libs are the only reusable artifact in there.
+
+---
+
 ## Dependency map
 - **B1 → B2 → B3 → B4 → B5 → B6** is a hard chain (each needs the prior). **B7** gates B3–B6. **B8** wraps B3–B6. **B9** wraps B4. **B10** extends B6.
 - Fastest early signal: **B1 + B2 + B4** (the plumbing) can be proven on the spare sensor before the crypto (B3) is right — de-risks the Android BLE/NFC mechanics separately from the decoding.
-- **The gating unknown:** B3/B7 is iterative and may need many cycles; worst case, EU firmware has shifted since the community's public docs and a fresh reverse-engineering step is needed. Track A is unaffected either way.
+- **The gating unknown:** B3/B7 is iterative and may need many cycles; worst case, EU firmware has shifted since the community's public docs and a fresh reverse-engineering step is needed (→ **F1** is the escape hatch, at the cost of B8/B10 and a public repo). Track A is unaffected either way.
 
 ## When Track B lands
 Flip the A10 data-source picker from Simulated → Libre. The whole Track A app — Home, alerts, logbook, insights, sharing, emergency, widget — runs on real glucose, unchanged. That is the payoff of building everything against the abstraction.

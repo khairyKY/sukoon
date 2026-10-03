@@ -51,6 +51,7 @@ import com.sukoon.app.calibration.CalibrationManager
 import com.sukoon.app.insulin.InsulinOnBoard
 import java.time.Duration
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 
 /**
  * Manual dependency container (ponytail: no Hilt/Koin for a graph this small). Owns the
@@ -91,12 +92,7 @@ class AppContainer(private val context: Context) {
     /** Rapid insulin still active (Logbook doses on the exponential curve): every minute, and at once on a new dose. */
     val insulinOnBoard: Flow<Double> = merge(
         logbookRepository.eventsSince(0).map { },
-        flow {
-            while (true) {
-                emit(Unit)
-                delay(60_000)
-            }
-        },
+        ticks(60_000),
     ).map {
         val now = Instant.now()
         InsulinOnBoard.total(logbookRepository.eventsSince(now.minus(Duration.ofHours(9)).toEpochMilli()).first(), now, settings.insulinAction)
@@ -147,11 +143,24 @@ class AppContainer(private val context: Context) {
         followerWatch.start()
         healthConnect.start()
         calibration.start()
+        // The sensor's ongoing notification shows the newest reading; re-drawn each minute for its age.
+        appScope.launch {
+            combine(glucoseRepository.latestReading, ticks(60_000)) { reading, _ -> reading }.collect { reading ->
+                if (_sourceKind.value == SourceKind.LIBRE_BLE) SensorService.show(context, reading, Instant.now())
+            }
+        }
         appScope.launch {
             while (true) {
                 runCatching { sensorNotices.check() }
                 delay(5 * 60_000L)
             }
+        }
+    }
+
+    private fun ticks(periodMillis: Long) = flow {
+        while (true) {
+            emit(Unit)
+            delay(periodMillis)
         }
     }
 

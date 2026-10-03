@@ -578,4 +578,6 @@
     <string name="report_pdf_generated">اتعمل %1$s</string>
     <string name="report_pdf_footer">اتعمل بسكون، وهو مش جهاز طبي. القرايات من حساس FreeStyle Libre 2 بيقراه سكون. النسب المئوية حسب الوقت في اليوم على مدار الفترة؛ والأهداف من الإجماع الدولي على الوقت في المدى (Battelino et al., Diabetes Care 2019).</string>
     <string name="toast_report_failed">مقدرناش نعمل الـ PDF: %1$s</string>
+    <string name="service_stale_title">مفيش قراية بقالها %1$d دقيقة</string>
+    <string name="service_stale_body">آخر قراية: %1$d ملغم/دل الساعة %2$s. بيرجع يتوصل لوحده.</string>
 </resources>
