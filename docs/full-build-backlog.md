@@ -37,7 +37,7 @@ Legend: ✅ done · ◐ in progress · ⬜ to do · ⏸ blocked (reason)
 - ✅ Insights into the AI brief (dose rules deliberately left out); active insulin in the brief; glucose-at-entry in the CSV and the brief; "glucose now" on the entry sheet.
 - ◐ Settings completion (A10): ✅ theme (like the phone / light / dark), ✅ quiet hours for highs (lows always sound); ⬜ units mg/dL ↔ mmol/L everywhere.
 - ✅ Logbook polish: when it happened (now, 15/30/60 min ago, or a picked time; edits can move it); meal photos (taken or picked, also used by the AI estimate; thumbnails in the list; replace/remove).
-- ⬜ Localization + motion sweep (A12).
+- ◐ Localization + motion sweep (A12): ✅ EN/AR parity checked (589 strings each, placeholders match, no hard-coded UI text); ⬜ motion pass against the design's motion spec.
 - ⬜ Wear OS complication/tile (#16).
 
 Rules: no APK builds or installs unless Kai asks (compile + unit tests only); no AI attribution in commits or PRs.

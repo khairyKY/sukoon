@@ -206,7 +206,7 @@ class LibreBleSource(
         if (!active) return
         val now = System.currentTimeMillis()
         if (gatt != null && now - lastPacketAt > STALL_MS && now - attemptStartedAt > STALL_MS) {
-            Log.w(TAG, "No packet for ${(now - lastPacketAt) / 1000} s — restarting the connection")
+            Log.w(TAG, if (lastPacketAt == 0L) "No packet since connecting — restarting the connection" else "No packet for ${(now - lastPacketAt) / 1000} s — restarting the connection")
             gatt?.close()
             gatt = null
             chunks.clear()
