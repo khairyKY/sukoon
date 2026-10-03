@@ -35,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -75,6 +76,9 @@ import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.sukoon.app.ui.components.toast
+import com.sukoon.app.insights.MeterCheck
+import com.sukoon.app.ui.theme.StateHigh
 
 // Quick-entry preset amounts per type (design 6g) — tapping one logs immediately, satisfying the
 // "one tap + one number" quick-entry principle (docs/PLAN.md §11) without a stepper. A custom
@@ -89,7 +93,7 @@ private val PRESETS: Map<LogEventType, List<Double>> = mapOf(
 private val hmFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
 
 private sealed interface SheetTarget {
-    data object New : SheetTarget
+    data class New(val type: LogEventType = LogEventType.CARB) : SheetTarget
     data class Edit(val event: EventEntity) : SheetTarget
 }
 
@@ -113,8 +117,18 @@ fun LogbookScreen(
     onEstimateCarbs: (suspend (String, ByteArray?) -> CarbEstimate)? = null,
     /** Meal + the insulin taken for it in one save: (carbs g, note, rapid units, minutes injected before eating). */
     onLogMeal: ((Double, String?, Double, Int) -> Unit)? = null,
+    /** Set by Home's shortcuts: open a new entry of this type once, then [onOpenedEntry]. */
+    openNewEntry: LogEventType? = null,
+    onOpenedEntry: () -> Unit = {},
 ) {
+    val context = LocalContext.current
     var sheetTarget by remember { mutableStateOf<SheetTarget?>(null) }
+    LaunchedEffect(openNewEntry) {
+        if (openNewEntry != null) {
+            sheetTarget = SheetTarget.New(openNewEntry)
+            onOpenedEntry()
+        }
+    }
 
     Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
@@ -131,11 +145,11 @@ fun LogbookScreen(
             Spacer(Modifier.height(16.dp))
 
             if (state.events.isEmpty()) {
-                LogbookEmptyState(onLogFirst = { sheetTarget = SheetTarget.New }, modifier = Modifier.weight(1f))
+                LogbookEmptyState(onLogFirst = { sheetTarget = SheetTarget.New() }, modifier = Modifier.weight(1f))
             } else {
                 LazyColumn(Modifier.weight(1f)) {
                     items(state.events, key = { it.id }) { event ->
-                        LogbookRow(event, onClick = { sheetTarget = SheetTarget.Edit(event) })
+                        LogbookRow(event, state.meterChecks[event.id], onClick = { sheetTarget = SheetTarget.Edit(event) })
                         HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
                     }
                 }
@@ -145,7 +159,7 @@ fun LogbookScreen(
 
         val addEntryDescription = stringResource(R.string.logbook_add_entry)
         FloatingActionButton(
-            onClick = { sheetTarget = SheetTarget.New },
+            onClick = { sheetTarget = SheetTarget.New() },
             containerColor = Sage,
             contentColor = Color.White,
             modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp).semantics { contentDescription = addEntryDescription },
@@ -158,6 +172,7 @@ fun LogbookScreen(
         val editing = (target as? SheetTarget.Edit)?.event
         QuickEntrySheet(
             existing = editing,
+            newType = (target as? SheetTarget.New)?.type ?: LogEventType.CARB,
             onDismiss = { sheetTarget = null },
             onSave = { type, value, note ->
                 if (editing != null) {
@@ -165,11 +180,22 @@ fun LogbookScreen(
                 } else {
                     onQuickLog(type, value, note)
                 }
+                context.toast(context.getString(if (editing != null) R.string.toast_entry_updated else R.string.toast_logged))
                 sheetTarget = null
             },
-            onDelete = editing?.let { toDelete -> { onDeleteEvent(toDelete); sheetTarget = null } },
+            onDelete = editing?.let { toDelete ->
+                {
+                    onDeleteEvent(toDelete)
+                    context.toast(context.getString(R.string.toast_entry_deleted))
+                    sheetTarget = null
+                }
+            },
             onEstimateCarbs = onEstimateCarbs,
-            onSaveMeal = onLogMeal?.let { log -> { carbs, note, insulin, minutes -> log(carbs, note, insulin, minutes); sheetTarget = null } },
+            onSaveMeal = onLogMeal?.let { log -> { carbs, note, insulin, minutes ->
+                    log(carbs, note, insulin, minutes)
+                    context.toast(context.getString(R.string.toast_logged))
+                    sheetTarget = null
+                } },
         )
     }
 }
@@ -210,7 +236,7 @@ private fun LogbookEmptyState(onLogFirst: () -> Unit, modifier: Modifier = Modif
 }
 
 @Composable
-private fun LogbookRow(event: EventEntity, onClick: () -> Unit) {
+private fun LogbookRow(event: EventEntity, check: MeterCheck?, onClick: () -> Unit) {
     val type = event.logType
     val hasNote = !event.note.isNullOrBlank()
     Row(
@@ -232,6 +258,17 @@ private fun LogbookRow(event: EventEntity, onClick: () -> Unit) {
             if (hasNote) {
                 Text(typeLabel(type), fontSize = 10.5.sp, color = CaptionMuted)
             }
+            check?.let { c ->
+                Text(
+                    when {
+                        c.percentDiff > 2 -> stringResource(R.string.logbook_sensor_higher, c.sensorMgDl, c.percentDiff)
+                        c.percentDiff < -2 -> stringResource(R.string.logbook_sensor_lower, c.sensorMgDl, -c.percentDiff)
+                        else -> stringResource(R.string.logbook_sensor_same, c.sensorMgDl)
+                    },
+                    fontSize = 10.5.sp,
+                    color = if (c.agrees) Sage else StateHigh,
+                )
+            }
         }
         Column(horizontalAlignment = Alignment.End) {
             event.value?.let {
@@ -251,6 +288,7 @@ private fun LogbookRow(event: EventEntity, onClick: () -> Unit) {
 @Composable
 private fun QuickEntrySheet(
     existing: EventEntity?,
+    newType: LogEventType,
     onDismiss: () -> Unit,
     onSave: (LogEventType, Double?, String?) -> Unit,
     onDelete: (() -> Unit)?,
@@ -258,7 +296,7 @@ private fun QuickEntrySheet(
     onSaveMeal: ((Double, String?, Double, Int) -> Unit)? = null,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var type by remember { mutableStateOf(existing?.logType ?: LogEventType.CARB) }
+    var type by remember { mutableStateOf(existing?.logType ?: newType) }
     var amountText by remember { mutableStateOf(existing?.value?.let(::formatAmount) ?: "") }
     var noteText by remember { mutableStateOf(existing?.note ?: "") }
     // New meals only: optional rapid insulin logged alongside, injected N minutes before eating.
@@ -287,15 +325,19 @@ private fun QuickEntrySheet(
             )
             Spacer(Modifier.height(16.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                LogEventType.entries.forEach { candidate ->
-                    TypeChip(
-                        label = typeLabel(candidate),
-                        selected = candidate == type,
-                        color = colorForLogEventType(candidate),
-                        onClick = { type = candidate; amountText = "" },
-                        modifier = Modifier.weight(1f),
-                    )
+            // Two rows of three: six types don't fit one row on a phone.
+            LogEventType.entries.chunked(3).forEachIndexed { i, rowTypes ->
+                if (i > 0) Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    rowTypes.forEach { candidate ->
+                        TypeChip(
+                            label = typeLabel(candidate),
+                            selected = candidate == type,
+                            color = colorForLogEventType(candidate),
+                            onClick = { type = candidate; amountText = "" },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
             }
             Spacer(Modifier.height(18.dp))
@@ -309,19 +351,22 @@ private fun QuickEntrySheet(
                 )
             } else {
                 val unit = unitLabel(type)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PRESETS.getValue(type).forEach { preset ->
-                        AmountChip(
-                            label = "${formatAmountLocalized(preset)}$unit",
-                            onClick = { save(type, preset) },
-                        )
+                val presets = PRESETS[type].orEmpty() // none for a finger-prick: it's whatever the meter says
+                if (presets.isNotEmpty()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        presets.forEach { preset ->
+                            AmountChip(
+                                label = "${formatAmountLocalized(preset)}$unit",
+                                onClick = { save(type, preset) },
+                            )
+                        }
                     }
+                    Spacer(Modifier.height(14.dp))
                 }
-                Spacer(Modifier.height(14.dp))
                 OutlinedTextField(
                     value = amountText,
                     onValueChange = { amountText = it },
-                    label = { Text(stringResource(R.string.logbook_custom_label)) },
+                    label = { Text(stringResource(if (type == LogEventType.FINGERSTICK) R.string.logbook_meter_label else R.string.logbook_custom_label)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -360,10 +405,11 @@ private fun QuickEntrySheet(
                     TextButton(onClick = onDelete) { Text(stringResource(R.string.logbook_delete), color = StateLow) }
                     Spacer(Modifier.weight(1f))
                 }
-                val saveEnabled = if (type == LogEventType.NOTE) {
-                    noteText.isNotBlank()
-                } else {
-                    amountText.toDoubleOrNull()?.let { it > 0 } == true
+                val saveEnabled = when (type) {
+                    LogEventType.NOTE -> noteText.isNotBlank()
+                    // Meters show LO/HI outside about 20–600 mg/dL, so anything else is a typo.
+                    LogEventType.FINGERSTICK -> amountText.toDoubleOrNull()?.let { it in 20.0..600.0 } == true
+                    else -> amountText.toDoubleOrNull()?.let { it > 0 } == true
                 }
                 Box(
                     modifier = (if (onDelete == null) Modifier.fillMaxWidth() else Modifier)
@@ -525,6 +571,7 @@ private fun typeLabel(type: LogEventType): String = when (type) {
     LogEventType.CARB -> stringResource(R.string.logbook_type_carb)
     LogEventType.INSULIN -> stringResource(R.string.logbook_type_insulin)
     LogEventType.BASAL -> stringResource(R.string.logbook_type_basal)
+    LogEventType.FINGERSTICK -> stringResource(R.string.logbook_type_fingerstick)
     LogEventType.ACTIVITY -> stringResource(R.string.logbook_type_activity)
     LogEventType.NOTE -> stringResource(R.string.logbook_type_note)
 }
@@ -534,6 +581,7 @@ private fun unitLabel(type: LogEventType): String = when (type) {
     LogEventType.CARB -> stringResource(R.string.logbook_unit_grams)
     LogEventType.INSULIN -> stringResource(R.string.logbook_unit_units)
     LogEventType.BASAL -> stringResource(R.string.logbook_unit_units)
+    LogEventType.FINGERSTICK -> " " + stringResource(R.string.home_unit_mgdl)
     LogEventType.ACTIVITY -> stringResource(R.string.logbook_unit_minutes)
     LogEventType.NOTE -> ""
 }

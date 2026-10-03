@@ -32,6 +32,14 @@ import org.json.JSONObject
 
 data class NightscoutConfig(val enabled: Boolean = false, val url: String = "", val secret: String = "")
 
+/** Result of [NightscoutUploader.testConnection], for the toast after Save. */
+sealed interface ConnectionTest {
+    data object CanUpload : ConnectionTest
+    data object SecretRejected : ConnectionTest
+    data object Incomplete : ConnectionTest
+    data class Unreachable(val message: String) : ConnectionTest
+}
+
 sealed interface UploadStatus {
     data object Off : UploadStatus
     data class Ok(val at: Instant, val count: Int) : UploadStatus
@@ -60,7 +68,6 @@ class NightscoutUploader(
         get() = NightscoutConfig(prefs.getBoolean(KEY_ON, false), prefs.getString(KEY_URL, "") ?: "", prefs.getString(KEY_SECRET, "") ?: "")
         set(value) {
             prefs.edit().putBoolean(KEY_ON, value.enabled).putString(KEY_URL, value.url.trim().trimEnd('/')).putString(KEY_SECRET, value.secret.trim()).apply()
-            scope.launch { uploadNow() }
         }
 
     fun start() {
@@ -76,11 +83,44 @@ class NightscoutUploader(
         }
     }
 
-    suspend fun uploadNow() {
+    /** After a settings change: null when uploads are off, else whether this URL + secret can upload (and if so, upload now). */
+    suspend fun connect(): ConnectionTest? {
+        val c = config
+        if (!c.enabled) {
+            _status.value = UploadStatus.Off
+            return null
+        }
+        if (c.url.isBlank() || c.secret.isBlank()) return ConnectionTest.Incomplete
+        return testConnection(c).also { if (it == ConnectionTest.CanUpload) uploadNow() }
+    }
+
+    /** Asks Nightscout's /api/v1/verifyauth whether this URL + secret may write. */
+    private suspend fun testConnection(c: NightscoutConfig): ConnectionTest = withContext(Dispatchers.IO) {
+        try {
+            val connection = URL("${c.url}/api/v1/verifyauth").openConnection() as HttpURLConnection
+            try {
+                connection.connectTimeout = 10_000
+                connection.readTimeout = 10_000
+                connection.setRequestProperty("api-secret", sha1(c.secret))
+                val code = connection.responseCode
+                if (code !in 200..299) return@withContext ConnectionTest.Unreachable("HTTP $code")
+                val body = connection.inputStream.bufferedReader().use { it.readText() }
+                val canWrite = runCatching { JSONObject(body).getJSONObject("message").optBoolean("canWrite") }.getOrDefault(false)
+                if (canWrite) ConnectionTest.CanUpload else ConnectionTest.SecretRejected
+            } finally {
+                connection.disconnect()
+            }
+        } catch (e: Exception) {
+            ConnectionTest.Unreachable(e.message ?: e.javaClass.simpleName)
+        }
+    }
+
+    /** Uploads anything new; returns the resulting status (also published on [status]). */
+    suspend fun uploadNow(): UploadStatus {
         val c = config
         if (!c.enabled || c.url.isBlank() || c.secret.isBlank()) {
             _status.value = UploadStatus.Off
-            return
+            return UploadStatus.Off
         }
         val now = System.currentTimeMillis()
         try {
@@ -103,6 +143,7 @@ class NightscoutUploader(
             if (e is kotlinx.coroutines.CancellationException) throw e
             _status.value = UploadStatus.Failed(Instant.now(), e.message ?: e.javaClass.simpleName)
         }
+        return _status.value
     }
 
     private suspend fun post(c: NightscoutConfig, path: String, body: JSONArray) = withContext(Dispatchers.IO) {
@@ -161,6 +202,7 @@ class NightscoutUploader(
                 LogEventType.CARB -> json.put("eventType", "Carb Correction").put("carbs", e.value ?: 0.0)
                 LogEventType.INSULIN -> json.put("eventType", "Correction Bolus").put("insulin", e.value ?: 0.0)
                 LogEventType.BASAL -> json.put("eventType", "Note").put("notes", listOfNotNull("Basal ${e.value ?: 0.0} U", e.note).joinToString(" · "))
+                LogEventType.FINGERSTICK -> json.put("eventType", "BG Check").put("glucose", e.value ?: 0.0).put("glucoseType", "Finger").put("units", "mg/dl")
                 LogEventType.ACTIVITY -> json.put("eventType", "Exercise").put("duration", e.value ?: 0.0)
                 LogEventType.NOTE -> json.put("eventType", "Note")
             }

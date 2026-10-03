@@ -48,6 +48,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.sukoon.app.R
 import com.sukoon.app.alarms.AlarmType
+import com.sukoon.app.data.db.LogEventType
+import com.sukoon.app.ui.insights.InsightsViewModel
 import com.sukoon.app.ui.home.HomeUiState
 import com.sukoon.app.ui.settings.SetupBanner
 import com.sukoon.app.ui.settings.rememberMissingSetup
@@ -77,6 +79,8 @@ enum class SukoonTab(val route: String, @StringRes val labelRes: Int) {
 @Composable
 fun MainScaffold() {
     val navController = rememberNavController()
+    // Home's food/insulin shortcuts: which new entry the Logbook should open on arrival.
+    var pendingEntry by rememberSaveable { mutableStateOf<LogEventType?>(null) }
     Scaffold(
         bottomBar = { SukoonBottomBar(navController) },
     ) { innerPadding ->
@@ -113,6 +117,8 @@ fun MainScaffold() {
                             }
                         },
                         onSnooze = { scope.launch { alarms.acknowledge(AlarmType.LOW, 15) } },
+                        onAddFood = { pendingEntry = LogEventType.CARB; navController.navigateToTab(SukoonTab.TRENDS) },
+                        onAddInsulin = { pendingEntry = LogEventType.INSULIN; navController.navigateToTab(SukoonTab.TRENDS) },
                     )
                 }
             }
@@ -123,12 +129,16 @@ fun MainScaffold() {
                     factory = GraphViewModel.factory(container.glucoseRepository, container.logbookRepository),
                 )
                 val graphState by graphViewModel.uiState.collectAsStateWithLifecycle()
-                val logbookViewModel: LogbookViewModel = viewModel(factory = LogbookViewModel.factory(container.logbookRepository, container.gemini))
+                val logbookViewModel: LogbookViewModel = viewModel(factory = LogbookViewModel.factory(container.logbookRepository, container.glucoseRepository, container.gemini))
                 val logbookState by logbookViewModel.uiState.collectAsStateWithLifecycle()
                 val askViewModel: AskViewModel = viewModel(
                     factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini),
                 )
                 val askState by askViewModel.uiState.collectAsStateWithLifecycle()
+                val insightsViewModel: InsightsViewModel = viewModel(
+                    factory = InsightsViewModel.factory(container.glucoseRepository, container.logbookRepository, container.settings),
+                )
+                val insightsState by insightsViewModel.uiState.collectAsStateWithLifecycle()
                 TrendsHub(
                     graphState = graphState,
                     onSelectRange = graphViewModel::selectRange,
@@ -143,6 +153,10 @@ fun MainScaffold() {
                     onAsk = askViewModel::ask,
                     onClearAsk = askViewModel::clear,
                     onOpenSettings = { navController.navigateToTab(SukoonTab.YOU) },
+                    insightsState = insightsState,
+                    onAcknowledgeInsights = insightsViewModel::acknowledge,
+                    pendingEntry = pendingEntry,
+                    onPendingEntryHandled = { pendingEntry = null },
                 )
             }
             composable(SukoonTab.YOU.route) {
@@ -155,7 +169,6 @@ fun MainScaffold() {
                 var saveInterval by remember { mutableIntStateOf(container.settings.saveIntervalMinutes) }
                 var nightscout by remember { mutableStateOf(container.nightscout.config) }
                 val nightscoutStatus by container.nightscout.status.collectAsStateWithLifecycle()
-                val scope = rememberCoroutineScope()
                 SettingsScreen(
                     sourceKind = sourceKind,
                     status = status,
@@ -181,6 +194,7 @@ fun MainScaffold() {
                         alarmSettings = container.settings.alarmSettings
                     },
                     onTestAlarm = container.alarms::test,
+                    onPreviewAlarm = container.alarms::preview,
                     saveIntervalMinutes = saveInterval,
                     onSaveInterval = { minutes ->
                         container.settings.saveIntervalMinutes = minutes
@@ -191,8 +205,9 @@ fun MainScaffold() {
                     onNightscout = { changed ->
                         container.nightscout.config = changed
                         nightscout = container.nightscout.config
+                        container.nightscout.connect()
                     },
-                    onUploadNow = { scope.launch { container.nightscout.uploadNow() } },
+                    onUploadNow = container.nightscout::uploadNow,
                     buildCsv = container::exportCsv,
                 )
             }

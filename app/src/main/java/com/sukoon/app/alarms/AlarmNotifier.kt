@@ -6,12 +6,13 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
-import android.media.Ringtone
+import android.media.MediaPlayer
 import android.media.RingtoneManager
-import android.os.Build
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.sukoon.app.MainActivity
@@ -23,17 +24,17 @@ import com.sukoon.app.R
  * access granted the channel also bypasses DND), a full-screen alert over the lock screen, and —
  * with "display over other apps" — the alert screen opened directly. Snooze is always an explicit
  * button, never a swipe.
+ *
+ * Sounds are played here rather than by the notification channels, so each alarm can use the
+ * user's chosen sound (a phone sound or their own file) and a sound that won't play falls back to
+ * a default instead of leaving the alarm silent.
  */
 class AlarmNotifier(private val context: Context) {
 
     private val manager = context.getSystemService(NotificationManager::class.java)
     private val main = Handler(Looper.getMainLooper())
-    private var ringtone: Ringtone? = null
-
-    private val alarmAudio = AudioAttributes.Builder()
-        .setUsage(AudioAttributes.USAGE_ALARM)
-        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-        .build()
+    private var player: MediaPlayer? = null
+    private var playing: AlarmType? = null
 
     fun show(alert: Alert, settings: AlarmSettings, test: Boolean = false) {
         val (titleRes, bodyRes) = when (alert.type) {
@@ -55,7 +56,8 @@ class AlarmNotifier(private val context: Context) {
             AlarmType.HIGH -> settings.highSnoozeMinutes to context.getString(R.string.alarm_action_snooze, settings.highSnoozeMinutes)
             AlarmType.SIGNAL_LOSS -> 30 to context.getString(R.string.alarm_action_snooze, 30)
         }
-        val builder = NotificationCompat.Builder(context, channelFor(alert.type))
+        val channel = channelFor(alert.type)
+        val builder = NotificationCompat.Builder(context, channel)
             .setSmallIcon(R.drawable.ic_stat_sukoon)
             .setContentTitle(title)
             .setContentText(body)
@@ -79,33 +81,50 @@ class AlarmNotifier(private val context: Context) {
                 runCatching { context.startActivity(UrgentAlarmActivity.intent(context, alert.mgDl).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             }
         }
-        if (NotificationManagerCompat.from(context).areNotificationsEnabled()) {
-            manager.notify(notificationId(alert.type), builder.build())
+        val posted = NotificationManagerCompat.from(context).areNotificationsEnabled() &&
+            manager.getNotificationChannel(channel)?.importance != NotificationManager.IMPORTANCE_NONE
+        if (posted) manager.notify(notificationId(alert.type), builder.build())
+        // Lows always sound; highs and signal loss stay quiet if the user blocked their notifications.
+        when {
+            alert.type == AlarmType.URGENT_LOW -> play(alert.type, settings, loop = true, URGENT_SOUND_MS)
+            alert.type.loud || posted -> play(alert.type, settings, loop = false, SOUND_MS)
         }
-        if (alert.type == AlarmType.URGENT_LOW) playLoud(URGENT_SOUND_MS)
     }
 
+    /** You → Alarms → a sound's "Play it": a few seconds of what this alarm will sound like. */
+    fun preview(type: AlarmType, settings: AlarmSettings) = play(type, settings, loop = true, PREVIEW_MS)
+
+    @Synchronized
     fun cancel(type: AlarmType) {
         manager.cancel(notificationId(type))
-        if (type == AlarmType.URGENT_LOW) stopSound()
+        if (type == playing) stopSound()
     }
 
+    @Synchronized
     fun stopSound() {
         main.removeCallbacksAndMessages(null)
-        ringtone?.stop()
-        ringtone = null
+        player?.release()
+        player = null
+        playing = null
     }
 
-    /** Alarm-stream ringtone, looping until acknowledged or [durationMs] passes. */
-    private fun playLoud(durationMs: Long) {
+    /**
+     * Plays [type]'s sound for up to [durationMs]: the user's choice, else the phone's default for
+     * that kind of alert, else any default that plays — a deleted or unreadable file must never
+     * leave an alarm silent. Lows use the alarm stream; highs and signal loss the notification one.
+     */
+    @Synchronized
+    private fun play(type: AlarmType, settings: AlarmSettings, loop: Boolean, durationMs: Long) {
         stopSound()
-        val uri = RingtoneManager.getActualDefaultRingtoneUri(context, RingtoneManager.TYPE_ALARM)
-            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-        ringtone = RingtoneManager.getRingtone(context, uri)?.apply {
-            audioAttributes = alarmAudio
-            if (Build.VERSION.SDK_INT >= 28) isLooping = true
-            play()
-        }
+        val attributes = AudioAttributes.Builder()
+            .setUsage(if (type.loud) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_NOTIFICATION_EVENT)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+        val defaults = listOf(if (type.loud) RingtoneManager.TYPE_ALARM else RingtoneManager.TYPE_NOTIFICATION, RingtoneManager.TYPE_ALARM, RingtoneManager.TYPE_RINGTONE)
+            .mapNotNull { RingtoneManager.getActualDefaultRingtoneUri(context, it) }
+        val candidates = (listOfNotNull(settings.sounds[type]?.uri?.let(Uri::parse)) + defaults).distinct()
+        player = candidates.firstNotNullOfOrNull { start(context, it, attributes, loop) }
+        playing = type
         main.postDelayed(::stopSound, durationMs)
     }
 
@@ -121,24 +140,27 @@ class AlarmNotifier(private val context: Context) {
     /**
      * Channels are immutable once created, and DND bypass only sticks if DND access was granted
      * at creation — so the urgent/low channel ids carry a suffix and are recreated once access is.
+     * The channels are silent (vibration only): [play] makes the sound.
      */
     private fun channelFor(type: AlarmType): String {
         val dnd = manager.isNotificationPolicyAccessGranted
         return when (type) {
-            AlarmType.URGENT_LOW -> ensure("alarm_urgent" + if (dnd) "_dnd" else "", R.string.alarm_channel_urgent, NotificationManager.IMPORTANCE_HIGH, alarmSound = true, bypassDnd = dnd, vibration = URGENT_VIBRATION)
-            AlarmType.LOW, AlarmType.GOING_LOW -> ensure("alarm_low" + if (dnd) "_dnd" else "", R.string.alarm_channel_low, NotificationManager.IMPORTANCE_HIGH, alarmSound = true, bypassDnd = dnd, vibration = LOW_VIBRATION)
-            AlarmType.HIGH -> ensure("alarm_high", R.string.alarm_channel_high, NotificationManager.IMPORTANCE_HIGH, alarmSound = false, bypassDnd = false, vibration = LOW_VIBRATION)
-            AlarmType.SIGNAL_LOSS -> ensure("alarm_signal", R.string.alarm_channel_signal, NotificationManager.IMPORTANCE_DEFAULT, alarmSound = false, bypassDnd = false, vibration = null)
+            AlarmType.URGENT_LOW -> ensure("alarm2_urgent" + if (dnd) "_dnd" else "", R.string.alarm_channel_urgent, NotificationManager.IMPORTANCE_HIGH, bypassDnd = dnd, vibration = URGENT_VIBRATION)
+            AlarmType.LOW, AlarmType.GOING_LOW -> ensure("alarm2_low" + if (dnd) "_dnd" else "", R.string.alarm_channel_low, NotificationManager.IMPORTANCE_HIGH, bypassDnd = dnd, vibration = LOW_VIBRATION)
+            AlarmType.HIGH -> ensure("alarm2_high", R.string.alarm_channel_high, NotificationManager.IMPORTANCE_HIGH, bypassDnd = false, vibration = LOW_VIBRATION)
+            AlarmType.SIGNAL_LOSS -> ensure("alarm2_signal", R.string.alarm_channel_signal, NotificationManager.IMPORTANCE_DEFAULT, bypassDnd = false, vibration = null)
         }
     }
 
-    private fun ensure(id: String, nameRes: Int, importance: Int, alarmSound: Boolean, bypassDnd: Boolean, vibration: LongArray?): String {
+    private fun ensure(id: String, nameRes: Int, importance: Int, bypassDnd: Boolean, vibration: LongArray?): String {
         if (manager.getNotificationChannel(id) == null) {
-            // Drop the pre-DND-access twin so the user doesn't see two copies in settings.
+            // Drop the pre-DND-access twin so the user doesn't see two copies in settings, and the
+            // first-generation channels, which played their own (fixed) sound.
             if (id.endsWith("_dnd")) manager.deleteNotificationChannel(id.removeSuffix("_dnd"))
+            LEGACY_CHANNELS.forEach(manager::deleteNotificationChannel)
             manager.createNotificationChannel(
                 NotificationChannel(id, context.getString(nameRes), importance).apply {
-                    if (alarmSound) setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), alarmAudio)
+                    setSound(null, null)
                     if (vibration != null) {
                         enableVibration(true)
                         vibrationPattern = vibration
@@ -153,9 +175,45 @@ class AlarmNotifier(private val context: Context) {
 
     private fun notificationId(type: AlarmType) = 1000 + type.ordinal
 
-    private companion object {
-        const val URGENT_SOUND_MS = 60_000L
-        val URGENT_VIBRATION = longArrayOf(0, 800, 400, 800, 400, 800, 400, 1600)
-        val LOW_VIBRATION = longArrayOf(0, 600, 300, 600)
+    companion object {
+        private const val TAG = "AlarmNotifier"
+        private const val URGENT_SOUND_MS = 60_000L
+        private const val SOUND_MS = 30_000L
+        private const val PREVIEW_MS = 5_000L
+        private val URGENT_VIBRATION = longArrayOf(0, 800, 400, 800, 400, 800, 400, 1600)
+        private val LOW_VIBRATION = longArrayOf(0, 600, 300, 600)
+        private val LEGACY_CHANNELS = listOf("alarm_urgent", "alarm_urgent_dnd", "alarm_low", "alarm_low_dnd", "alarm_high", "alarm_signal")
+
+        /** A started player for [uri], or null if it can't play (missing file, lost permission, unsupported format). */
+        private fun start(context: Context, uri: Uri, attributes: AudioAttributes, loop: Boolean): MediaPlayer? {
+            val player = MediaPlayer()
+            return try {
+                player.setAudioAttributes(attributes)
+                player.setDataSource(context, uri)
+                player.isLooping = loop
+                player.prepare()
+                player.start()
+                player
+            } catch (e: Exception) {
+                Log.w(TAG, "Can't play $uri", e)
+                player.release()
+                null
+            }
+        }
+
+        /** Whether [uri] would play: checked when the user picks a file, before any alarm relies on it. */
+        fun canPlay(context: Context, uri: Uri): Boolean {
+            val player = MediaPlayer()
+            return try {
+                player.setDataSource(context, uri)
+                player.prepare()
+                true
+            } catch (e: Exception) {
+                Log.w(TAG, "Picked sound won't play: $uri", e)
+                false
+            } finally {
+                player.release()
+            }
+        }
     }
 }

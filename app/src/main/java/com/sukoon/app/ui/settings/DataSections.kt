@@ -49,12 +49,39 @@ import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.content.Context
+import com.sukoon.app.data.export.ConnectionTest
+import com.sukoon.app.ui.components.toast
 
-/** You → Nightscout: Sukoon uploads readings + logbook (the job DiaBox used to do). */
+/** You → Nightscout: Sukoon uploads readings + logbook (the job DiaBox used to do). Every save checks the connection and says how it went. */
 @Composable
-fun NightscoutSection(config: NightscoutConfig, status: UploadStatus, onSave: (NightscoutConfig) -> Unit, onUploadNow: () -> Unit) {
+fun NightscoutSection(
+    config: NightscoutConfig,
+    status: UploadStatus,
+    onSave: suspend (NightscoutConfig) -> ConnectionTest?,
+    onUploadNow: suspend () -> UploadStatus,
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var url by rememberSaveable(config.url) { mutableStateOf(config.url) }
     var secret by rememberSaveable(config.secret) { mutableStateOf(config.secret) }
+    var busy by remember { mutableStateOf(false) }
+    fun save(enabled: Boolean) {
+        if (busy) return
+        busy = true
+        scope.launch {
+            val test = onSave(NightscoutConfig(enabled, normalize(url), secret))
+            busy = false
+            val message = when (test) {
+                null -> context.getString(R.string.toast_ns_off)
+                ConnectionTest.CanUpload -> context.getString(R.string.toast_ns_connected)
+                ConnectionTest.SecretRejected -> context.getString(R.string.toast_ns_secret)
+                ConnectionTest.Incomplete -> context.getString(R.string.toast_ns_incomplete)
+                is ConnectionTest.Unreachable -> context.getString(R.string.toast_ns_unreachable, test.message)
+            }
+            context.toast(message, long = test != null && test != ConnectionTest.CanUpload)
+        }
+    }
     SectionCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -63,7 +90,8 @@ fun NightscoutSection(config: NightscoutConfig, status: UploadStatus, onSave: (N
             }
             Switch(
                 checked = config.enabled,
-                onCheckedChange = { onSave(NightscoutConfig(it, url, secret)) },
+                onCheckedChange = { save(it) },
+                enabled = !busy,
                 colors = SwitchDefaults.colors(checkedTrackColor = Sage),
             )
         }
@@ -85,15 +113,24 @@ fun NightscoutSection(config: NightscoutConfig, status: UploadStatus, onSave: (N
             modifier = Modifier.fillMaxWidth(),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Pill(stringResource(R.string.settings_save)) { onSave(NightscoutConfig(config.enabled, normalize(url), secret)) }
-            if (config.enabled) Pill(stringResource(R.string.ns_upload_now), filled = false, onClick = onUploadNow)
+            Pill(stringResource(if (busy) R.string.ns_checking else R.string.settings_save)) { save(config.enabled) }
+            if (config.enabled) {
+                Pill(stringResource(R.string.ns_upload_now), filled = false) {
+                    scope.launch { context.toast(uploadText(context, onUploadNow()) ?: context.getString(R.string.toast_ns_incomplete)) }
+                }
+            }
         }
-        val time = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
-        when (status) {
-            UploadStatus.Off -> Unit
-            is UploadStatus.Ok -> Text(stringResource(R.string.ns_status_ok, time.format(status.at), status.count), fontSize = 12.sp, color = Sage)
-            is UploadStatus.Failed -> Text(stringResource(R.string.ns_status_failed, time.format(status.at), status.message), fontSize = 12.sp, color = StateLow)
-        }
+        uploadText(context, status)?.let { Text(it, fontSize = 12.sp, color = if (status is UploadStatus.Failed) StateLow else Sage) }
+    }
+}
+
+/** The last upload as one line (null when uploads are off): shown under the card and toasted after Upload now. */
+private fun uploadText(context: Context, status: UploadStatus): String? {
+    val time = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+    return when (status) {
+        UploadStatus.Off -> null
+        is UploadStatus.Ok -> context.getString(R.string.ns_status_ok, time.format(status.at), status.count)
+        is UploadStatus.Failed -> context.getString(R.string.ns_status_failed, time.format(status.at), status.message)
     }
 }
 
@@ -107,11 +144,15 @@ fun ExportSection(buildCsv: suspend (days: Int) -> Pair<String, Int>) {
     val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
-            result = runCatching {
+            val message = runCatching {
                 val (csv, rows) = buildCsv(days)
-                withContext(Dispatchers.IO) { context.contentResolver.openOutputStream(uri)?.use { it.write(csv.toByteArray()) } }
+                withContext(Dispatchers.IO) {
+                    (context.contentResolver.openOutputStream(uri) ?: error("can't open the file")).use { it.write(csv.toByteArray()) }
+                }
                 context.getString(R.string.export_done, rows)
             }.getOrElse { context.getString(R.string.export_failed, it.message ?: it.javaClass.simpleName) }
+            result = message
+            context.toast(message)
         }
     }
     SectionCard {

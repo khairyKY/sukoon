@@ -16,16 +16,28 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.sukoon.app.data.db.logType
+import com.sukoon.app.data.repository.GlucoseRepository
+import com.sukoon.app.insights.MeterCheck
+import kotlin.math.roundToInt
 
 /** Drives the Logbook screen — today's window of logged events, newest first, from Room via [LogbookRepository]. */
-class LogbookViewModel(private val repository: LogbookRepository, private val gemini: GeminiClient) : ViewModel() {
+class LogbookViewModel(private val repository: LogbookRepository, glucose: GlucoseRepository, private val gemini: GeminiClient) : ViewModel() {
 
-    val uiState: StateFlow<LogbookUiState> = repository
-        .eventsSince(System.currentTimeMillis() - WINDOW_MILLIS)
-        .map { events -> LogbookUiState(events = events.sortedByDescending { it.timestampMillis }) }
+    private val since = System.currentTimeMillis() - WINDOW_MILLIS
+
+    // Readings ride along so each finger-prick can show what the sensor said at that moment.
+    val uiState: StateFlow<LogbookUiState> = combine(repository.eventsSince(since), glucose.readingsSince(since - MeterCheck.WINDOW_MS)) { events, readings ->
+        LogbookUiState(
+            events = events.sortedByDescending { it.timestampMillis },
+            meterChecks = events.filter { it.logType == LogEventType.FINGERSTICK }.mapNotNull { e ->
+                e.value?.let { MeterCheck.of(it.roundToInt(), e.timestampMillis, readings) }?.let { e.id to it }
+            }.toMap(),
+        )
+    }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000L),
@@ -64,8 +76,8 @@ class LogbookViewModel(private val repository: LogbookRepository, private val ge
     companion object {
         private val WINDOW_MILLIS = TimeUnit.HOURS.toMillis(24)
 
-        fun factory(repository: LogbookRepository, gemini: GeminiClient) = viewModelFactory {
-            initializer { LogbookViewModel(repository, gemini) }
+        fun factory(repository: LogbookRepository, glucose: GlucoseRepository, gemini: GeminiClient) = viewModelFactory {
+            initializer { LogbookViewModel(repository, glucose, gemini) }
         }
     }
 }

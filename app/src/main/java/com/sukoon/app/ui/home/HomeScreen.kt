@@ -24,6 +24,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.painterResource
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -81,6 +85,28 @@ fun HomeScreen(
     onTroubleshoot: () -> Unit = {},
     onPairSensor: () -> Unit = {},
     onEnterCodeManually: () -> Unit = {},
+    onAddFood: () -> Unit = {},
+    onAddInsulin: () -> Unit = {},
+) {
+    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin)) {
+        HomeContent(state, modifier, onTreated, onSnooze, onAlertEmergencyContact, onTroubleshoot, onPairSensor, onEnterCodeManually)
+    }
+}
+
+/** Home's quick-log shortcuts, reached from every state's top bar without threading them through each one. */
+private class Shortcuts(val onFood: () -> Unit, val onInsulin: () -> Unit)
+private val LocalShortcuts = staticCompositionLocalOf { Shortcuts({}, {}) }
+
+@Composable
+private fun HomeContent(
+    state: HomeUiState,
+    modifier: Modifier,
+    onTreated: () -> Unit,
+    onSnooze: () -> Unit,
+    onAlertEmergencyContact: () -> Unit,
+    onTroubleshoot: () -> Unit,
+    onPairSensor: () -> Unit,
+    onEnterCodeManually: () -> Unit,
 ) {
     Column(
         modifier = modifier
@@ -156,7 +182,25 @@ private fun HomeAppBar(dimmed: Boolean = false) {
                 color = MaterialTheme.colorScheme.onBackground,
             )
         }
-        Box(Modifier.size(26.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f)))
+        val shortcuts = LocalShortcuts.current
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            ShortcutIcon(R.drawable.ic_food, stringResource(R.string.home_add_food), shortcuts.onFood)
+            ShortcutIcon(R.drawable.ic_insulin, stringResource(R.string.home_add_insulin), shortcuts.onInsulin)
+        }
+    }
+}
+
+@Composable
+private fun ShortcutIcon(iconRes: Int, description: String, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(painterResource(iconRes), contentDescription = description, tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(22.dp))
     }
 }
 

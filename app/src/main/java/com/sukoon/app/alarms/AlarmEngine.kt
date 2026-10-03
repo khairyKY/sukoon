@@ -5,7 +5,15 @@ import com.sukoon.app.ui.home.HomeUiStateMapper
 import java.time.Duration
 import java.time.Instant
 
-enum class AlarmType { URGENT_LOW, LOW, GOING_LOW, HIGH, SIGNAL_LOSS }
+enum class AlarmType {
+    URGENT_LOW, LOW, GOING_LOW, HIGH, SIGNAL_LOSS;
+
+    /** Lows sound on the alarm stream (through silent mode and DND's "alarms"); highs and signal loss on the notification stream. */
+    val loud: Boolean get() = this == URGENT_LOW || this == LOW || this == GOING_LOW
+}
+
+/** A chosen alarm sound: a content URI (a phone sound or the user's own file) and the name to show for it. */
+data class AlarmSound(val uri: String, val name: String)
 
 /** You → Alarms. Urgent low (< [URGENT_LOW_MG_DL]) is deliberately not configurable or switchable. */
 data class AlarmSettings(
@@ -18,6 +26,8 @@ data class AlarmSettings(
     val signalLossMinutes: Int = 20,
     val lowSnoozeMinutes: Int = 15,
     val highSnoozeMinutes: Int = 60,
+    /** Per-alarm sound; absent = the phone's default for that kind of alert. */
+    val sounds: Map<AlarmType, AlarmSound> = emptyMap(),
 ) {
     /** Clamp anything stored (or hand-edited) into safe ranges: a low alarm can't sit below urgent. */
     fun sanitized() = copy(

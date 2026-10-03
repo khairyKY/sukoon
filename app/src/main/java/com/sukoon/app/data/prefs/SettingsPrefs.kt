@@ -3,6 +3,8 @@ package com.sukoon.app.data.prefs
 import android.content.Context
 import com.sukoon.app.alarms.AlarmSettings
 import com.sukoon.app.data.source.SourceKind
+import com.sukoon.app.alarms.AlarmSound
+import com.sukoon.app.alarms.AlarmType
 
 /**
  * User settings, in the same prefs file as [DisclaimerPrefs]. ponytail: plain private
@@ -37,18 +39,36 @@ class SettingsPrefs(context: Context) {
             signalLossMinutes = prefs.getInt(KEY_SIGNAL, 20),
             lowSnoozeMinutes = prefs.getInt(KEY_LOW_SNOOZE, 15),
             highSnoozeMinutes = prefs.getInt(KEY_HIGH_SNOOZE, 60),
+            sounds = AlarmType.entries.mapNotNull { type ->
+                prefs.getString(KEY_SOUND + type.name, null)?.let { uri -> type to AlarmSound(uri, prefs.getString(KEY_SOUND_NAME + type.name, null).orEmpty()) }
+            }.toMap(),
         ).sanitized()
-        set(value) = prefs.edit()
-            .putBoolean(KEY_LOW_ON, value.lowEnabled)
-            .putInt(KEY_LOW, value.lowMgDl)
-            .putBoolean(KEY_GOING_LOW_ON, value.goingLowEnabled)
-            .putBoolean(KEY_HIGH_ON, value.highEnabled)
-            .putInt(KEY_HIGH, value.highMgDl)
-            .putBoolean(KEY_SIGNAL_ON, value.signalLossEnabled)
-            .putInt(KEY_SIGNAL, value.signalLossMinutes)
-            .putInt(KEY_LOW_SNOOZE, value.lowSnoozeMinutes)
-            .putInt(KEY_HIGH_SNOOZE, value.highSnoozeMinutes)
-            .apply()
+        set(value) {
+            val edit = prefs.edit()
+                .putBoolean(KEY_LOW_ON, value.lowEnabled)
+                .putInt(KEY_LOW, value.lowMgDl)
+                .putBoolean(KEY_GOING_LOW_ON, value.goingLowEnabled)
+                .putBoolean(KEY_HIGH_ON, value.highEnabled)
+                .putInt(KEY_HIGH, value.highMgDl)
+                .putBoolean(KEY_SIGNAL_ON, value.signalLossEnabled)
+                .putInt(KEY_SIGNAL, value.signalLossMinutes)
+                .putInt(KEY_LOW_SNOOZE, value.lowSnoozeMinutes)
+                .putInt(KEY_HIGH_SNOOZE, value.highSnoozeMinutes)
+            AlarmType.entries.forEach { type ->
+                val sound = value.sounds[type]
+                if (sound == null) {
+                    edit.remove(KEY_SOUND + type.name).remove(KEY_SOUND_NAME + type.name)
+                } else {
+                    edit.putString(KEY_SOUND + type.name, sound.uri).putString(KEY_SOUND_NAME + type.name, sound.name)
+                }
+            }
+            edit.apply()
+        }
+
+    /** Trends → Insights stays locked until the user has read and accepted what it is (and isn't). */
+    var insightsAcknowledged: Boolean
+        get() = prefs.getBoolean(KEY_INSIGHTS_ACK, false)
+        set(value) = prefs.edit().putBoolean(KEY_INSIGHTS_ACK, value).apply()
 
     companion object {
         val SAVE_INTERVALS = listOf(1, 2, 3, 5, 15)
@@ -56,6 +76,7 @@ class SettingsPrefs(context: Context) {
         private const val KEY_SOURCE = "source_kind"
         private const val KEY_GEMINI = "gemini_api_key"
         private const val KEY_SAVE_INTERVAL = "save_interval_minutes"
+        private const val KEY_INSIGHTS_ACK = "insights_acknowledged"
         private const val KEY_LOW_ON = "alarm_low_on"
         private const val KEY_LOW = "alarm_low"
         private const val KEY_GOING_LOW_ON = "alarm_going_low_on"
@@ -65,5 +86,7 @@ class SettingsPrefs(context: Context) {
         private const val KEY_SIGNAL = "alarm_signal_minutes"
         private const val KEY_LOW_SNOOZE = "alarm_low_snooze"
         private const val KEY_HIGH_SNOOZE = "alarm_high_snooze"
+        private const val KEY_SOUND = "alarm_sound_"
+        private const val KEY_SOUND_NAME = "alarm_sound_name_"
     }
 }

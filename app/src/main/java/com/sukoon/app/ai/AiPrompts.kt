@@ -109,6 +109,7 @@ object AiPrompts {
                     LogEventType.CARB -> " g carbs"
                     LogEventType.INSULIN -> " units rapid insulin"
                     LogEventType.BASAL -> " units basal insulin"
+                    LogEventType.FINGERSTICK -> " mg/dL finger-prick (blood meter)"
                     LogEventType.ACTIVITY -> " min activity"
                     LogEventType.NOTE -> ""
                 }

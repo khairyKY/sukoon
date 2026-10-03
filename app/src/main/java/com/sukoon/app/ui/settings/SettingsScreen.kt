@@ -48,6 +48,10 @@ import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
 import com.sukoon.app.ui.theme.Sage
 import com.sukoon.app.ui.widget.WidgetsCard
+import androidx.compose.ui.platform.LocalContext
+import com.sukoon.app.data.export.ConnectionTest
+import com.sukoon.app.ui.components.toast
+import com.sukoon.app.alarms.AlarmType
 
 /**
  * You tab (A10, MVP slice): the paired Libre sensor (Track B), the data source (sensor or demo),
@@ -66,15 +70,17 @@ fun SettingsScreen(
     alarmSettings: AlarmSettings,
     onAlarmSettings: (AlarmSettings) -> Unit,
     onTestAlarm: () -> Unit,
+    onPreviewAlarm: (AlarmType) -> Unit,
     saveIntervalMinutes: Int,
     onSaveInterval: (Int) -> Unit,
     nightscout: NightscoutConfig,
     nightscoutStatus: UploadStatus,
-    onNightscout: (NightscoutConfig) -> Unit,
-    onUploadNow: () -> Unit,
+    onNightscout: suspend (NightscoutConfig) -> ConnectionTest?,
+    onUploadNow: suspend () -> UploadStatus,
     buildCsv: suspend (Int) -> Pair<String, Int>,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     var keyInput by rememberSaveable(geminiKey) { mutableStateOf(geminiKey) }
 
     Column(
@@ -97,7 +103,10 @@ fun SettingsScreen(
             sensorSelected = sourceKind == SourceKind.LIBRE_BLE,
             status = status,
             onPaired = onPaired,
-            onForget = onForgetSensor,
+            onForget = {
+                onForgetSensor()
+                context.toast(context.getString(R.string.toast_sensor_forgotten))
+            },
         )
 
         Spacer(Modifier.height(28.dp))
@@ -105,15 +114,17 @@ fun SettingsScreen(
         if (pairing != null) {
             SourceOption(SourceKind.LIBRE_BLE, sourceKind, R.string.settings_source_sensor, R.string.settings_source_sensor_body) {
                 onSelectSource(SourceKind.LIBRE_BLE)
+                context.toast(context.getString(R.string.toast_source_sensor))
             }
         }
         SourceOption(SourceKind.SIMULATED, sourceKind, R.string.settings_source_demo, R.string.settings_source_demo_body) {
             onSelectSource(SourceKind.SIMULATED)
+            context.toast(context.getString(R.string.toast_source_demo))
         }
 
         Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(R.string.alarms_title))
-        AlarmSettingsSection(alarmSettings, onAlarmSettings, onTestAlarm)
+        AlarmSettingsSection(alarmSettings, onAlarmSettings, onTestAlarm, onPreviewAlarm)
 
         Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(R.string.readings_title))
@@ -144,7 +155,10 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
-        PrimaryButton(stringResource(if (geminiKey.isBlank()) R.string.settings_save else R.string.settings_update)) { onSaveGeminiKey(keyInput) }
+        PrimaryButton(stringResource(if (geminiKey.isBlank()) R.string.settings_save else R.string.settings_update)) {
+            onSaveGeminiKey(keyInput)
+            context.toast(context.getString(if (keyInput.isBlank()) R.string.toast_ai_key_removed else R.string.settings_ai_saved))
+        }
         if (geminiKey.isNotBlank()) {
             Text(stringResource(R.string.settings_ai_saved), fontSize = 11.5.sp, color = Sage, modifier = Modifier.padding(top = 6.dp))
         }

@@ -6,7 +6,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -29,6 +31,8 @@ import com.sukoon.app.R
 import com.sukoon.app.ai.CarbEstimate
 import com.sukoon.app.ui.ai.AskScreen
 import com.sukoon.app.ui.ai.AskUiState
+import com.sukoon.app.ui.insights.InsightsScreen
+import com.sukoon.app.ui.insights.InsightsUiState
 import com.sukoon.app.data.db.EventEntity
 import com.sukoon.app.data.db.LogEventType
 import com.sukoon.app.ui.graph.GraphRange
@@ -39,7 +43,7 @@ import com.sukoon.app.ui.logbook.LogbookUiState
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.Sage
 
-private enum class TrendsSubTab { GRAPH, LOGBOOK, ASK }
+private enum class TrendsSubTab { GRAPH, LOGBOOK, INSIGHTS, ASK }
 
 /**
  * The Trends tab's content (A1 comment in MainScaffold): a hub over Graph (A3) and Logbook (A4),
@@ -63,17 +67,23 @@ fun TrendsHub(
     onAsk: (String) -> Unit,
     onClearAsk: () -> Unit,
     onOpenSettings: () -> Unit,
+    insightsState: InsightsUiState,
+    onAcknowledgeInsights: () -> Unit,
+    pendingEntry: LogEventType?,
+    onPendingEntryHandled: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var subTab by rememberSaveable { mutableStateOf(TrendsSubTab.GRAPH) }
+    if (pendingEntry != null) subTab = TrendsSubTab.LOGBOOK
 
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             SubTabChip(stringResource(R.string.graph_title), subTab == TrendsSubTab.GRAPH) { subTab = TrendsSubTab.GRAPH }
             SubTabChip(stringResource(R.string.logbook_title), subTab == TrendsSubTab.LOGBOOK) { subTab = TrendsSubTab.LOGBOOK }
+            SubTabChip(stringResource(R.string.insights_tab), subTab == TrendsSubTab.INSIGHTS) { subTab = TrendsSubTab.INSIGHTS }
             SubTabChip(stringResource(R.string.ask_tab), subTab == TrendsSubTab.ASK) { subTab = TrendsSubTab.ASK }
         }
         when (subTab) {
@@ -86,7 +96,10 @@ fun TrendsHub(
                 modifier = Modifier.weight(1f),
                 onEstimateCarbs = onEstimateCarbs,
                 onLogMeal = onLogMeal,
+                openNewEntry = pendingEntry,
+                onOpenedEntry = onPendingEntryHandled,
             )
+            TrendsSubTab.INSIGHTS -> InsightsScreen(insightsState, onAcknowledgeInsights, Modifier.weight(1f))
             TrendsSubTab.ASK -> AskScreen(
                 state = askState,
                 hasKey = hasAiKey,

@@ -29,6 +29,7 @@ object CsvExport {
                 LogEventType.CARB -> row(ts, "meal", carbs = amount, notes = e.note)
                 LogEventType.INSULIN -> row(ts, "insulin", insulin = amount, insulinType = "rapid", notes = e.note)
                 LogEventType.BASAL -> row(ts, "insulin", insulin = amount, insulinType = "basal", notes = e.note)
+                LogEventType.FINGERSTICK -> row(ts, "fingerstick", glucose = amount, notes = e.note)
                 LogEventType.ACTIVITY -> row(ts, "activity", notes = listOfNotNull(e.value?.let { "${number(it)} min" }, e.note).joinToString(" · "))
                 LogEventType.NOTE -> row(ts, "note", notes = e.note)
             }

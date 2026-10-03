@@ -65,6 +65,9 @@ class AlarmMonitor(
     /** You → Alarms → Test: the real urgent-low path (sound, notification, full screen), marked as a test. */
     fun test() = notifier.show(Alert(AlarmType.URGENT_LOW, 52, 0), settings.alarmSettings, test = true)
 
+    /** You → Alarms → a sound's "Play it". */
+    fun preview(type: AlarmType) = notifier.preview(type, settings.alarmSettings)
+
     private fun evaluateLocked() {
         val now = Instant.now()
         recent.headMap(now.minus(WINDOW)).clear()

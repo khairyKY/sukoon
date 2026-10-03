@@ -37,6 +37,16 @@ class ExportTest {
     }
 
     @Test
+    fun `finger-pricks export as fingerstick rows and nightscout BG checks`() {
+        val prick = EventEntity(timestampMillis = t.toEpochMilli(), type = "FINGERSTICK", value = 112.0)
+        assertEquals("2026-10-03T04:00:00Z,fingerstick,,,,112,", CsvExport.build(emptyList(), listOf(prick), ZoneOffset.UTC).trimEnd().lines()[1])
+        val json = NightscoutUploader.treatmentJson(prick)
+        assertEquals("BG Check", json.getString("eventType"))
+        assertEquals(112.0, json.getDouble("glucose"), 0.0)
+        assertEquals("Finger", json.getString("glucoseType"))
+    }
+
+    @Test
     fun `csv escaping follows RFC 4180`() {
         assertEquals("plain", CsvExport.escape("plain"))
         assertEquals("\"say \"\"hi\"\"\"", CsvExport.escape("say \"hi\""))

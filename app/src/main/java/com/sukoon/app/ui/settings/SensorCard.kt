@@ -50,6 +50,8 @@ import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.Sage
 import com.sukoon.app.ui.theme.StateLow
 import java.util.Locale
+import androidx.compose.runtime.LaunchedEffect
+import com.sukoon.app.ui.components.toast
 
 private enum class TapMode { CHECK, CONNECT }
 
@@ -75,6 +77,19 @@ fun SensorCard(
     var result by rememberSaveable { mutableStateOf<String?>(null) }
     var failed by rememberSaveable { mutableStateOf(false) }
     val paired by rememberUpdatedState(onPaired)
+    // Shown on the card and toasted, so the outcome is seen even if the card is scrolled away.
+    fun report(message: String, isFailure: Boolean) {
+        result = message
+        failed = isFailure
+        context.toast(message, long = true)
+    }
+    var awaitingReadings by remember { mutableStateOf(false) }
+    LaunchedEffect(status, awaitingReadings) {
+        if (awaitingReadings && status == SourceStatus.Connected) {
+            awaitingReadings = false
+            context.toast(context.getString(R.string.toast_sensor_live))
+        }
+    }
 
     val permissions = buildList {
         if (Build.VERSION.SDK_INT >= 31) {
@@ -88,7 +103,7 @@ fun SensorCard(
     fun bluetoothGranted() = permissions.filter { it != Manifest.permission.POST_NOTIFICATIONS }
         .all { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
     val requestPermissions = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        if (bluetoothGranted()) mode = TapMode.CONNECT else { result = context.getString(R.string.sensor_need_permissions); failed = true }
+        if (bluetoothGranted()) mode = TapMode.CONNECT else report(context.getString(R.string.sensor_need_permissions), isFailure = true)
     }
 
     val active = mode
@@ -102,15 +117,15 @@ fun SensorCard(
                     outcome.onSuccess { logRead(it) }.onFailure { Log.w("LibreNfc", "Read failed", it) }
                     activity.runOnUiThread {
                         outcome.onSuccess { read ->
-                            failed = read.fram == null || !read.supported
-                            result = describe(context, read)
                             if (read.bleMac != null) {
                                 paired(read, scannedAt)
-                                result = context.getString(R.string.sensor_connected_now)
+                                awaitingReadings = true
+                                report(context.getString(R.string.sensor_connected_now), isFailure = false)
+                            } else {
+                                report(describe(context, read), isFailure = read.fram == null || !read.supported)
                             }
                         }.onFailure {
-                            failed = true
-                            result = context.getString(R.string.sensor_failed, it.message ?: it.javaClass.simpleName)
+                            report(context.getString(R.string.sensor_failed, it.message ?: it.javaClass.simpleName), isFailure = true)
                         }
                         mode = null
                     }

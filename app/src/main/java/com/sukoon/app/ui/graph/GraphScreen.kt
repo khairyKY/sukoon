@@ -54,6 +54,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.math.abs
+import com.sukoon.app.data.db.LogEventType
 
 // Fixed y-axis span for the chart, mg/dL. In-range band is 70–180 (matches GlucoseMetrics).
 private const val Y_MIN = 40f
@@ -189,14 +190,19 @@ private fun GlucoseChart(readings: List<GlucoseReading>, range: GraphRange, even
                 drawPath(path, color = lineColor, style = Stroke(width = 3f))
             }
 
-            // Logged-event pins (A4) — small dots near the top, colored by type.
+            // Logged-event pins (A4) — small dots near the top, colored by type. Finger-pricks sit at
+            // their own value as rings, so they read straight against the sensor line.
             events.forEach { event ->
                 if (event.timestampMillis in tStart..tEnd) {
-                    drawCircle(
-                        color = colorForLogEventType(event.logType),
-                        radius = 5f,
-                        center = Offset(xFor(event.timestampMillis), 14f),
-                    )
+                    val x = xFor(event.timestampMillis)
+                    val color = colorForLogEventType(event.logType)
+                    val meter = event.value?.toInt()?.takeIf { event.logType == LogEventType.FINGERSTICK }
+                    if (meter != null) {
+                        drawCircle(Color.White, radius = 7f, center = Offset(x, yFor(meter)))
+                        drawCircle(color, radius = 7f, center = Offset(x, yFor(meter)), style = Stroke(width = 3.5f))
+                    } else {
+                        drawCircle(color = color, radius = 5f, center = Offset(x, 14f))
+                    }
                 }
             }
 

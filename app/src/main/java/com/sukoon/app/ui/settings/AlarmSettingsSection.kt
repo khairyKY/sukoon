@@ -29,6 +29,31 @@ import com.sukoon.app.ui.components.NumberChips
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.Sage
 import com.sukoon.app.ui.theme.StateUrgent
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.media.RingtoneManager
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.core.content.IntentCompat
+import com.sukoon.app.alarms.AlarmNotifier
+import com.sukoon.app.alarms.AlarmSound
+import com.sukoon.app.alarms.AlarmType
+import com.sukoon.app.ui.components.toast
 
 private val LOW_LEVELS = listOf(60, 65, 70, 75, 80, 90, 100)
 private val HIGH_LEVELS = listOf(180, 200, 220, 250, 280, 300, 350)
@@ -36,9 +61,65 @@ private val SIGNAL_MINUTES = listOf(15, 20, 30, 60)
 private val LOW_SNOOZES = listOf(10, 15, 30)
 private val HIGH_SNOOZES = listOf(30, 60, 120)
 
-/** You → Alarms. Urgent low is shown but not editable: it's always on at 55. */
+/** You → Alarms. Urgent low is shown but not editable: it's always on at 55. Every alarm can have its own sound. */
 @Composable
-fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> Unit, onTest: () -> Unit) {
+fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> Unit, onTest: () -> Unit, onPreview: (AlarmType) -> Unit) {
+    val context = LocalContext.current
+    var pickingFor by rememberSaveable { mutableStateOf<AlarmType?>(null) }
+    fun setSound(type: AlarmType, sound: AlarmSound?) {
+        onChange(settings.copy(sounds = if (sound == null) settings.sounds - type else settings.sounds + (type to sound)))
+        context.toast(context.getString(R.string.toast_alarm_sound, context.getString(alarmLabel(type)), sound?.name ?: context.getString(R.string.alarm_sound_default)))
+    }
+    val phoneSounds = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val type = pickingFor ?: return@rememberLauncherForActivityResult
+        val data = result.data
+        if (result.resultCode != Activity.RESULT_OK || data == null) return@rememberLauncherForActivityResult
+        val uri = IntentCompat.getParcelableExtra(data, RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
+        // Silent isn't offered; a null pick or the "Default" row both mean the phone's default.
+        if (uri == null || RingtoneManager.isDefault(uri)) {
+            setSound(type, null)
+        } else {
+            val name = runCatching { RingtoneManager.getRingtone(context, uri)?.getTitle(context) }.getOrNull() ?: uri.lastPathSegment.orEmpty()
+            setSound(type, AlarmSound(uri.toString(), name))
+        }
+    }
+    val ownFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        val type = pickingFor ?: return@rememberLauncherForActivityResult
+        if (uri == null) return@rememberLauncherForActivityResult
+        // Keep read access across reboots, and make sure it plays before an alarm depends on it.
+        runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+        if (AlarmNotifier.canPlay(context, uri)) {
+            setSound(type, AlarmSound(uri.toString(), displayName(context, uri)))
+        } else {
+            context.toast(context.getString(R.string.toast_alarm_sound_bad), long = true)
+        }
+    }
+
+    @Composable
+    fun Sound(type: AlarmType, enabled: Boolean = true) = SoundRow(
+        name = settings.sounds[type]?.name,
+        enabled = enabled,
+        onPhoneSounds = {
+            pickingFor = type
+            val kind = if (type.loud) RingtoneManager.TYPE_ALARM else RingtoneManager.TYPE_NOTIFICATION
+            val default = RingtoneManager.getDefaultUri(kind)
+            val picker = Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
+                .putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, kind)
+                .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                .putExtra(RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI, default)
+                .putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, settings.sounds[type]?.uri?.let(Uri::parse) ?: default)
+                .putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, context.getString(alarmLabel(type)))
+            runCatching { phoneSounds.launch(picker) }.onFailure { context.toast(context.getString(R.string.toast_no_sound_picker), long = true) }
+        },
+        onOwnFile = {
+            pickingFor = type
+            ownFile.launch(arrayOf("audio/*"))
+        },
+        onDefault = { setSound(type, null) },
+        onPlay = { onPreview(type) },
+    )
+
     Card {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -55,6 +136,7 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
                 Text(stringResource(R.string.alarms_test), color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp)
             }
         }
+        Sound(AlarmType.URGENT_LOW)
 
         Toggle(R.string.alarms_low, R.string.alarms_low_body, settings.lowEnabled) { onChange(settings.copy(lowEnabled = it)) }
         NumberChips(LOW_LEVELS, settings.lowMgDl, 60..110, { stringResource(R.string.alarms_below, it) }, enabled = settings.lowEnabled) {
@@ -64,8 +146,10 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
         NumberChips(LOW_SNOOZES, settings.lowSnoozeMinutes, 5..60, { stringResource(R.string.alarms_minutes, it) }, enabled = settings.lowEnabled) {
             onChange(settings.copy(lowSnoozeMinutes = it))
         }
+        Sound(AlarmType.LOW, settings.lowEnabled)
 
         Toggle(R.string.alarms_going_low, R.string.alarms_going_low_body, settings.goingLowEnabled) { onChange(settings.copy(goingLowEnabled = it)) }
+        Sound(AlarmType.GOING_LOW, settings.goingLowEnabled)
 
         Toggle(R.string.alarms_high, R.string.alarms_high_body, settings.highEnabled) { onChange(settings.copy(highEnabled = it)) }
         NumberChips(HIGH_LEVELS, settings.highMgDl, 150..400, { stringResource(R.string.alarms_above, it) }, enabled = settings.highEnabled) {
@@ -75,13 +159,64 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
         NumberChips(HIGH_SNOOZES, settings.highSnoozeMinutes, 15..240, { stringResource(R.string.alarms_minutes, it) }, enabled = settings.highEnabled) {
             onChange(settings.copy(highSnoozeMinutes = it))
         }
+        Sound(AlarmType.HIGH, settings.highEnabled)
 
         Toggle(R.string.alarms_signal, R.string.alarms_signal_body, settings.signalLossEnabled) { onChange(settings.copy(signalLossEnabled = it)) }
         NumberChips(SIGNAL_MINUTES, settings.signalLossMinutes, 10..120, { stringResource(R.string.alarms_after_minutes, it) }, enabled = settings.signalLossEnabled) {
             onChange(settings.copy(signalLossMinutes = it))
         }
+        Sound(AlarmType.SIGNAL_LOSS, settings.signalLossEnabled)
     }
 }
+
+/** "Sound · <name>"; tapping opens: phone sounds, your own file, back to default, play it. */
+@Composable
+private fun SoundRow(name: String?, enabled: Boolean, onPhoneSounds: () -> Unit, onOwnFile: () -> Unit, onDefault: () -> Unit, onPlay: () -> Unit) {
+    var menu by remember { mutableStateOf(false) }
+    Box {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .clickable(enabled = enabled) { menu = true }
+                .padding(vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(stringResource(R.string.alarm_sound), fontSize = 12.5.sp, color = CaptionMuted)
+            Spacer(Modifier.width(12.dp))
+            Text(
+                name ?: stringResource(R.string.alarm_sound_default),
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.End,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                fontSize = 12.5.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (enabled) Sage else CaptionMuted,
+            )
+        }
+        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            DropdownMenuItem(text = { Text(stringResource(R.string.alarm_sound_phone)) }, onClick = { menu = false; onPhoneSounds() })
+            DropdownMenuItem(text = { Text(stringResource(R.string.alarm_sound_file)) }, onClick = { menu = false; onOwnFile() })
+            if (name != null) DropdownMenuItem(text = { Text(stringResource(R.string.alarm_sound_reset)) }, onClick = { menu = false; onDefault() })
+            DropdownMenuItem(text = { Text(stringResource(R.string.alarm_sound_play)) }, onClick = { menu = false; onPlay() })
+        }
+    }
+}
+
+private fun alarmLabel(type: AlarmType) = when (type) {
+    AlarmType.URGENT_LOW -> R.string.alarms_urgent
+    AlarmType.LOW -> R.string.alarms_low
+    AlarmType.GOING_LOW -> R.string.alarms_going_low
+    AlarmType.HIGH -> R.string.alarms_high
+    AlarmType.SIGNAL_LOSS -> R.string.alarms_signal
+}
+
+/** The picked file's name without its extension, for showing under the alarm. */
+private fun displayName(context: Context, uri: Uri): String =
+    runCatching {
+        context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c -> if (c.moveToFirst()) c.getString(0) else null }
+    }.getOrNull()?.substringBeforeLast('.') ?: uri.lastPathSegment.orEmpty()
 
 /** You → Readings: how often a reading is saved. Alarms always see every reading. */
 @Composable

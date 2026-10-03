@@ -50,6 +50,7 @@ import com.sukoon.app.ui.theme.Sage
 import com.sukoon.app.ui.theme.SukoonTheme
 import com.sukoon.app.ui.widget.GlucoseWidget.Companion.toWidgetOptions
 import kotlinx.coroutines.launch
+import com.sukoon.app.ui.components.toast
 
 /**
  * Per-widget settings: graph range (or none), details, background. Shown when a widget is added
@@ -79,6 +80,7 @@ class WidgetConfigActivity : ComponentActivity() {
                     WidgetConfigScreen(current) { chosen ->
                         lifecycleScope.launch {
                             GlucoseWidget.saveOptions(this@WidgetConfigActivity, glanceId, chosen)
+                            this@WidgetConfigActivity.toast(getString(R.string.toast_widget_saved))
                             setResult(RESULT_OK, result)
                             finish()
                         }
