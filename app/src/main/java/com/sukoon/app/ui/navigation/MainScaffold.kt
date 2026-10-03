@@ -137,6 +137,7 @@ fun MainScaffold() {
                     onUpdateEvent = logbookViewModel::updateEvent,
                     onDeleteEvent = logbookViewModel::deleteEvent,
                     onEstimateCarbs = logbookViewModel::estimateCarbs,
+                    onLogMeal = logbookViewModel::logMeal,
                     askState = askState,
                     hasAiKey = askViewModel.hasKey,
                     onAsk = askViewModel::ask,
@@ -152,6 +153,9 @@ fun MainScaffold() {
                 var geminiKey by remember { mutableStateOf(container.settings.geminiApiKey) }
                 var alarmSettings by remember { mutableStateOf(container.settings.alarmSettings) }
                 var saveInterval by remember { mutableIntStateOf(container.settings.saveIntervalMinutes) }
+                var nightscout by remember { mutableStateOf(container.nightscout.config) }
+                val nightscoutStatus by container.nightscout.status.collectAsStateWithLifecycle()
+                val scope = rememberCoroutineScope()
                 SettingsScreen(
                     sourceKind = sourceKind,
                     status = status,
@@ -182,6 +186,14 @@ fun MainScaffold() {
                         container.settings.saveIntervalMinutes = minutes
                         saveInterval = container.settings.saveIntervalMinutes
                     },
+                    nightscout = nightscout,
+                    nightscoutStatus = nightscoutStatus,
+                    onNightscout = { changed ->
+                        container.nightscout.config = changed
+                        nightscout = container.nightscout.config
+                    },
+                    onUploadNow = { scope.launch { container.nightscout.uploadNow() } },
+                    buildCsv = container::exportCsv,
                 )
             }
         }

@@ -38,6 +38,7 @@
     <string name="logbook_sheet_title_edit">عدّل القيد</string>
     <string name="logbook_type_carb">أكلة</string>
     <string name="logbook_type_insulin">إنسولين</string>
+    <string name="logbook_type_basal">قاعدي</string>
     <string name="logbook_type_activity">نشاط</string>
     <string name="logbook_type_note">ملاحظة</string>
     <string name="logbook_custom_label">قيمة تانية</string>
@@ -264,4 +265,28 @@
     <string name="readings_title">القرايات</string>
     <string name="readings_save_every">احفظ قراية كل</string>
     <string name="readings_body">الحساس بيبعت قراية كل دقيقة. لو حفظت أقل السجل هيبقى أخف؛ والتنبيهات برضه بتفحص كل قراية.</string>
+    <string name="custom_value">قيمة تانية…</string>
+    <string name="custom_value_title">قيمة مخصّصة</string>
+    <string name="custom_value_range">من %1$d لـ %2$d</string>
+    <string name="custom_value_set">ظبّط</string>
+    <string name="logbook_meal_insulin">إنسولين مع الوجبة دي (اختياري، وحدات)</string>
+    <string name="logbook_prebolus">اتاخد قبل الأكل بـ</string>
+    <string name="logbook_prebolus_with">مع الأكل</string>
+    <string name="logbook_prebolus_min">%1$d دقيقة قبلها</string>
+    <!-- You → Nightscout / Your data -->
+    <string name="ns_title">Nightscout</string>
+    <string name="ns_upload">ارفع على Nightscout</string>
+    <string name="ns_upload_body">بيبعت قراياتك وسجلّك لموقع Nightscout بتاعك (اللي كان DiaBox بيعمله)، علشان الأدوات اللي بتقرا منه تفضل شغّالة.</string>
+    <string name="ns_url">رابط Nightscout</string>
+    <string name="ns_secret">الـ API secret</string>
+    <string name="ns_upload_now">ارفع دلوقتي</string>
+    <string name="ns_status_ok">اترفع %2$d جديد الساعة %1$s.</string>
+    <string name="ns_status_failed">الرفع فشل الساعة %1$s: %2$s</string>
+    <string name="export_title">بياناتك</string>
+    <string name="export_body">كل اللي سكون بيسجّله — القرايات والسجل — كملف CSV لإكسل أو شيتس أو الدكتور.</string>
+    <string name="export_csv">صدّر CSV</string>
+    <string name="export_days">%1$d يوم</string>
+    <string name="export_all">الكل</string>
+    <string name="export_done">اتحفظ %1$d سطر.</string>
+    <string name="export_failed">مقدرناش نحفظ: %1$s</string>
 </resources>

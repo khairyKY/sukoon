@@ -43,6 +43,7 @@ import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.lifecycle.lifecycleScope
 import com.sukoon.app.R
 import com.sukoon.app.ui.components.ChoiceChips
+import com.sukoon.app.ui.components.NumberChips
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
 import com.sukoon.app.ui.theme.Sage
@@ -104,9 +105,10 @@ private fun WidgetConfigScreen(initial: WidgetOptions, onSave: (WidgetOptions) -
         Text(stringResource(R.string.widget_config_resize_hint), fontSize = 12.5.sp, color = CaptionMuted)
 
         Label(stringResource(R.string.widget_config_graph))
-        ChoiceChips(
+        NumberChips(
             choices = WidgetOptions.GRAPH_CHOICES,
             selected = options.graphHours,
+            range = 0..24,
             label = { if (it == 0) stringResource(R.string.widget_config_graph_off) else stringResource(R.string.widget_config_hours, it) },
         ) { options = options.copy(graphHours = it) }
 

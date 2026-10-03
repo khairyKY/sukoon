@@ -107,7 +107,8 @@ object AiPrompts {
             val amount = event.value?.let { v ->
                 val unit = when (event.logType) {
                     LogEventType.CARB -> " g carbs"
-                    LogEventType.INSULIN -> " units insulin"
+                    LogEventType.INSULIN -> " units rapid insulin"
+                    LogEventType.BASAL -> " units basal insulin"
                     LogEventType.ACTIVITY -> " min activity"
                     LogEventType.NOTE -> ""
                 }

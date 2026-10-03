@@ -57,6 +57,7 @@ fun TrendsHub(
     onUpdateEvent: (EventEntity) -> Unit,
     onDeleteEvent: (EventEntity) -> Unit,
     onEstimateCarbs: suspend (String, ByteArray?) -> CarbEstimate,
+    onLogMeal: (Double, String?, Double, Int) -> Unit,
     askState: AskUiState,
     hasAiKey: Boolean,
     onAsk: (String) -> Unit,
@@ -84,6 +85,7 @@ fun TrendsHub(
                 onDeleteEvent = onDeleteEvent,
                 modifier = Modifier.weight(1f),
                 onEstimateCarbs = onEstimateCarbs,
+                onLogMeal = onLogMeal,
             )
             TrendsSubTab.ASK -> AskScreen(
                 state = askState,

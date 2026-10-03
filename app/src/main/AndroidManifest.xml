@@ -39,7 +39,11 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:theme="@style/Theme.Sukoon"
-        android:supportsRtl="true">
+        android:supportsRtl="true"
+        android:usesCleartextTraffic="true">
+        <!-- ponytail: cleartext allowed app-wide because the Nightscout upload target is usually a
+             self-hosted http URL on a LAN/Tailscale IP (Tailscale already encrypts the hop). Narrow
+             it with a network-security-config if a public https-only Nightscout becomes the norm. -->
 
         <activity
             android:name=".MainActivity"

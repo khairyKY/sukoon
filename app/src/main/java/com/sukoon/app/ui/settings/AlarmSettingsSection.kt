@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.sukoon.app.R
 import com.sukoon.app.alarms.AlarmSettings
 import com.sukoon.app.data.prefs.SettingsPrefs
-import com.sukoon.app.ui.components.ChoiceChips
+import com.sukoon.app.ui.components.NumberChips
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.Sage
 import com.sukoon.app.ui.theme.StateUrgent
@@ -57,27 +57,27 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
         }
 
         Toggle(R.string.alarms_low, R.string.alarms_low_body, settings.lowEnabled) { onChange(settings.copy(lowEnabled = it)) }
-        ChoiceChips(LOW_LEVELS, settings.lowMgDl, { stringResource(R.string.alarms_below, it) }, enabled = settings.lowEnabled) {
+        NumberChips(LOW_LEVELS, settings.lowMgDl, 60..110, { stringResource(R.string.alarms_below, it) }, enabled = settings.lowEnabled) {
             onChange(settings.copy(lowMgDl = it))
         }
         Label(R.string.alarms_low_repeat)
-        ChoiceChips(LOW_SNOOZES, settings.lowSnoozeMinutes, { stringResource(R.string.alarms_minutes, it) }, enabled = settings.lowEnabled) {
+        NumberChips(LOW_SNOOZES, settings.lowSnoozeMinutes, 5..60, { stringResource(R.string.alarms_minutes, it) }, enabled = settings.lowEnabled) {
             onChange(settings.copy(lowSnoozeMinutes = it))
         }
 
         Toggle(R.string.alarms_going_low, R.string.alarms_going_low_body, settings.goingLowEnabled) { onChange(settings.copy(goingLowEnabled = it)) }
 
         Toggle(R.string.alarms_high, R.string.alarms_high_body, settings.highEnabled) { onChange(settings.copy(highEnabled = it)) }
-        ChoiceChips(HIGH_LEVELS, settings.highMgDl, { stringResource(R.string.alarms_above, it) }, enabled = settings.highEnabled) {
+        NumberChips(HIGH_LEVELS, settings.highMgDl, 150..400, { stringResource(R.string.alarms_above, it) }, enabled = settings.highEnabled) {
             onChange(settings.copy(highMgDl = it))
         }
         Label(R.string.alarms_high_repeat)
-        ChoiceChips(HIGH_SNOOZES, settings.highSnoozeMinutes, { stringResource(R.string.alarms_minutes, it) }, enabled = settings.highEnabled) {
+        NumberChips(HIGH_SNOOZES, settings.highSnoozeMinutes, 15..240, { stringResource(R.string.alarms_minutes, it) }, enabled = settings.highEnabled) {
             onChange(settings.copy(highSnoozeMinutes = it))
         }
 
         Toggle(R.string.alarms_signal, R.string.alarms_signal_body, settings.signalLossEnabled) { onChange(settings.copy(signalLossEnabled = it)) }
-        ChoiceChips(SIGNAL_MINUTES, settings.signalLossMinutes, { stringResource(R.string.alarms_after_minutes, it) }, enabled = settings.signalLossEnabled) {
+        NumberChips(SIGNAL_MINUTES, settings.signalLossMinutes, 10..120, { stringResource(R.string.alarms_after_minutes, it) }, enabled = settings.signalLossEnabled) {
             onChange(settings.copy(signalLossMinutes = it))
         }
     }
@@ -88,7 +88,7 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
 fun ReadingsSection(intervalMinutes: Int, onChange: (Int) -> Unit) {
     Card {
         Label(R.string.readings_save_every)
-        ChoiceChips(SettingsPrefs.SAVE_INTERVALS, intervalMinutes, { stringResource(R.string.alarms_minutes, it) }) { onChange(it) }
+        NumberChips(SettingsPrefs.SAVE_INTERVALS, intervalMinutes, SettingsPrefs.SAVE_INTERVAL_RANGE, { stringResource(R.string.alarms_minutes, it) }) { onChange(it) }
         Text(stringResource(R.string.readings_body), fontSize = 12.sp, color = CaptionMuted)
     }
 }

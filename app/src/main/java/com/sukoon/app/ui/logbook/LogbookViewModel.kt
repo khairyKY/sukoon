@@ -11,6 +11,7 @@ import com.sukoon.app.ai.GeminiClient
 import com.sukoon.app.data.db.EventEntity
 import com.sukoon.app.data.db.LogEventType
 import com.sukoon.app.data.repository.LogbookRepository
+import java.time.Instant
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.SharingStarted
@@ -33,6 +34,15 @@ class LogbookViewModel(private val repository: LogbookRepository, private val ge
 
     fun log(type: LogEventType, value: Double?, note: String?) {
         viewModelScope.launch { repository.log(type, value, note) }
+    }
+
+    /** A meal plus the rapid insulin for it; the insulin is stamped [preBolusMinutes] before the meal. */
+    fun logMeal(carbs: Double, note: String?, insulinUnits: Double, preBolusMinutes: Int) {
+        viewModelScope.launch {
+            val now = Instant.now()
+            repository.log(LogEventType.INSULIN, insulinUnits, null, at = now.minusSeconds(preBolusMinutes * 60L))
+            repository.log(LogEventType.CARB, carbs, note, at = now)
+        }
     }
 
     fun updateEvent(event: EventEntity) {

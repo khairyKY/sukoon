@@ -23,7 +23,7 @@ class SettingsPrefs(context: Context) {
 
     /** You → Readings: minimum minutes between saved readings. Alarms ignore it and see every reading. */
     var saveIntervalMinutes: Int
-        get() = prefs.getInt(KEY_SAVE_INTERVAL, 1).takeIf { it in SAVE_INTERVALS } ?: 1
+        get() = prefs.getInt(KEY_SAVE_INTERVAL, 1).coerceIn(SAVE_INTERVAL_RANGE)
         set(value) = prefs.edit().putInt(KEY_SAVE_INTERVAL, value).apply()
 
     var alarmSettings: AlarmSettings
@@ -52,6 +52,7 @@ class SettingsPrefs(context: Context) {
 
     companion object {
         val SAVE_INTERVALS = listOf(1, 2, 3, 5, 15)
+        val SAVE_INTERVAL_RANGE = 1..60
         private const val KEY_SOURCE = "source_kind"
         private const val KEY_GEMINI = "gemini_api_key"
         private const val KEY_SAVE_INTERVAL = "save_interval_minutes"

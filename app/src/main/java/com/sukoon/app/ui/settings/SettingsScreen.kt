@@ -38,6 +38,8 @@ import androidx.compose.ui.unit.sp
 import com.sukoon.app.BuildConfig
 import com.sukoon.app.R
 import com.sukoon.app.alarms.AlarmSettings
+import com.sukoon.app.data.export.NightscoutConfig
+import com.sukoon.app.data.export.UploadStatus
 import com.sukoon.app.data.source.libre.LibreNfc
 import com.sukoon.app.data.source.libre.SensorPairing
 import com.sukoon.app.data.source.SourceKind
@@ -66,6 +68,11 @@ fun SettingsScreen(
     onTestAlarm: () -> Unit,
     saveIntervalMinutes: Int,
     onSaveInterval: (Int) -> Unit,
+    nightscout: NightscoutConfig,
+    nightscoutStatus: UploadStatus,
+    onNightscout: (NightscoutConfig) -> Unit,
+    onUploadNow: () -> Unit,
+    buildCsv: suspend (Int) -> Pair<String, Int>,
     modifier: Modifier = Modifier,
 ) {
     var keyInput by rememberSaveable(geminiKey) { mutableStateOf(geminiKey) }
@@ -111,6 +118,14 @@ fun SettingsScreen(
         Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(R.string.readings_title))
         ReadingsSection(saveIntervalMinutes, onSaveInterval)
+
+        Spacer(Modifier.height(28.dp))
+        SectionLabel(stringResource(R.string.ns_title))
+        NightscoutSection(nightscout, nightscoutStatus, onNightscout, onUploadNow)
+
+        Spacer(Modifier.height(28.dp))
+        SectionLabel(stringResource(R.string.export_title))
+        ExportSection(buildCsv)
 
         Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(R.string.widgets_title))

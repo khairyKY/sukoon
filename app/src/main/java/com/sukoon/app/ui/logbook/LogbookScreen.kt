@@ -37,6 +37,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -58,6 +59,7 @@ import androidx.core.content.FileProvider
 import com.sukoon.app.R
 import com.sukoon.app.ai.CarbEstimate
 import com.sukoon.app.ai.MealPhoto
+import com.sukoon.app.ui.components.NumberChips
 import com.sukoon.app.data.db.EventEntity
 import com.sukoon.app.data.db.LogEventType
 import com.sukoon.app.data.db.logType
@@ -80,6 +82,7 @@ import kotlinx.coroutines.withContext
 private val PRESETS: Map<LogEventType, List<Double>> = mapOf(
     LogEventType.CARB to listOf(15.0, 30.0, 45.0, 60.0),
     LogEventType.INSULIN to listOf(1.0, 2.0, 4.0, 6.0),
+    LogEventType.BASAL to listOf(10.0, 14.0, 18.0, 22.0),
     LogEventType.ACTIVITY to listOf(15.0, 30.0, 60.0),
 )
 
@@ -108,6 +111,8 @@ fun LogbookScreen(
     onDeleteEvent: (EventEntity) -> Unit,
     modifier: Modifier = Modifier,
     onEstimateCarbs: (suspend (String, ByteArray?) -> CarbEstimate)? = null,
+    /** Meal + the insulin taken for it in one save: (carbs g, note, rapid units, minutes injected before eating). */
+    onLogMeal: ((Double, String?, Double, Int) -> Unit)? = null,
 ) {
     var sheetTarget by remember { mutableStateOf<SheetTarget?>(null) }
 
@@ -164,6 +169,7 @@ fun LogbookScreen(
             },
             onDelete = editing?.let { toDelete -> { onDeleteEvent(toDelete); sheetTarget = null } },
             onEstimateCarbs = onEstimateCarbs,
+            onSaveMeal = onLogMeal?.let { log -> { carbs, note, insulin, minutes -> log(carbs, note, insulin, minutes); sheetTarget = null } },
         )
     }
 }
@@ -249,11 +255,23 @@ private fun QuickEntrySheet(
     onSave: (LogEventType, Double?, String?) -> Unit,
     onDelete: (() -> Unit)?,
     onEstimateCarbs: (suspend (String, ByteArray?) -> CarbEstimate)?,
+    onSaveMeal: ((Double, String?, Double, Int) -> Unit)? = null,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var type by remember { mutableStateOf(existing?.logType ?: LogEventType.CARB) }
     var amountText by remember { mutableStateOf(existing?.value?.let(::formatAmount) ?: "") }
     var noteText by remember { mutableStateOf(existing?.note ?: "") }
+    // New meals only: optional rapid insulin logged alongside, injected N minutes before eating.
+    var mealInsulinText by remember { mutableStateOf("") }
+    var preBolusMinutes by remember { mutableIntStateOf(0) }
+    val mealInsulin = mealInsulinText.toDoubleOrNull()?.takeIf { it > 0 && existing == null && onSaveMeal != null }
+    fun save(saveType: LogEventType, amount: Double?) {
+        if (saveType == LogEventType.CARB && amount != null && mealInsulin != null) {
+            onSaveMeal!!(amount, noteText.ifBlank { null }, mealInsulin, preBolusMinutes)
+        } else {
+            onSave(saveType, amount, noteText.ifBlank { null })
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -295,7 +313,7 @@ private fun QuickEntrySheet(
                     PRESETS.getValue(type).forEach { preset ->
                         AmountChip(
                             label = "${formatAmountLocalized(preset)}$unit",
-                            onClick = { onSave(type, preset, noteText.ifBlank { null }) },
+                            onClick = { save(type, preset) },
                         )
                     }
                 }
@@ -307,6 +325,24 @@ private fun QuickEntrySheet(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                 )
+                if (type == LogEventType.CARB && existing == null && onSaveMeal != null) {
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = mealInsulinText,
+                        onValueChange = { mealInsulinText = it },
+                        label = { Text(stringResource(R.string.logbook_meal_insulin)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    if (mealInsulin != null) {
+                        Spacer(Modifier.height(10.dp))
+                        Text(stringResource(R.string.logbook_prebolus), fontSize = 12.sp, color = CaptionMuted)
+                        Spacer(Modifier.height(6.dp))
+                        NumberChips(listOf(0, 5, 10, 15, 20, 30), preBolusMinutes, 0..90, {
+                            if (it == 0) stringResource(R.string.logbook_prebolus_with) else stringResource(R.string.logbook_prebolus_min, it)
+                        }) { preBolusMinutes = it }
+                    }
+                }
                 if (type == LogEventType.CARB && onEstimateCarbs != null) {
                     CarbEstimator(
                         estimate = onEstimateCarbs,
@@ -334,7 +370,7 @@ private fun QuickEntrySheet(
                         .clip(RoundedCornerShape(14.dp))
                         .background(if (saveEnabled) Sage else Sage.copy(alpha = 0.4f))
                         .clickable(enabled = saveEnabled) {
-                            onSave(type, amountText.toDoubleOrNull(), noteText.ifBlank { null })
+                            save(type, amountText.toDoubleOrNull())
                         }
                         .padding(horizontal = 24.dp, vertical = 15.dp),
                     contentAlignment = Alignment.Center,
@@ -488,6 +524,7 @@ private fun AmountChip(label: String, onClick: () -> Unit) {
 private fun typeLabel(type: LogEventType): String = when (type) {
     LogEventType.CARB -> stringResource(R.string.logbook_type_carb)
     LogEventType.INSULIN -> stringResource(R.string.logbook_type_insulin)
+    LogEventType.BASAL -> stringResource(R.string.logbook_type_basal)
     LogEventType.ACTIVITY -> stringResource(R.string.logbook_type_activity)
     LogEventType.NOTE -> stringResource(R.string.logbook_type_note)
 }
@@ -496,6 +533,7 @@ private fun typeLabel(type: LogEventType): String = when (type) {
 private fun unitLabel(type: LogEventType): String = when (type) {
     LogEventType.CARB -> stringResource(R.string.logbook_unit_grams)
     LogEventType.INSULIN -> stringResource(R.string.logbook_unit_units)
+    LogEventType.BASAL -> stringResource(R.string.logbook_unit_units)
     LogEventType.ACTIVITY -> stringResource(R.string.logbook_unit_minutes)
     LogEventType.NOTE -> ""
 }

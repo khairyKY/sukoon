@@ -38,6 +38,7 @@
     <string name="logbook_sheet_title_edit">Edit entry</string>
     <string name="logbook_type_carb">Meal</string>
     <string name="logbook_type_insulin">Insulin</string>
+    <string name="logbook_type_basal">Basal</string>
     <string name="logbook_type_activity">Activity</string>
     <string name="logbook_type_note">Note</string>
     <string name="logbook_custom_label">Custom</string>
@@ -264,4 +265,28 @@
     <string name="readings_title">Readings</string>
     <string name="readings_save_every">Save a reading every</string>
     <string name="readings_body">The sensor sends one reading a minute. Saving fewer keeps your history lighter; alarms still check every single reading.</string>
+    <string name="custom_value">Custom…</string>
+    <string name="custom_value_title">Custom value</string>
+    <string name="custom_value_range">Between %1$d and %2$d</string>
+    <string name="custom_value_set">Set</string>
+    <string name="logbook_meal_insulin">Insulin with this meal (optional, units)</string>
+    <string name="logbook_prebolus">Injected before eating</string>
+    <string name="logbook_prebolus_with">With the meal</string>
+    <string name="logbook_prebolus_min">%1$d min before</string>
+    <!-- You → Nightscout / Your data -->
+    <string name="ns_title">Nightscout</string>
+    <string name="ns_upload">Upload to Nightscout</string>
+    <string name="ns_upload_body">Sends your readings and logbook to your Nightscout site (what DiaBox used to do), so Nightscout-based tools keep working.</string>
+    <string name="ns_url">Nightscout URL</string>
+    <string name="ns_secret">API secret</string>
+    <string name="ns_upload_now">Upload now</string>
+    <string name="ns_status_ok">Uploaded %2$d new at %1$s.</string>
+    <string name="ns_status_failed">Upload failed at %1$s: %2$s</string>
+    <string name="export_title">Your data</string>
+    <string name="export_body">Everything Sukoon records — readings and logbook — as a CSV for Excel, Sheets or your doctor.</string>
+    <string name="export_csv">Export CSV</string>
+    <string name="export_days">%1$d days</string>
+    <string name="export_all">All</string>
+    <string name="export_done">Saved %1$d rows.</string>
+    <string name="export_failed">Couldn\'t save: %1$s</string>
 </resources>

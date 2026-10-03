@@ -5,6 +5,8 @@ import com.sukoon.app.ai.GeminiClient
 import com.sukoon.app.alarms.AlarmMonitor
 import com.sukoon.app.alarms.AlarmNotifier
 import com.sukoon.app.data.db.AppDatabase
+import com.sukoon.app.data.export.CsvExport
+import com.sukoon.app.data.export.NightscoutUploader
 import com.sukoon.app.data.prefs.SettingsPrefs
 import com.sukoon.app.data.repository.GlucoseRepository
 import com.sukoon.app.data.repository.LogbookRepository
@@ -21,11 +23,13 @@ import com.sukoon.app.data.source.libre.SensorPairingStore
 import com.sukoon.app.platform.SensorService
 import com.sukoon.app.ui.widget.GlucoseWidget
 import java.time.Instant
+import java.time.ZoneId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -67,6 +71,8 @@ class AppContainer(private val context: Context) {
 
     val gemini = GeminiClient(apiKey = { settings.geminiApiKey })
 
+    val nightscout = NightscoutUploader(context, glucoseRepository, logbookRepository, appScope)
+
     val alarms = AlarmMonitor(
         repository = glucoseRepository,
         settings = settings,
@@ -80,6 +86,15 @@ class AppContainer(private val context: Context) {
         if (_sourceKind.value == SourceKind.LIBRE_BLE) SensorService.start(context)
         refreshWidgets()
         alarms.start()
+        nightscout.start()
+    }
+
+    /** CSV of the last [days] days (0 = everything) → (text, data rows). */
+    suspend fun exportCsv(days: Int): Pair<String, Int> {
+        val since = if (days <= 0) 0L else System.currentTimeMillis() - days * 86_400_000L
+        val readings = glucoseRepository.readingsSince(since).first()
+        val events = logbookRepository.eventsSince(since).first()
+        return CsvExport.build(readings, events, ZoneId.systemDefault()) to readings.size + events.size
     }
 
     /**
