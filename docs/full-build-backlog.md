@@ -23,7 +23,7 @@ Legend: ✅ done · ◐ in progress · ⬜ to do · ⏸ blocked (reason)
 ## Next, in Kai's order (2026-10-03)
 1. ✅ Graph overhaul: current value + trend arrow header, range-colored line with gap breaks, only 70/180 + clock labels, adaptive y-axis, 3h–14d ranges, time-in-range bar (5 bands) + average + GMI (same math as Insights), every reading listed newest first with day headers.
 2. ✅ Emergency contacts + escalation (A8): contacts from the phone book or typed (stored international), your name for the texts. Urgent low, or a no-signal alarm that began while low, unanswered for N min (default 10; any button or swipe restarts the clock) → 60 s countdown (full screen, urgent sound, "I'm OK", wake lock) → text everyone + call the first; again after 30 min if still unanswered; "back to N" text on recovery; "I'm OK, tell them" after. Optional map link. Home "Alert my emergency contact" = text all / WhatsApp / call. Setup checklist asks for SMS + call once a contact exists. Automatic WhatsApp needs the WhatsApp Cloud API from a server → with #3.
-3. ◐ Followers + sharing (A6) on Supabase: ✅ accounts, one-time invite codes, RLS schema (supabase/migrations — Kai runs it once), reading upload, followers/following lists, live follower viewer, background follower alerts (special-use FGS). ⬜ automatic WhatsApp alerts (Edge Function + WhatsApp Cloud API; needs Kai's Meta setup), ⬜ iOS followers via a web app (pending Kai), ⬜ start on boot.
+3. ✅ Followers + sharing (A6) on Supabase: accounts, one-time invite codes, RLS schema (supabase/migrations — Kai runs it once), reading upload, followers/following lists, live follower viewer, background follower alerts (special-use FGS). Followers use the app (no web page). Decided 2026-10-03: no WhatsApp Business/Cloud API — alerts stay SMS + call, WhatsApp is the manual pre-filled option.
 4. ✅ Health Connect: MyFitnessPal (and other apps') meals in as Logbook carb entries via the change log (edits and deletions follow), sensor readings out as interstitial blood glucose (client ids, no duplicates); syncs every 15 min, on every return to the app, and on "Sync now". Client pinned at 1.1.0-beta01 (1.1.0 needs compileSdk 36 + AGP 8.9.1).
 5. ✅ Sensor lifecycle: real warm-up countdown on Home (from the pairing's start), "sensor ended" Home state with "Connect a new sensor", last-day banner on Home, sensor card shows when it ends; one-time notices: ready after warm-up, a day left, an hour left, ended.
 6. ✅ Calibration (opt-in, B10): weighted least squares on the newest 4 steady finger-pricks from 7 days; slope only with a 40+ mg/dL spread; caps ×0.8–1.25 and ±20 mg/dL; pairs >40 mg/dL/40 % apart or taken on a fast arrow left out; a reading under 70 is never raised. Stored readings stay raw; the repository applies it on the way out (screens, alarms, uploads).
@@ -31,6 +31,7 @@ Legend: ✅ done · ◐ in progress · ⬜ to do · ⏸ blocked (reason)
 8. ✅ Report (Trends → Report): AGP percentile bands by time of day (5–95, 25–75, median) over 7/14/30 days with time active, mean, GMI, CV and time in ranges; one-page A4 PDF (PdfDocument) with the consensus targets, shared through the share sheet. Same renderer for screen and PDF.
 
 ## After those
+- ⬜ Start on boot: reconnect the sensor and resume following after a phone restart.
 - ⬜ Glucose in the status bar: the sensor notification shows value + arrow + age; status-bar icon draws the number.
 - ⬜ User guide: first-run walkthrough + Help page.
 - ⬜ Insights into the AI brief; glucose-at-entry in the CSV `glucose_mgdl` column and the AI brief; "glucose now" on the entry sheet.
@@ -40,3 +41,5 @@ Legend: ✅ done · ◐ in progress · ⬜ to do · ⏸ blocked (reason)
 - ⬜ Wear OS complication/tile (#16).
 
 Rules: no APK builds or installs unless Kai asks (compile + unit tests only); no AI attribution in commits or PRs.
+
+iPhone (Kai's father, own sensor): not possible without Apple's paid developer account — free personal teams can't use NFC to pair a Libre. Options: an Android phone with NFC (runs Sukoon fully), or the $99/yr account + a Mac + an iOS port. Kai declined the license (2026-10-03).
