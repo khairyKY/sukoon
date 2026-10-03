@@ -26,6 +26,8 @@ import kotlin.math.roundToInt
 import com.sukoon.app.data.source.nearestTo
 import com.sukoon.app.insulin.InsulinAction
 import com.sukoon.app.insulin.InsulinOnBoard
+import com.sukoon.app.ui.home.HomeUiStateMapper
+import java.time.Duration
 
 /** Drives the Logbook screen — today's window of logged events, newest first, from Room via [LogbookRepository]. */
 class LogbookViewModel(
@@ -46,6 +48,7 @@ class LogbookViewModel(
             }.toMap(),
             glucoseAt = events.mapNotNull { e -> readings.nearestTo(e.timestampMillis)?.let { e.id to it } }.toMap(),
             insulinOnBoard = InsulinOnBoard.total(events, Instant.now(), insulinAction()),
+            glucoseNow = readings.lastOrNull()?.takeIf { Duration.between(it.timestamp, Instant.now()) <= HomeUiStateMapper.STALE_AFTER },
         )
     }
         .stateIn(

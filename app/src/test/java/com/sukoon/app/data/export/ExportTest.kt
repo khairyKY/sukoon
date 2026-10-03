@@ -14,7 +14,7 @@ class ExportTest {
     private val t = Instant.parse("2026-10-03T04:00:00Z")
 
     @Test
-    fun `csv merges readings and logbook in time order with Kai's columns`() {
+    fun `csv merges readings and logbook in time order with Kai's columns, entries carrying the glucose then`() {
         val csv = CsvExport.build(
             readings = listOf(GlucoseReading(t.plusSeconds(600), 182, TrendDirection.RISING, SourceKind.LIBRE_BLE)),
             events = listOf(
@@ -28,9 +28,9 @@ class ExportTest {
             listOf(
                 CsvExport.HEADER,
                 "2026-10-03T07:00:00+03:00,insulin,,6,rapid,,",
-                "2026-10-03T07:05:00+03:00,meal,60,,,,\"koshari, large\"",
+                "2026-10-03T07:05:00+03:00,meal,60,,,182,\"koshari, large\"",
                 "2026-10-03T07:10:00+03:00,glucose,,,,182,",
-                "2026-10-03T07:15:00+03:00,insulin,,18,basal,,",
+                "2026-10-03T07:15:00+03:00,insulin,,18,basal,182,",
             ),
             csv.trimEnd().lines(),
         )

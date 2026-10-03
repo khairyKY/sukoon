@@ -612,4 +612,5 @@
     <string name="start_emergency">ضيف جهة طوارئ</string>
     <string name="start_guide">اقرا الدليل</string>
     <string name="start_dismiss">تمام</string>
+    <string name="logbook_glucose_now">السكر دلوقتي: %1$s %2$s (بيتسجّل مع التسجيل ده)</string>
 </resources>

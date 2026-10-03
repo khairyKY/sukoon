@@ -182,6 +182,7 @@ fun LogbookScreen(
             existing = editing,
             newType = (target as? SheetTarget.New)?.type ?: LogEventType.CARB,
             insulinOnBoard = state.insulinOnBoard,
+            glucoseNow = state.glucoseNow,
             onDismiss = { sheetTarget = null },
             onSave = { type, value, note ->
                 if (editing != null) {
@@ -321,6 +322,7 @@ private fun QuickEntrySheet(
     existing: EventEntity?,
     newType: LogEventType,
     insulinOnBoard: Double,
+    glucoseNow: GlucoseReading?,
     onDismiss: () -> Unit,
     onSave: (LogEventType, Double?, String?) -> Unit,
     onDelete: (() -> Unit)?,
@@ -355,6 +357,14 @@ private fun QuickEntrySheet(
                 fontSize = 22.sp,
                 color = MaterialTheme.colorScheme.onBackground,
             )
+            if (existing == null && glucoseNow != null) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    stringResource(R.string.logbook_glucose_now, String.format(Locale.getDefault(), "%d", glucoseNow.glucoseMgDl), glucoseNow.trend.arrow),
+                    fontSize = 12.sp,
+                    color = CaptionMuted,
+                )
+            }
             Spacer(Modifier.height(16.dp))
 
             // Two rows of three: six types don't fit one row on a phone.

@@ -188,7 +188,7 @@ fun MainScaffold() {
                 val logbookViewModel: LogbookViewModel = viewModel(factory = LogbookViewModel.factory(container.logbookRepository, container.glucoseRepository, container.gemini) { container.settings.insulinAction })
                 val logbookState by logbookViewModel.uiState.collectAsStateWithLifecycle()
                 val askViewModel: AskViewModel = viewModel(
-                    factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini),
+                    factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini) { container.settings.insulinAction },
                 )
                 val askState by askViewModel.uiState.collectAsStateWithLifecycle()
                 val insightsViewModel: InsightsViewModel = viewModel(

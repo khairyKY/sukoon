@@ -34,7 +34,7 @@ Legend: ✅ done · ◐ in progress · ⬜ to do · ⏸ blocked (reason)
 - ✅ Start on boot and after updates (BootReceiver).
 - ✅ Glucose in the status bar: the sensor notification shows value + arrow + age; the number is the status-bar icon.
 - ✅ User guide: You → Guide (12 topics, EN/AR) + a getting-started card on Now.
-- ⬜ Insights into the AI brief; glucose-at-entry in the CSV `glucose_mgdl` column and the AI brief; "glucose now" on the entry sheet.
+- ✅ Insights into the AI brief (dose rules deliberately left out); active insulin in the brief; glucose-at-entry in the CSV and the brief; "glucose now" on the entry sheet.
 - ⬜ Settings completion (A10): units mg/dL ↔ mmol/L everywhere, theme (auto/light/dark), quiet hours for highs.
 - ⬜ Logbook polish: edit an entry's time, photo attached to meals.
 - ⬜ Localization + motion sweep (A12).

@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.sukoon.app.insulin.InsulinAction
 
 data class AskUiState(
     val turns: List<ChatTurn> = emptyList(),
@@ -36,6 +37,7 @@ class AskViewModel(
     private val glucoseRepository: GlucoseRepository,
     private val logbookRepository: LogbookRepository,
     private val gemini: GeminiClient,
+    private val insulinAction: () -> InsulinAction = { InsulinAction() },
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AskUiState())
@@ -56,6 +58,7 @@ class AskViewModel(
                     events = logbookRepository.eventsSince(since).first(),
                     now = Instant.now(),
                     zone = ZoneId.systemDefault(),
+                    insulinAction = insulinAction(),
                 )
                 gemini.generate(system, turns)
             }
@@ -77,8 +80,8 @@ class AskViewModel(
     companion object {
         private val WINDOW_MILLIS = TimeUnit.DAYS.toMillis(7)
 
-        fun factory(glucoseRepository: GlucoseRepository, logbookRepository: LogbookRepository, gemini: GeminiClient) = viewModelFactory {
-            initializer { AskViewModel(glucoseRepository, logbookRepository, gemini) }
+        fun factory(glucoseRepository: GlucoseRepository, logbookRepository: LogbookRepository, gemini: GeminiClient, insulinAction: () -> InsulinAction = { InsulinAction() }) = viewModelFactory {
+            initializer { AskViewModel(glucoseRepository, logbookRepository, gemini, insulinAction) }
         }
     }
 }

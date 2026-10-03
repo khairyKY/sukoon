@@ -612,4 +612,5 @@
     <string name="start_emergency">Add an emergency contact</string>
     <string name="start_guide">Read the guide</string>
     <string name="start_dismiss">Got it</string>
+    <string name="logbook_glucose_now">Glucose now: %1$s %2$s (saved with this entry)</string>
 </resources>

@@ -13,4 +13,6 @@ data class LogbookUiState(
     val glucoseAt: Map<Long, GlucoseReading> = emptyMap(),
     /** Rapid insulin still active right now, shown when logging another dose. */
     val insulinOnBoard: Double = 0.0,
+    /** The current reading when fresh: shown on a new entry, which then carries it. */
+    val glucoseNow: GlucoseReading? = null,
 )

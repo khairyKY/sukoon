@@ -14,6 +14,11 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.roundToInt
 import org.json.JSONObject
+import com.sukoon.app.data.source.nearestTo
+import com.sukoon.app.insights.Insight
+import com.sukoon.app.insights.InsightEngine
+import com.sukoon.app.insulin.InsulinAction
+import com.sukoon.app.insulin.InsulinOnBoard
 
 /**
  * Everything the AI is told. Pure (clock + zone injected) so the data brief is unit-tested; the
@@ -40,6 +45,9 @@ object AiPrompts {
         - Be calm and brief: 2–6 short sentences or a few "•" bullets. Plain text — no markdown, no headings.
         - Reply in the language the user writes in (English or Egyptian Arabic).
         - If DATA SOURCE is SIMULATED, say once that this is demo data, not their real readings.
+        - INSIGHTS are computed by the app from these readings with the cited consensus rules: use their
+          numbers rather than re-deriving them, and keep their caveats. ACTIVE INSULIN is rapid insulin
+          still working; mention stacking risk if it matters, never a dose.
         Targets: in range 70–180 mg/dL, low < 70, very low < 54, high > 180, very high > 250.
     """.trimIndent()
 
@@ -54,8 +62,14 @@ object AiPrompts {
          "confidence": "low" | "medium" | "high", "note": "one short sentence on the biggest uncertainty"}
     """.trimIndent()
 
-    fun askSystemPrompt(readings: List<GlucoseReading>, events: List<EventEntity>, now: Instant, zone: ZoneId): String =
-        listOf(ASK_RULES, PERSONAL_CONTEXT, "DATA\n" + dataBrief(readings, events, now, zone))
+    fun askSystemPrompt(
+        readings: List<GlucoseReading>,
+        events: List<EventEntity>,
+        now: Instant,
+        zone: ZoneId,
+        insulinAction: InsulinAction = InsulinAction(),
+    ): String =
+        listOf(ASK_RULES, PERSONAL_CONTEXT, "DATA\n" + dataBrief(readings, events, now, zone, insulinAction))
             .filter { it.isNotBlank() }
             .joinToString("\n\n")
 
@@ -64,7 +78,13 @@ object AiPrompts {
             (if (PERSONAL_CONTEXT.isNotBlank()) "\n\n$PERSONAL_CONTEXT" else "")
 
     /** [readings] chronological (oldest first), typically the last 7 days. */
-    fun dataBrief(readings: List<GlucoseReading>, events: List<EventEntity>, now: Instant, zone: ZoneId): String = buildString {
+    fun dataBrief(
+        readings: List<GlucoseReading>,
+        events: List<EventEntity>,
+        now: Instant,
+        zone: ZoneId,
+        insulinAction: InsulinAction = InsulinAction(),
+    ): String = buildString {
         // Locale.US throughout: the model gets one consistent numeral/day-name format whatever the UI language.
         val dayTime = DateTimeFormatter.ofPattern("EEE MM-dd HH:mm", Locale.US).withZone(zone)
         val time = DateTimeFormatter.ofPattern("HH:mm", Locale.US).withZone(zone)
@@ -101,7 +121,23 @@ object AiPrompts {
             )
         }
 
-        appendLine("LOGBOOK (time, type, amount, note):")
+        val active = InsulinOnBoard.total(events, now, insulinAction)
+        appendLine(
+            String.format(
+                Locale.US,
+                "ACTIVE INSULIN now: %.1f units rapid (curve peaks at %d min, lasts %d h; basal not counted)",
+                active, insulinAction.peakMinutes, insulinAction.durationMinutes / 60,
+            ),
+        )
+
+        // The ratio rules (500/1800) and per-meal carbs-per-unit stay out on purpose: they invite dose maths.
+        val insights = InsightEngine.analyze(readings, events, now, zone).filterNot { it is Insight.Formulas }
+        if (insights.isNotEmpty()) {
+            appendLine("INSIGHTS (14-day rules, with sources):")
+            insights.forEach { appendLine("- " + insightLine(it)) }
+        }
+
+        appendLine("LOGBOOK (time, type, amount, note, sensor glucose then):")
         if (events.isEmpty()) appendLine("(nothing logged)")
         events.sortedBy { it.timestampMillis }.forEach { event ->
             val amount = event.value?.let { v ->
@@ -115,9 +151,38 @@ object AiPrompts {
                 }
                 "${if (v % 1.0 == 0.0) v.toLong() else v}$unit"
             }.orEmpty()
-            appendLine(listOf(dayTime.format(Instant.ofEpochMilli(event.timestampMillis)), event.logType.name.lowercase(), amount, event.note.orEmpty()).filter { it.isNotBlank() }.joinToString(" · "))
+            val glucose = readings.nearestTo(event.timestampMillis)?.let { "sensor ${it.glucoseMgDl} ${it.trend.name.lowercase().replace('_', ' ')}" }.orEmpty()
+            appendLine(
+                listOf(dayTime.format(Instant.ofEpochMilli(event.timestampMillis)), event.logType.name.lowercase(), amount, event.note.orEmpty(), glucose)
+                    .filter { it.isNotBlank() }
+                    .joinToString(" · "),
+            )
         }
     }.trim()
+
+    private fun insightLine(insight: Insight): String {
+        fun hour(h: Int) = String.format(Locale.US, "%02d:00", h)
+        return when (insight) {
+            is Insight.NotEnoughData -> "Not enough data for patterns yet (${insight.daysWithData} days, ${insight.coveragePercent}% coverage)."
+            is Insight.Targets -> "Targets over ${insight.days} days (${insight.coveragePercent}% coverage): in range ${insight.inRange}% (goal >70), " +
+                "below 70 ${insight.below70}% (<4), below 54 ${insight.below54}% (<1), above 180 ${insight.above180}% (<25), " +
+                "above 250 ${insight.above250}% (<5); mean ${insight.meanMgDl}, GMI ${insight.gmiPercent}% [Battelino et al. 2019]."
+            is Insight.Variability -> "Variability: CV ${insight.cvPercent}% (stable at 36 or less) [Danne et al. 2017]."
+            is Insight.RecurringLows -> "Recurring lows starting ${hour(insight.fromHour)}–${hour(insight.toHour)} on ${insight.days} days " +
+                "(${insight.episodes} of ${insight.totalEpisodes} lows)."
+            is Insight.RecurringHighs -> "Usually above 180 between ${hour(insight.fromHour)} and ${hour(insight.toHour)} (${insight.percentOfDays}% of days)."
+            is Insight.DawnRise -> "Dawn rise: ${insight.nightsWithRise} of ${insight.nights} nights rose 20+ from the 03–06 low by 07–08 " +
+                "(median +${insight.medianRise}) [Monnier et al. 2013]."
+            is Insight.MealOutcomes -> "${insight.slot.name.lowercase()} meals: ${insight.meals}; above 180 two hours after: ${insight.highAt2h}; " +
+                "low within 4 h: ${insight.lowWithin4h}; average rise ${insight.averageRise}."
+            is Insight.PreBolus -> "Insulin 10+ min before eating: average rise ${insight.earlyRise} (${insight.earlyMeals} meals) vs " +
+                "${insight.lateRise} when taken at or after eating (${insight.lateMeals}) [Slattery et al. 2018]."
+            is Insight.Stacking -> "${insight.lowsAfterStacking} of ${insight.totalLows} lows came within 4 h of two rapid doses taken under 3 h apart."
+            is Insight.Formulas -> ""
+            is Insight.MeterAgreement -> "Sensor vs finger-pricks: ${insight.agreeing} of ${insight.checks} within the 20/20 band; " +
+                "the sensor averages ${insight.meanDiffPercent}% against the meter."
+        }
+    }
 
     // Exact extremes (with times) matter: the 15-minute averages below smooth away short lows.
     private fun summary(label: String, readings: List<GlucoseReading>, time: DateTimeFormatter): String {
