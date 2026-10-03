@@ -67,6 +67,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
+import com.sukoon.app.data.source.libre.SensorLife
+import com.sukoon.app.ui.home.SensorEndingBanner
+import java.time.Duration
+import java.time.Instant
 
 /**
  * Top-level navigation, per the shipped design's 3-tab bottom bar (Now / Trends / You) — not the
@@ -103,7 +107,7 @@ fun MainScaffold() {
         ) {
             composable(SukoonTab.NOW.route) {
                 val repository = (LocalContext.current.applicationContext as SukoonApp).container.glucoseRepository
-                val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModel.factory(repository))
+                val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModel.factory(repository, (LocalContext.current.applicationContext as SukoonApp).container::sensorLife))
                 val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
                 val toYou = { navController.navigateToTab(SukoonTab.YOU) }
                 val alarms = (LocalContext.current.applicationContext as SukoonApp).container.alarms
@@ -120,6 +124,10 @@ fun MainScaffold() {
                     if (missingSetup.isNotEmpty() && !setupLater) {
                         SetupBanner(missingSetup, onFix = toYou, onLater = { setupLater = true })
                     }
+                    val life by homeViewModel.sensorLife.collectAsStateWithLifecycle()
+                    (life as? SensorLife.Running)
+                        ?.takeIf { Duration.between(Instant.now(), it.endsAt) <= Duration.ofHours(24) }
+                        ?.let { SensorEndingBanner(it, onClick = toYou) }
                     HomeScreen(
                         state = homeState,
                         modifier = Modifier.weight(1f),

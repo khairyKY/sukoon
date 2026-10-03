@@ -6,6 +6,7 @@ import com.sukoon.app.domain.metrics.GlucoseMetrics
 import com.sukoon.app.domain.metrics.GlucoseMetrics.RangeBracket
 import java.time.Duration
 import java.time.Instant
+import com.sukoon.app.data.source.libre.SensorLife
 
 /**
  * Pure mapping from raw source signals (status + latest reading + recent window) to [HomeUiState].
@@ -26,12 +27,18 @@ object HomeUiStateMapper {
         latest: GlucoseReading?,
         recentMgDl: List<Int>,
         now: Instant,
-    ): HomeUiState = when (status) {
+        /** The paired sensor's life (null on demo data): the real warm-up countdown, and "ended". */
+        life: SensorLife? = null,
+    ): HomeUiState = when (life) {
+        is SensorLife.Ended -> HomeUiState.SensorEnded
+        is SensorLife.WarmingUp -> HomeUiState.WarmingUp(life.minutesLeft)
+        else -> byStatus(status, latest, recentMgDl, now)
+    }
+
+    private fun byStatus(status: SourceStatus, latest: GlucoseReading?, recentMgDl: List<Int>, now: Instant): HomeUiState = when (status) {
         SourceStatus.Disconnected -> HomeUiState.NoSensor
 
-        // The simulator jumps straight to Connected, so this branch is dead until Track B. A real
-        // sensor's warm-up countdown comes from the sensor session (warmupEndsAtMillis), not from
-        // this payload-less status — hence the placeholder. LibreBleSource will supply real minutes.
+        // The countdown comes from the paired sensor's start (life, above); this is only a fallback.
         SourceStatus.WarmingUp -> HomeUiState.WarmingUp(minutesRemaining = 0)
 
         SourceStatus.Stale -> latest?.let { stale(it, recentMgDl, now) } ?: HomeUiState.NoSensor

@@ -43,6 +43,9 @@ import com.sukoon.app.sharing.Supabase
 import com.sukoon.app.sharing.Sharing
 import com.sukoon.app.sharing.FollowerWatch
 import com.sukoon.app.health.HealthConnectSync
+import com.sukoon.app.data.source.libre.SensorLife
+import com.sukoon.app.data.source.libre.SensorLifecycle
+import com.sukoon.app.platform.SensorLifeNotices
 
 /**
  * Manual dependency container (ponytail: no Hilt/Koin for a graph this small). Owns the
@@ -100,6 +103,16 @@ class AppContainer(private val context: Context) {
 
     val healthConnect = HealthConnectSync(context, glucoseRepository, logbookRepository, appScope)
 
+    /** The paired sensor's life while it's the source (null on demo data or with no sensor). */
+    fun sensorLife(now: Instant = Instant.now()): SensorLife? =
+        if (_sourceKind.value != SourceKind.LIBRE_BLE) null else pairingStore.load()?.let { SensorLifecycle.of(it.startMillis, it.lifetimeMinutes, now) }
+
+    private val sensorNotices = SensorLifeNotices(context) {
+        pairingStore.load()
+            ?.takeIf { _sourceKind.value == SourceKind.LIBRE_BLE }
+            ?.let { it.serial to SensorLifecycle.of(it.startMillis, it.lifetimeMinutes, Instant.now()) }
+    }
+
     init {
         glucoseRepository.start()
         if (_sourceKind.value == SourceKind.LIBRE_BLE) SensorService.start(context)
@@ -109,6 +122,12 @@ class AppContainer(private val context: Context) {
         sharing.start()
         followerWatch.start()
         healthConnect.start()
+        appScope.launch {
+            while (true) {
+                runCatching { sensorNotices.check() }
+                delay(5 * 60_000L)
+            }
+        }
     }
 
     /** CSV of the last [days] days (0 = everything) → (text, data rows). */

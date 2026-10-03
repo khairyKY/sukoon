@@ -8,6 +8,7 @@ import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.sukoon.app.data.source.libre.SensorLife
 
 class HomeUiStateMapperTest {
 
@@ -16,6 +17,14 @@ class HomeUiStateMapperTest {
 
     private fun reading(mgDl: Int, at: Instant = now) =
         GlucoseReading(at, mgDl, TrendDirection.STEADY, SourceKind.SIMULATED)
+
+    @Test
+    fun `the paired sensor's life wins - real warm-up minutes, and ended`() {
+        val warming = HomeUiStateMapper.map(SourceStatus.Connecting, null, emptyList(), now, SensorLife.WarmingUp(42))
+        assertEquals(HomeUiState.WarmingUp(42), warming)
+        val ended = HomeUiStateMapper.map(SourceStatus.Error("Sensor has expired"), reading(140, now.minusSeconds(3600)), recent, now, SensorLife.Ended(now))
+        assertEquals(HomeUiState.SensorEnded, ended)
+    }
 
     @Test
     fun `disconnected maps to NoSensor`() {

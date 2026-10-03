@@ -516,4 +516,24 @@
     <string name="toast_hc_synced">Synced: %1$d new meals, %2$d updated, %3$d readings shared.</string>
     <string name="toast_hc_denied">Health Connect access wasn\'t granted.</string>
     <string name="toast_hc_failed">Health Connect sync failed: %1$s</string>
+    <string name="home_status_sensor_ended">SENSOR ENDED</string>
+    <string name="home_sensor_ended_title">Your sensor has ended</string>
+    <string name="home_sensor_ended_body">Apply a new sensor, then connect it here so readings and alarms carry on.</string>
+    <string name="home_btn_new_sensor">Connect a new sensor</string>
+    <string name="banner_sensor_ending">Sensor ends %1$s (in %2$s). Have a new one ready.</string>
+    <string name="life_in_days">%1$d d %2$d h</string>
+    <string name="life_in_hours">%1$d h</string>
+    <string name="life_in_minutes">%1$d min</string>
+    <string name="sensor_life_warming">Warming up: readings start in %1$d min.</string>
+    <string name="sensor_life_running">Ends %1$s (in %2$s).</string>
+    <string name="sensor_life_ended">Ended %1$s.</string>
+    <string name="life_channel">Sensor reminders</string>
+    <string name="life_warmed_title">Sensor ready</string>
+    <string name="life_warmed_body">Warm-up is over: live readings and alarms are on.</string>
+    <string name="life_day_title">Sensor ends in about a day</string>
+    <string name="life_day_body">It stops %1$s. Have a new one ready.</string>
+    <string name="life_hour_title">Sensor ends within the hour</string>
+    <string name="life_hour_body">It stops %1$s. Apply the new one, then connect it in You → Your sensor.</string>
+    <string name="life_ended_title">Sensor ended</string>
+    <string name="life_ended_body">No more readings from it. Apply a new sensor and connect it in You → Your sensor.</string>
 </resources>

@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
+import com.sukoon.app.data.source.libre.SensorLife
+import kotlinx.coroutines.flow.map
 
 /**
  * Drives the Home screen. Thin by design: it just observes the app-scoped [GlucoseRepository]'s
@@ -21,7 +23,7 @@ import kotlinx.coroutines.flow.stateIn
  * any in-memory buffer — persistence and the source lifecycle live in the repository (A2), so
  * data keeps flowing while the user is on other tabs and survives config changes / relaunch.
  */
-class HomeViewModel(repository: GlucoseRepository) : ViewModel() {
+class HomeViewModel(repository: GlucoseRepository, private val lifeOf: () -> SensorLife? = { null }) : ViewModel() {
 
     // Re-evaluates freshness when no new reading arrives — otherwise a silent source would leave
     // the last value on screen as if live, never tipping into the Stale state.
@@ -38,12 +40,15 @@ class HomeViewModel(repository: GlucoseRepository) : ViewModel() {
         repository.recentReadings(WINDOW_SIZE),
         ticker,
     ) { status, latest, recent, _ ->
-        HomeUiStateMapper.map(status, latest, toBars(recent.map { it.glucoseMgDl }), Instant.now())
+        HomeUiStateMapper.map(status, latest, toBars(recent.map { it.glucoseMgDl }), Instant.now(), lifeOf())
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
         initialValue = HomeUiState.NoSensor,
     )
+
+    /** The paired sensor's life, for Home's "ends soon" banner (null on demo data). */
+    val sensorLife: StateFlow<SensorLife?> = ticker.map { lifeOf() }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     companion object {
         /** Averages the window into ≤[BARS] buckets — MiniGraph is a fixed bar strip, not a line. */
@@ -59,8 +64,8 @@ class HomeViewModel(repository: GlucoseRepository) : ViewModel() {
         private const val STOP_TIMEOUT_MS = 5_000L
         private const val TICK_MS = 30_000L
 
-        fun factory(repository: GlucoseRepository) = viewModelFactory {
-            initializer { HomeViewModel(repository) }
+        fun factory(repository: GlucoseRepository, lifeOf: () -> SensorLife? = { null }) = viewModelFactory {
+            initializer { HomeViewModel(repository, lifeOf) }
         }
     }
 }

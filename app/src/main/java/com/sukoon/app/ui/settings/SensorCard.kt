@@ -52,6 +52,9 @@ import com.sukoon.app.ui.theme.StateLow
 import java.util.Locale
 import androidx.compose.runtime.LaunchedEffect
 import com.sukoon.app.ui.components.toast
+import com.sukoon.app.data.source.libre.SensorLifecycle
+import com.sukoon.app.ui.components.lifeLine
+import java.time.Instant
 
 private enum class TapMode { CHECK, CONNECT }
 
@@ -146,13 +149,14 @@ fun SensorCard(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         if (pairing != null) {
-            val info = Libre2.sensorInfo(pairing.fram)
+            val now = Instant.now()
             Text(
-                stringResource(R.string.sensor_paired, pairing.serial, days(info.ageMinutes), days(pairing.lifetimeMinutes)),
+                stringResource(R.string.sensor_paired, pairing.serial, days(((now.toEpochMilli() - pairing.startMillis) / 60_000).toInt()), days(pairing.lifetimeMinutes)),
                 fontSize = 13.5.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onBackground,
             )
+            Text(lifeLine(context, SensorLifecycle.of(pairing.startMillis, pairing.lifetimeMinutes, now), now), fontSize = 12.sp, color = CaptionMuted)
             if (sensorSelected) StatusLine(status)
         } else {
             Text(stringResource(R.string.sensor_body_unpaired), fontSize = 12.5.sp, color = CaptionMuted)

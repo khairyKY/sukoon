@@ -121,6 +121,7 @@ private fun HomeContent(
             is HomeUiState.WarmingUp -> WarmingUpContent(state)
             is HomeUiState.Stale -> StaleContent(state, onTroubleshoot)
             HomeUiState.NoSensor -> NoSensorContent(onPairSensor, onEnterCodeManually)
+            HomeUiState.SensorEnded -> NoSensorContent(onPairSensor, onEnterCodeManually, ended = true)
         }
     }
 }
@@ -553,11 +554,11 @@ private fun ColumnScope.StaleContent(state: HomeUiState.Stale, onTroubleshoot: (
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-private fun ColumnScope.NoSensorContent(onPairSensor: () -> Unit, onEnterCodeManually: () -> Unit) {
+private fun ColumnScope.NoSensorContent(onPairSensor: () -> Unit, onEnterCodeManually: () -> Unit, ended: Boolean = false) {
     Column(modifier = Modifier.weight(1f)) {
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(top = 16.dp), horizontalArrangement = Arrangement.End) {
             Text(
-                text = stringResource(R.string.home_status_not_connected),
+                text = stringResource(if (ended) R.string.home_status_sensor_ended else R.string.home_status_not_connected),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 9.sp,
                 letterSpacing = 1.sp,
@@ -579,7 +580,7 @@ private fun ColumnScope.NoSensorContent(onPairSensor: () -> Unit, onEnterCodeMan
             }
             Spacer(Modifier.height(26.dp))
             Text(
-                text = stringResource(R.string.home_no_sensor_title),
+                text = stringResource(if (ended) R.string.home_sensor_ended_title else R.string.home_no_sensor_title),
                 fontFamily = HeadlineSerifFontFamily,
                 fontSize = 25.sp,
                 color = MaterialTheme.colorScheme.onBackground,
@@ -587,7 +588,7 @@ private fun ColumnScope.NoSensorContent(onPairSensor: () -> Unit, onEnterCodeMan
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = stringResource(R.string.home_no_sensor_body),
+                text = stringResource(if (ended) R.string.home_sensor_ended_body else R.string.home_no_sensor_body),
                 fontSize = 13.sp,
                 lineHeight = 19.sp,
                 color = CaptionMuted,
@@ -595,8 +596,8 @@ private fun ColumnScope.NoSensorContent(onPairSensor: () -> Unit, onEnterCodeMan
             )
         }
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp)) {
-            ActionButton(stringResource(R.string.home_btn_pair_sensor), filled = true, onClick = onPairSensor)
-            Box(
+            ActionButton(stringResource(if (ended) R.string.home_btn_new_sensor else R.string.home_btn_pair_sensor), filled = true, onClick = onPairSensor)
+            if (!ended) Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(onClick = onEnterCodeManually)

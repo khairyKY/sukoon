@@ -34,4 +34,7 @@ sealed interface HomeUiState {
     ) : HomeUiState
 
     data object NoSensor : HomeUiState
+
+    /** The paired sensor reached the end of its life: time for a new one. */
+    data object SensorEnded : HomeUiState
 }

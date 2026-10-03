@@ -516,4 +516,24 @@
     <string name="toast_hc_synced">اتزامن: %1$d وجبة جديدة، %2$d اتحدثت، %3$d قراية اتشاركت.</string>
     <string name="toast_hc_denied">مفيش صلاحية لـ Health Connect.</string>
     <string name="toast_hc_failed">المزامنة مع Health Connect فشلت: %1$s</string>
+    <string name="home_status_sensor_ended">الحساس خلص</string>
+    <string name="home_sensor_ended_title">الحساس خلص عمره</string>
+    <string name="home_sensor_ended_body">ركّب حساس جديد، ووصّله هنا علشان القرايات والمنبّهات تكمّل.</string>
+    <string name="home_btn_new_sensor">وصّل حساس جديد</string>
+    <string name="banner_sensor_ending">الحساس هيخلص %1$s (بعد %2$s). جهّز واحد جديد.</string>
+    <string name="life_in_days">%1$d يوم و%2$d ساعة</string>
+    <string name="life_in_hours">%1$d ساعة</string>
+    <string name="life_in_minutes">%1$d دقيقة</string>
+    <string name="sensor_life_warming">بيسخّن: القرايات هتبدأ بعد %1$d دقيقة.</string>
+    <string name="sensor_life_running">هيخلص %1$s (بعد %2$s).</string>
+    <string name="sensor_life_ended">خلص %1$s.</string>
+    <string name="life_channel">تذكيرات الحساس</string>
+    <string name="life_warmed_title">الحساس جاهز</string>
+    <string name="life_warmed_body">التسخين خلص: القرايات والمنبّهات شغّالة.</string>
+    <string name="life_day_title">الحساس هيخلص خلال يوم تقريبًا</string>
+    <string name="life_day_body">هيقف %1$s. جهّز واحد جديد.</string>
+    <string name="life_hour_title">الحساس هيخلص خلال ساعة</string>
+    <string name="life_hour_body">هيقف %1$s. ركّب الجديد ووصّله من إنت ← الحساس بتاعك.</string>
+    <string name="life_ended_title">الحساس خلص</string>
+    <string name="life_ended_body">مفيش قرايات منه تاني. ركّب حساس جديد ووصّله من إنت ← الحساس بتاعك.</string>
 </resources>
