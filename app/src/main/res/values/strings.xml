@@ -388,4 +388,15 @@
     <string name="toast_alarm_sound">%1$s sound: %2$s</string>
     <string name="toast_alarm_sound_bad">That file can\'t be played. Keeping the current sound.</string>
     <string name="toast_no_sound_picker">This phone has no sound picker. Choose a file instead.</string>
+    <string name="graph_range_days">%1$dd</string>
+    <string name="graph_just_now">just now</string>
+    <string name="graph_min_ago">%1$d min ago</string>
+    <string name="graph_tir_title">Time in range · %1$s</string>
+    <string name="graph_in_range">in range (70–180)</string>
+    <string name="graph_average">Average %1$d mg/dL</string>
+    <string name="graph_gmi">GMI (estimated A1C) %1$s%%</string>
+    <string name="graph_gmi_note">GMI estimates A1C from your average glucose. It is meaningful over about 14 days of data (Bergenstal et al., Diabetes Care 2018).</string>
+    <string name="graph_readings">Readings</string>
+    <string name="graph_today">Today</string>
+    <string name="graph_yesterday">Yesterday</string>
 </resources>

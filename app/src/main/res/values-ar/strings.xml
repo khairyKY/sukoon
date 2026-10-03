@@ -388,4 +388,15 @@
     <string name="toast_alarm_sound">صوت %1$s: %2$s</string>
     <string name="toast_alarm_sound_bad">الملف ده مش بيشتغل. هنسيب الصوت الحالي.</string>
     <string name="toast_no_sound_picker">الموبايل ده مفيهوش اختيار أصوات. اختار ملف بدل كده.</string>
+    <string name="graph_range_days">%1$dي</string>
+    <string name="graph_just_now">دلوقتي</string>
+    <string name="graph_min_ago">من %1$d دقيقة</string>
+    <string name="graph_tir_title">الوقت في المدى · %1$s</string>
+    <string name="graph_in_range">في المدى (٧٠–١٨٠)</string>
+    <string name="graph_average">المتوسط %1$d ملغم/دل</string>
+    <string name="graph_gmi">GMI (A1C تقديري) %1$s%%</string>
+    <string name="graph_gmi_note">الـ GMI بيقدّر الـ A1C من متوسط السكر، وبيبقى له معنى على بيانات حوالي ١٤ يوم (Bergenstal et al., Diabetes Care 2018).</string>
+    <string name="graph_readings">القرايات</string>
+    <string name="graph_today">النهارده</string>
+    <string name="graph_yesterday">امبارح</string>
 </resources>

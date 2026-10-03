@@ -41,6 +41,26 @@ class InsightEngineTest {
     }
 
     @Test
+    fun `range summary splits time into the five consensus bands`() {
+        // Each day: 1 h at 50, 1 h at 60, 18 h at 120, 3 h at 200, 1 h at 300.
+        val readings = series(6) { _, m ->
+            when {
+                m < 60 -> 50
+                m < 120 -> 60
+                m < 1200 -> 120
+                m < 1380 -> 200
+                else -> 300
+            }
+        }
+        val s = InsightEngine.summary(readings, now)!!
+        assertEquals(100.0, s.veryLow + s.low + s.inRange + s.high + s.veryHigh, 1e-9)
+        assertEquals(75.0, s.inRange, 1e-9)
+        assertEquals(12.5, s.high, 1e-9)
+        assertEquals(100.0 / 24, s.veryLow, 1e-9)
+        assertNull(InsightEngine.summary(emptyList(), now))
+    }
+
+    @Test
     fun `too little data gives no claims`() {
         val out = InsightEngine.analyze(series(2) { _, _ -> 120 }, emptyList(), day0.plus(Duration.ofDays(2)), zone)
         assertTrue(out.single() is Insight.NotEnoughData)

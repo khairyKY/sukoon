@@ -10,6 +10,7 @@ import java.time.ZoneId
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
+import com.sukoon.app.domain.metrics.GlucoseMetrics
 
 enum class Level { GOOD, INFO, ATTENTION, URGENT }
 
@@ -116,6 +117,20 @@ sealed interface Insight {
 }
 
 /**
+ * Time-weighted share of a stretch of readings in each consensus band (Battelino et al. 2019:
+ * < 54, 54–69, 70–180, 181–250, > 250), as percents summing to 100, plus the mean and GMI.
+ */
+data class RangeSummary(
+    val veryLow: Double,
+    val low: Double,
+    val inRange: Double,
+    val high: Double,
+    val veryHigh: Double,
+    val meanMgDl: Int,
+    val gmiPercent: Double,
+)
+
+/**
  * Turns the last 14 days of readings + logbook into [Insight]s. Pure and clock/zone-injected so every
  * rule is unit-tested. Percentages are time-weighted (each reading counts for the time until the next,
  * capped at 15 min), so mixing 1-minute live data with 15-minute backfill doesn't skew them.
@@ -173,21 +188,36 @@ object InsightEngine {
         return (filled * 100 / slots).toInt().coerceAtMost(100)
     }
 
-    private fun targets(r: List<GlucoseReading>, days: Int, coverage: Int, now: Instant): Insight.Targets {
+    /** [r] oldest first; null when empty. The graph's stats use this too, so they always match the Insights card. */
+    fun summary(r: List<GlucoseReading>, now: Instant): RangeSummary? {
+        if (r.isEmpty()) return null
         val w = weights(r, now)
         val total = w.sum()
-        fun pct(predicate: (Int) -> Boolean) = (r.indices.filter { predicate(r[it].glucoseMgDl) }.sumOf { w[it] } * 100 / total).roundToInt()
+        fun pct(predicate: (Int) -> Boolean) = r.indices.filter { predicate(r[it].glucoseMgDl) }.sumOf { w[it] } * 100 / total
         val mean = r.indices.sumOf { r[it].glucoseMgDl * w[it] } / total
+        return RangeSummary(
+            veryLow = pct { it < 54 },
+            low = pct { it in 54..69 },
+            inRange = pct { it in 70..180 },
+            high = pct { it in 181..250 },
+            veryHigh = pct { it > 250 },
+            meanMgDl = mean.roundToInt(),
+            gmiPercent = (GlucoseMetrics.gmiPercent(mean) * 10).roundToInt() / 10.0,
+        )
+    }
+
+    private fun targets(r: List<GlucoseReading>, days: Int, coverage: Int, now: Instant): Insight.Targets {
+        val s = requireNotNull(summary(r, now))
         return Insight.Targets(
             days = days,
             coveragePercent = coverage,
-            inRange = pct { it in 70..180 },
-            below70 = pct { it < 70 },
-            below54 = pct { it < 54 },
-            above180 = pct { it > 180 },
-            above250 = pct { it > 250 },
-            meanMgDl = mean.roundToInt(),
-            gmiPercent = (3.31 + 0.02392 * mean).let { (it * 10).roundToInt() / 10.0 },
+            inRange = s.inRange.roundToInt(),
+            below70 = (s.veryLow + s.low).roundToInt(),
+            below54 = s.veryLow.roundToInt(),
+            above180 = (s.high + s.veryHigh).roundToInt(),
+            above250 = s.veryHigh.roundToInt(),
+            meanMgDl = s.meanMgDl,
+            gmiPercent = s.gmiPercent,
         )
     }
 

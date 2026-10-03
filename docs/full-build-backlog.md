@@ -18,20 +18,25 @@ Legend: ✅ done · ◐ in progress · ⬜ to do · ⏸ blocked (reason)
 - ✅ Feedback everywhere: toasts for Nightscout (real `verifyauth` connection test on save), sensor check/connect/forget + "readings are coming in", source switch, AI key, logbook saves, export, widget options.
 - ✅ Finger-prick checks (Kai, 2026-10-03): own logbook type (meter mg/dL, 20–600), shown beside the sensor reading at that moment (20/20 agreement band), rings on the graph at their value, Nightscout "BG Check", CSV `fingerstick` rows, AI brief, "Sensor vs finger-pricks" insight. Record only — never changes readings.
 - ✅ Alarm sounds (Kai, 2026-10-03): per alarm, a phone sound (system picker) or your own audio file (persisted access, checked playable on pick), 5-s preview; played by Sukoon itself with a fallback chain so a broken file can never silence an alarm.
+- ✅ Logbook: each entry shows the glucose at its moment (nearest reading within 5 min, trend arrow, low/high tint).
 
-## Next, in order
-1. ⬜ Graph overhaul: current value + trend arrow header, minimal y/x axis labels, % in range bar + GMI for the range, minute-by-minute readings list.
-2. ⬜ Glucose in the status bar: the sensor notification shows value + arrow + age; status-bar icon draws the number.
-3. ⬜ Emergency contacts + escalation (A8): contacts picker; urgent low unacknowledged for N min (or silence after a low) → cancellable 60 s countdown → SMS all + call primary.
-4. ⬜ User guide: first-run walkthrough + Help page (pairing, permissions, alarms, widgets, Nightscout, AI, insights).
-5. ⬜ Insights into the AI brief (Ask explains patterns using the same numbers).
-6. ⏸ Followers + sharing (A6) on Supabase — waiting on Kai's project URL + anon key. Then: auth, readings table, RLS, follow requests/approvals, follower viewer mode with alarms.
-7. ⏸ Health Connect: write glucose, read MyFitnessPal meals into the logbook — needs the Health Connect library (DNS on the dev PC is down at the moment).
-8. ⬜ Sensor lifecycle: expiry warnings (24 h / 1 h), real warm-up countdown, "sensor ended" state, start-new-sensor guidance.
-9. ⬜ Settings completion (A10): units mg/dL ↔ mmol/L everywhere, theme (auto/light/dark), quiet hours for highs.
-10. ⬜ Calibration (capped, opt-in) — B10; fits from the logged finger-pricks.
-11. ⬜ Insulin on board on Home (rapid insulin still active).
-12. ⬜ Reports: 14-day AGP percentile chart + PDF export for the doctor (A9 / #19).
-13. ⬜ Logbook polish: edit an entry's time, photo attached to meals.
-14. ⬜ Localization + motion sweep (A12).
-15. ⬜ Wear OS complication/tile (#16).
+## Next, in Kai's order (2026-10-03)
+1. ✅ Graph overhaul: current value + trend arrow header, range-colored line with gap breaks, only 70/180 + clock labels, adaptive y-axis, 3h–14d ranges, time-in-range bar (5 bands) + average + GMI (same math as Insights), every reading listed newest first with day headers.
+2. ⬜ Emergency contacts + escalation (A8): contacts picker; urgent low unacknowledged for N min (or silence after a low) → cancellable 60 s countdown → SMS all + call primary. WhatsApp too (Kai, 2026-10-03): automatic sends need the WhatsApp Cloud API from a server (Supabase Edge Function); on-device WhatsApp can only pre-fill a message someone must tap Send on.
+3. ⬜ Followers + sharing (A6) on Supabase (project `xfanobficweqlhklsllg`, URL + publishable key in `local.properties`): auth, readings table, RLS, follow requests/approvals, follower viewer with alarms. iOS followers via a web app, pending Kai's answer.
+4. ⬜ Health Connect: write glucose, read MyFitnessPal meals into the logbook.
+5. ⬜ Sensor lifecycle: expiry warnings (24 h / 1 h), real warm-up countdown, "sensor ended" state, start-new-sensor guidance.
+6. ⬜ Calibration (capped, opt-in) — B10; fits from the logged finger-pricks.
+7. ⬜ Insulin on board on Home (rapid insulin still active).
+8. ⬜ Reports: 14-day AGP percentile chart + PDF export for the doctor (A9 / #19).
+
+## After those
+- ⬜ Glucose in the status bar: the sensor notification shows value + arrow + age; status-bar icon draws the number.
+- ⬜ User guide: first-run walkthrough + Help page.
+- ⬜ Insights into the AI brief; glucose-at-entry in the CSV `glucose_mgdl` column and the AI brief; "glucose now" on the entry sheet.
+- ⬜ Settings completion (A10): units mg/dL ↔ mmol/L everywhere, theme (auto/light/dark), quiet hours for highs.
+- ⬜ Logbook polish: edit an entry's time, photo attached to meals.
+- ⬜ Localization + motion sweep (A12).
+- ⬜ Wear OS complication/tile (#16).
+
+Rules: no APK builds or installs unless Kai asks (compile + unit tests only); no AI attribution in commits or PRs.
