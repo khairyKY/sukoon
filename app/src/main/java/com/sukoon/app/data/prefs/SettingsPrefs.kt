@@ -6,6 +6,7 @@ import com.sukoon.app.data.source.SourceKind
 import com.sukoon.app.alarms.AlarmSound
 import com.sukoon.app.alarms.AlarmType
 import com.sukoon.app.emergency.EmergencySettings
+import com.sukoon.app.insulin.InsulinAction
 
 /**
  * User settings, in the same prefs file as [DisclaimerPrefs]. ponytail: plain private
@@ -81,6 +82,11 @@ class SettingsPrefs(context: Context) {
             .putBoolean(KEY_EMERGENCY_LOCATION, value.shareLocation)
             .apply()
 
+    /** You → Insulin: the rapid insulin's activity curve, for "active insulin". */
+    var insulinAction: InsulinAction
+        get() = InsulinAction(prefs.getInt(KEY_INSULIN_PEAK, 75), prefs.getInt(KEY_INSULIN_DURATION, 300)).sanitized()
+        set(value) = prefs.edit().putInt(KEY_INSULIN_PEAK, value.peakMinutes).putInt(KEY_INSULIN_DURATION, value.durationMinutes).apply()
+
     /** Trends → Insights stays locked until the user has read and accepted what it is (and isn't). */
     var insightsAcknowledged: Boolean
         get() = prefs.getBoolean(KEY_INSIGHTS_ACK, false)
@@ -105,6 +111,8 @@ class SettingsPrefs(context: Context) {
         private const val KEY_SOUND = "alarm_sound_"
         private const val KEY_SOUND_NAME = "alarm_sound_name_"
         private const val KEY_EMERGENCY_CONTACTS = "emergency_contacts"
+        private const val KEY_INSULIN_PEAK = "insulin_peak_minutes"
+        private const val KEY_INSULIN_DURATION = "insulin_duration_minutes"
         private const val KEY_EMERGENCY_NAME = "emergency_your_name"
         private const val KEY_EMERGENCY_AFTER = "emergency_after_minutes"
         private const val KEY_EMERGENCY_LOCATION = "emergency_share_location"

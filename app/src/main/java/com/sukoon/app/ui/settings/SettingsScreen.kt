@@ -59,6 +59,7 @@ import com.sukoon.app.ui.sharing.SharingSection
 import com.sukoon.app.sharing.FollowerWatch
 import com.sukoon.app.health.HealthConnectSync
 import com.sukoon.app.calibration.CalibrationManager
+import com.sukoon.app.insulin.InsulinAction
 
 /**
  * You tab (A10, MVP slice): the paired Libre sensor (Track B), the data source (sensor or demo),
@@ -85,6 +86,8 @@ fun SettingsScreen(
     followerWatch: FollowerWatch,
     healthConnect: HealthConnectSync,
     calibration: CalibrationManager,
+    insulinAction: InsulinAction,
+    onInsulinAction: (InsulinAction) -> Unit,
     saveIntervalMinutes: Int,
     onSaveInterval: (Int) -> Unit,
     nightscout: NightscoutConfig,
@@ -139,6 +142,10 @@ fun SettingsScreen(
         Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(R.string.calibration_title))
         CalibrationSection(calibration)
+
+        Spacer(Modifier.height(28.dp))
+        SectionLabel(stringResource(R.string.insulin_title))
+        InsulinSection(insulinAction, onInsulinAction)
 
         Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(R.string.alarms_title))

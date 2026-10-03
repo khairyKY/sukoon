@@ -546,4 +546,11 @@
     <string name="calibration_caps">Limits: × %1$s to %2$s, ± %3$d mg/dL; the newest 4 from the last 7 days.</string>
     <string name="toast_calibration_on">Calibration on.</string>
     <string name="toast_calibration_off">Calibration off: factory readings.</string>
+    <string name="home_iob">%1$s u active</string>
+    <string name="logbook_iob">Still active from earlier doses: %1$s u. Doses close together add up.</string>
+    <string name="insulin_title">Insulin</string>
+    <string name="insulin_body">How your rapid insulin works over time, for the active insulin shown on Home and when you log a dose. Long-acting (basal) insulin isn\'t counted.</string>
+    <string name="insulin_duration">Lasts</string>
+    <string name="insulin_peak">Strongest after</string>
+    <string name="insulin_peak_hint">55 min suits ultra-rapid insulin (Fiasp, Lyumjev), 75 min rapid (Apidra, NovoRapid, Humalog). Check with your care team. The curve is the one OpenAPS and Loop use.</string>
 </resources>

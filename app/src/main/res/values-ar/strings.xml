@@ -546,4 +546,11 @@
     <string name="calibration_caps">الحدود: × %1$s لـ %2$s، ± %3$d ملغم/دل؛ آخر ٤ من آخر ٧ أيام.</string>
     <string name="toast_calibration_on">المعايرة اشتغلت.</string>
     <string name="toast_calibration_off">المعايرة اتقفلت: قرايات المصنع.</string>
+    <string name="home_iob">%1$s وحدة شغّالة</string>
+    <string name="logbook_iob">لسه شغّال من جرعات قبل كده: %1$s وحدة. الجرعات القريبة من بعض بتتجمّع.</string>
+    <string name="insulin_title">الإنسولين</string>
+    <string name="insulin_body">إزاي الإنسولين السريع بيشتغل مع الوقت، علشان الإنسولين الشغّال اللي بيظهر في الرئيسية ووقت ما تسجّل جرعة. الإنسولين طويل المفعول (القاعدي) مش بيتحسب.</string>
+    <string name="insulin_duration">مدة المفعول</string>
+    <string name="insulin_peak">أقوى مفعول بعد</string>
+    <string name="insulin_peak_hint">٥٥ دقيقة للإنسولين فائق السرعة (Fiasp وLyumjev)، و٧٥ دقيقة للسريع (Apidra وNovoRapid وHumalog). اتأكد مع دكتورك. المنحنى هو نفس اللي OpenAPS وLoop بيستخدموه.</string>
 </resources>

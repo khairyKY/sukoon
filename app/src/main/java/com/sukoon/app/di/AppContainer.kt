@@ -48,6 +48,9 @@ import com.sukoon.app.data.source.libre.SensorLifecycle
 import com.sukoon.app.platform.SensorLifeNotices
 import com.sukoon.app.calibration.Calibration
 import com.sukoon.app.calibration.CalibrationManager
+import com.sukoon.app.insulin.InsulinOnBoard
+import java.time.Duration
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Manual dependency container (ponytail: no Hilt/Koin for a graph this small). Owns the
@@ -84,6 +87,20 @@ class AppContainer(private val context: Context) {
     val logbookRepository: LogbookRepository = LogbookRepository(eventDao = database.eventDao())
 
     val calibration = CalibrationManager(context, calibrationInForce, glucoseRepository, logbookRepository, appScope)
+
+    /** Rapid insulin still active (Logbook doses on the exponential curve): every minute, and at once on a new dose. */
+    val insulinOnBoard: Flow<Double> = merge(
+        logbookRepository.eventsSince(0).map { },
+        flow {
+            while (true) {
+                emit(Unit)
+                delay(60_000)
+            }
+        },
+    ).map {
+        val now = Instant.now()
+        InsulinOnBoard.total(logbookRepository.eventsSince(now.minus(Duration.ofHours(9)).toEpochMilli()).first(), now, settings.insulinAction)
+    }
 
     val gemini = GeminiClient(apiKey = { settings.geminiApiKey })
 

@@ -27,7 +27,7 @@ Legend: ✅ done · ◐ in progress · ⬜ to do · ⏸ blocked (reason)
 4. ✅ Health Connect: MyFitnessPal (and other apps') meals in as Logbook carb entries via the change log (edits and deletions follow), sensor readings out as interstitial blood glucose (client ids, no duplicates); syncs every 15 min, on every return to the app, and on "Sync now". Client pinned at 1.1.0-beta01 (1.1.0 needs compileSdk 36 + AGP 8.9.1).
 5. ✅ Sensor lifecycle: real warm-up countdown on Home (from the pairing's start), "sensor ended" Home state with "Connect a new sensor", last-day banner on Home, sensor card shows when it ends; one-time notices: ready after warm-up, a day left, an hour left, ended.
 6. ✅ Calibration (opt-in, B10): weighted least squares on the newest 4 steady finger-pricks from 7 days; slope only with a 40+ mg/dL spread; caps ×0.8–1.25 and ±20 mg/dL; pairs >40 mg/dL/40 % apart or taken on a fast arrow left out; a reading under 70 is never raised. Stored readings stay raw; the repository applies it on the way out (screens, alarms, uploads).
-7. ⬜ Insulin on board on Home (rapid insulin still active).
+7. ✅ Insulin on board: rapid doses on the exponential activity curve OpenAPS/Loop use (peak 75 min, 5 h by default; You → Insulin), basal excluded; shown on Home beside the shortcuts and in the Logbook sheet before another dose ("doses close together add up").
 8. ⬜ Reports: 14-day AGP percentile chart + PDF export for the doctor (A9 / #19).
 
 ## After those

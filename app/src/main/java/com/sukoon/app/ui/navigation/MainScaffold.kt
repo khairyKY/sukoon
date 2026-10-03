@@ -119,6 +119,7 @@ fun MainScaffold() {
                 val emergencyAlerts = (context.applicationContext as SukoonApp).container.emergency
                 val latest by repository.latestReading.collectAsStateWithLifecycle(initialValue = null)
                 var askingForHelp by remember { mutableStateOf(false) }
+                val insulinOnBoard by (context.applicationContext as SukoonApp).container.insulinOnBoard.collectAsStateWithLifecycle(initialValue = 0.0)
                 if (askingForHelp) EmergencyActionsDialog(emergencyAlerts, latest, onDismiss = { askingForHelp = false })
                 Column {
                     if (missingSetup.isNotEmpty() && !setupLater) {
@@ -152,6 +153,7 @@ fun MainScaffold() {
                         },
                         onAddFood = { pendingEntry = LogEventType.CARB; navController.navigateToTab(SukoonTab.TRENDS) },
                         onAddInsulin = { pendingEntry = LogEventType.INSULIN; navController.navigateToTab(SukoonTab.TRENDS) },
+                        insulinOnBoard = insulinOnBoard,
                     )
                 }
             }
@@ -162,7 +164,7 @@ fun MainScaffold() {
                     factory = GraphViewModel.factory(container.glucoseRepository, container.logbookRepository),
                 )
                 val graphState by graphViewModel.uiState.collectAsStateWithLifecycle()
-                val logbookViewModel: LogbookViewModel = viewModel(factory = LogbookViewModel.factory(container.logbookRepository, container.glucoseRepository, container.gemini))
+                val logbookViewModel: LogbookViewModel = viewModel(factory = LogbookViewModel.factory(container.logbookRepository, container.glucoseRepository, container.gemini) { container.settings.insulinAction })
                 val logbookState by logbookViewModel.uiState.collectAsStateWithLifecycle()
                 val askViewModel: AskViewModel = viewModel(
                     factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini),
@@ -200,6 +202,7 @@ fun MainScaffold() {
                 var geminiKey by remember { mutableStateOf(container.settings.geminiApiKey) }
                 var alarmSettings by remember { mutableStateOf(container.settings.alarmSettings) }
                 var emergency by remember { mutableStateOf(container.settings.emergency) }
+                var insulinAction by remember { mutableStateOf(container.settings.insulinAction) }
                 var saveInterval by remember { mutableIntStateOf(container.settings.saveIntervalMinutes) }
                 var nightscout by remember { mutableStateOf(container.nightscout.config) }
                 val nightscoutStatus by container.nightscout.status.collectAsStateWithLifecycle()
@@ -235,6 +238,11 @@ fun MainScaffold() {
                     followerWatch = container.followerWatch,
                     healthConnect = container.healthConnect,
                     calibration = container.calibration,
+                    insulinAction = insulinAction,
+                    onInsulinAction = { changed ->
+                        container.settings.insulinAction = changed
+                        insulinAction = container.settings.insulinAction
+                    },
                     onEmergency = { changed ->
                         container.settings.emergency = changed.sanitized()
                         emergency = container.settings.emergency

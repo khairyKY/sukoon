@@ -65,6 +65,7 @@ import com.sukoon.app.ui.theme.SukoonTheme
 import com.sukoon.app.ui.widget.arrow
 import com.sukoon.app.ui.theme.TextMuted
 import com.sukoon.app.ui.theme.UiFontFamily
+import java.util.Locale
 
 /**
  * The Home/Now screen, in every state it can be in (docs/design-screens.md §2). Copy, colors,
@@ -87,14 +88,16 @@ fun HomeScreen(
     onEnterCodeManually: () -> Unit = {},
     onAddFood: () -> Unit = {},
     onAddInsulin: () -> Unit = {},
+    /** Rapid insulin still active, shown beside the shortcuts when there is any. */
+    insulinOnBoard: Double = 0.0,
 ) {
-    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin)) {
+    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard)) {
         HomeContent(state, modifier, onTreated, onSnooze, onAlertEmergencyContact, onTroubleshoot, onPairSensor, onEnterCodeManually)
     }
 }
 
 /** Home's quick-log shortcuts, reached from every state's top bar without threading them through each one. */
-private class Shortcuts(val onFood: () -> Unit, val onInsulin: () -> Unit)
+private class Shortcuts(val onFood: () -> Unit, val onInsulin: () -> Unit, val insulinOnBoard: Double = 0.0)
 private val LocalShortcuts = staticCompositionLocalOf { Shortcuts({}, {}) }
 
 @Composable
@@ -184,7 +187,14 @@ private fun HomeAppBar(dimmed: Boolean = false) {
             )
         }
         val shortcuts = LocalShortcuts.current
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (shortcuts.insulinOnBoard >= 0.05) {
+                Text(
+                    stringResource(R.string.home_iob, String.format(Locale.getDefault(), "%.1f", shortcuts.insulinOnBoard)),
+                    fontSize = 12.sp,
+                    color = CaptionMuted,
+                )
+            }
             ShortcutIcon(R.drawable.ic_food, stringResource(R.string.home_add_food), shortcuts.onFood)
             ShortcutIcon(R.drawable.ic_insulin, stringResource(R.string.home_add_insulin), shortcuts.onInsulin)
         }

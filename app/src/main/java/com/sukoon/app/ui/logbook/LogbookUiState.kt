@@ -11,4 +11,6 @@ data class LogbookUiState(
     val meterChecks: Map<Long, MeterCheck> = emptyMap(),
     /** Event id → the sensor reading at that moment (nearest within 5 min), shown on each entry. */
     val glucoseAt: Map<Long, GlucoseReading> = emptyMap(),
+    /** Rapid insulin still active right now, shown when logging another dose. */
+    val insulinOnBoard: Double = 0.0,
 )

@@ -24,9 +24,16 @@ import com.sukoon.app.data.repository.GlucoseRepository
 import com.sukoon.app.insights.MeterCheck
 import kotlin.math.roundToInt
 import com.sukoon.app.data.source.nearestTo
+import com.sukoon.app.insulin.InsulinAction
+import com.sukoon.app.insulin.InsulinOnBoard
 
 /** Drives the Logbook screen — today's window of logged events, newest first, from Room via [LogbookRepository]. */
-class LogbookViewModel(private val repository: LogbookRepository, glucose: GlucoseRepository, private val gemini: GeminiClient) : ViewModel() {
+class LogbookViewModel(
+    private val repository: LogbookRepository,
+    glucose: GlucoseRepository,
+    private val gemini: GeminiClient,
+    private val insulinAction: () -> InsulinAction = { InsulinAction() },
+) : ViewModel() {
 
     private val since = System.currentTimeMillis() - WINDOW_MILLIS
 
@@ -38,6 +45,7 @@ class LogbookViewModel(private val repository: LogbookRepository, glucose: Gluco
                 e.value?.let { MeterCheck.of(it.roundToInt(), e.timestampMillis, readings) }?.let { e.id to it }
             }.toMap(),
             glucoseAt = events.mapNotNull { e -> readings.nearestTo(e.timestampMillis)?.let { e.id to it } }.toMap(),
+            insulinOnBoard = InsulinOnBoard.total(events, Instant.now(), insulinAction()),
         )
     }
         .stateIn(
@@ -78,8 +86,8 @@ class LogbookViewModel(private val repository: LogbookRepository, glucose: Gluco
     companion object {
         private val WINDOW_MILLIS = TimeUnit.HOURS.toMillis(24)
 
-        fun factory(repository: LogbookRepository, glucose: GlucoseRepository, gemini: GeminiClient) = viewModelFactory {
-            initializer { LogbookViewModel(repository, glucose, gemini) }
+        fun factory(repository: LogbookRepository, glucose: GlucoseRepository, gemini: GeminiClient, insulinAction: () -> InsulinAction) = viewModelFactory {
+            initializer { LogbookViewModel(repository, glucose, gemini, insulinAction) }
         }
     }
 }

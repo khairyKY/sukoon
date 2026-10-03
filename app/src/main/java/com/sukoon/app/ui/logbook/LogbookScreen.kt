@@ -181,6 +181,7 @@ fun LogbookScreen(
         QuickEntrySheet(
             existing = editing,
             newType = (target as? SheetTarget.New)?.type ?: LogEventType.CARB,
+            insulinOnBoard = state.insulinOnBoard,
             onDismiss = { sheetTarget = null },
             onSave = { type, value, note ->
                 if (editing != null) {
@@ -319,6 +320,7 @@ private fun GlucosePill(reading: GlucoseReading) {
 private fun QuickEntrySheet(
     existing: EventEntity?,
     newType: LogEventType,
+    insulinOnBoard: Double,
     onDismiss: () -> Unit,
     onSave: (LogEventType, Double?, String?) -> Unit,
     onDelete: (() -> Unit)?,
@@ -380,6 +382,15 @@ private fun QuickEntrySheet(
                     modifier = Modifier.fillMaxWidth(),
                 )
             } else {
+                // Stacking: say what's still working before another dose goes in.
+                if (insulinOnBoard >= 0.05 && (type == LogEventType.INSULIN || (type == LogEventType.CARB && existing == null && onSaveMeal != null))) {
+                    Text(
+                        stringResource(R.string.logbook_iob, String.format(Locale.getDefault(), "%.1f", insulinOnBoard)),
+                        fontSize = 12.sp,
+                        color = StateHigh,
+                    )
+                    Spacer(Modifier.height(10.dp))
+                }
                 val unit = unitLabel(type)
                 val presets = PRESETS[type].orEmpty() // none for a finger-prick: it's whatever the meter says
                 if (presets.isNotEmpty()) {
