@@ -13,6 +13,9 @@ import com.sukoon.app.insulin.InsulinAction
  * SharedPreferences for the Gemini key too — app-private storage, a personal-use key; move to
  * Keystore-backed storage if the app is ever distributed.
  */
+/** Light/dark: follow the phone, or always one. */
+enum class ThemeMode { AUTO, LIGHT, DARK }
+
 class SettingsPrefs(context: Context) {
     private val prefs = context.getSharedPreferences("sukoon_prefs", Context.MODE_PRIVATE)
 
@@ -41,6 +44,8 @@ class SettingsPrefs(context: Context) {
             signalLossMinutes = prefs.getInt(KEY_SIGNAL, 20),
             lowSnoozeMinutes = prefs.getInt(KEY_LOW_SNOOZE, 15),
             highSnoozeMinutes = prefs.getInt(KEY_HIGH_SNOOZE, 60),
+            quietHighsFrom = prefs.getInt(KEY_QUIET_FROM, -1),
+            quietHighsTo = prefs.getInt(KEY_QUIET_TO, -1),
             sounds = AlarmType.entries.mapNotNull { type ->
                 prefs.getString(KEY_SOUND + type.name, null)?.let { uri -> type to AlarmSound(uri, prefs.getString(KEY_SOUND_NAME + type.name, null).orEmpty()) }
             }.toMap(),
@@ -56,6 +61,8 @@ class SettingsPrefs(context: Context) {
                 .putInt(KEY_SIGNAL, value.signalLossMinutes)
                 .putInt(KEY_LOW_SNOOZE, value.lowSnoozeMinutes)
                 .putInt(KEY_HIGH_SNOOZE, value.highSnoozeMinutes)
+                .putInt(KEY_QUIET_FROM, value.quietHighsFrom)
+                .putInt(KEY_QUIET_TO, value.quietHighsTo)
             AlarmType.entries.forEach { type ->
                 val sound = value.sounds[type]
                 if (sound == null) {
@@ -86,6 +93,11 @@ class SettingsPrefs(context: Context) {
     var insulinAction: InsulinAction
         get() = InsulinAction(prefs.getInt(KEY_INSULIN_PEAK, 75), prefs.getInt(KEY_INSULIN_DURATION, 300)).sanitized()
         set(value) = prefs.edit().putInt(KEY_INSULIN_PEAK, value.peakMinutes).putInt(KEY_INSULIN_DURATION, value.durationMinutes).apply()
+
+    /** You → Appearance. */
+    var themeMode: ThemeMode
+        get() = ThemeMode.entries.firstOrNull { it.name == prefs.getString(KEY_THEME, null) } ?: ThemeMode.AUTO
+        set(value) = prefs.edit().putString(KEY_THEME, value.name).apply()
 
     /** Home's getting-started card, once the user has said "Got it". */
     var gettingStartedDismissed: Boolean
@@ -118,6 +130,9 @@ class SettingsPrefs(context: Context) {
         private const val KEY_EMERGENCY_CONTACTS = "emergency_contacts"
         private const val KEY_INSULIN_PEAK = "insulin_peak_minutes"
         private const val KEY_START_DISMISSED = "getting_started_dismissed"
+        private const val KEY_QUIET_FROM = "alarm_quiet_highs_from"
+        private const val KEY_QUIET_TO = "alarm_quiet_highs_to"
+        private const val KEY_THEME = "theme_mode"
         private const val KEY_INSULIN_DURATION = "insulin_duration_minutes"
         private const val KEY_EMERGENCY_NAME = "emergency_your_name"
         private const val KEY_EMERGENCY_AFTER = "emergency_after_minutes"

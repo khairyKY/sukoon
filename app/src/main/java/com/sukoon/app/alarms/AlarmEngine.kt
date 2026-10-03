@@ -4,6 +4,7 @@ import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.ui.home.HomeUiStateMapper
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
 
 enum class AlarmType {
     URGENT_LOW, LOW, GOING_LOW, HIGH, SIGNAL_LOSS;
@@ -28,7 +29,15 @@ data class AlarmSettings(
     val highSnoozeMinutes: Int = 60,
     /** Per-alarm sound; absent = the phone's default for that kind of alert. */
     val sounds: Map<AlarmType, AlarmSound> = emptyMap(),
+    /** Local hours with no high alarm (wrapping midnight); -1 = off. Lows are never quiet. */
+    val quietHighsFrom: Int = -1,
+    val quietHighsTo: Int = -1,
 ) {
+    fun quietAt(hour: Int): Boolean {
+        if (quietHighsFrom !in 0..23 || quietHighsTo !in 0..23 || quietHighsFrom == quietHighsTo) return false
+        return if (quietHighsFrom < quietHighsTo) hour in quietHighsFrom until quietHighsTo else hour >= quietHighsFrom || hour < quietHighsTo
+    }
+
     /** Clamp anything stored (or hand-edited) into safe ranges: a low alarm can't sit below urgent. */
     fun sanitized() = copy(
         lowMgDl = lowMgDl.coerceIn(URGENT_LOW_MG_DL + 5, 110),
@@ -36,6 +45,8 @@ data class AlarmSettings(
         signalLossMinutes = signalLossMinutes.coerceIn(10, 120),
         lowSnoozeMinutes = lowSnoozeMinutes.coerceIn(5, 60),
         highSnoozeMinutes = highSnoozeMinutes.coerceIn(15, 240),
+        quietHighsFrom = quietHighsFrom.coerceIn(-1, 23),
+        quietHighsTo = quietHighsTo.coerceIn(-1, 23),
     )
 
     companion object {
@@ -76,7 +87,7 @@ object AlarmEngine {
     private const val PROJECTION_MINUTES = 20.0
 
     /** [recent] = the last ~30 min of live readings, any order. */
-    fun evaluate(recent: List<GlucoseReading>, now: Instant, settings: AlarmSettings, state: AlarmState): Evaluation {
+    fun evaluate(recent: List<GlucoseReading>, now: Instant, settings: AlarmSettings, state: AlarmState, zone: ZoneId = ZoneId.systemDefault()): Evaluation {
         val latest = recent.maxByOrNull { it.timestamp }
         val age = latest?.let { Duration.between(it.timestamp, now) }
         val fresh = age != null && age <= HomeUiStateMapper.STALE_AFTER
@@ -97,7 +108,7 @@ object AlarmEngine {
                 settings.lowEnabled && v < lowLine -> active += AlarmType.LOW
                 settings.goingLowEnabled && projected(recent, latest) < settings.lowMgDl -> active += AlarmType.GOING_LOW
             }
-            if (settings.highEnabled && v > highLine) active += AlarmType.HIGH
+            if (settings.highEnabled && v > highLine && !settings.quietAt(now.atZone(zone).hour)) active += AlarmType.HIGH
         } else {
             // Stale: keep glucose episodes open (don't announce them as resolved) but don't re-alert.
             active += state.activeSince.keys.filter { it != AlarmType.SIGNAL_LOSS }

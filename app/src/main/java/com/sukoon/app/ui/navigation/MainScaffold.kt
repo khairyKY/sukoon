@@ -229,6 +229,7 @@ fun MainScaffold() {
                 var alarmSettings by remember { mutableStateOf(container.settings.alarmSettings) }
                 var emergency by remember { mutableStateOf(container.settings.emergency) }
                 var insulinAction by remember { mutableStateOf(container.settings.insulinAction) }
+                val themeMode by container.themeMode.collectAsStateWithLifecycle()
                 var saveInterval by remember { mutableIntStateOf(container.settings.saveIntervalMinutes) }
                 var nightscout by remember { mutableStateOf(container.nightscout.config) }
                 val nightscoutStatus by container.nightscout.status.collectAsStateWithLifecycle()
@@ -265,6 +266,11 @@ fun MainScaffold() {
                     healthConnect = container.healthConnect,
                     calibration = container.calibration,
                     onOpenGuide = { showGuide = true },
+                    themeMode = themeMode,
+                    onThemeMode = { mode ->
+                        container.settings.themeMode = mode
+                        container.themeMode.value = mode
+                    },
                     insulinAction = insulinAction,
                     onInsulinAction = { changed ->
                         container.settings.insulinAction = changed

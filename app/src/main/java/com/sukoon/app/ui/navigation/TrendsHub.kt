@@ -44,6 +44,7 @@ import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.Sage
 import com.sukoon.app.ui.reports.ReportScreen
 import com.sukoon.app.ui.reports.ReportUiState
+import java.time.Instant
 
 private enum class TrendsSubTab { GRAPH, LOGBOOK, INSIGHTS, REPORT, ASK }
 
@@ -59,11 +60,11 @@ fun TrendsHub(
     graphState: GraphUiState,
     onSelectRange: (GraphRange) -> Unit,
     logbookState: LogbookUiState,
-    onQuickLog: (LogEventType, Double?, String?) -> Unit,
+    onQuickLog: (LogEventType, Double?, String?, Instant) -> Unit,
     onUpdateEvent: (EventEntity) -> Unit,
     onDeleteEvent: (EventEntity) -> Unit,
     onEstimateCarbs: suspend (String, ByteArray?) -> CarbEstimate,
-    onLogMeal: (Double, String?, Double, Int) -> Unit,
+    onLogMeal: (Double, String?, Double, Int, Instant) -> Unit,
     askState: AskUiState,
     hasAiKey: Boolean,
     onAsk: (String) -> Unit,

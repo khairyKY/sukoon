@@ -15,6 +15,9 @@ import com.sukoon.app.data.prefs.DisclaimerPrefs
 import com.sukoon.app.ui.navigation.MainScaffold
 import com.sukoon.app.ui.onboarding.DisclaimerGateScreen
 import com.sukoon.app.ui.theme.SukoonTheme
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.collectAsState
+import com.sukoon.app.data.prefs.ThemeMode
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,8 +26,16 @@ class MainActivity : ComponentActivity() {
 
         val disclaimerPrefs = DisclaimerPrefs(applicationContext)
 
+        val themeMode = (application as SukoonApp).container.themeMode
         setContent {
-            SukoonTheme {
+            val mode by themeMode.collectAsState()
+            SukoonTheme(
+                darkTheme = when (mode) {
+                    ThemeMode.AUTO -> isSystemInDarkTheme()
+                    ThemeMode.LIGHT -> false
+                    ThemeMode.DARK -> true
+                },
+            ) {
                 var disclaimerAccepted by remember { mutableStateOf(disclaimerPrefs.hasAccepted()) }
 
                 Surface(modifier = Modifier.fillMaxSize()) {

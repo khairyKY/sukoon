@@ -70,6 +70,9 @@ class AppContainer(private val context: Context) {
 
     val pairingStore = SensorPairingStore(context)
 
+    /** You → Appearance, applied at once by MainActivity. */
+    val themeMode = MutableStateFlow(settings.themeMode)
+
     private val _sourceKind = MutableStateFlow(settings.sourceKind)
     val sourceKind: StateFlow<SourceKind> = _sourceKind.asStateFlow()
 

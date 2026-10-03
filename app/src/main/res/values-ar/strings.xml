@@ -613,4 +613,15 @@
     <string name="start_guide">اقرا الدليل</string>
     <string name="start_dismiss">تمام</string>
     <string name="logbook_glucose_now">السكر دلوقتي: %1$s %2$s (بيتسجّل مع التسجيل ده)</string>
+    <string name="logbook_when_now">دلوقتي</string>
+    <string name="logbook_when_ago">من %1$d دقيقة</string>
+    <string name="logbook_when_pick">اختار وقت</string>
+    <string name="alarms_quiet">هادي بالليل</string>
+    <string name="alarms_quiet_body">مفيش تنبيهات ارتفاع في الساعات دي. الهبوط دايمًا بيرن.</string>
+    <string name="alarms_quiet_from">من</string>
+    <string name="alarms_quiet_to">لحد</string>
+    <string name="appearance_title">الشكل</string>
+    <string name="theme_auto">زي الموبايل</string>
+    <string name="theme_light">فاتح</string>
+    <string name="theme_dark">غامق</string>
 </resources>

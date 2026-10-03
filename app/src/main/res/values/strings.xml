@@ -613,4 +613,15 @@
     <string name="start_guide">Read the guide</string>
     <string name="start_dismiss">Got it</string>
     <string name="logbook_glucose_now">Glucose now: %1$s %2$s (saved with this entry)</string>
+    <string name="logbook_when_now">Now</string>
+    <string name="logbook_when_ago">%1$d min ago</string>
+    <string name="logbook_when_pick">Pick a time</string>
+    <string name="alarms_quiet">Quiet at night</string>
+    <string name="alarms_quiet_body">No high alarms in these hours. Lows always sound.</string>
+    <string name="alarms_quiet_from">From</string>
+    <string name="alarms_quiet_to">Until</string>
+    <string name="appearance_title">Appearance</string>
+    <string name="theme_auto">Like the phone</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
 </resources>

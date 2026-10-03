@@ -60,6 +60,8 @@ import com.sukoon.app.sharing.FollowerWatch
 import com.sukoon.app.health.HealthConnectSync
 import com.sukoon.app.calibration.CalibrationManager
 import com.sukoon.app.insulin.InsulinAction
+import com.sukoon.app.data.prefs.ThemeMode
+import com.sukoon.app.ui.components.ChoiceChips
 
 /**
  * You tab (A10, MVP slice): the paired Libre sensor (Track B), the data source (sensor or demo),
@@ -87,6 +89,8 @@ fun SettingsScreen(
     healthConnect: HealthConnectSync,
     calibration: CalibrationManager,
     onOpenGuide: () -> Unit,
+    themeMode: ThemeMode,
+    onThemeMode: (ThemeMode) -> Unit,
     insulinAction: InsulinAction,
     onInsulinAction: (InsulinAction) -> Unit,
     saveIntervalMinutes: Int,
@@ -207,6 +211,23 @@ fun SettingsScreen(
         if (geminiKey.isNotBlank()) {
             Text(stringResource(R.string.settings_ai_saved), fontSize = 11.5.sp, color = Sage, modifier = Modifier.padding(top = 6.dp))
         }
+
+        Spacer(Modifier.height(28.dp))
+        SectionLabel(stringResource(R.string.appearance_title))
+        Spacer(Modifier.height(10.dp))
+        ChoiceChips(
+            ThemeMode.entries,
+            themeMode,
+            { mode ->
+                stringResource(
+                    when (mode) {
+                        ThemeMode.AUTO -> R.string.theme_auto
+                        ThemeMode.LIGHT -> R.string.theme_light
+                        ThemeMode.DARK -> R.string.theme_dark
+                    },
+                )
+            },
+        ) { onThemeMode(it) }
 
         Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(R.string.settings_about_title))

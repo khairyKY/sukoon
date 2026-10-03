@@ -87,6 +87,10 @@ import com.sukoon.app.ui.theme.PillHighBg
 import com.sukoon.app.ui.theme.PillHighText
 import com.sukoon.app.ui.theme.PillNeutralBg
 import com.sukoon.app.ui.theme.OnCanvasLight
+import android.app.TimePickerDialog
+import android.text.format.DateFormat
+import androidx.compose.foundation.horizontalScroll
+import java.time.ZonedDateTime
 
 // Quick-entry preset amounts per type (design 6g) — tapping one logs immediately, satisfying the
 // "one tap + one number" quick-entry principle (docs/PLAN.md §11) without a stepper. A custom
@@ -118,13 +122,13 @@ private sealed interface SheetTarget {
 @Composable
 fun LogbookScreen(
     state: LogbookUiState,
-    onQuickLog: (LogEventType, Double?, String?) -> Unit,
+    onQuickLog: (LogEventType, Double?, String?, Instant) -> Unit,
     onUpdateEvent: (EventEntity) -> Unit,
     onDeleteEvent: (EventEntity) -> Unit,
     modifier: Modifier = Modifier,
     onEstimateCarbs: (suspend (String, ByteArray?) -> CarbEstimate)? = null,
     /** Meal + the insulin taken for it in one save: (carbs g, note, rapid units, minutes injected before eating). */
-    onLogMeal: ((Double, String?, Double, Int) -> Unit)? = null,
+    onLogMeal: ((Double, String?, Double, Int, Instant) -> Unit)? = null,
     /** Set by Home's shortcuts: open a new entry of this type once, then [onOpenedEntry]. */
     openNewEntry: LogEventType? = null,
     onOpenedEntry: () -> Unit = {},
@@ -184,11 +188,11 @@ fun LogbookScreen(
             insulinOnBoard = state.insulinOnBoard,
             glucoseNow = state.glucoseNow,
             onDismiss = { sheetTarget = null },
-            onSave = { type, value, note ->
+            onSave = { type, value, note, at ->
                 if (editing != null) {
-                    onUpdateEvent(editing.copy(type = type.name, value = value, note = note))
+                    onUpdateEvent(editing.copy(type = type.name, value = value, note = note, timestampMillis = at.toEpochMilli()))
                 } else {
-                    onQuickLog(type, value, note)
+                    onQuickLog(type, value, note, at)
                 }
                 context.toast(context.getString(if (editing != null) R.string.toast_entry_updated else R.string.toast_logged))
                 sheetTarget = null
@@ -201,8 +205,8 @@ fun LogbookScreen(
                 }
             },
             onEstimateCarbs = onEstimateCarbs,
-            onSaveMeal = onLogMeal?.let { log -> { carbs, note, insulin, minutes ->
-                    log(carbs, note, insulin, minutes)
+            onSaveMeal = onLogMeal?.let { log -> { carbs, note, insulin, minutes, at ->
+                    log(carbs, note, insulin, minutes, at)
                     context.toast(context.getString(R.string.toast_logged))
                     sheetTarget = null
                 } },
@@ -324,10 +328,10 @@ private fun QuickEntrySheet(
     insulinOnBoard: Double,
     glucoseNow: GlucoseReading?,
     onDismiss: () -> Unit,
-    onSave: (LogEventType, Double?, String?) -> Unit,
+    onSave: (LogEventType, Double?, String?, Instant) -> Unit,
     onDelete: (() -> Unit)?,
     onEstimateCarbs: (suspend (String, ByteArray?) -> CarbEstimate)?,
-    onSaveMeal: ((Double, String?, Double, Int) -> Unit)? = null,
+    onSaveMeal: ((Double, String?, Double, Int, Instant) -> Unit)? = null,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var type by remember { mutableStateOf(existing?.logType ?: newType) }
@@ -336,12 +340,16 @@ private fun QuickEntrySheet(
     // New meals only: optional rapid insulin logged alongside, injected N minutes before eating.
     var mealInsulinText by remember { mutableStateOf("") }
     var preBolusMinutes by remember { mutableIntStateOf(0) }
+    // When it happened: now (stamped at save), a few minutes back, or a picked time; an edit keeps its own.
+    var minutesAgo by remember { mutableIntStateOf(if (existing == null) 0 else -1) }
+    var pickedAt by remember { mutableStateOf(existing?.let { Instant.ofEpochMilli(it.timestampMillis) } ?: Instant.now()) }
+    fun at(): Instant = if (minutesAgo >= 0) Instant.now().minusSeconds(minutesAgo * 60L) else pickedAt
     val mealInsulin = mealInsulinText.toDoubleOrNull()?.takeIf { it > 0 && existing == null && onSaveMeal != null }
     fun save(saveType: LogEventType, amount: Double?) {
         if (saveType == LogEventType.CARB && amount != null && mealInsulin != null) {
-            onSaveMeal!!(amount, noteText.ifBlank { null }, mealInsulin, preBolusMinutes)
+            onSaveMeal!!(amount, noteText.ifBlank { null }, mealInsulin, preBolusMinutes, at())
         } else {
-            onSave(saveType, amount, noteText.ifBlank { null })
+            onSave(saveType, amount, noteText.ifBlank { null }, at())
         }
     }
 
@@ -357,7 +365,7 @@ private fun QuickEntrySheet(
                 fontSize = 22.sp,
                 color = MaterialTheme.colorScheme.onBackground,
             )
-            if (existing == null && glucoseNow != null) {
+            if (existing == null && glucoseNow != null && minutesAgo == 0) {
                 Spacer(Modifier.height(4.dp))
                 Text(
                     stringResource(R.string.logbook_glucose_now, String.format(Locale.getDefault(), "%d", glucoseNow.glucoseMgDl), glucoseNow.trend.arrow),
@@ -382,6 +390,8 @@ private fun QuickEntrySheet(
                     }
                 }
             }
+            Spacer(Modifier.height(14.dp))
+            WhenRow(minutesAgo, pickedAt, onPick = { minutesAgo = it }, onPickTime = { pickedAt = it; minutesAgo = -1 })
             Spacer(Modifier.height(18.dp))
 
             if (type == LogEventType.NOTE) {
@@ -603,6 +613,46 @@ private fun TypeChip(label: String, selected: Boolean, color: Color, onClick: ()
     }
 }
 
+/** When it happened: now, 15/30/60 minutes ago, or a picked time within the last day. */
+@Composable
+private fun WhenRow(minutesAgo: Int, pickedAt: Instant, onPick: (Int) -> Unit, onPickTime: (Instant) -> Unit) {
+    val context = LocalContext.current
+    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        listOf(0, 15, 30, 60).forEach { ago ->
+            WhenChip(if (ago == 0) stringResource(R.string.logbook_when_now) else stringResource(R.string.logbook_when_ago, ago), minutesAgo == ago) { onPick(ago) }
+        }
+        WhenChip(if (minutesAgo < 0) hmFormatter.format(pickedAt) else stringResource(R.string.logbook_when_pick), minutesAgo < 0) {
+            val start = (if (minutesAgo < 0) pickedAt else Instant.now()).atZone(ZoneId.systemDefault())
+            TimePickerDialog(
+                context,
+                { _, hour, minute ->
+                    val now = ZonedDateTime.now()
+                    val chosen = now.withHour(hour).withMinute(minute).withSecond(0).withNano(0)
+                    // A time later than now means yesterday.
+                    onPickTime((if (chosen.isAfter(now)) chosen.minusDays(1) else chosen).toInstant())
+                },
+                start.hour,
+                start.minute,
+                DateFormat.is24HourFormat(context),
+            ).show()
+        }
+    }
+}
+
+@Composable
+private fun WhenChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(if (selected) Sage else MaterialTheme.colorScheme.surface)
+            .border(1.dp, if (selected) Sage else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    ) {
+        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = if (selected) Color.White else MaterialTheme.colorScheme.onBackground)
+    }
+}
+
 @Composable
 private fun AmountChip(label: String, onClick: () -> Unit) {
     Box(
@@ -661,7 +711,7 @@ private fun LogbookScreenPreview() {
         EventEntity(id = 3, timestampMillis = now - 150 * 60_000L, type = "ACTIVITY", value = 20.0, note = "Morning walk"),
     )
     SukoonTheme {
-        LogbookScreen(state = LogbookUiState(events), onQuickLog = { _, _, _ -> }, onUpdateEvent = {}, onDeleteEvent = {})
+        LogbookScreen(state = LogbookUiState(events), onQuickLog = { _, _, _, _ -> }, onUpdateEvent = {}, onDeleteEvent = {})
     }
 }
 
@@ -669,6 +719,6 @@ private fun LogbookScreenPreview() {
 @Composable
 private fun LogbookEmptyPreview() {
     SukoonTheme {
-        LogbookScreen(state = LogbookUiState(), onQuickLog = { _, _, _ -> }, onUpdateEvent = {}, onDeleteEvent = {})
+        LogbookScreen(state = LogbookUiState(), onQuickLog = { _, _, _, _ -> }, onUpdateEvent = {}, onDeleteEvent = {})
     }
 }

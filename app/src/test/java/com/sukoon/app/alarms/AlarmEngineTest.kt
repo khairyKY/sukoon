@@ -7,6 +7,7 @@ import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.ZoneOffset
 
 class AlarmEngineTest {
 
@@ -25,6 +26,17 @@ class AlarmEngineTest {
             state = e.state
             i.toLong() to e.fire.map { it.type }.toSet()
         }
+    }
+
+    @Test
+    fun `quiet hours hold back highs but never lows`() {
+        val quiet = settings.copy(quietHighsFrom = 22, quietHighsTo = 7) // t0 is 03:00 UTC: inside
+        assertTrue(AlarmEngine.evaluate(listOf(r(0, 300)), at(0), quiet, AlarmState(), ZoneOffset.UTC).fire.isEmpty())
+        assertEquals(setOf(AlarmType.URGENT_LOW), AlarmEngine.evaluate(listOf(r(0, 50)), at(0), quiet, AlarmState(), ZoneOffset.UTC).fire.map { it.type }.toSet())
+        val seven = at(4 * 60)
+        val morning = AlarmEngine.evaluate(listOf(GlucoseReading(seven, 300, TrendDirection.STEADY, SourceKind.LIBRE_BLE)), seven, quiet, AlarmState(), ZoneOffset.UTC)
+        assertEquals(setOf(AlarmType.HIGH), morning.fire.map { it.type }.toSet())
+        assertTrue(quiet.quietAt(23) && quiet.quietAt(6) && !quiet.quietAt(7) && !quiet.quietAt(21))
     }
 
     private fun firedAt(log: List<Pair<Long, Set<AlarmType>>>, type: AlarmType) = log.filter { type in it.second }.map { it.first }

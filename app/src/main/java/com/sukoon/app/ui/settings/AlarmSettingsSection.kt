@@ -159,6 +159,15 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
         NumberChips(HIGH_SNOOZES, settings.highSnoozeMinutes, 15..240, { stringResource(R.string.alarms_minutes, it) }, enabled = settings.highEnabled) {
             onChange(settings.copy(highSnoozeMinutes = it))
         }
+        Toggle(R.string.alarms_quiet, R.string.alarms_quiet_body, settings.quietHighsFrom >= 0) { on ->
+            onChange(if (on) settings.copy(quietHighsFrom = 22, quietHighsTo = 7) else settings.copy(quietHighsFrom = -1, quietHighsTo = -1))
+        }
+        if (settings.quietHighsFrom >= 0) {
+            Label(R.string.alarms_quiet_from)
+            NumberChips(listOf(21, 22, 23, 0), settings.quietHighsFrom, 0..23, { hourLabel(it) }) { onChange(settings.copy(quietHighsFrom = it)) }
+            Label(R.string.alarms_quiet_to)
+            NumberChips(listOf(6, 7, 8, 9), settings.quietHighsTo, 0..23, { hourLabel(it) }) { onChange(settings.copy(quietHighsTo = it)) }
+        }
         Sound(AlarmType.HIGH, settings.highEnabled)
 
         Toggle(R.string.alarms_signal, R.string.alarms_signal_body, settings.signalLossEnabled) { onChange(settings.copy(signalLossEnabled = it)) }
@@ -203,6 +212,8 @@ private fun SoundRow(name: String?, enabled: Boolean, onPhoneSounds: () -> Unit,
         }
     }
 }
+
+private fun hourLabel(hour: Int) = String.format(java.util.Locale.getDefault(), "%02d:00", hour)
 
 private fun alarmLabel(type: AlarmType) = when (type) {
     AlarmType.URGENT_LOW -> R.string.alarms_urgent

@@ -57,14 +57,14 @@ class LogbookViewModel(
             initialValue = LogbookUiState(),
         )
 
-    fun log(type: LogEventType, value: Double?, note: String?) {
-        viewModelScope.launch { repository.log(type, value, note) }
+    fun log(type: LogEventType, value: Double?, note: String?, at: Instant = Instant.now()) {
+        viewModelScope.launch { repository.log(type, value, note, at) }
     }
 
     /** A meal plus the rapid insulin for it; the insulin is stamped [preBolusMinutes] before the meal. */
-    fun logMeal(carbs: Double, note: String?, insulinUnits: Double, preBolusMinutes: Int) {
+    fun logMeal(carbs: Double, note: String?, insulinUnits: Double, preBolusMinutes: Int, at: Instant = Instant.now()) {
         viewModelScope.launch {
-            val now = Instant.now()
+            val now = at
             repository.log(LogEventType.INSULIN, insulinUnits, null, at = now.minusSeconds(preBolusMinutes * 60L))
             repository.log(LogEventType.CARB, carbs, note, at = now)
         }
