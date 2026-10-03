@@ -71,6 +71,7 @@ import com.sukoon.app.data.source.libre.SensorLife
 import com.sukoon.app.ui.home.SensorEndingBanner
 import java.time.Duration
 import java.time.Instant
+import com.sukoon.app.ui.reports.ReportViewModel
 
 /**
  * Top-level navigation, per the shipped design's 3-tab bottom bar (Now / Trends / You) — not the
@@ -174,6 +175,8 @@ fun MainScaffold() {
                     factory = InsightsViewModel.factory(container.glucoseRepository, container.logbookRepository, container.settings),
                 )
                 val insightsState by insightsViewModel.uiState.collectAsStateWithLifecycle()
+                val reportViewModel: ReportViewModel = viewModel(factory = ReportViewModel.factory(container.glucoseRepository))
+                val reportState by reportViewModel.state.collectAsStateWithLifecycle()
                 TrendsHub(
                     graphState = graphState,
                     onSelectRange = graphViewModel::selectRange,
@@ -192,6 +195,9 @@ fun MainScaffold() {
                     onAcknowledgeInsights = insightsViewModel::acknowledge,
                     pendingEntry = pendingEntry,
                     onPendingEntryHandled = { pendingEntry = null },
+                    reportState = reportState,
+                    onSelectReportDays = reportViewModel::selectDays,
+                    reportName = container.settings.emergency.yourName,
                 )
             }
             composable(SukoonTab.YOU.route) {

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Where the camera may write meal photos for the AI carb estimate (ai/MealPhoto.kt). -->
+<!-- Files the app hands to other apps: meal photos (ai/MealPhoto.kt) and report PDFs. -->
 <paths>
     <cache-path name="photos" path="photos/" />
+    <!-- The doctor's report PDF (reports/AgpPdf.kt), shared through the share sheet. -->
+    <cache-path name="reports" path="reports/" />
 </paths>

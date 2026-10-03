@@ -131,7 +131,7 @@ fun GraphScreen(
             item {
                 Column {
                     Spacer(Modifier.height(16.dp))
-                    RangeStats(summary, state.range)
+                    RangeStats(summary, stringResource(R.string.graph_tir_title, rangeLabel(state.range)), showGmi = state.range.hours >= 24)
                 }
             }
         }
@@ -335,7 +335,7 @@ private fun RangeSelector(selected: GraphRange, onSelect: (GraphRange) -> Unit) 
 /** Time in range for the chosen window: one bar of the five consensus bands, average, and GMI for day ranges. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun RangeStats(summary: RangeSummary, range: GraphRange) {
+internal fun RangeStats(summary: RangeSummary, title: String, showGmi: Boolean) {
     val bands = listOf(
         Triple(String.format(Locale.getDefault(), "<%d", 54), summary.veryLow, PillLowText),
         Triple(String.format(Locale.getDefault(), "%d–%d", 54, 69), summary.low, StateLow),
@@ -351,7 +351,7 @@ private fun RangeStats(summary: RangeSummary, range: GraphRange) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Eyebrow(stringResource(R.string.graph_tir_title, rangeLabel(range)))
+        Eyebrow(title)
         Row(verticalAlignment = Alignment.Bottom) {
             Text(percent(summary.inRange), fontFamily = HeadlineSerifFontFamily, fontSize = 32.sp, lineHeight = 32.sp, color = MaterialTheme.colorScheme.onBackground)
             Spacer(Modifier.width(8.dp))
@@ -378,7 +378,7 @@ private fun RangeStats(summary: RangeSummary, range: GraphRange) {
             }
         }
         val average = stringResource(R.string.graph_average, summary.meanMgDl)
-        if (range.hours >= 24) {
+        if (showGmi) {
             Text("$average · ${stringResource(R.string.graph_gmi, String.format(Locale.getDefault(), "%.1f", summary.gmiPercent))}", fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground)
             Text(stringResource(R.string.graph_gmi_note), fontSize = 12.sp, lineHeight = 16.sp, color = CaptionMuted)
         } else {

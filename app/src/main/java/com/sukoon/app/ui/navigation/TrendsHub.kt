@@ -42,8 +42,10 @@ import com.sukoon.app.ui.logbook.LogbookScreen
 import com.sukoon.app.ui.logbook.LogbookUiState
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.Sage
+import com.sukoon.app.ui.reports.ReportScreen
+import com.sukoon.app.ui.reports.ReportUiState
 
-private enum class TrendsSubTab { GRAPH, LOGBOOK, INSIGHTS, ASK }
+private enum class TrendsSubTab { GRAPH, LOGBOOK, INSIGHTS, REPORT, ASK }
 
 /**
  * The Trends tab's content (A1 comment in MainScaffold): a hub over Graph (A3) and Logbook (A4),
@@ -71,6 +73,9 @@ fun TrendsHub(
     onAcknowledgeInsights: () -> Unit,
     pendingEntry: LogEventType?,
     onPendingEntryHandled: () -> Unit,
+    reportState: ReportUiState,
+    onSelectReportDays: (Int) -> Unit,
+    reportName: String,
     modifier: Modifier = Modifier,
 ) {
     var subTab by rememberSaveable { mutableStateOf(TrendsSubTab.GRAPH) }
@@ -84,6 +89,7 @@ fun TrendsHub(
             SubTabChip(stringResource(R.string.graph_title), subTab == TrendsSubTab.GRAPH) { subTab = TrendsSubTab.GRAPH }
             SubTabChip(stringResource(R.string.logbook_title), subTab == TrendsSubTab.LOGBOOK) { subTab = TrendsSubTab.LOGBOOK }
             SubTabChip(stringResource(R.string.insights_tab), subTab == TrendsSubTab.INSIGHTS) { subTab = TrendsSubTab.INSIGHTS }
+            SubTabChip(stringResource(R.string.report_tab), subTab == TrendsSubTab.REPORT) { subTab = TrendsSubTab.REPORT }
             SubTabChip(stringResource(R.string.ask_tab), subTab == TrendsSubTab.ASK) { subTab = TrendsSubTab.ASK }
         }
         when (subTab) {
@@ -100,6 +106,7 @@ fun TrendsHub(
                 onOpenedEntry = onPendingEntryHandled,
             )
             TrendsSubTab.INSIGHTS -> InsightsScreen(insightsState, onAcknowledgeInsights, Modifier.weight(1f))
+            TrendsSubTab.REPORT -> ReportScreen(reportState, reportName, onSelectReportDays, Modifier.weight(1f))
             TrendsSubTab.ASK -> AskScreen(
                 state = askState,
                 hasKey = hasAiKey,
