@@ -23,6 +23,7 @@ import com.sukoon.app.data.db.logType
 import com.sukoon.app.data.repository.GlucoseRepository
 import com.sukoon.app.insights.MeterCheck
 import kotlin.math.roundToInt
+import com.sukoon.app.data.source.nearestTo
 
 /** Drives the Logbook screen — today's window of logged events, newest first, from Room via [LogbookRepository]. */
 class LogbookViewModel(private val repository: LogbookRepository, glucose: GlucoseRepository, private val gemini: GeminiClient) : ViewModel() {
@@ -36,6 +37,7 @@ class LogbookViewModel(private val repository: LogbookRepository, glucose: Gluco
             meterChecks = events.filter { it.logType == LogEventType.FINGERSTICK }.mapNotNull { e ->
                 e.value?.let { MeterCheck.of(it.roundToInt(), e.timestampMillis, readings) }?.let { e.id to it }
             }.toMap(),
+            glucoseAt = events.mapNotNull { e -> readings.nearestTo(e.timestampMillis)?.let { e.id to it } }.toMap(),
         )
     }
         .stateIn(

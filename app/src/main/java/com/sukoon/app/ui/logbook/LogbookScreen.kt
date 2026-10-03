@@ -79,6 +79,14 @@ import kotlinx.coroutines.withContext
 import com.sukoon.app.ui.components.toast
 import com.sukoon.app.insights.MeterCheck
 import com.sukoon.app.ui.theme.StateHigh
+import com.sukoon.app.data.source.GlucoseReading
+import com.sukoon.app.ui.widget.arrow
+import com.sukoon.app.ui.theme.PillLowBg
+import com.sukoon.app.ui.theme.PillLowText
+import com.sukoon.app.ui.theme.PillHighBg
+import com.sukoon.app.ui.theme.PillHighText
+import com.sukoon.app.ui.theme.PillNeutralBg
+import com.sukoon.app.ui.theme.OnCanvasLight
 
 // Quick-entry preset amounts per type (design 6g) — tapping one logs immediately, satisfying the
 // "one tap + one number" quick-entry principle (docs/PLAN.md §11) without a stepper. A custom
@@ -149,7 +157,7 @@ fun LogbookScreen(
             } else {
                 LazyColumn(Modifier.weight(1f)) {
                     items(state.events, key = { it.id }) { event ->
-                        LogbookRow(event, state.meterChecks[event.id], onClick = { sheetTarget = SheetTarget.Edit(event) })
+                        LogbookRow(event, state.meterChecks[event.id], state.glucoseAt[event.id], onClick = { sheetTarget = SheetTarget.Edit(event) })
                         HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
                     }
                 }
@@ -236,7 +244,7 @@ private fun LogbookEmptyState(onLogFirst: () -> Unit, modifier: Modifier = Modif
 }
 
 @Composable
-private fun LogbookRow(event: EventEntity, check: MeterCheck?, onClick: () -> Unit) {
+private fun LogbookRow(event: EventEntity, check: MeterCheck?, glucose: GlucoseReading?, onClick: () -> Unit) {
     val type = event.logType
     val hasNote = !event.note.isNullOrBlank()
     Row(
@@ -270,6 +278,11 @@ private fun LogbookRow(event: EventEntity, check: MeterCheck?, onClick: () -> Un
                 )
             }
         }
+        // The glucose at that moment; a finger-prick already shows the sensor beside the meter.
+        if (glucose != null && type != LogEventType.FINGERSTICK) {
+            GlucosePill(glucose)
+            Spacer(Modifier.width(10.dp))
+        }
         Column(horizontalAlignment = Alignment.End) {
             event.value?.let {
                 Text(
@@ -282,6 +295,23 @@ private fun LogbookRow(event: EventEntity, check: MeterCheck?, onClick: () -> Un
             Text(hmFormatter.format(Instant.ofEpochMilli(event.timestampMillis)), fontSize = 10.sp, color = CaptionMuted)
         }
     }
+}
+
+/** "142 ↗", tinted like Home's pills: low red, high amber, in range neutral. */
+@Composable
+private fun GlucosePill(reading: GlucoseReading) {
+    val (background, text) = when {
+        reading.glucoseMgDl < 70 -> PillLowBg to PillLowText
+        reading.glucoseMgDl > 180 -> PillHighBg to PillHighText
+        else -> PillNeutralBg to OnCanvasLight
+    }
+    Text(
+        String.format(Locale.getDefault(), "%d %s", reading.glucoseMgDl, reading.trend.arrow),
+        modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(background).padding(horizontal = 8.dp, vertical = 3.dp),
+        fontSize = 11.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = text,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

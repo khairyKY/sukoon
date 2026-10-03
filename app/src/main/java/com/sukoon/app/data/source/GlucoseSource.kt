@@ -3,6 +3,7 @@ package com.sukoon.app.data.source
 import java.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlin.math.abs
 
 /**
  * A pluggable source of glucose readings. See docs/PLAN.md §1.
@@ -44,3 +45,7 @@ sealed interface SourceStatus {
     data object Stale : SourceStatus
     data class Error(val message: String) : SourceStatus
 }
+
+/** The reading nearest [atMillis], if one is within [withinMillis]: the glucose "at" a logged moment. */
+fun List<GlucoseReading>.nearestTo(atMillis: Long, withinMillis: Long = 5 * 60_000L): GlucoseReading? =
+    minByOrNull { abs(it.timestamp.toEpochMilli() - atMillis) }?.takeIf { abs(it.timestamp.toEpochMilli() - atMillis) <= withinMillis }
