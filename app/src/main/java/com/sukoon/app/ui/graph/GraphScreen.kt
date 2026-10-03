@@ -103,6 +103,8 @@ fun GraphScreen(
     state: GraphUiState,
     onSelectRange: (GraphRange) -> Unit,
     modifier: Modifier = Modifier,
+    /** Someone else's name when following them; "Graph" for your own. */
+    title: String? = null,
 ) {
     val zone = remember { ZoneId.systemDefault() }
     val newestFirst = remember(state.readings) { state.readings.asReversed() }
@@ -110,7 +112,7 @@ fun GraphScreen(
         modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 24.dp),
     ) {
-        item { Header(state.readings.lastOrNull()) }
+        item { Header(state.readings.lastOrNull(), title) }
         item {
             Column {
                 Spacer(Modifier.height(16.dp))
@@ -154,9 +156,9 @@ fun GraphScreen(
 
 /** The current value and where it's heading — the graph's answer to "where am I now". */
 @Composable
-private fun Header(latest: GlucoseReading?) {
+private fun Header(latest: GlucoseReading?, title: String?) {
     Column {
-        Text(stringResource(R.string.graph_title), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
+        Text(title ?: stringResource(R.string.graph_title), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
         if (latest == null) return@Column
         val minutes = Duration.between(latest.timestamp, Instant.now()).toMinutes().coerceAtLeast(0)
         val stale = minutes > HomeUiStateMapper.STALE_AFTER.toMinutes()

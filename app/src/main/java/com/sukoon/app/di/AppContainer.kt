@@ -38,6 +38,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.sukoon.app.emergency.EmergencyAlerts
+import com.sukoon.app.BuildConfig
+import com.sukoon.app.sharing.Supabase
+import com.sukoon.app.sharing.Sharing
 
 /**
  * Manual dependency container (ponytail: no Hilt/Koin for a graph this small). Owns the
@@ -76,6 +79,10 @@ class AppContainer(private val context: Context) {
 
     val emergency = EmergencyAlerts(context, settings)
 
+    val supabase = Supabase(context, BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_KEY)
+
+    val sharing = Sharing(context, supabase, glucoseRepository, appScope)
+
     val alarms = AlarmMonitor(
         repository = glucoseRepository,
         settings = settings,
@@ -91,6 +98,7 @@ class AppContainer(private val context: Context) {
         refreshWidgets()
         alarms.start()
         nightscout.start()
+        sharing.start()
     }
 
     /** CSV of the last [days] days (0 = everything) → (text, data rows). */

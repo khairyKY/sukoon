@@ -213,6 +213,7 @@ fun MainScaffold() {
                     onPreviewAlarm = container.alarms::preview,
                     emergency = emergency,
                     emergencyAlerts = container.emergency,
+                    sharing = container.sharing,
                     onEmergency = { changed ->
                         container.settings.emergency = changed.sanitized()
                         emergency = container.settings.emergency

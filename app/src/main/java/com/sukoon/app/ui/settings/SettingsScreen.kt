@@ -54,6 +54,8 @@ import com.sukoon.app.ui.components.toast
 import com.sukoon.app.alarms.AlarmType
 import com.sukoon.app.emergency.EmergencyAlerts
 import com.sukoon.app.emergency.EmergencySettings
+import com.sukoon.app.sharing.Sharing
+import com.sukoon.app.ui.sharing.SharingSection
 
 /**
  * You tab (A10, MVP slice): the paired Libre sensor (Track B), the data source (sensor or demo),
@@ -76,6 +78,7 @@ fun SettingsScreen(
     emergency: EmergencySettings,
     emergencyAlerts: EmergencyAlerts,
     onEmergency: (EmergencySettings) -> Unit,
+    sharing: Sharing,
     saveIntervalMinutes: Int,
     onSaveInterval: (Int) -> Unit,
     nightscout: NightscoutConfig,
@@ -134,6 +137,10 @@ fun SettingsScreen(
         Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(R.string.emergency_title))
         EmergencySection(emergency, emergencyAlerts, onEmergency)
+
+        Spacer(Modifier.height(28.dp))
+        SectionLabel(stringResource(R.string.sharing_title))
+        SharingSection(sharing)
 
         Spacer(Modifier.height(28.dp))
         SectionLabel(stringResource(R.string.readings_title))

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -17,6 +19,13 @@ android {
         targetSdk = 35
         versionCode = 3
         versionName = "0.3.0-dev"
+
+        // Followers backend (Supabase): URL + publishable key from the gitignored local.properties.
+        val local = Properties().apply {
+            rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+        }
+        buildConfigField("String", "SUPABASE_URL", "\"${local.getProperty("supabase.url", "")}\"")
+        buildConfigField("String", "SUPABASE_KEY", "\"${local.getProperty("supabase.publishableKey", "")}\"")
     }
 
     buildTypes {
