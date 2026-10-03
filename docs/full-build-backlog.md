@@ -31,9 +31,9 @@ Legend: ✅ done · ◐ in progress · ⬜ to do · ⏸ blocked (reason)
 8. ✅ Report (Trends → Report): AGP percentile bands by time of day (5–95, 25–75, median) over 7/14/30 days with time active, mean, GMI, CV and time in ranges; one-page A4 PDF (PdfDocument) with the consensus targets, shared through the share sheet. Same renderer for screen and PDF.
 
 ## After those
-- ⬜ Start on boot: reconnect the sensor and resume following after a phone restart.
-- ⬜ Glucose in the status bar: the sensor notification shows value + arrow + age; status-bar icon draws the number.
-- ⬜ User guide: first-run walkthrough + Help page.
+- ✅ Start on boot and after updates (BootReceiver).
+- ✅ Glucose in the status bar: the sensor notification shows value + arrow + age; the number is the status-bar icon.
+- ✅ User guide: You → Guide (12 topics, EN/AR) + a getting-started card on Now.
 - ⬜ Insights into the AI brief; glucose-at-entry in the CSV `glucose_mgdl` column and the AI brief; "glucose now" on the entry sheet.
 - ⬜ Settings completion (A10): units mg/dL ↔ mmol/L everywhere, theme (auto/light/dark), quiet hours for highs.
 - ⬜ Logbook polish: edit an entry's time, photo attached to meals.

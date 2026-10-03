@@ -86,6 +86,7 @@ fun SettingsScreen(
     followerWatch: FollowerWatch,
     healthConnect: HealthConnectSync,
     calibration: CalibrationManager,
+    onOpenGuide: () -> Unit,
     insulinAction: InsulinAction,
     onInsulinAction: (InsulinAction) -> Unit,
     saveIntervalMinutes: Int,
@@ -108,7 +109,14 @@ fun SettingsScreen(
             .padding(horizontal = 20.dp, vertical = 16.dp),
     ) {
         Text(stringResource(R.string.home_nav_you), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground)
-        Spacer(Modifier.height(20.dp))
+        Text(
+            stringResource(R.string.settings_guide),
+            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onOpenGuide).padding(vertical = 8.dp),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Sage,
+        )
+        Spacer(Modifier.height(12.dp))
 
         SectionLabel(stringResource(R.string.setup_title))
         SetupChecklist()

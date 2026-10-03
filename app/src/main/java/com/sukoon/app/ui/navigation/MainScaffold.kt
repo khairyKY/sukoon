@@ -72,6 +72,8 @@ import com.sukoon.app.ui.home.SensorEndingBanner
 import java.time.Duration
 import java.time.Instant
 import com.sukoon.app.ui.reports.ReportViewModel
+import com.sukoon.app.ui.help.GettingStartedCard
+import com.sukoon.app.ui.help.HelpDialog
 
 /**
  * Top-level navigation, per the shipped design's 3-tab bottom bar (Now / Trends / You) — not the
@@ -90,6 +92,8 @@ enum class SukoonTab(val route: String, @StringRes val labelRes: Int) {
 @Composable
 fun MainScaffold() {
     val navController = rememberNavController()
+    var showGuide by rememberSaveable { mutableStateOf(false) }
+    if (showGuide) HelpDialog(onClose = { showGuide = false })
     // Health Connect only lets most phones read while Sukoon is on screen: sync on every return.
     val appContainer = (LocalContext.current.applicationContext as SukoonApp).container
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -125,6 +129,22 @@ fun MainScaffold() {
                 Column {
                     if (missingSetup.isNotEmpty() && !setupLater) {
                         SetupBanner(missingSetup, onFix = toYou, onLater = { setupLater = true })
+                    }
+                    val app = (context.applicationContext as SukoonApp).container
+                    var startDismissed by remember { mutableStateOf(app.settings.gettingStartedDismissed) }
+                    val sensorConnected = app.pairingStore.load() != null
+                    val hasContact = app.settings.emergency.contacts.isNotEmpty()
+                    if (!startDismissed && !(sensorConnected && hasContact)) {
+                        GettingStartedCard(
+                            sensorConnected = sensorConnected,
+                            hasEmergencyContact = hasContact,
+                            onSetUp = toYou,
+                            onGuide = { showGuide = true },
+                            onDismiss = {
+                                app.settings.gettingStartedDismissed = true
+                                startDismissed = true
+                            },
+                        )
                     }
                     val life by homeViewModel.sensorLife.collectAsStateWithLifecycle()
                     (life as? SensorLife.Running)
@@ -244,6 +264,7 @@ fun MainScaffold() {
                     followerWatch = container.followerWatch,
                     healthConnect = container.healthConnect,
                     calibration = container.calibration,
+                    onOpenGuide = { showGuide = true },
                     insulinAction = insulinAction,
                     onInsulinAction = { changed ->
                         container.settings.insulinAction = changed

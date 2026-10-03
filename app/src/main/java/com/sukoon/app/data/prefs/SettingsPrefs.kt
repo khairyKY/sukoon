@@ -87,6 +87,11 @@ class SettingsPrefs(context: Context) {
         get() = InsulinAction(prefs.getInt(KEY_INSULIN_PEAK, 75), prefs.getInt(KEY_INSULIN_DURATION, 300)).sanitized()
         set(value) = prefs.edit().putInt(KEY_INSULIN_PEAK, value.peakMinutes).putInt(KEY_INSULIN_DURATION, value.durationMinutes).apply()
 
+    /** Home's getting-started card, once the user has said "Got it". */
+    var gettingStartedDismissed: Boolean
+        get() = prefs.getBoolean(KEY_START_DISMISSED, false)
+        set(value) = prefs.edit().putBoolean(KEY_START_DISMISSED, value).apply()
+
     /** Trends → Insights stays locked until the user has read and accepted what it is (and isn't). */
     var insightsAcknowledged: Boolean
         get() = prefs.getBoolean(KEY_INSIGHTS_ACK, false)
@@ -112,6 +117,7 @@ class SettingsPrefs(context: Context) {
         private const val KEY_SOUND_NAME = "alarm_sound_name_"
         private const val KEY_EMERGENCY_CONTACTS = "emergency_contacts"
         private const val KEY_INSULIN_PEAK = "insulin_peak_minutes"
+        private const val KEY_START_DISMISSED = "getting_started_dismissed"
         private const val KEY_INSULIN_DURATION = "insulin_duration_minutes"
         private const val KEY_EMERGENCY_NAME = "emergency_your_name"
         private const val KEY_EMERGENCY_AFTER = "emergency_after_minutes"
