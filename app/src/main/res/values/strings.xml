@@ -624,4 +624,5 @@
     <string name="theme_auto">Like the phone</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
+    <string name="logbook_photo_remove">Remove photo</string>
 </resources>

@@ -52,6 +52,7 @@ import com.sukoon.app.insulin.InsulinOnBoard
 import java.time.Duration
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import com.sukoon.app.data.repository.EntryPhotos
 
 /**
  * Manual dependency container (ponytail: no Hilt/Koin for a graph this small). Owns the
@@ -89,6 +90,8 @@ class AppContainer(private val context: Context) {
     )
 
     val logbookRepository: LogbookRepository = LogbookRepository(eventDao = database.eventDao())
+
+    val entryPhotos = EntryPhotos(context.filesDir)
 
     val calibration = CalibrationManager(context, calibrationInForce, glucoseRepository, logbookRepository, appScope)
 

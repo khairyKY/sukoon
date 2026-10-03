@@ -624,4 +624,5 @@
     <string name="theme_auto">زي الموبايل</string>
     <string name="theme_light">فاتح</string>
     <string name="theme_dark">غامق</string>
+    <string name="logbook_photo_remove">شيل الصورة</string>
 </resources>

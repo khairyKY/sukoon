@@ -185,7 +185,7 @@ fun MainScaffold() {
                     factory = GraphViewModel.factory(container.glucoseRepository, container.logbookRepository),
                 )
                 val graphState by graphViewModel.uiState.collectAsStateWithLifecycle()
-                val logbookViewModel: LogbookViewModel = viewModel(factory = LogbookViewModel.factory(container.logbookRepository, container.glucoseRepository, container.gemini) { container.settings.insulinAction })
+                val logbookViewModel: LogbookViewModel = viewModel(factory = LogbookViewModel.factory(container.logbookRepository, container.glucoseRepository, container.gemini, container.entryPhotos) { container.settings.insulinAction })
                 val logbookState by logbookViewModel.uiState.collectAsStateWithLifecycle()
                 val askViewModel: AskViewModel = viewModel(
                     factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini) { container.settings.insulinAction },
@@ -206,6 +206,7 @@ fun MainScaffold() {
                     onDeleteEvent = logbookViewModel::deleteEvent,
                     onEstimateCarbs = logbookViewModel::estimateCarbs,
                     onLogMeal = logbookViewModel::logMeal,
+                    onEntryPhoto = logbookViewModel::setPhoto,
                     askState = askState,
                     hasAiKey = askViewModel.hasKey,
                     onAsk = askViewModel::ask,

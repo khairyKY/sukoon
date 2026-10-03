@@ -16,9 +16,9 @@ class LogbookRepository(private val eventDao: EventDao) {
     /** Logged events at or after [sinceMillis], chronological — backs the Logbook timeline and the graph's event pins. */
     fun eventsSince(sinceMillis: Long): Flow<List<EventEntity>> = eventDao.since(sinceMillis)
 
-    suspend fun log(type: LogEventType, value: Double? = null, note: String? = null, at: Instant = Instant.now()) {
+    /** Returns the new entry's id (a photo attached to it is filed under that id). */
+    suspend fun log(type: LogEventType, value: Double? = null, note: String? = null, at: Instant = Instant.now()): Long =
         eventDao.insert(EventEntity(timestampMillis = at.toEpochMilli(), type = type.name, value = value, note = note))
-    }
 
     suspend fun update(event: EventEntity) = eventDao.update(event)
 

@@ -28,6 +28,10 @@ import com.sukoon.app.insulin.InsulinAction
 import com.sukoon.app.insulin.InsulinOnBoard
 import com.sukoon.app.ui.home.HomeUiStateMapper
 import java.time.Duration
+import com.sukoon.app.data.repository.EntryPhotos
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.withContext
 
 /** Drives the Logbook screen — today's window of logged events, newest first, from Room via [LogbookRepository]. */
 class LogbookViewModel(
@@ -35,12 +39,16 @@ class LogbookViewModel(
     glucose: GlucoseRepository,
     private val gemini: GeminiClient,
     private val insulinAction: () -> InsulinAction = { InsulinAction() },
+    private val photos: EntryPhotos? = null,
 ) : ViewModel() {
+    /** Bumped after a photo is written, since the entry itself was saved (and shown) a moment before. */
+    private val photoVersion = MutableStateFlow(0)
+
 
     private val since = System.currentTimeMillis() - WINDOW_MILLIS
 
     // Readings ride along so each finger-prick can show what the sensor said at that moment.
-    val uiState: StateFlow<LogbookUiState> = combine(repository.eventsSince(since), glucose.readingsSince(since - MeterCheck.WINDOW_MS)) { events, readings ->
+    val uiState: StateFlow<LogbookUiState> = combine(repository.eventsSince(since), glucose.readingsSince(since - MeterCheck.WINDOW_MS), photoVersion) { events, readings, _ ->
         LogbookUiState(
             events = events.sortedByDescending { it.timestampMillis },
             meterChecks = events.filter { it.logType == LogEventType.FINGERSTICK }.mapNotNull { e ->
@@ -48,6 +56,7 @@ class LogbookViewModel(
             }.toMap(),
             glucoseAt = events.mapNotNull { e -> readings.nearestTo(e.timestampMillis)?.let { e.id to it } }.toMap(),
             insulinOnBoard = InsulinOnBoard.total(events, Instant.now(), insulinAction()),
+            photos = photos?.all().orEmpty(),
             glucoseNow = readings.lastOrNull()?.takeIf { Duration.between(it.timestamp, Instant.now()) <= HomeUiStateMapper.STALE_AFTER },
         )
     }
@@ -57,16 +66,20 @@ class LogbookViewModel(
             initialValue = LogbookUiState(),
         )
 
-    fun log(type: LogEventType, value: Double?, note: String?, at: Instant = Instant.now()) {
-        viewModelScope.launch { repository.log(type, value, note, at) }
+    fun log(type: LogEventType, value: Double?, note: String?, at: Instant = Instant.now(), photo: ByteArray? = null) {
+        viewModelScope.launch {
+            val id = repository.log(type, value, note, at)
+            if (photo != null) setPhotoNow(id, photo)
+        }
     }
 
     /** A meal plus the rapid insulin for it; the insulin is stamped [preBolusMinutes] before the meal. */
-    fun logMeal(carbs: Double, note: String?, insulinUnits: Double, preBolusMinutes: Int, at: Instant = Instant.now()) {
+    fun logMeal(carbs: Double, note: String?, insulinUnits: Double, preBolusMinutes: Int, at: Instant = Instant.now(), photo: ByteArray? = null) {
         viewModelScope.launch {
             val now = at
             repository.log(LogEventType.INSULIN, insulinUnits, null, at = now.minusSeconds(preBolusMinutes * 60L))
-            repository.log(LogEventType.CARB, carbs, note, at = now)
+            val meal = repository.log(LogEventType.CARB, carbs, note, at = now)
+            if (photo != null) setPhotoNow(meal, photo)
         }
     }
 
@@ -75,7 +88,21 @@ class LogbookViewModel(
     }
 
     fun deleteEvent(event: EventEntity) {
-        viewModelScope.launch { repository.delete(event) }
+        viewModelScope.launch {
+            repository.delete(event)
+            setPhotoNow(event.id, null)
+        }
+    }
+
+    /** Attach, replace (bytes) or remove (null) an entry's photo. */
+    fun setPhoto(id: Long, jpeg: ByteArray?) {
+        viewModelScope.launch { setPhotoNow(id, jpeg) }
+    }
+
+    private suspend fun setPhotoNow(id: Long, jpeg: ByteArray?) {
+        val store = photos ?: return
+        withContext(Dispatchers.IO) { if (jpeg != null) store.save(id, jpeg) else store.delete(id) }
+        photoVersion.value++
     }
 
     /** AI carb estimate for the quick-entry sheet — a suggestion only; the sheet's Save logs it. */
@@ -89,8 +116,8 @@ class LogbookViewModel(
     companion object {
         private val WINDOW_MILLIS = TimeUnit.HOURS.toMillis(24)
 
-        fun factory(repository: LogbookRepository, glucose: GlucoseRepository, gemini: GeminiClient, insulinAction: () -> InsulinAction) = viewModelFactory {
-            initializer { LogbookViewModel(repository, glucose, gemini, insulinAction) }
+        fun factory(repository: LogbookRepository, glucose: GlucoseRepository, gemini: GeminiClient, photos: EntryPhotos, insulinAction: () -> InsulinAction) = viewModelFactory {
+            initializer { LogbookViewModel(repository, glucose, gemini, insulinAction, photos) }
         }
     }
 }

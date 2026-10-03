@@ -91,6 +91,13 @@ import android.app.TimePickerDialog
 import android.text.format.DateFormat
 import androidx.compose.foundation.horizontalScroll
 import java.time.ZonedDateTime
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import java.io.File
 
 // Quick-entry preset amounts per type (design 6g) — tapping one logs immediately, satisfying the
 // "one tap + one number" quick-entry principle (docs/PLAN.md §11) without a stepper. A custom
@@ -122,13 +129,15 @@ private sealed interface SheetTarget {
 @Composable
 fun LogbookScreen(
     state: LogbookUiState,
-    onQuickLog: (LogEventType, Double?, String?, Instant) -> Unit,
+    onQuickLog: (LogEventType, Double?, String?, Instant, ByteArray?) -> Unit,
     onUpdateEvent: (EventEntity) -> Unit,
     onDeleteEvent: (EventEntity) -> Unit,
     modifier: Modifier = Modifier,
     onEstimateCarbs: (suspend (String, ByteArray?) -> CarbEstimate)? = null,
     /** Meal + the insulin taken for it in one save: (carbs g, note, rapid units, minutes injected before eating). */
-    onLogMeal: ((Double, String?, Double, Int, Instant) -> Unit)? = null,
+    onLogMeal: ((Double, String?, Double, Int, Instant, ByteArray?) -> Unit)? = null,
+    /** Attach, replace (bytes) or remove (null) an existing entry's photo. */
+    onEntryPhoto: (Long, ByteArray?) -> Unit = { _, _ -> },
     /** Set by Home's shortcuts: open a new entry of this type once, then [onOpenedEntry]. */
     openNewEntry: LogEventType? = null,
     onOpenedEntry: () -> Unit = {},
@@ -161,7 +170,7 @@ fun LogbookScreen(
             } else {
                 LazyColumn(Modifier.weight(1f)) {
                     items(state.events, key = { it.id }) { event ->
-                        LogbookRow(event, state.meterChecks[event.id], state.glucoseAt[event.id], onClick = { sheetTarget = SheetTarget.Edit(event) })
+                        LogbookRow(event, state.meterChecks[event.id], state.glucoseAt[event.id], state.photos[event.id], onClick = { sheetTarget = SheetTarget.Edit(event) })
                         HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
                     }
                 }
@@ -187,12 +196,14 @@ fun LogbookScreen(
             newType = (target as? SheetTarget.New)?.type ?: LogEventType.CARB,
             insulinOnBoard = state.insulinOnBoard,
             glucoseNow = state.glucoseNow,
+            photoFile = editing?.let { state.photos[it.id] },
             onDismiss = { sheetTarget = null },
-            onSave = { type, value, note, at ->
+            onSave = { type, value, note, at, photo, photoRemoved ->
                 if (editing != null) {
                     onUpdateEvent(editing.copy(type = type.name, value = value, note = note, timestampMillis = at.toEpochMilli()))
+                    if (photo != null || photoRemoved) onEntryPhoto(editing.id, photo)
                 } else {
-                    onQuickLog(type, value, note, at)
+                    onQuickLog(type, value, note, at, photo)
                 }
                 context.toast(context.getString(if (editing != null) R.string.toast_entry_updated else R.string.toast_logged))
                 sheetTarget = null
@@ -205,8 +216,8 @@ fun LogbookScreen(
                 }
             },
             onEstimateCarbs = onEstimateCarbs,
-            onSaveMeal = onLogMeal?.let { log -> { carbs, note, insulin, minutes, at ->
-                    log(carbs, note, insulin, minutes, at)
+            onSaveMeal = onLogMeal?.let { log -> { carbs, note, insulin, minutes, at, photo ->
+                    log(carbs, note, insulin, minutes, at, photo)
                     context.toast(context.getString(R.string.toast_logged))
                     sheetTarget = null
                 } },
@@ -250,7 +261,7 @@ private fun LogbookEmptyState(onLogFirst: () -> Unit, modifier: Modifier = Modif
 }
 
 @Composable
-private fun LogbookRow(event: EventEntity, check: MeterCheck?, glucose: GlucoseReading?, onClick: () -> Unit) {
+private fun LogbookRow(event: EventEntity, check: MeterCheck?, glucose: GlucoseReading?, photo: File?, onClick: () -> Unit) {
     val type = event.logType
     val hasNote = !event.note.isNullOrBlank()
     Row(
@@ -260,7 +271,11 @@ private fun LogbookRow(event: EventEntity, check: MeterCheck?, glucose: GlucoseR
             .padding(vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(9.dp).clip(CircleShape).background(colorForLogEventType(type)))
+        if (photo != null) {
+            PhotoThumb(photo, Modifier.size(40.dp))
+        } else {
+            Box(Modifier.size(9.dp).clip(CircleShape).background(colorForLogEventType(type)))
+        }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
@@ -327,11 +342,13 @@ private fun QuickEntrySheet(
     newType: LogEventType,
     insulinOnBoard: Double,
     glucoseNow: GlucoseReading?,
+    photoFile: File?,
     onDismiss: () -> Unit,
-    onSave: (LogEventType, Double?, String?, Instant) -> Unit,
+    /** (type, amount, note, when, new photo or null, existing photo removed) */
+    onSave: (LogEventType, Double?, String?, Instant, ByteArray?, Boolean) -> Unit,
     onDelete: (() -> Unit)?,
     onEstimateCarbs: (suspend (String, ByteArray?) -> CarbEstimate)?,
-    onSaveMeal: ((Double, String?, Double, Int, Instant) -> Unit)? = null,
+    onSaveMeal: ((Double, String?, Double, Int, Instant, ByteArray?) -> Unit)? = null,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var type by remember { mutableStateOf(existing?.logType ?: newType) }
@@ -344,12 +361,15 @@ private fun QuickEntrySheet(
     var minutesAgo by remember { mutableIntStateOf(if (existing == null) 0 else -1) }
     var pickedAt by remember { mutableStateOf(existing?.let { Instant.ofEpochMilli(it.timestampMillis) } ?: Instant.now()) }
     fun at(): Instant = if (minutesAgo >= 0) Instant.now().minusSeconds(minutesAgo * 60L) else pickedAt
+    // A meal photo: a new one (also what the AI estimate looks at), or the entry's existing one unless removed.
+    var photo by remember { mutableStateOf<ByteArray?>(null) }
+    var photoRemoved by remember { mutableStateOf(false) }
     val mealInsulin = mealInsulinText.toDoubleOrNull()?.takeIf { it > 0 && existing == null && onSaveMeal != null }
     fun save(saveType: LogEventType, amount: Double?) {
         if (saveType == LogEventType.CARB && amount != null && mealInsulin != null) {
-            onSaveMeal!!(amount, noteText.ifBlank { null }, mealInsulin, preBolusMinutes, at())
+            onSaveMeal!!(amount, noteText.ifBlank { null }, mealInsulin, preBolusMinutes, at(), photo)
         } else {
-            onSave(saveType, amount, noteText.ifBlank { null }, at())
+            onSave(saveType, amount, noteText.ifBlank { null }, at(), photo.takeIf { saveType == LogEventType.CARB }, photoRemoved)
         }
     }
 
@@ -449,9 +469,19 @@ private fun QuickEntrySheet(
                         }) { preBolusMinutes = it }
                     }
                 }
+                if (type == LogEventType.CARB) {
+                    Spacer(Modifier.height(12.dp))
+                    MealPhotoRow(
+                        photo = photo,
+                        existing = photoFile.takeUnless { photoRemoved },
+                        onPhoto = { photo = it; photoRemoved = false },
+                        onRemove = { photo = null; photoRemoved = photoFile != null },
+                    )
+                }
                 if (type == LogEventType.CARB && onEstimateCarbs != null) {
                     CarbEstimator(
                         estimate = onEstimateCarbs,
+                        photo = photo,
                         onUse = { grams, title ->
                             amountText = grams.toString()
                             if (noteText.isBlank()) noteText = title
@@ -494,26 +524,13 @@ private fun QuickEntrySheet(
  * "Use" only fills the amount field; nothing is logged until the user taps Save.
  */
 @Composable
-private fun CarbEstimator(estimate: suspend (String, ByteArray?) -> CarbEstimate, onUse: (Int, String) -> Unit) {
-    val context = LocalContext.current
+private fun CarbEstimator(estimate: suspend (String, ByteArray?) -> CarbEstimate, photo: ByteArray?, onUse: (Int, String) -> Unit) {
     val scope = rememberCoroutineScope()
     var open by remember { mutableStateOf(false) }
     var description by remember { mutableStateOf("") }
-    var photo by remember { mutableStateOf<ByteArray?>(null) }
     var busy by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<CarbEstimate?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
-
-    val loadPhoto: (Uri) -> Unit = { uri ->
-        scope.launch {
-            runCatching { withContext(Dispatchers.IO) { MealPhoto.loadScaledJpeg(context, uri) } }
-                .onSuccess { photo = it; error = null }
-                .onFailure { error = it.message }
-        }
-    }
-    val captureUri = remember { FileProvider.getUriForFile(context, "${context.packageName}.files", MealPhoto.newCaptureFile(context)) }
-    val takePhoto = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved -> if (saved) loadPhoto(captureUri) }
-    val pickPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> uri?.let(loadPhoto) }
 
     Spacer(Modifier.height(10.dp))
     if (!open) {
@@ -534,13 +551,7 @@ private fun CarbEstimator(estimate: suspend (String, ByteArray?) -> CarbEstimate
             label = { Text(stringResource(R.string.carb_ai_describe)) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            AmountChip(stringResource(R.string.carb_ai_camera)) { takePhoto.launch(captureUri) }
-            AmountChip(stringResource(R.string.carb_ai_gallery)) {
-                pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-            }
-            if (photo != null) Text(stringResource(R.string.carb_ai_photo_added), fontSize = 11.5.sp, color = Sage)
-        }
+        if (photo != null) Text(stringResource(R.string.carb_ai_photo_added), fontSize = 11.5.sp, color = Sage)
         val canEstimate = !busy && (description.isNotBlank() || photo != null)
         Box(
             Modifier
@@ -610,6 +621,50 @@ private fun TypeChip(label: String, selected: Boolean, color: Color, onClick: ()
         Box(Modifier.size(9.dp).clip(CircleShape).background(if (selected) Color.White else color))
         Spacer(Modifier.height(6.dp))
         Text(label, fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold, color = if (selected) Color.White else MaterialTheme.colorScheme.onBackground)
+    }
+}
+
+/** The meal's photo: take or pick one (the AI estimate uses it too), see it, remove it. */
+@Composable
+private fun MealPhotoRow(photo: ByteArray?, existing: File?, onPhoto: (ByteArray) -> Unit, onRemove: () -> Unit) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val load: (Uri) -> Unit = { uri ->
+        scope.launch {
+            runCatching { withContext(Dispatchers.IO) { MealPhoto.loadScaledJpeg(context, uri) } }
+                .onSuccess(onPhoto)
+                .onFailure { context.toast(it.message ?: it.javaClass.simpleName) }
+        }
+    }
+    val captureUri = remember { FileProvider.getUriForFile(context, "${context.packageName}.files", MealPhoto.newCaptureFile(context)) }
+    val takePhoto = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved -> if (saved) load(captureUri) }
+    val pickPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> uri?.let(load) }
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        when {
+            photo != null -> PhotoThumb(photo, Modifier.size(56.dp))
+            existing != null -> PhotoThumb(existing, Modifier.size(56.dp))
+        }
+        AmountChip(stringResource(R.string.carb_ai_camera)) { takePhoto.launch(captureUri) }
+        AmountChip(stringResource(R.string.carb_ai_gallery)) { pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+        if (photo != null || existing != null) TextButton(onClick = onRemove) { Text(stringResource(R.string.logbook_photo_remove), color = StateLow, fontSize = 12.sp) }
+    }
+}
+
+/** A small rounded preview, decoded off the main thread at a fraction of full size. */
+@Composable
+private fun PhotoThumb(source: Any, modifier: Modifier) {
+    val image by produceState<ImageBitmap?>(null, source) {
+        value = withContext(Dispatchers.IO) {
+            val options = BitmapFactory.Options().apply { inSampleSize = 4 }
+            when (source) {
+                is File -> BitmapFactory.decodeFile(source.path, options)
+                is ByteArray -> BitmapFactory.decodeByteArray(source, 0, source.size, options)
+                else -> null
+            }?.asImageBitmap()
+        }
+    }
+    Box(modifier.clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surface)) {
+        image?.let { Image(it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) }
     }
 }
 
@@ -711,7 +766,7 @@ private fun LogbookScreenPreview() {
         EventEntity(id = 3, timestampMillis = now - 150 * 60_000L, type = "ACTIVITY", value = 20.0, note = "Morning walk"),
     )
     SukoonTheme {
-        LogbookScreen(state = LogbookUiState(events), onQuickLog = { _, _, _, _ -> }, onUpdateEvent = {}, onDeleteEvent = {})
+        LogbookScreen(state = LogbookUiState(events), onQuickLog = { _, _, _, _, _ -> }, onUpdateEvent = {}, onDeleteEvent = {})
     }
 }
 
@@ -719,6 +774,6 @@ private fun LogbookScreenPreview() {
 @Composable
 private fun LogbookEmptyPreview() {
     SukoonTheme {
-        LogbookScreen(state = LogbookUiState(), onQuickLog = { _, _, _, _ -> }, onUpdateEvent = {}, onDeleteEvent = {})
+        LogbookScreen(state = LogbookUiState(), onQuickLog = { _, _, _, _, _ -> }, onUpdateEvent = {}, onDeleteEvent = {})
     }
 }
