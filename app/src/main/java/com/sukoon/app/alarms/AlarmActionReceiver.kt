@@ -24,7 +24,7 @@ class AlarmActionReceiver : BroadcastReceiver() {
                 when {
                     imOk -> container.alarms.imOk()
                     person != null -> container.followerWatch.acknowledge(person, requireNotNull(type), minutes)
-                    else -> container.alarms.acknowledge(requireNotNull(type), minutes)
+                    else -> container.alarms.acknowledge(requireNotNull(type), minutes, treated = intent.getBooleanExtra(EXTRA_TREATED, false))
                 }
             } finally {
                 pending.finish()
@@ -38,5 +38,6 @@ class AlarmActionReceiver : BroadcastReceiver() {
         const val EXTRA_TYPE = "type"
         const val EXTRA_MINUTES = "minutes"
         const val EXTRA_PERSON = "person"
+        const val EXTRA_TREATED = "treated" // "I'm treating it": Home starts the 15-minute wait
     }
 }

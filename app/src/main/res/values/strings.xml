@@ -681,4 +681,5 @@
     <string name="home_treated_action">Treated at %1$s. Check again at %2$s: still under 70 then? Have another 15 g.</string>
     <string name="home_low_insulin">%1$s u of rapid insulin is still working, so you may need a second round.</string>
     <string name="home_last_3_hours_hint">Last 3 hours · the band is your 70–180 target</string>
+    <string name="alarm_snooze_for">Snooze for</string>
 </resources>

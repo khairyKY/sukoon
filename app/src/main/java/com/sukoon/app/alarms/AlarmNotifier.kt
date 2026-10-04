@@ -22,12 +22,44 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+/** The alarm's name, for the notification and the alert screen. */
+internal val AlarmType.titleRes: Int
+    get() = when (this) {
+        AlarmType.URGENT_LOW -> R.string.alarm_urgent_title
+        AlarmType.LOW -> R.string.alarm_low_title
+        AlarmType.GOING_LOW -> R.string.alarm_going_low_title
+        AlarmType.HIGH -> R.string.alarm_high_title
+        AlarmType.SIGNAL_LOSS -> R.string.alarm_signal_title
+    }
+
+/** The alarm's message; about [who] when it's someone this phone follows. */
+internal fun alarmBody(context: Context, type: AlarmType, minutesSinceReading: Long?, who: String?): String = when {
+    who != null && type == AlarmType.SIGNAL_LOSS -> context.getString(R.string.follow_alarm_signal_body, who, minutesSinceReading ?: 0)
+    who != null -> context.getString(R.string.follow_alarm_body, who)
+    else -> when (type) {
+        AlarmType.URGENT_LOW -> context.getString(R.string.alarm_urgent_body)
+        AlarmType.LOW -> context.getString(R.string.alarm_low_body)
+        AlarmType.GOING_LOW -> context.getString(R.string.alarm_going_low_body)
+        AlarmType.HIGH -> context.getString(R.string.alarm_high_body)
+        AlarmType.SIGNAL_LOSS -> context.getString(R.string.alarm_signal_body, minutesSinceReading ?: 0)
+    }
+}
+
+/** What the alarm's own button ("OK", "Snooze N min", "I'm treating it") snoozes it for. */
+internal fun AlarmType.defaultSnooze(settings: AlarmSettings): Int = when (this) {
+    AlarmType.URGENT_LOW -> 5
+    AlarmType.LOW -> settings.lowSnoozeMinutes
+    AlarmType.GOING_LOW -> 30
+    AlarmType.HIGH -> settings.highSnoozeMinutes
+    AlarmType.SIGNAL_LOSS -> 30
+}
+
 /**
  * Turns alarm decisions into things a person notices. Urgent low is built to wake someone up:
  * alarm-stream sound looping for up to a minute (DND "alarms allowed" lets it through; with DND
- * access granted the channel also bypasses DND), a full-screen alert over the lock screen, and —
- * with "display over other apps" — the alert screen opened directly. Snooze is always an explicit
- * button, never a swipe.
+ * access granted the channel also bypasses DND). Every alarm opens the full-screen alert
+ * ([AlarmActivity]) over the lock screen and, with "display over other apps", over whatever is
+ * open. Snooze is always an explicit button, never a swipe.
  *
  * Sounds are played here rather than by the notification channels, so each alarm can use the
  * user's chosen sound (a phone sound or their own file) and a sound that won't play falls back to
@@ -46,35 +78,26 @@ class AlarmNotifier(private val context: Context) {
 
     /** [who] + [person]: an alarm about someone this phone follows (their name and user id); null = your own. */
     fun show(alert: Alert, settings: AlarmSettings, test: Boolean = false, who: String? = null, person: String? = null) {
-        val (titleRes, bodyRes) = when (alert.type) {
-            AlarmType.URGENT_LOW -> R.string.alarm_urgent_title to R.string.alarm_urgent_body
-            AlarmType.LOW -> R.string.alarm_low_title to R.string.alarm_low_body
-            AlarmType.GOING_LOW -> R.string.alarm_going_low_title to R.string.alarm_going_low_body
-            AlarmType.HIGH -> R.string.alarm_high_title to R.string.alarm_high_body
-            AlarmType.SIGNAL_LOSS -> R.string.alarm_signal_title to R.string.alarm_signal_body
-        }
         val value = alert.mgDl?.let { context.getString(R.string.alarm_value, it) }
         val title = listOfNotNull(
             if (test) context.getString(R.string.alarm_test_prefix) else null,
             who?.let { "$it ·" },
-            context.getString(titleRes),
+            context.getString(alert.type.titleRes),
             value.takeIf { alert.type != AlarmType.SIGNAL_LOSS },
         ).joinToString(" ")
-        val body = when {
-            who != null && alert.type == AlarmType.SIGNAL_LOSS -> context.getString(R.string.follow_alarm_signal_body, who, alert.minutesSinceReading ?: 0)
-            who != null -> context.getString(R.string.follow_alarm_body, who)
-            alert.type == AlarmType.SIGNAL_LOSS -> context.getString(bodyRes, alert.minutesSinceReading ?: 0)
-            else -> context.getString(bodyRes)
-        }
+        val body = alarmBody(context, alert.type, alert.minutesSinceReading, who)
 
-        val (snoozeMinutes, snoozeLabel) = when (alert.type) {
-            AlarmType.URGENT_LOW -> 5 to context.getString(if (person == null) R.string.alarm_action_treating else R.string.alarm_action_ok)
-            AlarmType.LOW -> settings.lowSnoozeMinutes to context.getString(R.string.alarm_action_snooze, settings.lowSnoozeMinutes)
-            AlarmType.GOING_LOW -> 60 to context.getString(R.string.alarm_action_ok)
-            AlarmType.HIGH -> settings.highSnoozeMinutes to context.getString(R.string.alarm_action_snooze, settings.highSnoozeMinutes)
-            AlarmType.SIGNAL_LOSS -> 30 to context.getString(R.string.alarm_action_snooze, 30)
+        val snoozeMinutes = alert.type.defaultSnooze(settings)
+        val treating = alert.type == AlarmType.URGENT_LOW && person == null
+        val snoozeLabel = when {
+            treating -> context.getString(R.string.alarm_action_treating)
+            alert.type == AlarmType.URGENT_LOW -> context.getString(R.string.alarm_action_ok)
+            else -> context.getString(R.string.alarm_action_snooze, snoozeMinutes)
         }
         val channel = channelFor(alert.type)
+        // Every alarm takes the screen: over the lock screen through the full-screen intent, and
+        // straight over whatever is open with "display over other apps".
+        val screen = AlarmActivity.intent(context, alert, who, person, test)
         val builder = NotificationCompat.Builder(context, channel)
             .setSmallIcon(R.drawable.ic_stat_sukoon)
             .setContentTitle(title)
@@ -85,20 +108,10 @@ class AlarmNotifier(private val context: Context) {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE))
             .setDeleteIntent(actionIntent(alert.type, minutes = 0, requestCode = alert.type.ordinal + 100, person = person))
-            .addAction(0, snoozeLabel, actionIntent(alert.type, snoozeMinutes, requestCode = alert.type.ordinal, person = person))
-
-        if (alert.type == AlarmType.URGENT_LOW && person == null) {
-            val fullScreen = PendingIntent.getActivity(
-                context, 1,
-                UrgentAlarmActivity.intent(context, alert.mgDl),
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-            )
-            builder.setFullScreenIntent(fullScreen, true)
-            // With "display over other apps" Android lets us open the alert screen from the background.
-            if (Settings.canDrawOverlays(context)) {
-                runCatching { context.startActivity(UrgentAlarmActivity.intent(context, alert.mgDl).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-            }
-        }
+            .addAction(0, snoozeLabel, actionIntent(alert.type, snoozeMinutes, requestCode = alert.type.ordinal, person = person, treated = treating && !test))
+            .setFullScreenIntent(PendingIntent.getActivity(context, 1, screen, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT), true)
+        // With "display over other apps" Android lets us open the alert screen from the background.
+        if (Settings.canDrawOverlays(context)) runCatching { context.startActivity(Intent(screen).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
         val posted = NotificationManagerCompat.from(context).areNotificationsEnabled() &&
             manager.getNotificationChannel(channel)?.importance != NotificationManager.IMPORTANCE_NONE
         if (posted) manager.notify(person, notificationId(alert.type), builder.build())
@@ -114,7 +127,7 @@ class AlarmNotifier(private val context: Context) {
 
     /** The emergency countdown: urgent channel and sound, a live countdown, the full-screen alert, and "I'm OK". */
     fun showCountdown(endsAt: Instant, settings: AlarmSettings) {
-        val screen = PendingIntent.getActivity(context, 2, UrgentAlarmActivity.intent(context, null), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val screen = PendingIntent.getActivity(context, 2, AlarmActivity.intent(context, null), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val builder = NotificationCompat.Builder(context, channelFor(AlarmType.URGENT_LOW))
             .setSmallIcon(R.drawable.ic_stat_sukoon)
             .setContentTitle(context.getString(R.string.emergency_countdown_title))
@@ -132,7 +145,7 @@ class AlarmNotifier(private val context: Context) {
             .addAction(0, context.getString(R.string.emergency_im_ok), imOkIntent())
         if (NotificationManagerCompat.from(context).areNotificationsEnabled()) manager.notify(COUNTDOWN_ID, builder.build())
         if (Settings.canDrawOverlays(context)) {
-            runCatching { context.startActivity(UrgentAlarmActivity.intent(context, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            runCatching { context.startActivity(AlarmActivity.intent(context, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
         }
         play(AlarmType.URGENT_LOW, settings, loop = true, URGENT_SOUND_MS)
     }
@@ -146,7 +159,7 @@ class AlarmNotifier(private val context: Context) {
     fun showEmergencySent(names: List<String>, at: Instant) {
         val title = context.getString(if (names.isEmpty()) R.string.emergency_send_failed_title else R.string.emergency_sent_title)
         val body = if (names.isEmpty()) context.getString(R.string.emergency_send_failed) else context.getString(R.string.emergency_sent_body, names.joinToString(), TIME.format(at))
-        val screen = PendingIntent.getActivity(context, 3, UrgentAlarmActivity.intent(context, null), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val screen = PendingIntent.getActivity(context, 3, AlarmActivity.intent(context, null), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val notification = NotificationCompat.Builder(context, channelFor(AlarmType.URGENT_LOW))
             .setSmallIcon(R.drawable.ic_stat_sukoon)
             .setContentTitle(title)
@@ -205,7 +218,7 @@ class AlarmNotifier(private val context: Context) {
         main.postDelayed(::stopSound, durationMs)
     }
 
-    private fun actionIntent(type: AlarmType, minutes: Int, requestCode: Int, person: String?): PendingIntent = PendingIntent.getBroadcast(
+    private fun actionIntent(type: AlarmType, minutes: Int, requestCode: Int, person: String?, treated: Boolean = false): PendingIntent = PendingIntent.getBroadcast(
         context, requestCode,
         Intent(context, AlarmActionReceiver::class.java)
             .setAction(AlarmActionReceiver.ACTION_SNOOZE)
@@ -213,7 +226,8 @@ class AlarmNotifier(private val context: Context) {
             .setData(Uri.parse("sukoon://alarm/${person ?: "me"}/${type.name}/$minutes"))
             .putExtra(AlarmActionReceiver.EXTRA_TYPE, type.name)
             .putExtra(AlarmActionReceiver.EXTRA_MINUTES, minutes)
-            .putExtra(AlarmActionReceiver.EXTRA_PERSON, person),
+            .putExtra(AlarmActionReceiver.EXTRA_PERSON, person)
+            .putExtra(AlarmActionReceiver.EXTRA_TREATED, treated),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
 
@@ -228,7 +242,7 @@ class AlarmNotifier(private val context: Context) {
             AlarmType.URGENT_LOW -> ensure("alarm2_urgent" + if (dnd) "_dnd" else "", R.string.alarm_channel_urgent, NotificationManager.IMPORTANCE_HIGH, bypassDnd = dnd, vibration = URGENT_VIBRATION)
             AlarmType.LOW, AlarmType.GOING_LOW -> ensure("alarm2_low" + if (dnd) "_dnd" else "", R.string.alarm_channel_low, NotificationManager.IMPORTANCE_HIGH, bypassDnd = dnd, vibration = LOW_VIBRATION)
             AlarmType.HIGH -> ensure("alarm2_high", R.string.alarm_channel_high, NotificationManager.IMPORTANCE_HIGH, bypassDnd = false, vibration = LOW_VIBRATION)
-            AlarmType.SIGNAL_LOSS -> ensure("alarm2_signal", R.string.alarm_channel_signal, NotificationManager.IMPORTANCE_DEFAULT, bypassDnd = false, vibration = null)
+            AlarmType.SIGNAL_LOSS -> ensure("alarm3_signal", R.string.alarm_channel_signal, NotificationManager.IMPORTANCE_HIGH, bypassDnd = false, vibration = null)
         }
     }
 
@@ -265,7 +279,7 @@ class AlarmNotifier(private val context: Context) {
         private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
         private val URGENT_VIBRATION = longArrayOf(0, 800, 400, 800, 400, 800, 400, 1600)
         private val LOW_VIBRATION = longArrayOf(0, 600, 300, 600)
-        private val LEGACY_CHANNELS = listOf("alarm_urgent", "alarm_urgent_dnd", "alarm_low", "alarm_low_dnd", "alarm_high", "alarm_signal")
+        private val LEGACY_CHANNELS = listOf("alarm_urgent", "alarm_urgent_dnd", "alarm_low", "alarm_low_dnd", "alarm_high", "alarm_signal", "alarm2_signal")
 
         /** A started player for [uri], or null if it can't play (missing file, lost permission, unsupported format). */
         private fun start(context: Context, uri: Uri, attributes: AudioAttributes, loop: Boolean): MediaPlayer? {

@@ -126,7 +126,7 @@
         </activity>
 
         <activity
-            android:name=".alarms.UrgentAlarmActivity"
+            android:name=".alarms.AlarmActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:launchMode="singleTop"

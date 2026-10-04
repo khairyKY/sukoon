@@ -53,6 +53,11 @@ class AlarmMonitor(
     /** For the alert screen: idle, counting down to texting the contacts, or texts sent. */
     val escalation: StateFlow<EscalationPhase> = _escalation.asStateFlow()
 
+    private val _active = MutableStateFlow<Set<AlarmType>>(emptySet())
+
+    /** Alarms going on right now (snoozed ones too): the alert screen closes itself once its alarm is over. */
+    val active: StateFlow<Set<AlarmType>> = _active.asStateFlow()
+
     private val _treatedAt = MutableStateFlow<Instant?>(null)
 
     /** When a low was last marked treated: Home counts the 15-15 rule's minutes from it. */
@@ -127,12 +132,14 @@ class AlarmMonitor(
         if (!enabled()) {
             state.activeSince.keys.forEach(notifier::cancel)
             state = AlarmState()
+            _active.value = emptySet()
             if (_escalation.value !is EscalationPhase.Idle) notifier.cancelCountdown()
             _escalation.value = EscalationPhase.Idle
             return
         }
         val result = AlarmEngine.evaluate(recent.values.toList(), now, settings.alarmSettings, state)
         state = result.state
+        _active.value = state.activeSince.keys // before showing: the alert screen checks it as it opens
         result.cleared.forEach(notifier::cancel)
         result.fire.forEach { notifier.show(it, settings.alarmSettings) }
         escalateLocked(now)

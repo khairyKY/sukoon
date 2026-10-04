@@ -681,4 +681,5 @@
     <string name="home_treated_action">اتعالج الساعة %1$s. بُص تاني الساعة %2$s: لو لسه تحت ٧٠، كُل ١٥ جرام كمان.</string>
     <string name="home_low_insulin">لسه فيه %1$s وحدة أنسولين سريع شغّالة، فممكن تحتاج مرة كمان.</string>
     <string name="home_last_3_hours_hint">آخر ٣ ساعات · الشريط هو هدفك ٧٠–١٨٠</string>
+    <string name="alarm_snooze_for">أجّل لمدة</string>
 </resources>

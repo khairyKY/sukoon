@@ -18,6 +18,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Alerts about the people this phone follows. Every minute their last 30 minutes of readings go
@@ -38,6 +41,14 @@ class FollowerWatch(
     private val prefs = context.getSharedPreferences("sukoon_prefs", Context.MODE_PRIVATE)
     private val mutex = Mutex()
     private val states = mutableMapOf<String, AlarmState>()
+    private val _active = MutableStateFlow<Map<String, Set<AlarmType>>>(emptyMap())
+
+    /** Each followed person's alarms going on right now: their alert screen closes itself once one is over. */
+    val active: StateFlow<Map<String, Set<AlarmType>>> = _active.asStateFlow()
+
+    private fun publish() {
+        _active.value = states.mapValues { it.value.activeSince.keys }
+    }
 
     var alertsOn: Boolean
         get() = prefs.getBoolean(KEY_ALERTS, true)
@@ -77,6 +88,7 @@ class FollowerWatch(
         if (following.isEmpty()) {
             states.forEach { (id, state) -> state.activeSince.keys.forEach { notifier.cancel(it, id) } }
             states.clear()
+            publish()
             FollowService.stop(context)
             return
         }
@@ -87,11 +99,13 @@ class FollowerWatch(
             val recent = (sharing.readingsOf(person.id, now.minus(WINDOW).toEpochMilli()) + listOfNotNull(person.latest)).distinctBy { it.timestamp }
             val result = AlarmEngine.evaluate(recent, now, alarmSettings, states[person.id] ?: AlarmState())
             states[person.id] = result.state
+            publish() // before showing: the alert screen checks it as it opens
             result.cleared.forEach { notifier.cancel(it, person.id) }
             result.fire.forEach { notifier.show(it, alarmSettings, who = person.name.ifBlank { "…" }, person = person.id) }
         }
         val followedIds = following.map { it.id }.toSet()
         (states.keys - followedIds).forEach { id -> states.remove(id)?.activeSince?.keys?.forEach { notifier.cancel(it, id) } }
+        publish()
         FollowService.update(context, following.joinToString("\n") { line(it) })
     }
 
