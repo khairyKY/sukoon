@@ -40,6 +40,16 @@ Legend: ✅ done · ◐ in progress · ⬜ to do · ⏸ blocked (reason)
 - ✅ Localization + motion sweep (A12): EN/AR parity checked (589 strings each); motion per the design's spec — tokens (ui/theme/Motion.kt), live pulse, reading count-up, graph draw-on, list/card cascade, urgent-low entrance + breathing reading, button press dip, quick tab fades, haptic on save; all honour the phone's "Remove animations".
 - ✖ Wear OS: dropped, no Wear OS watch (Kai, 2026-10-03).
 
+## Redesign round (Kai, 2026-10-04)
+Designs: the "Sukoon — onboarding, logbook & settings redesign" canvas (claude.ai artifact 9FCYkkZafJkRVJkJBDknvN), approved by Kai.
+- ✅ Home messages: HomeBriefs picks the one observation that matters (trend and where it's heading, insulin still working, meals, activity, recent lows, time of day, today so far, sensor age) plus one next step, or "Nothing to do right now". Never a dose; lows follow the 15-15 rule and "I've treated it" starts the 15-minute wait.
+- ✅ Home chart: the Trends chart for the last 3 hours (line over the 70–180 band) replaced the 15-minute bars, which averaged short lows away and stayed green.
+- ✅ Every alarm full-screen (low, going low, high, no readings; yours and followed people's), colour by kind, with a snooze row (urgent low capped at 5 min); closes itself when the alarm is over.
+- ✅ You divided: hub (profile, "N things need you", eight sections with live summaries) and a page per section.
+- ✅ Adding entries, direction A (Kai's pick of three): tiles + "Again", a big number pad, meal + rapid insulin + when injected on one screen, undo. MyFitnessPal meals bring every nutrient (Room v3) and show MyFitnessPal's own icon (from the phone), what the meal did to glucose, and "Add insulin" when none was logged; pick a MyFitnessPal meal to add its insulin. "Powered by MyFitnessPal" not used: it would claim a partnership.
+- ✅ Onboarding by role (wearer / follower / both; account optional for a wearer) with each role's steps; follower Home (their live number, chart, words, Call/Message) and Trends; a strip of followed people for "both".
+- Next ideas: bundle the brand fonts (Newsreader, Hanken Grotesk) so the app matches the designs exactly; per-alarm "see it" previews; connection-health notes in You → Sensor.
+
 Rules: no APK builds or installs unless Kai asks (compile + unit tests only); no AI attribution in commits or PRs.
 
 iPhone (Kai's father, own sensor): not possible without Apple's paid developer account — free personal teams can't use NFC to pair a Libre. Options: an Android phone with NFC (runs Sukoon fully), or the $99/yr account + a Mac + an iOS port. Kai declined the license (2026-10-03).
