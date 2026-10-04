@@ -118,9 +118,13 @@ fun MainScaffold() {
             exitTransition = { fadeOut(tween(Motion.QUICK, easing = Motion.In)) },
         ) {
             composable(SukoonTab.NOW.route) {
-                val repository = (LocalContext.current.applicationContext as SukoonApp).container.glucoseRepository
-                val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModel.factory(repository, (LocalContext.current.applicationContext as SukoonApp).container::sensorLife))
+                val home = (LocalContext.current.applicationContext as SukoonApp).container
+                val repository = home.glucoseRepository
+                val homeViewModel: HomeViewModel = viewModel(
+                    factory = HomeViewModel.factory(repository, home::sensorLife, home.logbookRepository, home.alarms.treatedAt) { home.settings.insulinAction },
+                )
                 val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
+                val brief by homeViewModel.brief.collectAsStateWithLifecycle()
                 val toYou = { navController.navigateToTab(SukoonTab.YOU) }
                 val alarms = (LocalContext.current.applicationContext as SukoonApp).container.alarms
                 val settings = (LocalContext.current.applicationContext as SukoonApp).container.settings
@@ -159,6 +163,7 @@ fun MainScaffold() {
                         ?.let { SensorEndingBanner(it, onClick = toYou) }
                     HomeScreen(
                         state = homeState,
+                        brief = brief,
                         modifier = Modifier.weight(1f),
                         onPairSensor = toYou,
                         onEnterCodeManually = toYou,
@@ -166,8 +171,8 @@ fun MainScaffold() {
                         // "I've treated it": urgent re-checks in 5 min; a plain low after its usual snooze.
                         onTreated = {
                             scope.launch {
-                                if (homeState is HomeUiState.Urgent) alarms.acknowledge(AlarmType.URGENT_LOW, 5)
-                                else alarms.acknowledge(AlarmType.LOW, settings.alarmSettings.lowSnoozeMinutes)
+                                if (homeState is HomeUiState.Urgent) alarms.acknowledge(AlarmType.URGENT_LOW, 5, treated = true)
+                                else alarms.acknowledge(AlarmType.LOW, settings.alarmSettings.lowSnoozeMinutes, treated = true)
                             }
                         },
                         onSnooze = { scope.launch { alarms.acknowledge(AlarmType.LOW, 15) } },

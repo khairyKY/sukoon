@@ -94,6 +94,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.produceState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import androidx.compose.ui.unit.Dp
 
 // Fixed bottom of the y-axis; the top adapts to the data (see yMaxFor). Target band is 70–180.
 private const val Y_MIN = 40
@@ -211,8 +212,16 @@ private fun Header(latest: GlucoseReading?, title: String?) {
     }
 }
 
+/** Also Home's last-3-hours chart: shorter there, and without tap-to-read ([interactive] = false). */
 @Composable
-private fun GlucoseChart(readings: List<GlucoseReading>, range: GraphRange, events: List<EventEntity>, zone: ZoneId) {
+internal fun GlucoseChart(
+    readings: List<GlucoseReading>,
+    range: GraphRange,
+    events: List<EventEntity>,
+    zone: ZoneId,
+    height: Dp = CHART_HEIGHT,
+    interactive: Boolean = true,
+) {
     val onBg = MaterialTheme.colorScheme.onBackground
     val background = MaterialTheme.colorScheme.background
     // The chart always ends at "now", so a signal gap at the end shows as a gap.
@@ -244,7 +253,7 @@ private fun GlucoseChart(readings: List<GlucoseReading>, range: GraphRange, even
 
     Column {
         val sel = selected
-        Text(
+        if (interactive) Text(
             text = if (sel != null) {
                 "${hm.format(sel.timestamp)} · ${String.format(Locale.getDefault(), "%d", sel.glucoseMgDl)} ${stringResource(R.string.home_unit_mgdl)} ${sel.trend.arrow}"
             } else {
@@ -254,14 +263,15 @@ private fun GlucoseChart(readings: List<GlucoseReading>, range: GraphRange, even
             fontWeight = if (sel != null) FontWeight.SemiBold else FontWeight.Normal,
             fontSize = if (sel != null) 14.sp else 12.sp,
         )
-        Spacer(Modifier.height(8.dp))
+        if (interactive) Spacer(Modifier.height(8.dp))
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(CHART_HEIGHT)
+                .height(height)
                 .clipToBounds()
                 .graphicsLayer() // its own layer: scrolling the readings list moves it instead of redrawing every point each frame
-                .pointerInput(points, range) {
+                .pointerInput(points, range, interactive) {
+                    if (!interactive) return@pointerInput
                     detectTapGestures { offset ->
                         val t = tStart + (offset.x / size.width * span).toLong()
                         selected = points.minByOrNull { abs(it.timestamp.toEpochMilli() - t) }

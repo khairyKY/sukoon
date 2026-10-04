@@ -23,7 +23,6 @@
     <string name="graph_empty">No data in this range yet</string>
     <string name="graph_tap_hint">Tap the chart to inspect a reading</string>
     <string name="graph_range_hours">%1$dh</string>
-    <string name="home_last_n_hours">Last %1$d hours</string>
     <string name="home_unit_mgdl">mg/dL</string>
     <string name="home_updated_now">updated now</string>
 
@@ -57,8 +56,6 @@
 
     <!-- Home — in range -->
     <string name="home_pill_in_range">In range</string>
-    <string name="home_msg_steady_title">You\'re steady.</string>
-    <string name="home_msg_steady_body">Nothing to do right now. We\'ll tell you when something needs you.</string>
 
     <!-- Home — low -->
     <string name="home_pill_low">Low · action needed</string>
@@ -72,8 +69,6 @@
 
     <!-- Home — high -->
     <string name="home_pill_high">High</string>
-    <string name="home_msg_high_title">A little high.</string>
-    <string name="home_msg_high_body">You\'ve been above range for about an hour. A short walk often helps.</string>
 
     <!-- Home — urgent -->
     <string name="home_urgent_banner">Urgent low — treat now</string>
@@ -625,4 +620,65 @@
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
     <string name="logbook_photo_remove">Remove photo</string>
+    <string name="home_next_step">Next step</string>
+    <string name="home_nothing_to_do">Nothing to do right now.</string>
+    <string name="home_insulin_working">%1$s u of rapid insulin is still working.</string>
+    <string name="home_brief_heading_low_title">Heading down.</string>
+    <string name="home_brief_heading_low_body">At this rate you\'ll be near 70 in about %1$d min.</string>
+    <string name="home_brief_very_high_title">High for a while.</string>
+    <string name="home_brief_very_high_body">Over 250 for %1$s.</string>
+    <string name="home_brief_rebound_title">A rebound, most likely.</string>
+    <string name="home_brief_rebound_body">You were low at %1$s. Rising after treating a low is common.</string>
+    <string name="home_brief_insulin_title">Your insulin is on it.</string>
+    <string name="home_brief_high_title">A little high.</string>
+    <string name="home_brief_high_body">Above range for %1$s.</string>
+    <string name="home_brief_high_just_now">Just went above range.</string>
+    <string name="home_brief_meal_title">After your meal.</string>
+    <string name="home_brief_meal_body_grams">Your %1$d g meal at %2$s is still being absorbed. A rise after eating is expected.</string>
+    <string name="home_brief_meal_body">Your meal at %1$s is still being absorbed. A rise after eating is expected.</string>
+    <string name="home_brief_back_title">Back in range.</string>
+    <string name="home_brief_back_body">You were low at %1$s and you\'ve come back up.</string>
+    <string name="home_brief_dawn_title">The morning rise.</string>
+    <string name="home_brief_dawn_body">Glucose often climbs early in the morning, before you eat. It\'s called the dawn phenomenon.</string>
+    <string name="home_brief_rising_title">On the way up.</string>
+    <string name="home_brief_rising_body">You\'re rising, and there\'s no meal in your log for the last 3 hours.</string>
+    <string name="home_brief_bedtime_title">Before bed.</string>
+    <string name="home_brief_bedtime_insulin">You\'re at %1$d with insulin still working.</string>
+    <string name="home_brief_bedtime_falling">You\'re at %1$d and drifting down.</string>
+    <string name="home_brief_active_title">You were active today.</string>
+    <string name="home_brief_active_body">Exercise keeps lowering glucose for hours afterwards, sometimes overnight.</string>
+    <string name="home_brief_new_sensor_title">A new sensor.</string>
+    <string name="home_brief_new_sensor_body">Readings are often less accurate on the first day.</string>
+    <string name="home_brief_quiet_night_title">All quiet.</string>
+    <string name="home_brief_quiet_night_body">Steady through the night. Your alarms are on.</string>
+    <string name="home_brief_good_night_title">A good night.</string>
+    <string name="home_brief_good_night_body">You stayed in range all night.</string>
+    <string name="home_brief_streak_title">Steady.</string>
+    <string name="home_brief_streak_body">In range for %1$s straight.</string>
+    <string name="home_brief_good_day_title">A good day so far.</string>
+    <string name="home_brief_good_day_body">In range %1$d%% of today.</string>
+    <string name="home_brief_steady_0_title">You\'re steady.</string>
+    <string name="home_brief_steady_0_body">Right where you want to be.</string>
+    <string name="home_brief_steady_1_title">All calm.</string>
+    <string name="home_brief_steady_1_body">Carry on with your day. We\'re watching.</string>
+    <string name="home_brief_steady_2_title">Smooth so far.</string>
+    <string name="home_brief_steady_2_body">Nothing is moving fast.</string>
+    <string name="home_brief_steady_3_title">In range.</string>
+    <string name="home_brief_steady_3_body">We\'ll tell you the moment something needs you.</string>
+    <string name="home_step_carbs_ready">Keep 15 g of fast carbs within reach, and have it if you reach 70.</string>
+    <string name="home_step_ketones">Drink water and check for ketones if you have strips. Don\'t exercise if you have ketones.</string>
+    <string name="home_step_water">Drink some water. If you stay over 250, check for ketones.</string>
+    <string name="home_step_water_walk">Drink some water. A short walk often helps.</string>
+    <string name="home_step_dont_stack">Give it time before taking more. Doses close together can stack into a low.</string>
+    <string name="home_step_let_it_settle">Give it time before any correction. Insulin soon after a low can bring the low back.</string>
+    <string name="home_step_log_meal">Ate something? Log it, so your insights can learn from it.</string>
+    <string name="home_step_snack">If your next meal is more than an hour away, have a small snack so it doesn\'t dip again.</string>
+    <string name="home_step_carbs_by_bed">Keep fast carbs by your bed tonight.</string>
+    <string name="home_step_carbs_with_you">Keep fast carbs with you today.</string>
+    <string name="home_step_bedtime_snack">A small snack before sleep can keep you from going low overnight.</string>
+    <string name="home_step_fingerprick">Check with a finger-prick before you act on a number.</string>
+    <string name="home_headline_treated">Treated. Now give it time.</string>
+    <string name="home_treated_action">Treated at %1$s. Check again at %2$s: still under 70 then? Have another 15 g.</string>
+    <string name="home_low_insulin">%1$s u of rapid insulin is still working, so you may need a second round.</string>
+    <string name="home_last_3_hours_hint">Last 3 hours · the band is your 70–180 target</string>
 </resources>

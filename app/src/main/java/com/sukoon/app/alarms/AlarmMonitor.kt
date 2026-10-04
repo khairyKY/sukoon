@@ -53,6 +53,11 @@ class AlarmMonitor(
     /** For the alert screen: idle, counting down to texting the contacts, or texts sent. */
     val escalation: StateFlow<EscalationPhase> = _escalation.asStateFlow()
 
+    private val _treatedAt = MutableStateFlow<Instant?>(null)
+
+    /** When a low was last marked treated: Home counts the 15-15 rule's minutes from it. */
+    val treatedAt: StateFlow<Instant?> = _treatedAt.asStateFlow()
+
     fun start() {
         scope.launch {
             repository.readingsSince(System.currentTimeMillis() - WINDOW.toMillis()).first().forEach(::keep)
@@ -74,8 +79,10 @@ class AlarmMonitor(
     /**
      * A notification button / alert screen / Home button / swipe-away: stop the sound, count it as
      * an answer (which stops an emergency countdown at once) and, if [minutes] > 0, snooze.
+     * [treated]: the answer was "I'm treating it" (fast carbs taken), not just a snooze.
      */
-    suspend fun acknowledge(type: AlarmType, minutes: Int) {
+    suspend fun acknowledge(type: AlarmType, minutes: Int, treated: Boolean = false) {
+        if (treated) _treatedAt.value = Instant.now()
         notifier.stopSound()
         mutex.withLock {
             val now = Instant.now()

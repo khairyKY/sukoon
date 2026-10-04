@@ -13,10 +13,10 @@ import com.sukoon.app.data.source.libre.SensorLife
 class HomeUiStateMapperTest {
 
     private val now: Instant = Instant.parse("2026-07-16T10:00:00Z")
-    private val recent = listOf(100, 105, 110, 108, 112)
-
     private fun reading(mgDl: Int, at: Instant = now) =
         GlucoseReading(at, mgDl, TrendDirection.STEADY, SourceKind.SIMULATED)
+
+    private val recent = listOf(100, 105, 110, 108, 112).mapIndexed { i, v -> reading(v, now.minusSeconds((4 - i) * 60L)) }
 
     @Test
     fun `the paired sensor's life wins - real warm-up minutes, and ended`() {
@@ -103,12 +103,5 @@ class HomeUiStateMapperTest {
         state as HomeUiState.Stale
         assertEquals(104, state.lastGlucoseMgDl)
         assertEquals(12, state.minutesAgo)
-    }
-
-    @Test
-    fun `mini-graph window is averaged into at most 12 bars`() {
-        assertEquals(12, HomeViewModel.toBars(List(180) { 100 }).size)
-        assertEquals(listOf(100, 200), HomeViewModel.toBars(List(12) { 100 } + List(12) { 200 }).let { listOf(it.first(), it.last()) })
-        assertEquals(listOf(90, 110), HomeViewModel.toBars(listOf(90, 110))) // fewer than 12 → one bar each
     }
 }

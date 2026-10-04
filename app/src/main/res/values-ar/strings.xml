@@ -23,7 +23,6 @@
     <string name="graph_empty">لسه مفيش بيانات في المدة دي</string>
     <string name="graph_tap_hint">دوس على الرسم علشان تشوف قراية</string>
     <string name="graph_range_hours">%1$dس</string>
-    <string name="home_last_n_hours">آخر %1$d ساعات</string>
     <string name="home_unit_mgdl">ملغم/دل</string>
     <string name="home_updated_now">اتحدّث دلوقتي</string>
 
@@ -57,8 +56,6 @@
 
     <!-- Home — in range -->
     <string name="home_pill_in_range">في المعدل</string>
-    <string name="home_msg_steady_title">كله تمام.</string>
-    <string name="home_msg_steady_body">مفيش حاجة تشغل بالك دلوقتي. هننبّهك لو حصل أي حاجة.</string>
 
     <!-- Home — low -->
     <string name="home_pill_low">السكر واطي · لازم تتصرّف</string>
@@ -72,8 +69,6 @@
 
     <!-- Home — high -->
     <string name="home_pill_high">مرتفع</string>
-    <string name="home_msg_high_title">السكر شوية عالي.</string>
-    <string name="home_msg_high_body">بقالك حوالي ساعة فوق المعدل. مشية خفيفة ساعات بتساعد.</string>
 
     <!-- Home — urgent -->
     <string name="home_urgent_banner">هبوط خطير — تصرّف دلوقتي</string>
@@ -625,4 +620,65 @@
     <string name="theme_light">فاتح</string>
     <string name="theme_dark">غامق</string>
     <string name="logbook_photo_remove">شيل الصورة</string>
+    <string name="home_next_step">الخطوة الجاية</string>
+    <string name="home_nothing_to_do">مفيش حاجة تعملها دلوقتي.</string>
+    <string name="home_insulin_working">لسه فيه %1$s وحدة أنسولين سريع شغّالة.</string>
+    <string name="home_brief_heading_low_title">السكر نازل.</string>
+    <string name="home_brief_heading_low_body">بالمعدل ده هتقرّب من ٧٠ في حوالي %1$d دقيقة.</string>
+    <string name="home_brief_very_high_title">عالي من فترة.</string>
+    <string name="home_brief_very_high_body">فوق ٢٥٠ بقالك %1$s.</string>
+    <string name="home_brief_rebound_title">غالبًا ده ارتداد.</string>
+    <string name="home_brief_rebound_body">كنت واطي الساعة %1$s. طبيعي السكر يعلى بعد علاج الهبوط.</string>
+    <string name="home_brief_insulin_title">الأنسولين شغّال.</string>
+    <string name="home_brief_high_title">السكر شوية عالي.</string>
+    <string name="home_brief_high_body">فوق المعدل بقالك %1$s.</string>
+    <string name="home_brief_high_just_now">لسه طالع فوق المعدل.</string>
+    <string name="home_brief_meal_title">بعد الأكل.</string>
+    <string name="home_brief_meal_body_grams">وجبة الـ%1$d جرام بتاعة الساعة %2$s لسه بتتهضم. طبيعي السكر يعلى بعد الأكل.</string>
+    <string name="home_brief_meal_body">الوجبة بتاعة الساعة %1$s لسه بتتهضم. طبيعي السكر يعلى بعد الأكل.</string>
+    <string name="home_brief_back_title">رجعت للمعدل.</string>
+    <string name="home_brief_back_body">كنت واطي الساعة %1$s ورجعت تاني.</string>
+    <string name="home_brief_dawn_title">طلعة الصبح.</string>
+    <string name="home_brief_dawn_body">السكر كتير بيطلع الصبح بدري قبل الأكل. دي اسمها ظاهرة الفجر.</string>
+    <string name="home_brief_rising_title">السكر طالع.</string>
+    <string name="home_brief_rising_body">السكر بيطلع، ومفيش أكل متسجّل في آخر ٣ ساعات.</string>
+    <string name="home_brief_bedtime_title">قبل النوم.</string>
+    <string name="home_brief_bedtime_insulin">إنت على %1$d والأنسولين لسه شغّال.</string>
+    <string name="home_brief_bedtime_falling">إنت على %1$d وبتنزل بالراحة.</string>
+    <string name="home_brief_active_title">اتحركت النهارده.</string>
+    <string name="home_brief_active_body">الرياضة بتفضل تنزّل السكر ساعات بعدها، وساعات طول الليل.</string>
+    <string name="home_brief_new_sensor_title">حساس جديد.</string>
+    <string name="home_brief_new_sensor_body">القرايات بتبقى أقل دقة في أول يوم.</string>
+    <string name="home_brief_quiet_night_title">كله هادي.</string>
+    <string name="home_brief_quiet_night_body">مستقر طول الليل. المنبّهات شغّالة.</string>
+    <string name="home_brief_good_night_title">ليلة حلوة.</string>
+    <string name="home_brief_good_night_body">فضلت في المعدل طول الليل.</string>
+    <string name="home_brief_streak_title">مستقر.</string>
+    <string name="home_brief_streak_body">في المعدل بقالك %1$s على طول.</string>
+    <string name="home_brief_good_day_title">يوم حلو لحد دلوقتي.</string>
+    <string name="home_brief_good_day_body">في المعدل %1$d%% من النهارده.</string>
+    <string name="home_brief_steady_0_title">كله تمام.</string>
+    <string name="home_brief_steady_0_body">إنت بالظبط في المكان الصح.</string>
+    <string name="home_brief_steady_1_title">الدنيا هادية.</string>
+    <string name="home_brief_steady_1_body">كمّل يومك. إحنا مراقبين.</string>
+    <string name="home_brief_steady_2_title">ماشي بسلاسة.</string>
+    <string name="home_brief_steady_2_body">مفيش حاجة بتتحرك بسرعة.</string>
+    <string name="home_brief_steady_3_title">في المعدل.</string>
+    <string name="home_brief_steady_3_body">هنقولك أول ما حاجة تحتاجك.</string>
+    <string name="home_step_carbs_ready">خلّي ١٥ جرام سكريات سريعة جنبك، وكُلها لو وصلت ٧٠.</string>
+    <string name="home_step_ketones">اشرب مية واكشف على الكيتونات لو معاك شرايط. متعملش رياضة لو فيه كيتونات.</string>
+    <string name="home_step_water">اشرب مية. لو فضلت فوق ٢٥٠، اكشف على الكيتونات.</string>
+    <string name="home_step_water_walk">اشرب مية. مشية خفيفة ساعات بتساعد.</string>
+    <string name="home_step_dont_stack">إدّيله وقت قبل ما تاخد تاني. الجرعات القريبة من بعض ممكن تتراكم وتعمل هبوط.</string>
+    <string name="home_step_let_it_settle">إدّيله وقت قبل أي تصحيح. الأنسولين بعد الهبوط على طول ممكن يرجّع الهبوط.</string>
+    <string name="home_step_log_meal">أكلت حاجة؟ سجّلها عشان التحليلات تتعلم منها.</string>
+    <string name="home_step_snack">لو الوجبة الجاية بعد أكتر من ساعة، كُل سناك صغير عشان ميرجعش ينزل.</string>
+    <string name="home_step_carbs_by_bed">خلّي سكريات سريعة جنب السرير الليلة.</string>
+    <string name="home_step_carbs_with_you">خلّي معاك سكريات سريعة النهارده.</string>
+    <string name="home_step_bedtime_snack">سناك صغير قبل النوم ممكن يحميك من الهبوط بالليل.</string>
+    <string name="home_step_fingerprick">اتأكد بوخزة صباع قبل ما تتصرف على أي رقم.</string>
+    <string name="home_headline_treated">اتعالج. إدّيله وقت.</string>
+    <string name="home_treated_action">اتعالج الساعة %1$s. بُص تاني الساعة %2$s: لو لسه تحت ٧٠، كُل ١٥ جرام كمان.</string>
+    <string name="home_low_insulin">لسه فيه %1$s وحدة أنسولين سريع شغّالة، فممكن تحتاج مرة كمان.</string>
+    <string name="home_last_3_hours_hint">آخر ٣ ساعات · الشريط هو هدفك ٧٠–١٨٠</string>
 </resources>

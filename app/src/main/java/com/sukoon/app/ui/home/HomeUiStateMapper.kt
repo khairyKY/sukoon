@@ -25,23 +25,24 @@ object HomeUiStateMapper {
     fun map(
         status: SourceStatus,
         latest: GlucoseReading?,
-        recentMgDl: List<Int>,
+        /** The last few hours, oldest first: Home's chart. */
+        recent: List<GlucoseReading>,
         now: Instant,
         /** The paired sensor's life (null on demo data): the real warm-up countdown, and "ended". */
         life: SensorLife? = null,
     ): HomeUiState = when (life) {
         is SensorLife.Ended -> HomeUiState.SensorEnded
         is SensorLife.WarmingUp -> HomeUiState.WarmingUp(life.minutesLeft)
-        else -> byStatus(status, latest, recentMgDl, now)
+        else -> byStatus(status, latest, recent, now)
     }
 
-    private fun byStatus(status: SourceStatus, latest: GlucoseReading?, recentMgDl: List<Int>, now: Instant): HomeUiState = when (status) {
+    private fun byStatus(status: SourceStatus, latest: GlucoseReading?, recent: List<GlucoseReading>, now: Instant): HomeUiState = when (status) {
         SourceStatus.Disconnected -> HomeUiState.NoSensor
 
         // The countdown comes from the paired sensor's start (life, above); this is only a fallback.
         SourceStatus.WarmingUp -> HomeUiState.WarmingUp(minutesRemaining = 0)
 
-        SourceStatus.Stale -> latest?.let { stale(it, recentMgDl, now) } ?: HomeUiState.NoSensor
+        SourceStatus.Stale -> latest?.let { stale(it, recent, now) } ?: HomeUiState.NoSensor
 
         // Freshness comes from the reading's own age, not the status: a source can report Connected
         // while no packet has arrived for a while, and a transient Error (one bad BLE packet)
@@ -50,22 +51,22 @@ object HomeUiStateMapper {
         SourceStatus.Connected,
         is SourceStatus.Error -> when {
             latest == null -> HomeUiState.NoSensor
-            Duration.between(latest.timestamp, now) > STALE_AFTER -> stale(latest, recentMgDl, now)
-            else -> connected(latest, recentMgDl)
+            Duration.between(latest.timestamp, now) > STALE_AFTER -> stale(latest, recent, now)
+            else -> connected(latest, recent)
         }
     }
 
-    private fun stale(latest: GlucoseReading, recentMgDl: List<Int>, now: Instant) = HomeUiState.Stale(
+    private fun stale(latest: GlucoseReading, recent: List<GlucoseReading>, now: Instant) = HomeUiState.Stale(
         lastGlucoseMgDl = latest.glucoseMgDl,
         minutesAgo = Duration.between(latest.timestamp, now).toMinutes().toInt(),
-        recentReadings = recentMgDl,
+        recentReadings = recent,
     )
 
-    private fun connected(reading: GlucoseReading, recentMgDl: List<Int>): HomeUiState =
+    private fun connected(reading: GlucoseReading, recent: List<GlucoseReading>): HomeUiState =
         when (GlucoseMetrics.bracketFor(reading.glucoseMgDl)) {
             RangeBracket.VERY_LOW -> HomeUiState.Urgent(reading.glucoseMgDl, reading.trend)
             RangeBracket.LOW -> HomeUiState.Low(reading.glucoseMgDl, reading.trend)
-            RangeBracket.IN_RANGE -> HomeUiState.InRange(reading.glucoseMgDl, reading.trend, recentMgDl)
-            RangeBracket.HIGH, RangeBracket.VERY_HIGH -> HomeUiState.High(reading.glucoseMgDl, reading.trend, recentMgDl)
+            RangeBracket.IN_RANGE -> HomeUiState.InRange(reading.glucoseMgDl, reading.trend, recent)
+            RangeBracket.HIGH, RangeBracket.VERY_HIGH -> HomeUiState.High(reading.glucoseMgDl, reading.trend, recent)
         }
 }
