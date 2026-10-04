@@ -18,4 +18,6 @@ data class LogbookUiState(
     val glucoseNow: GlucoseReading? = null,
     /** Entry id → its attached photo. */
     val photos: Map<Long, File> = emptyMap(),
+    /** The window's readings, oldest first: what a meal did to glucose. */
+    val readings: List<GlucoseReading> = emptyList(),
 )

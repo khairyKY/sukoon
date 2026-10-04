@@ -14,7 +14,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         EventEntity::class,
         CalibrationEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -32,7 +32,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "sukoon.db",
-                ).addMigrations(MIGRATION_1_2).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { instance = it }
             }
 
         // v2: unique index on readings.timestampMillis (see ReadingEntity). Keep the first copy
@@ -41,6 +41,15 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("DELETE FROM readings WHERE id NOT IN (SELECT MIN(id) FROM readings GROUP BY timestampMillis)")
                 db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_readings_timestampMillis ON readings (timestampMillis)")
+            }
+        }
+
+        // v3: events remember their source app and a meal's nutrients (MyFitnessPal brings them).
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE events ADD COLUMN source TEXT")
+                db.execSQL("ALTER TABLE events ADD COLUMN mealType INTEGER")
+                listOf("fiber", "sugar", "protein", "fat", "kcal").forEach { db.execSQL("ALTER TABLE events ADD COLUMN $it REAL") }
             }
         }
     }

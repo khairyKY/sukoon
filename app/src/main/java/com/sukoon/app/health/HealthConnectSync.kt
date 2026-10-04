@@ -102,6 +102,10 @@ class HealthConnectSync(
 
     /** Meals via Health Connect's change log: everything from 7 days back the first time, then only what changed. */
     private suspend fun importNutrition(): Pair<Int, Int> {
+        // Entries imported before nutrients were kept: read the last 7 days again once, onto the same entries.
+        if (prefs.getInt(KEY_IMPORT_VERSION, 1) < IMPORT_VERSION) {
+            prefs.edit().remove(KEY_TOKEN).putInt(KEY_IMPORT_VERSION, IMPORT_VERSION).apply()
+        }
         var added = 0
         var updated = 0
         val ids = mealIds()
@@ -151,14 +155,20 @@ class HealthConnectSync(
             existing?.let { logbook.deleteById(it); ids.remove(record.metadata.id) }
             return null
         }
-        val note = listOfNotNull(record.name?.takeIf { it.isNotBlank() }, mealName(record.mealType), appName(record.metadata.dataOrigin.packageName))
-            .joinToString(" · ")
+        fun round1(x: Double?) = x?.takeIf { it > 0 }?.let { (it * 10).roundToInt() / 10.0 }
         val event = EventEntity(
             id = existing ?: 0,
             timestampMillis = record.startTime.toEpochMilli(),
             type = LogEventType.CARB.name,
-            value = (carbs * 10).roundToInt() / 10.0,
-            note = note,
+            value = round1(carbs),
+            note = record.name?.takeIf { it.isNotBlank() }, // the foods, as the other app names them
+            source = record.metadata.dataOrigin.packageName,
+            mealType = record.mealType.takeIf { it != MealType.MEAL_TYPE_UNKNOWN },
+            fiber = round1(record.dietaryFiber?.inGrams),
+            sugar = round1(record.sugar?.inGrams),
+            protein = round1(record.protein?.inGrams),
+            fat = round1(record.totalFat?.inGrams),
+            kcal = round1(record.energy?.inKilocalories),
         )
         return if (existing != null) {
             logbook.update(event)
@@ -193,18 +203,6 @@ class HealthConnectSync(
         return readings.size
     }
 
-    private fun mealName(type: Int): String? = when (type) {
-        MealType.MEAL_TYPE_BREAKFAST -> context.getString(R.string.hc_meal_breakfast)
-        MealType.MEAL_TYPE_LUNCH -> context.getString(R.string.hc_meal_lunch)
-        MealType.MEAL_TYPE_DINNER -> context.getString(R.string.hc_meal_dinner)
-        MealType.MEAL_TYPE_SNACK -> context.getString(R.string.hc_meal_snack)
-        else -> null
-    }
-
-    private fun appName(packageName: String): String = runCatching {
-        context.packageManager.getApplicationLabel(context.packageManager.getApplicationInfo(packageName, 0)).toString()
-    }.getOrNull() ?: KNOWN_APPS[packageName] ?: packageName
-
     /** Health Connect record id → Logbook event id, so later changes land on the same entry. */
     private fun mealIds(): MutableMap<String, Long> {
         val json = runCatching { JSONObject(prefs.getString(KEY_MEAL_IDS, "{}") ?: "{}") }.getOrDefault(JSONObject())
@@ -223,12 +221,9 @@ class HealthConnectSync(
         const val KEY_EXPORT = "hc_share_glucose"
         const val KEY_TOKEN = "hc_nutrition_token"
         const val KEY_MEAL_IDS = "hc_meal_ids"
+        const val KEY_IMPORT_VERSION = "hc_import_version"
+        const val IMPORT_VERSION = 2 // 2: nutrients, meal type and source app
         const val KEY_EXPORT_CURSOR = "hc_export_cursor"
         const val MAX_BATCH = 1000
-        val KNOWN_APPS = mapOf(
-            "com.myfitnesspal.android" to "MyFitnessPal",
-            "com.samsung.android.app.health" to "Samsung Health",
-            "com.google.android.apps.fitness" to "Google Fit",
-        )
     }
 }

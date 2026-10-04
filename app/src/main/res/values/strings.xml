@@ -28,21 +28,17 @@
 
     <!-- Logbook (A4) -->
     <string name="logbook_title">Logbook</string>
-    <string name="logbook_today">Today</string>
     <string name="logbook_empty_title">Nothing logged yet</string>
     <string name="logbook_empty_body">Log a meal, insulin, or activity and it\'ll show up here — right beside your readings.</string>
     <string name="logbook_empty_cta">Log your first entry</string>
     <string name="logbook_add_entry">Add entry</string>
     <string name="logbook_sheet_title_new">Add to your day</string>
-    <string name="logbook_sheet_title_edit">Edit entry</string>
     <string name="logbook_type_carb">Meal</string>
-    <string name="logbook_type_insulin">Insulin</string>
-    <string name="logbook_type_basal">Basal</string>
+    <string name="logbook_type_insulin">Rapid insulin</string>
+    <string name="logbook_type_basal">Long-acting</string>
     <string name="logbook_type_activity">Activity</string>
     <string name="logbook_type_note">Note</string>
-    <string name="logbook_custom_label">Custom</string>
     <string name="logbook_note_hint">What\'s on your mind?</string>
-    <string name="logbook_save">Save to timeline</string>
     <string name="logbook_delete">Delete</string>
     <string name="logbook_unit_grams">g</string>
     <string name="logbook_unit_units">u</string>
@@ -125,7 +121,6 @@
     <string name="settings_about_body">Sukoon %1$s · Not a medical device. Always confirm with a finger-prick before treating, and follow your diabetes team\'s plan.</string>
 
     <!-- Logbook → AI carb estimate -->
-    <string name="carb_ai_open">✨ Estimate carbs with AI</string>
     <string name="carb_ai_describe">What are you eating?</string>
     <string name="carb_ai_camera">Take photo</string>
     <string name="carb_ai_gallery">Gallery</string>
@@ -264,8 +259,6 @@
     <string name="custom_value_title">Custom value</string>
     <string name="custom_value_range">Between %1$d and %2$d</string>
     <string name="custom_value_set">Set</string>
-    <string name="logbook_meal_insulin">Insulin with this meal (optional, units)</string>
-    <string name="logbook_prebolus">Injected before eating</string>
     <string name="logbook_prebolus_with">With the meal</string>
     <string name="logbook_prebolus_min">%1$d min before</string>
     <!-- You → Nightscout / Your data -->
@@ -358,11 +351,9 @@
     <string name="toast_source_demo">Now showing demo data.</string>
     <string name="toast_ai_key_removed">AI key removed.</string>
     <string name="toast_widget_saved">Widget updated.</string>
-    <string name="toast_logged">Logged.</string>
     <string name="toast_entry_updated">Entry updated.</string>
     <string name="toast_entry_deleted">Entry deleted.</string>
     <string name="logbook_type_fingerstick">Finger-prick</string>
-    <string name="logbook_meter_label">Meter reading (mg/dL)</string>
     <string name="logbook_sensor_higher">Sensor %1$d · %2$d%% higher</string>
     <string name="logbook_sensor_lower">Sensor %1$d · %2$d%% lower</string>
     <string name="logbook_sensor_same">Sensor %1$d · same</string>
@@ -542,7 +533,6 @@
     <string name="toast_calibration_on">Calibration on.</string>
     <string name="toast_calibration_off">Calibration off: factory readings.</string>
     <string name="home_iob">%1$s u active</string>
-    <string name="logbook_iob">Still active from earlier doses: %1$s u. Doses close together add up.</string>
     <string name="insulin_title">Insulin</string>
     <string name="insulin_body">How your rapid insulin works over time, for the active insulin shown on Home and when you log a dose. Long-acting (basal) insulin isn\'t counted.</string>
     <string name="insulin_duration">Lasts</string>
@@ -607,7 +597,6 @@
     <string name="start_emergency">Add an emergency contact</string>
     <string name="start_guide">Read the guide</string>
     <string name="start_dismiss">Got it</string>
-    <string name="logbook_glucose_now">Glucose now: %1$s %2$s (saved with this entry)</string>
     <string name="logbook_when_now">Now</string>
     <string name="logbook_when_ago">%1$d min ago</string>
     <string name="logbook_when_pick">Pick a time</string>
@@ -682,4 +671,53 @@
     <string name="home_low_insulin">%1$s u of rapid insulin is still working, so you may need a second round.</string>
     <string name="home_last_3_hours_hint">Last 3 hours · the band is your 70–180 target</string>
     <string name="alarm_snooze_for">Snooze for</string>
+    <string name="entry_again">Again</string>
+    <string name="entry_new">New</string>
+    <string name="entry_meals_arrive">Meals you log in MyFitnessPal arrive by themselves.</string>
+    <string name="entry_close">Close</string>
+    <string name="entry_carbs">Carbs</string>
+    <string name="entry_meter">Meter</string>
+    <string name="entry_minutes">Minutes</string>
+    <string name="entry_add">Add</string>
+    <string name="entry_photo">Photo</string>
+    <string name="entry_more">More details: name, fibre, protein, fat, energy</string>
+    <string name="entry_name">Name</string>
+    <string name="entry_fiber">Fibre</string>
+    <string name="entry_sugar">Sugar</string>
+    <string name="entry_protein">Protein</string>
+    <string name="entry_fat">Fat</string>
+    <string name="entry_energy">Energy</string>
+    <string name="entry_unit_kcal">kcal</string>
+    <string name="entry_now_pill">%1$s %2$s now</string>
+    <string name="entry_iob_pill">%1$s u still working</string>
+    <string name="entry_sensor_now">Sensor now: %1$s</string>
+    <string name="entry_insulin_for">Insulin for %1$s</string>
+    <string name="entry_save">Save</string>
+    <string name="entry_save_amount">Save %1$s</string>
+    <string name="entry_save_meal_insulin">Save %1$s g + %2$s u</string>
+    <string name="entry_save_changes">Save changes</string>
+    <string name="entry_add_to_meal">Add %1$s u to %2$s</string>
+    <string name="entry_saved">Saved %1$s</string>
+    <string name="entry_undo">Undo</string>
+    <string name="entry_from_app">From %1$s</string>
+    <string name="entry_today_in_app">Today in %1$s</string>
+    <string name="entry_app_stays">The food itself stays in %1$s: change it there and it updates here.</string>
+    <string name="entry_slow_meal">Plenty of fat and protein: this meal can keep raising glucose 3 to 5 hours later.</string>
+    <string name="entry_dose_after">%1$d min after</string>
+    <string name="logbook_today_totals">Today · %1$s g · %2$s u</string>
+    <string name="logbook_no_insulin">No insulin logged for this meal</string>
+    <string name="logbook_add_insulin">Add insulin</string>
+    <string name="logbook_response">%1$d → peak %2$d at %3$s</string>
+    <string name="logbook_response_back">%1$d → peak %2$d at %3$s, back in range by %4$s</string>
+    <string name="meal_detail_what">What it did</string>
+    <string name="meal_detail_rose">Rose from %1$d to %2$d at %3$s.</string>
+    <string name="meal_detail_back">Back in range by %1$s.</string>
+    <string name="meal_detail_rising">Still rising: %1$d now.</string>
+    <string name="meal_detail_stayed">Stayed in range, peaking at %1$d.</string>
+    <string name="meal_detail_no_data">Not enough readings around this meal yet.</string>
+    <string name="meal_detail_insulin">Insulin</string>
+    <string name="meal_detail_no_insulin">None logged with this meal</string>
+    <string name="meal_detail_open">Open %1$s</string>
+    <string name="meal_detail_hide">Hide from my logbook</string>
+    <string name="toast_meal_hidden">Hidden from your logbook.</string>
 </resources>

@@ -45,6 +45,8 @@ import com.sukoon.app.ui.theme.Sage
 import com.sukoon.app.ui.reports.ReportScreen
 import com.sukoon.app.ui.reports.ReportUiState
 import java.time.Instant
+import com.sukoon.app.ui.logbook.EntryDraft
+import kotlinx.coroutines.Deferred
 
 private enum class TrendsSubTab { GRAPH, LOGBOOK, INSIGHTS, REPORT, ASK }
 
@@ -60,11 +62,11 @@ fun TrendsHub(
     graphState: GraphUiState,
     onSelectRange: (GraphRange) -> Unit,
     logbookState: LogbookUiState,
-    onQuickLog: (LogEventType, Double?, String?, Instant, ByteArray?) -> Unit,
+    onSaveEntry: (EntryDraft) -> Deferred<List<Long>>,
+    onUndoEntry: (List<Long>) -> Unit,
     onUpdateEvent: (EventEntity) -> Unit,
     onDeleteEvent: (EventEntity) -> Unit,
     onEstimateCarbs: suspend (String, ByteArray?) -> CarbEstimate,
-    onLogMeal: (Double, String?, Double, Int, Instant, ByteArray?) -> Unit,
     onEntryPhoto: (Long, ByteArray?) -> Unit,
     askState: AskUiState,
     hasAiKey: Boolean,
@@ -98,12 +100,12 @@ fun TrendsHub(
             TrendsSubTab.GRAPH -> GraphScreen(state = graphState, onSelectRange = onSelectRange, modifier = Modifier.weight(1f))
             TrendsSubTab.LOGBOOK -> LogbookScreen(
                 state = logbookState,
-                onQuickLog = onQuickLog,
+                onSaveEntry = onSaveEntry,
+                onUndoEntry = onUndoEntry,
                 onUpdateEvent = onUpdateEvent,
                 onDeleteEvent = onDeleteEvent,
                 modifier = Modifier.weight(1f),
                 onEstimateCarbs = onEstimateCarbs,
-                onLogMeal = onLogMeal,
                 onEntryPhoto = onEntryPhoto,
                 openNewEntry = pendingEntry,
                 onOpenedEntry = onPendingEntryHandled,

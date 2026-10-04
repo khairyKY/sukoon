@@ -33,6 +33,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 
 /** Drives the Logbook screen — today's window of logged events, newest first, from Room via [LogbookRepository]. */
 class LogbookViewModel(
@@ -59,6 +61,7 @@ class LogbookViewModel(
             insulinOnBoard = InsulinOnBoard.total(events, Instant.now(), insulinAction()),
             photos = photos?.all().orEmpty(),
             glucoseNow = readings.lastOrNull()?.takeIf { Duration.between(it.timestamp, Instant.now()) <= HomeUiStateMapper.STALE_AFTER },
+            readings = readings,
         )
     }
         .flowOn(Dispatchers.Default) // nearest-reading lookups and the photo folder stay off the main thread
@@ -68,20 +71,42 @@ class LogbookViewModel(
             initialValue = LogbookUiState(),
         )
 
-    fun log(type: LogEventType, value: Double?, note: String?, at: Instant = Instant.now(), photo: ByteArray? = null) {
-        viewModelScope.launch {
-            val id = repository.log(type, value, note, at)
-            if (photo != null) setPhotoNow(id, photo)
+    /**
+     * Saves [draft] (a meal's insulin is stamped its pre-bolus minutes before the meal) and returns
+     * the new entries' ids, for Undo. Runs in the ViewModel's scope, so leaving the screen can't cut
+     * a save in half.
+     */
+    fun save(draft: EntryDraft): Deferred<List<Long>> = viewModelScope.async {
+        val ids = mutableListOf<Long>()
+        draft.insulin?.takeIf { it > 0 }?.let { units ->
+            ids += repository.log(LogEventType.INSULIN, units, null, at = draft.at.minusSeconds(draft.preBolusMinutes * 60L))
         }
+        val n = draft.nutrients
+        val id = repository.insert(
+            EventEntity(
+                timestampMillis = draft.at.toEpochMilli(),
+                type = draft.type.name,
+                value = draft.amount,
+                note = draft.note,
+                fiber = n?.fiber,
+                sugar = n?.sugar,
+                protein = n?.protein,
+                fat = n?.fat,
+                kcal = n?.kcal,
+            ),
+        )
+        ids += id
+        if (draft.photo != null) setPhotoNow(id, draft.photo)
+        ids
     }
 
-    /** A meal plus the rapid insulin for it; the insulin is stamped [preBolusMinutes] before the meal. */
-    fun logMeal(carbs: Double, note: String?, insulinUnits: Double, preBolusMinutes: Int, at: Instant = Instant.now(), photo: ByteArray? = null) {
+    /** Takes back what a save just added. */
+    fun undo(ids: List<Long>) {
         viewModelScope.launch {
-            val now = at
-            repository.log(LogEventType.INSULIN, insulinUnits, null, at = now.minusSeconds(preBolusMinutes * 60L))
-            val meal = repository.log(LogEventType.CARB, carbs, note, at = now)
-            if (photo != null) setPhotoNow(meal, photo)
+            ids.forEach { id ->
+                repository.deleteById(id)
+                setPhotoNow(id, null)
+            }
         }
     }
 

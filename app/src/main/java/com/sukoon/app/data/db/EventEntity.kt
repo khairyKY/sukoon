@@ -21,6 +21,16 @@ data class EventEntity(
     val type: String, // LogEventType.name
     val value: Double? = null, // grams of carbs, insulin units, meter mg/dL, or activity minutes
     val note: String? = null,
+    /** The app an imported entry came from (its package, e.g. MyFitnessPal's); null = logged in Sukoon. */
+    val source: String? = null,
+    /** Health Connect's meal type (1 breakfast, 2 lunch, 3 dinner, 4 snack); null = not given. */
+    val mealType: Int? = null,
+    // A meal's nutrients beyond its carbs (value), in grams, and its energy in kcal.
+    val fiber: Double? = null,
+    val sugar: Double? = null,
+    val protein: Double? = null,
+    val fat: Double? = null,
+    val kcal: Double? = null,
 )
 
 /** INSULIN = rapid-acting (bolus, e.g. Apidra); BASAL = long-acting (e.g. Toujeo). Stored by name, so adding one needs no migration. */

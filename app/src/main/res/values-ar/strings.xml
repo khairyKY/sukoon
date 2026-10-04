@@ -28,21 +28,17 @@
 
     <!-- Logbook (A4) -->
     <string name="logbook_title">السجل</string>
-    <string name="logbook_today">النهاردة</string>
     <string name="logbook_empty_title">لسه مفيش حاجة اتسجلت</string>
     <string name="logbook_empty_body">سجّل أكلة، إنسولين، أو نشاط وهيظهر هنا — جنب قراياتك.</string>
     <string name="logbook_empty_cta">سجّل أول حاجة</string>
     <string name="logbook_add_entry">ضيف قيد</string>
     <string name="logbook_sheet_title_new">ضيف ليومك</string>
-    <string name="logbook_sheet_title_edit">عدّل القيد</string>
     <string name="logbook_type_carb">أكلة</string>
-    <string name="logbook_type_insulin">إنسولين</string>
-    <string name="logbook_type_basal">قاعدي</string>
+    <string name="logbook_type_insulin">أنسولين سريع</string>
+    <string name="logbook_type_basal">طويل المفعول</string>
     <string name="logbook_type_activity">نشاط</string>
     <string name="logbook_type_note">ملاحظة</string>
-    <string name="logbook_custom_label">قيمة تانية</string>
     <string name="logbook_note_hint">عايز تكتب إيه؟</string>
-    <string name="logbook_save">احفظ في السجل</string>
     <string name="logbook_delete">امسح</string>
     <string name="logbook_unit_grams">جم</string>
     <string name="logbook_unit_units">و</string>
@@ -125,7 +121,6 @@
     <string name="settings_about_body">سكون %1$s · مش جهاز طبي. أكّد دايمًا بوخزة صباع قبل ما تعالج، وامشي على خطة فريقك الطبي.</string>
 
     <!-- Logbook → AI carb estimate -->
-    <string name="carb_ai_open">✨ قدّر الكربوهيدرات بالذكاء الاصطناعي</string>
     <string name="carb_ai_describe">بتاكل إيه؟</string>
     <string name="carb_ai_camera">صوّر</string>
     <string name="carb_ai_gallery">من المعرض</string>
@@ -264,8 +259,6 @@
     <string name="custom_value_title">قيمة مخصّصة</string>
     <string name="custom_value_range">من %1$d لـ %2$d</string>
     <string name="custom_value_set">ظبّط</string>
-    <string name="logbook_meal_insulin">إنسولين مع الوجبة دي (اختياري، وحدات)</string>
-    <string name="logbook_prebolus">اتاخد قبل الأكل بـ</string>
     <string name="logbook_prebolus_with">مع الأكل</string>
     <string name="logbook_prebolus_min">%1$d دقيقة قبلها</string>
     <!-- You → Nightscout / Your data -->
@@ -358,11 +351,9 @@
     <string name="toast_source_demo">دلوقتي بنعرض بيانات تجريبية.</string>
     <string name="toast_ai_key_removed">مفتاح الذكاء الاصطناعي اتشال.</string>
     <string name="toast_widget_saved">الويدجت اتحدّث.</string>
-    <string name="toast_logged">اتسجّل.</string>
     <string name="toast_entry_updated">التسجيل اتعدّل.</string>
     <string name="toast_entry_deleted">التسجيل اتمسح.</string>
     <string name="logbook_type_fingerstick">قياس صباع</string>
-    <string name="logbook_meter_label">قراية الجهاز (ملغم/دل)</string>
     <string name="logbook_sensor_higher">الحساس %1$d · أعلى بـ %2$d%%</string>
     <string name="logbook_sensor_lower">الحساس %1$d · أقل بـ %2$d%%</string>
     <string name="logbook_sensor_same">الحساس %1$d · نفس القراية</string>
@@ -542,7 +533,6 @@
     <string name="toast_calibration_on">المعايرة اشتغلت.</string>
     <string name="toast_calibration_off">المعايرة اتقفلت: قرايات المصنع.</string>
     <string name="home_iob">%1$s وحدة شغّالة</string>
-    <string name="logbook_iob">لسه شغّال من جرعات قبل كده: %1$s وحدة. الجرعات القريبة من بعض بتتجمّع.</string>
     <string name="insulin_title">الإنسولين</string>
     <string name="insulin_body">إزاي الإنسولين السريع بيشتغل مع الوقت، علشان الإنسولين الشغّال اللي بيظهر في الرئيسية ووقت ما تسجّل جرعة. الإنسولين طويل المفعول (القاعدي) مش بيتحسب.</string>
     <string name="insulin_duration">مدة المفعول</string>
@@ -607,7 +597,6 @@
     <string name="start_emergency">ضيف جهة طوارئ</string>
     <string name="start_guide">اقرا الدليل</string>
     <string name="start_dismiss">تمام</string>
-    <string name="logbook_glucose_now">السكر دلوقتي: %1$s %2$s (بيتسجّل مع التسجيل ده)</string>
     <string name="logbook_when_now">دلوقتي</string>
     <string name="logbook_when_ago">من %1$d دقيقة</string>
     <string name="logbook_when_pick">اختار وقت</string>
@@ -682,4 +671,53 @@
     <string name="home_low_insulin">لسه فيه %1$s وحدة أنسولين سريع شغّالة، فممكن تحتاج مرة كمان.</string>
     <string name="home_last_3_hours_hint">آخر ٣ ساعات · الشريط هو هدفك ٧٠–١٨٠</string>
     <string name="alarm_snooze_for">أجّل لمدة</string>
+    <string name="entry_again">تاني</string>
+    <string name="entry_new">جديد</string>
+    <string name="entry_meals_arrive">الوجبات اللي بتسجّلها في MyFitnessPal بتوصل لوحدها.</string>
+    <string name="entry_close">اقفل</string>
+    <string name="entry_carbs">كربوهيدرات</string>
+    <string name="entry_meter">الجهاز</string>
+    <string name="entry_minutes">دقايق</string>
+    <string name="entry_add">ضيف</string>
+    <string name="entry_photo">صورة</string>
+    <string name="entry_more">تفاصيل أكتر: الاسم، الألياف، البروتين، الدهون، الطاقة</string>
+    <string name="entry_name">الاسم</string>
+    <string name="entry_fiber">ألياف</string>
+    <string name="entry_sugar">سكريات</string>
+    <string name="entry_protein">بروتين</string>
+    <string name="entry_fat">دهون</string>
+    <string name="entry_energy">طاقة</string>
+    <string name="entry_unit_kcal">سعر</string>
+    <string name="entry_now_pill">%1$s %2$s دلوقتي</string>
+    <string name="entry_iob_pill">لسه %1$s وحدة شغّالة</string>
+    <string name="entry_sensor_now">الحساس دلوقتي: %1$s</string>
+    <string name="entry_insulin_for">أنسولين لـ%1$s</string>
+    <string name="entry_save">احفظ</string>
+    <string name="entry_save_amount">احفظ %1$s</string>
+    <string name="entry_save_meal_insulin">احفظ %1$s جرام + %2$s وحدة</string>
+    <string name="entry_save_changes">احفظ التعديل</string>
+    <string name="entry_add_to_meal">ضيف %1$s وحدة لـ%2$s</string>
+    <string name="entry_saved">اتحفظ %1$s</string>
+    <string name="entry_undo">تراجع</string>
+    <string name="entry_from_app">من %1$s</string>
+    <string name="entry_today_in_app">النهارده في %1$s</string>
+    <string name="entry_app_stays">الأكل نفسه بيفضل في %1$s: عدّله هناك ويتحدّث هنا.</string>
+    <string name="entry_slow_meal">فيها دهون وبروتين كتير: الوجبة دي ممكن تفضل ترفع السكر بعد ٣ لـ٥ ساعات.</string>
+    <string name="entry_dose_after">بعدها بـ%1$d دقيقة</string>
+    <string name="logbook_today_totals">النهارده · %1$s جرام · %2$s وحدة</string>
+    <string name="logbook_no_insulin">مفيش أنسولين متسجّل للوجبة دي</string>
+    <string name="logbook_add_insulin">ضيف أنسولين</string>
+    <string name="logbook_response">من %1$d لأعلى %2$d الساعة %3$s</string>
+    <string name="logbook_response_back">من %1$d لأعلى %2$d الساعة %3$s، ورجع للمعدل الساعة %4$s</string>
+    <string name="meal_detail_what">عملت إيه في السكر</string>
+    <string name="meal_detail_rose">طلع من %1$d لـ%2$d الساعة %3$s.</string>
+    <string name="meal_detail_back">رجع للمعدل الساعة %1$s.</string>
+    <string name="meal_detail_rising">لسه بيطلع: %1$d دلوقتي.</string>
+    <string name="meal_detail_stayed">فضل في المعدل، وأعلى قراية %1$d.</string>
+    <string name="meal_detail_no_data">مفيش قرايات كفاية حوالين الوجبة دي لسه.</string>
+    <string name="meal_detail_insulin">الأنسولين</string>
+    <string name="meal_detail_no_insulin">مفيش متسجّل مع الوجبة دي</string>
+    <string name="meal_detail_open">افتح %1$s</string>
+    <string name="meal_detail_hide">اخفيها من السجل</string>
+    <string name="toast_meal_hidden">اتخفت من السجل.</string>
 </resources>
