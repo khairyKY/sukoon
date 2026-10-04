@@ -9,7 +9,7 @@ import com.sukoon.app.emergency.EmergencySettings
 import com.sukoon.app.insulin.InsulinAction
 
 /**
- * User settings, in the same prefs file as [DisclaimerPrefs]. ponytail: plain private
+ * User settings, in the app's prefs file (sukoon_prefs). ponytail: plain private
  * SharedPreferences for the Gemini key too — app-private storage, a personal-use key; move to
  * Keystore-backed storage if the app is ever distributed.
  */
@@ -99,6 +99,23 @@ class SettingsPrefs(context: Context) {
         get() = ThemeMode.entries.firstOrNull { it.name == prefs.getString(KEY_THEME, null) } ?: ThemeMode.AUTO
         set(value) = prefs.edit().putString(KEY_THEME, value.name).apply()
 
+    /** What this person uses Sukoon for, chosen at sign-up (onboarding's role step). */
+    var role: UserRole
+        get() = UserRole.entries.firstOrNull { it.name == prefs.getString(KEY_ROLE, null) } ?: UserRole.WEARER
+        set(value) = prefs.edit().putString(KEY_ROLE, value.name).apply()
+
+    /** Onboarding is done. Anyone who accepted the old disclaimer gate had set up already, so never sees it. */
+    var onboarded: Boolean
+        get() = prefs.getBoolean(KEY_ONBOARDED, prefs.getBoolean(KEY_OLD_DISCLAIMER, false))
+        set(value) = prefs.edit().putBoolean(KEY_ONBOARDED, value).putBoolean(KEY_OLD_DISCLAIMER, value).apply()
+
+    /** A followed person's phone number, kept on this phone only (for Call and Message on their Home). */
+    fun followedPhone(personId: String): String? = prefs.getString(KEY_FOLLOWED_PHONE + personId, null)
+
+    fun setFollowedPhone(personId: String, phone: String?) {
+        prefs.edit().apply { if (phone.isNullOrBlank()) remove(KEY_FOLLOWED_PHONE + personId) else putString(KEY_FOLLOWED_PHONE + personId, phone) }.apply()
+    }
+
     /** Home's getting-started card, once the user has said "Got it". */
     var gettingStartedDismissed: Boolean
         get() = prefs.getBoolean(KEY_START_DISMISSED, false)
@@ -113,6 +130,10 @@ class SettingsPrefs(context: Context) {
         val SAVE_INTERVALS = listOf(1, 2, 3, 5, 15)
         val SAVE_INTERVAL_RANGE = 1..60
         private const val KEY_SOURCE = "source_kind"
+        private const val KEY_ROLE = "user_role"
+        private const val KEY_ONBOARDED = "onboarded"
+        private const val KEY_OLD_DISCLAIMER = "disclaimer_accepted" // the disclaimer gate's key, from before onboarding
+        private const val KEY_FOLLOWED_PHONE = "followed_phone_"
         private const val KEY_GEMINI = "gemini_api_key"
         private const val KEY_SAVE_INTERVAL = "save_interval_minutes"
         private const val KEY_INSIGHTS_ACK = "insights_acknowledged"
@@ -138,4 +159,12 @@ class SettingsPrefs(context: Context) {
         private const val KEY_EMERGENCY_AFTER = "emergency_after_minutes"
         private const val KEY_EMERGENCY_LOCATION = "emergency_share_location"
     }
+}
+
+/** Chosen at sign-up: wearing a sensor, following someone who does, or both. */
+enum class UserRole {
+    WEARER, FOLLOWER, BOTH;
+
+    val wears: Boolean get() = this != FOLLOWER
+    val follows: Boolean get() = this != WEARER
 }

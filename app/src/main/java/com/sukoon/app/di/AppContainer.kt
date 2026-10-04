@@ -74,6 +74,9 @@ class AppContainer(private val context: Context) {
     /** You → Appearance, applied at once by MainActivity. */
     val themeMode = MutableStateFlow(settings.themeMode)
 
+    /** Wearer, follower or both (chosen at sign-up): what Home and Trends show. */
+    val role = MutableStateFlow(settings.role)
+
     private val _sourceKind = MutableStateFlow(settings.sourceKind)
     val sourceKind: StateFlow<SourceKind> = _sourceKind.asStateFlow()
 

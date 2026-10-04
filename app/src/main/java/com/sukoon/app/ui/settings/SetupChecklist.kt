@@ -56,9 +56,9 @@ fun rememberMissingSetup(): List<SetupItem> {
     return missing
 }
 
-/** You → Setup: every OS permission/setting Sukoon relies on, each with why and a one-tap fix. */
+/** You → Setup: every OS permission/setting Sukoon relies on, each with why and a one-tap fix ([only]: a subset, as onboarding asks it). */
 @Composable
-fun SetupChecklist() {
+fun SetupChecklist(only: Set<SetupItem>? = null) {
     val context = LocalContext.current
     val missing = rememberMissingSetup() // returning from a dialog or Settings is a resume → re-checked
     var pending by remember { mutableStateOf<SetupItem?>(null) }
@@ -76,7 +76,7 @@ fun SetupChecklist() {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        SetupCheck.applicable(context).forEach { item ->
+        SetupCheck.applicable(context).filter { only == null || it in only }.forEach { item ->
             val done = item !in missing
             Row(verticalAlignment = Alignment.Top) {
                 Box(Modifier.padding(top = 5.dp).size(10.dp).clip(CircleShape).background(if (done) Sage else StateHigh))

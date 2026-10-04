@@ -78,6 +78,14 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import com.sukoon.app.ui.theme.Motion
+import com.sukoon.app.data.prefs.UserRole
+import com.sukoon.app.platform.SetupItem
+import com.sukoon.app.ui.home.FollowingHome
+import com.sukoon.app.ui.home.FollowingStrip
+import com.sukoon.app.ui.home.FollowingTrends
+import androidx.compose.material3.Surface
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 
 /**
  * Top-level navigation, per the shipped design's 3-tab bottom bar (Now / Trends / You) — not the
@@ -119,6 +127,17 @@ fun MainScaffold() {
         ) {
             composable(SukoonTab.NOW.route) {
                 val home = (LocalContext.current.applicationContext as SukoonApp).container
+                val role by home.role.collectAsStateWithLifecycle()
+                if (role == UserRole.FOLLOWER) {
+                    // Following only: Home is the person followed (design "Follower · Home").
+                    Column {
+                        val missing = rememberMissingSetup().filter { it in FOLLOWER_SETUP }
+                        var later by rememberSaveable { mutableStateOf(false) }
+                        if (missing.isNotEmpty() && !later) SetupBanner(missing, onFix = { navController.navigateToTab(SukoonTab.YOU) }, onLater = { later = true })
+                        FollowingHome(home.sharing, home.settings, onAddPerson = { navController.navigateToTab(SukoonTab.YOU) }, modifier = Modifier.weight(1f))
+                    }
+                    return@composable
+                }
                 val repository = home.glucoseRepository
                 val homeViewModel: HomeViewModel = viewModel(
                     factory = HomeViewModel.factory(repository, home::sensorLife, home.logbookRepository, home.alarms.treatedAt) { home.settings.insulinAction },
@@ -137,7 +156,17 @@ fun MainScaffold() {
                 var askingForHelp by remember { mutableStateOf(false) }
                 val insulinOnBoard by (context.applicationContext as SukoonApp).container.insulinOnBoard.collectAsStateWithLifecycle(initialValue = 0.0)
                 if (askingForHelp) EmergencyActionsDialog(emergencyAlerts, latest, onDismiss = { askingForHelp = false })
+                var viewing by remember { mutableStateOf<String?>(null) }
+                viewing?.let { id ->
+                    Dialog(onDismissRequest = { viewing = null }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+                        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                            FollowingHome(home.sharing, home.settings, onAddPerson = { viewing = null; toYou() }, personId = id)
+                        }
+                    }
+                }
                 Column {
+                    // Wearing and following: the people followed sit above your own Home.
+                    if (role == UserRole.BOTH) FollowingStrip(home.sharing) { viewing = it.id }
                     if (missingSetup.isNotEmpty() && !setupLater) {
                         SetupBanner(missingSetup, onFix = toYou, onLater = { setupLater = true })
                     }
@@ -193,6 +222,11 @@ fun MainScaffold() {
             composable(SukoonTab.TRENDS.route) {
                 // Hub over Graph (A3) + Logbook (A4); Insights (A9) slots in as a third sub-tab later.
                 val container = (LocalContext.current.applicationContext as SukoonApp).container
+                val role by container.role.collectAsStateWithLifecycle()
+                if (role == UserRole.FOLLOWER) {
+                    FollowingTrends(container.sharing)
+                    return@composable
+                }
                 val graphViewModel: GraphViewModel = viewModel(
                     factory = GraphViewModel.factory(container.glucoseRepository, container.logbookRepository),
                 )
@@ -385,3 +419,6 @@ private fun BottomBarItem(label: String, selected: Boolean, onClick: () -> Unit)
         )
     }
 }
+
+/** What a follower-only phone needs for alerts to reach it (no sensor, no emergency texts). */
+private val FOLLOWER_SETUP = setOf(SetupItem.NOTIFICATIONS, SetupItem.FULL_SCREEN, SetupItem.OVERLAY, SetupItem.BATTERY)

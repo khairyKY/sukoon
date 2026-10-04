@@ -11,9 +11,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.sukoon.app.data.prefs.DisclaimerPrefs
 import com.sukoon.app.ui.navigation.MainScaffold
-import com.sukoon.app.ui.onboarding.DisclaimerGateScreen
+import com.sukoon.app.ui.onboarding.Onboarding
 import com.sukoon.app.ui.theme.SukoonTheme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
@@ -24,9 +23,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val disclaimerPrefs = DisclaimerPrefs(applicationContext)
-
-        val themeMode = (application as SukoonApp).container.themeMode
+        val container = (application as SukoonApp).container
+        val themeMode = container.themeMode
         setContent {
             val mode by themeMode.collectAsState()
             SukoonTheme(
@@ -36,22 +34,11 @@ class MainActivity : ComponentActivity() {
                     ThemeMode.DARK -> true
                 },
             ) {
-                var disclaimerAccepted by remember { mutableStateOf(disclaimerPrefs.hasAccepted()) }
+                var onboarded by remember { mutableStateOf(container.settings.onboarded) }
 
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    if (disclaimerAccepted) {
-                        // Post-disclaimer: the 3-tab shell (Now/Trends/You). The Now tab hosts the
-                        // live SimulatedSource-driven Home; Trends/You are placeholders until their
-                        // screens land (A3/A4/A9/A10).
-                        MainScaffold()
-                    } else {
-                        DisclaimerGateScreen(
-                            onAccept = {
-                                disclaimerPrefs.setAccepted()
-                                disclaimerAccepted = true
-                            },
-                        )
-                    }
+                    // First run: welcome (with the disclaimer), role, account, then that role's setup.
+                    if (onboarded) MainScaffold() else Onboarding(container) { onboarded = true }
                 }
             }
         }
