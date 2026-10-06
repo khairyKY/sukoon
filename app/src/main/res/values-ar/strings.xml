@@ -976,4 +976,21 @@
     <string name="alarms_line_low">يرن تحت</string>
     <string name="alarms_line_high">يرن فوق</string>
     <string name="alarms_signal_after">يرن بعد</string>
+    <string name="hc_mfp_through">عن طريق Health Connect</string>
+    <string name="hc_mfp_last">عن طريق Health Connect · آخر وجبة %1$s</string>
+    <string name="hc_connected">متوصل</string>
+    <string name="hc_connect_short">وصّل</string>
+    <string name="hc_meals_title">الوجبات في سجلّك</string>
+    <string name="hc_meals_body">كربوهيدرات، ألياف، سكر، بروتين، دهون وسعرات</string>
+    <string name="hc_open_mfp">افتح MyFitnessPal</string>
+    <string name="hc_store">مخزن الصحة المشترك في أندرويد</string>
+    <string name="hc_share_body">تطبيقات الصحة التانية تقدر تقراه</string>
+    <string name="hc_background">زامن وسكون مقفول</string>
+    <string name="hc_allowed">مسموح</string>
+    <string name="hc_allow">اسمح</string>
+    <string name="apps_not_set_up">مش متظبط</string>
+    <string name="apps_set_up">ظبّطه</string>
+    <string name="apps_change">غيّر</string>
+    <string name="apps_ai">المساعد الذكي</string>
+    <string name="apps_ai_key_ending">مفتاح Gemini آخره %1$s</string>
 </resources>

@@ -90,6 +90,8 @@ import com.sukoon.app.ui.theme.SurfaceDark
 import com.sukoon.app.ui.theme.SurfaceLight
 import com.sukoon.app.ui.theme.SageLight
 import com.sukoon.app.alarms.AlarmLog
+import android.net.Uri
+import androidx.compose.material3.HorizontalDivider
 
 /** The You tab's sections (design "You, divided"): each opens its own page from the hub. */
 private enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
@@ -242,14 +244,42 @@ fun SettingsScreen(
                     }
                     YouPage.INSULIN -> InsulinSection(insulinAction, onInsulinAction)
                     YouPage.APPS -> {
-                        SectionLabel(stringResource(R.string.hc_title))
                         HealthConnectSection(healthConnect)
-                        Gap()
-                        SectionLabel(stringResource(R.string.ns_title))
-                        NightscoutSection(nightscout, nightscoutStatus, onNightscout, onUploadNow)
-                        Gap()
-                        SectionLabel(stringResource(R.string.settings_ai_title))
-                        AiKey(geminiKey, onSaveGeminiKey)
+                        Spacer(Modifier.height(10.dp))
+                        var service by rememberSaveable { mutableStateOf<String?>(null) }
+                        val nsOn = nightscout.enabled && nightscout.url.isNotBlank()
+                        Column(
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(MaterialTheme.colorScheme.surface)
+                                .border(1.dp, outline(), RoundedCornerShape(18.dp))
+                                .padding(horizontal = 14.dp, vertical = 4.dp),
+                        ) {
+                            ServiceRow(
+                                stringResource(R.string.ns_title),
+                                if (nsOn) Uri.parse(nightscout.url).host ?: nightscout.url else stringResource(R.string.apps_not_set_up),
+                                stringResource(if (nsOn) R.string.apps_change else R.string.apps_set_up),
+                                prominent = !nsOn,
+                            ) { service = if (service == "ns") null else "ns" }
+                            HorizontalDivider(color = outline().copy(alpha = 0.08f))
+                            ServiceRow(
+                                stringResource(R.string.apps_ai),
+                                if (geminiKey.isNotBlank()) stringResource(R.string.apps_ai_key_ending, geminiKey.takeLast(4)) else stringResource(R.string.apps_not_set_up),
+                                stringResource(if (geminiKey.isNotBlank()) R.string.apps_change else R.string.apps_set_up),
+                                prominent = geminiKey.isBlank(),
+                            ) { service = if (service == "ai") null else "ai" }
+                        }
+                        when (service) {
+                            "ns" -> {
+                                Gap()
+                                NightscoutSection(nightscout, nightscoutStatus, onNightscout, onUploadNow)
+                            }
+                            "ai" -> {
+                                Gap()
+                                AiKey(geminiKey, onSaveGeminiKey)
+                            }
+                        }
                     }
                     YouPage.REPORTS -> {
                         Text(stringResource(R.string.you_reports_body), fontSize = 13.sp, color = CaptionMuted)
@@ -436,6 +466,28 @@ private fun languageLabel(): String {
 
 private fun formatHours(minutes: Int): String =
     if (minutes % 60 == 0) String.format(Locale.getDefault(), "%d", minutes / 60) else String.format(Locale.getDefault(), "%.1f", minutes / 60.0)
+
+/** A service in one line: its name, how it's set now, and the button that opens its settings under the list. */
+@Composable
+private fun ServiceRow(title: String, summary: String, action: String, prominent: Boolean, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.weight(1f)) {
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+            Text(summary, fontSize = 12.5.sp, color = CaptionMuted, maxLines = 1, modifier = Modifier.padding(top = 2.dp))
+        }
+        Box(
+            Modifier
+                .heightIn(min = 40.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .border(if (prominent) 1.5.dp else 1.dp, if (prominent) Sage else outline(), RoundedCornerShape(20.dp))
+                .clickable(onClick = onClick)
+                .padding(horizontal = 14.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(action, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (prominent) com.sukoon.app.ui.theme.SageDeep else MaterialTheme.colorScheme.onBackground)
+        }
+    }
+}
 
 @Composable
 private fun AiKey(geminiKey: String, onSave: (String) -> Unit) {

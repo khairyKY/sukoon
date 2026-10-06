@@ -976,4 +976,21 @@
     <string name="alarms_line_low">Sound below</string>
     <string name="alarms_line_high">Sound above</string>
     <string name="alarms_signal_after">Sound after</string>
+    <string name="hc_mfp_through">Through Health Connect</string>
+    <string name="hc_mfp_last">Through Health Connect · last meal %1$s</string>
+    <string name="hc_connected">Connected</string>
+    <string name="hc_connect_short">Connect</string>
+    <string name="hc_meals_title">Meals into your logbook</string>
+    <string name="hc_meals_body">Carbs, fibre, sugar, protein, fat and calories</string>
+    <string name="hc_open_mfp">Open MyFitnessPal</string>
+    <string name="hc_store">Android\'s shared health store</string>
+    <string name="hc_share_body">Other health apps can read it</string>
+    <string name="hc_background">Sync while Sukoon is closed</string>
+    <string name="hc_allowed">Allowed</string>
+    <string name="hc_allow">Allow</string>
+    <string name="apps_not_set_up">Not set up</string>
+    <string name="apps_set_up">Set up</string>
+    <string name="apps_change">Change</string>
+    <string name="apps_ai">AI assistant</string>
+    <string name="apps_ai_key_ending">Gemini key ending %1$s</string>
 </resources>

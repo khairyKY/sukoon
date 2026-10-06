@@ -42,6 +42,7 @@ import androidx.health.connect.client.aggregate.AggregateMetric
 import androidx.health.connect.client.request.AggregateRequest
 import java.time.LocalDate
 import kotlin.reflect.KClass
+import com.sukoon.app.data.db.logType
 
 /**
  * Health Connect, both ways. In: meals other apps log there (MyFitnessPal writes each meal's
@@ -103,6 +104,18 @@ class HealthConnectSync(
     }
 
     suspend fun granted(): Set<String> = if (available) client.permissionController.getGrantedPermissions() else emptySet()
+
+    /** Whether this phone's Health Connect can let Sukoon read while it's closed. */
+    fun backgroundSupported(): Boolean = available &&
+        client.features.getFeatureStatus(HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND) == HealthConnectFeatures.FEATURE_STATUS_AVAILABLE
+
+    val readInBackground = HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND
+
+    /** When the newest MyFitnessPal meal in the logbook was eaten (null: none in the last 30 days). */
+    suspend fun lastMfpMeal(): Instant? = logbook.eventsSince(System.currentTimeMillis() - Duration.ofDays(30).toMillis()).first()
+        .filter { it.source == MFP && it.logType == LogEventType.CARB }
+        .maxOfOrNull { it.timestampMillis }
+        ?.let(Instant::ofEpochMilli)
 
     fun start() {
         scope.launch {
@@ -308,18 +321,20 @@ class HealthConnectSync(
         prefs.edit().putString(KEY_MEAL_IDS, JSONObject(kept.associate { it.key to it.value }).toString()).apply()
     }
 
-    private companion object {
-        const val TAG = "HealthConnect"
-        const val KEY_IMPORT = "hc_import_meals"
-        const val KEY_EXPORT = "hc_share_glucose"
-        const val KEY_TOKEN = "hc_nutrition_token"
-        const val KEY_MEAL_IDS = "hc_meal_ids"
-        const val KEY_IMPORT_VERSION = "hc_import_version"
-        const val IMPORT_VERSION = 3 // 2: nutrients, meal type and source app; 3: workouts
-        const val KEY_IMPORT_ACTIVITY = "hc_import_activity"
-        const val KEY_TOKEN_TYPES = "hc_token_types"
-        const val MIN_WORKOUT_MINUTES = 10
-        const val KEY_EXPORT_CURSOR = "hc_export_cursor"
-        const val MAX_BATCH = 1000
+    companion object {
+        /** MyFitnessPal's package: its meals' source, and the app You → Apps & data opens. */
+        const val MFP = "com.myfitnesspal.android"
+        private const val TAG = "HealthConnect"
+        private const val KEY_IMPORT = "hc_import_meals"
+        private const val KEY_EXPORT = "hc_share_glucose"
+        private const val KEY_TOKEN = "hc_nutrition_token"
+        private const val KEY_MEAL_IDS = "hc_meal_ids"
+        private const val KEY_IMPORT_VERSION = "hc_import_version"
+        private const val IMPORT_VERSION = 3 // 2: nutrients, meal type and source app; 3: workouts
+        private const val KEY_IMPORT_ACTIVITY = "hc_import_activity"
+        private const val KEY_TOKEN_TYPES = "hc_token_types"
+        private const val MIN_WORKOUT_MINUTES = 10
+        private const val KEY_EXPORT_CURSOR = "hc_export_cursor"
+        private const val MAX_BATCH = 1000
     }
 }

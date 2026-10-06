@@ -41,8 +41,27 @@ import com.sukoon.app.ui.components.toast
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.Sage
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.painterResource
+import com.sukoon.app.ui.logbook.AppIcon
+import com.sukoon.app.ui.logbook.rememberSourceApp
+import com.sukoon.app.ui.logbook.outline
+import com.sukoon.app.ui.theme.SageDeep
+import com.sukoon.app.ui.theme.SageMist
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
-/** You → Health Connect: MyFitnessPal (and other apps') meals in, glucose readings out. */
+/** You → Apps & data: MyFitnessPal (meals and workouts in, through Health Connect), then Health Connect itself (glucose out, background sync). */
 @Composable
 fun HealthConnectSection(sync: HealthConnectSync) {
     val context = LocalContext.current
@@ -54,7 +73,11 @@ fun HealthConnectSection(sync: HealthConnectSync) {
     var importActivity by remember { mutableStateOf(sync.importActivity) }
     var shareGlucose by remember { mutableStateOf(sync.shareGlucose) }
     var busy by remember { mutableStateOf(false) }
-    LaunchedEffect(checks) { granted = runCatching { sync.granted() }.getOrDefault(emptySet()) }
+    var lastMeal by remember { mutableStateOf<Instant?>(null) }
+    LaunchedEffect(checks) {
+        granted = runCatching { sync.granted() }.getOrDefault(emptySet())
+        lastMeal = runCatching { sync.lastMfpMeal() }.getOrNull()
+    }
 
     fun syncNow() {
         if (busy) return
@@ -75,30 +98,45 @@ fun HealthConnectSection(sync: HealthConnectSync) {
         if (sync.readMeals in result || sync.writeGlucose in result) syncNow() else context.toast(context.getString(R.string.toast_hc_denied))
     }
 
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(stringResource(R.string.hc_body), fontSize = 12.5.sp, color = CaptionMuted)
-        when (status) {
-            HealthConnectClient.SDK_UNAVAILABLE -> Text(stringResource(R.string.hc_unavailable), fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground)
-            HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> {
-                Text(stringResource(R.string.hc_update), fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground)
-                Pill(stringResource(R.string.hc_update_button)) {
-                    runCatching {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.apps.healthdata&url=healthconnect%3A%2F%2Fonboarding")))
-                    }
+    when (status) {
+        HealthConnectClient.SDK_UNAVAILABLE -> Box { Text(stringResource(R.string.hc_unavailable), fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground) }
+        HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> AppCard {
+            Text(stringResource(R.string.hc_update), fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground)
+            Pill(stringResource(R.string.hc_update_button)) {
+                runCatching {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.apps.healthdata&url=healthconnect%3A%2F%2Fonboarding")))
                 }
             }
-            else -> if (sync.readMeals !in granted && sync.writeGlucose !in granted) {
-                Pill(stringResource(R.string.hc_connect)) { request.launch(sync.wantedPermissions()) }
-                Text(stringResource(R.string.hc_mfp_hint), fontSize = 12.sp, color = CaptionMuted)
-            } else {
-                Toggle(stringResource(R.string.hc_import), stringResource(R.string.hc_import_body), importMeals) {
+        }
+        else -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            val connected = sync.readMeals in granted
+            val mfp = rememberSourceApp(HealthConnectSync.MFP)
+            AppCard {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    AppIcon(mfp, 40.dp)
+                    Column(Modifier.weight(1f)) {
+                        Text("MyFitnessPal", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                        Text(
+                            lastMeal?.let { stringResource(R.string.hc_mfp_last, mealTime(it)) } ?: stringResource(R.string.hc_mfp_through),
+                            fontSize = 12.5.sp,
+                            color = CaptionMuted,
+                            modifier = Modifier.padding(top = 2.dp),
+                        )
+                    }
+                    if (connected) {
+                        Text(
+                            stringResource(R.string.hc_connected),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = SageDeep,
+                            modifier = Modifier.clip(RoundedCornerShape(50)).background(SageMist).padding(horizontal = 10.dp, vertical = 4.dp),
+                        )
+                    } else {
+                        Pill(stringResource(R.string.hc_connect_short)) { request.launch(sync.wantedPermissions()) }
+                    }
+                }
+                Line()
+                Toggle(stringResource(R.string.hc_meals_title), stringResource(R.string.hc_meals_body), importMeals) {
                     importMeals = it
                     sync.importMeals = it
                     if (it && sync.readMeals !in granted) request.launch(sync.wantedPermissions())
@@ -108,18 +146,79 @@ fun HealthConnectSection(sync: HealthConnectSync) {
                     sync.importActivity = it
                     if (it && sync.readActivity !in granted) request.launch(sync.wantedPermissions())
                 }
-                Toggle(stringResource(R.string.hc_export), stringResource(R.string.hc_export_body), shareGlucose) {
+                OutlineButton(stringResource(R.string.hc_open_mfp)) {
+                    val open = context.packageManager.getLaunchIntentForPackage(HealthConnectSync.MFP)
+                        ?: Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${HealthConnectSync.MFP}"))
+                    runCatching { context.startActivity(open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                }
+                if (!connected) Text(stringResource(R.string.hc_mfp_hint), fontSize = 12.sp, color = CaptionMuted)
+            }
+            AppCard {
+                Column {
+                    Text(stringResource(R.string.hc_title), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                    Text(stringResource(R.string.hc_store), fontSize = 12.5.sp, color = CaptionMuted, modifier = Modifier.padding(top = 2.dp))
+                }
+                Line()
+                Toggle(stringResource(R.string.hc_export), stringResource(R.string.hc_share_body), shareGlucose) {
                     shareGlucose = it
                     sync.shareGlucose = it
                     if (it && sync.writeGlucose !in granted) request.launch(sync.wantedPermissions())
+                }
+                if (remember { sync.backgroundSupported() }) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.hc_background), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
+                        if (sync.readInBackground in granted) {
+                            Icon(painterResource(R.drawable.ic_check), contentDescription = null, tint = SageDeep, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(5.dp))
+                            Text(stringResource(R.string.hc_allowed), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = SageDeep)
+                        } else {
+                            Pill(stringResource(R.string.hc_allow)) { request.launch(sync.wantedPermissions()) }
+                        }
+                    }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Pill(stringResource(if (busy) R.string.hc_syncing else R.string.hc_sync_now)) { syncNow() }
                     Pill(stringResource(R.string.hc_permissions), filled = false) { request.launch(sync.wantedPermissions()) }
                 }
-                Text(stringResource(R.string.hc_mfp_hint), fontSize = 12.sp, color = CaptionMuted)
             }
         }
+    }
+}
+
+/** "12:52" today, "Mon 12:52" before. */
+private fun mealTime(at: Instant): String {
+    val zone = ZoneId.systemDefault()
+    val today = at.atZone(zone).toLocalDate() == LocalDate.now(zone)
+    return DateTimeFormatter.ofPattern(if (today) "HH:mm" else "EEE HH:mm", Locale.getDefault()).format(at.atZone(zone))
+}
+
+@Composable
+private fun AppCard(content: @Composable ColumnScope.() -> Unit) = Column(
+    Modifier
+        .fillMaxWidth()
+        .clip(RoundedCornerShape(18.dp))
+        .background(MaterialTheme.colorScheme.surface)
+        .border(1.dp, outline(), RoundedCornerShape(18.dp))
+        .padding(14.dp),
+    verticalArrangement = Arrangement.spacedBy(12.dp),
+    content = content,
+)
+
+@Composable
+private fun Line() = HorizontalDivider(color = outline().copy(alpha = 0.08f))
+
+@Composable
+private fun OutlineButton(label: String, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 46.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .border(1.dp, outline(), RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
     }
 }
 
