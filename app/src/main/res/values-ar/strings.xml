@@ -1011,4 +1011,8 @@
         <item quantity="many">آخر ٢٤ ساعة: %1$d انقطاع، أطولهم %2$d دقيقة الساعة %3$s.</item>
         <item quantity="other">آخر ٢٤ ساعة: %1$d انقطاع، أطولهم %2$d دقيقة الساعة %3$s.</item>
     </plurals>
+    <string name="follow_urgent">سكر %1$s واطي جدًا.</string>
+    <string name="follow_urgent_for">تحت ٥٥ بقاله %1$s. اتصل دلوقتي.</string>
+    <string name="follow_heading_low">سكر %1$s نازل ناحية الهبوط.</string>
+    <string name="follow_heading_low_in">ممكن يبقى تحت ٧٠ في حوالي %1$d دقيقة.</string>
 </resources>

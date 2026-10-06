@@ -144,7 +144,9 @@ Any answer to the alarm, even swiping it away, restarts the clock.
 ## 6. Following someone
 
 The same alarm rules run on the person you follow, checked every minute over the internet, with
-your own alarm settings. Their alarms show their name. Answers only snooze them on your phone.
+your own alarm settings. Their Home uses the same lines as yours: **very low** under 55 ("Call now"),
+**low** under 70, **heading low** when under 70 within 20 minutes, **high** over 180 (calm until 250),
+**steady** otherwise, and **no readings** after 10 minutes. Their alarms show their name. Answers only snooze them on your phone.
 Emergency texts are never sent from a follower's phone.
 
 ---

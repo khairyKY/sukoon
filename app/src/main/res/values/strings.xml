@@ -1003,4 +1003,8 @@
         <item quantity="one">Last 24 hours: one gap, %2$d min at %3$s.</item>
         <item quantity="other">Last 24 hours: %1$d gaps, the longest %2$d min at %3$s.</item>
     </plurals>
+    <string name="follow_urgent">%1$s is very low.</string>
+    <string name="follow_urgent_for">Below 55 for %1$s. Call now.</string>
+    <string name="follow_heading_low">%1$s is heading low.</string>
+    <string name="follow_heading_low_in">Could be under 70 in about %1$d min.</string>
 </resources>
