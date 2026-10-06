@@ -90,6 +90,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
+import com.sukoon.app.ui.components.ExpandedPanel
 
 private val LOW_LEVELS = listOf(60, 65, 70, 75, 80, 90, 100)
 private val HIGH_LEVELS = listOf(180, 200, 220, 250, 280, 300, 350)
@@ -277,7 +278,7 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
                 colors = SwitchDefaults.colors(checkedTrackColor = Sage),
             )
         }
-        Expanded(quiet) {
+        ExpandedPanel(quiet) {
             Label(R.string.alarms_quiet_from)
             NumberChips(listOf(21, 22, 23, 0), settings.quietHighsFrom, 0..23, { hourLabel(it) }) { onChange(settings.copy(quietHighsFrom = it)) }
             Label(R.string.alarms_quiet_to)
@@ -335,32 +336,8 @@ private fun AlarmRow(
             Switch(checked = on, onCheckedChange = onToggle, colors = SwitchDefaults.colors(checkedTrackColor = Sage))
         }
     }
-    Expanded(open, details)
+    ExpandedPanel(open, content = details)
     if (!last) HorizontalDivider(color = outline().copy(alpha = 0.08f))
-}
-
-/**
- * A row's settings, opened under it: they slide straight down (not out of the corner), in a tinted
- * panel set in from the card's edges, so they read as belonging to the row above, not as rows.
- */
-@Composable
-private fun Expanded(open: Boolean, content: @Composable ColumnScope.() -> Unit) {
-    AnimatedVisibility(
-        visible = open,
-        enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
-        exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut(),
-    ) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(start = 12.dp, end = 12.dp, bottom = 12.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f))
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            content = content,
-        )
-    }
 }
 
 /** Lows coral (going low as a ring: not there yet), highs amber, no readings grey. */

@@ -94,6 +94,7 @@ import android.net.Uri
 import androidx.compose.material3.HorizontalDivider
 import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.reminders.BasalReminderSettings
+import com.sukoon.app.ui.components.ExpandedPanel
 
 /** The You tab's sections (design "You, divided"): each opens its own page from the hub. */
 private enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
@@ -276,26 +277,19 @@ fun SettingsScreen(
                             ServiceRow(
                                 stringResource(R.string.ns_title),
                                 if (nsOn) Uri.parse(nightscout.url).host ?: nightscout.url else stringResource(R.string.apps_not_set_up),
-                                stringResource(if (nsOn) R.string.apps_change else R.string.apps_set_up),
-                                prominent = !nsOn,
+                                stringResource(if (service == "ns") R.string.apps_close else if (nsOn) R.string.apps_change else R.string.apps_set_up),
+                                prominent = !nsOn && service != "ns",
                             ) { service = if (service == "ns") null else "ns" }
+                            // Opens right under its row, in the same panel as the alarms' settings.
+                            ExpandedPanel(service == "ns", inset = 0.dp) { NightscoutSection(nightscout, nightscoutStatus, onNightscout, onUploadNow, plain = true) }
                             HorizontalDivider(color = outline().copy(alpha = 0.08f))
                             ServiceRow(
                                 stringResource(R.string.apps_ai),
                                 if (geminiKey.isNotBlank()) stringResource(R.string.apps_ai_key_ending, geminiKey.takeLast(4)) else stringResource(R.string.apps_not_set_up),
-                                stringResource(if (geminiKey.isNotBlank()) R.string.apps_change else R.string.apps_set_up),
-                                prominent = geminiKey.isBlank(),
+                                stringResource(if (service == "ai") R.string.apps_close else if (geminiKey.isNotBlank()) R.string.apps_change else R.string.apps_set_up),
+                                prominent = geminiKey.isBlank() && service != "ai",
                             ) { service = if (service == "ai") null else "ai" }
-                        }
-                        when (service) {
-                            "ns" -> {
-                                Gap()
-                                NightscoutSection(nightscout, nightscoutStatus, onNightscout, onUploadNow)
-                            }
-                            "ai" -> {
-                                Gap()
-                                AiKey(geminiKey, onSaveGeminiKey)
-                            }
+                            ExpandedPanel(service == "ai", inset = 0.dp) { AiKey(geminiKey, onSaveGeminiKey) }
                         }
                     }
                     YouPage.REPORTS -> {

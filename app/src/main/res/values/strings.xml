@@ -1029,4 +1029,5 @@
     <string name="sync_mfp_none">MyFitnessPal: nothing new yet.</string>
     <string name="sync_mfp_connect">MyFitnessPal isn\'t connected yet: You → Apps &amp; data → Connect.</string>
     <string name="sync_failed">Couldn\'t sync: %1$s</string>
+    <string name="apps_close">Close</string>
 </resources>

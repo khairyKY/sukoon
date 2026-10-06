@@ -60,6 +60,8 @@ fun NightscoutSection(
     status: UploadStatus,
     onSave: suspend (NightscoutConfig) -> ConnectionTest?,
     onUploadNow: suspend () -> UploadStatus,
+    /** Inside another panel: no card of its own. */
+    plain: Boolean = false,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -82,7 +84,7 @@ fun NightscoutSection(
             context.toast(message, long = test != null && test != ConnectionTest.CanUpload)
         }
     }
-    SectionCard {
+    SectionCard(plain) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.ns_upload), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
@@ -169,9 +171,9 @@ private fun normalize(raw: String): String {
 }
 
 @Composable
-private fun SectionCard(content: @Composable () -> Unit) {
+private fun SectionCard(plain: Boolean = false, content: @Composable () -> Unit) {
     Column(
-        Modifier
+        if (plain) Modifier.fillMaxWidth() else Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .background(MaterialTheme.colorScheme.surface)

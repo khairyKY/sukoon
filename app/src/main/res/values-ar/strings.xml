@@ -1037,4 +1037,5 @@
     <string name="sync_mfp_none">MyFitnessPal: مفيش جديد لسه.</string>
     <string name="sync_mfp_connect">MyFitnessPal لسه مش متوصل: حسابي ← التطبيقات والبيانات ← وصّل.</string>
     <string name="sync_failed">معرفتش أزامن: %1$s</string>
+    <string name="apps_close">اقفل</string>
 </resources>
