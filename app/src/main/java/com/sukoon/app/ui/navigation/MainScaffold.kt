@@ -88,6 +88,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.sukoon.app.ui.home.HomeStat
 import com.sukoon.app.ui.home.StatsPicker
+import kotlinx.coroutines.flow.first
 
 /**
  * Top-level navigation, per the shipped design's 3-tab bottom bar (Now / Trends / You) — not the
@@ -325,6 +326,7 @@ fun MainScaffold() {
                     },
                     onTestAlarm = container.alarms::test,
                     alarmLog = container.alarmLog.entries.collectAsStateWithLifecycle().value,
+                    dayOfReadings = { container.glucoseRepository.readingsSince(System.currentTimeMillis() - Duration.ofDays(1).toMillis()).first() },
                     onPreviewAlarm = container.alarms::preview,
                     emergency = emergency,
                     emergencyAlerts = container.emergency,

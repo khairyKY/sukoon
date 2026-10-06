@@ -993,4 +993,8 @@
     <string name="apps_change">غيّر</string>
     <string name="apps_ai">المساعد الذكي</string>
     <string name="apps_ai_key_ending">مفتاح Gemini آخره %1$s</string>
+    <string name="sensor_connection_title">الاتصال</string>
+    <string name="sensor_gaps_none">آخر ٢٤ ساعة: مفيش انقطاع في القراءات.</string>
+    <string name="sensor_gaps">آخر ٢٤ ساعة: %1$d انقطاع، أطولهم %2$d دقيقة الساعة %3$s.</string>
+    <string name="sensor_gaps_why">الانقطاع غالبًا معناه إن الموبايل كان بعيد عن الحساس (كام متر، وأقل لو فيه جسم أو حيطة في النص)، أو إن الموبايل وقّف سكون في الخلفية: راجع بنود البطارية في أنت ← المنبّهات.</string>
 </resources>

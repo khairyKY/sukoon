@@ -92,6 +92,7 @@ import com.sukoon.app.ui.theme.SageLight
 import com.sukoon.app.alarms.AlarmLog
 import android.net.Uri
 import androidx.compose.material3.HorizontalDivider
+import com.sukoon.app.data.source.GlucoseReading
 
 /** The You tab's sections (design "You, divided"): each opens its own page from the hub. */
 private enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
@@ -144,6 +145,8 @@ fun SettingsScreen(
     buildCsv: suspend (Int) -> Pair<String, Int>,
     modifier: Modifier = Modifier,
     alarmLog: List<AlarmLog.Entry> = emptyList(),
+    /** The last 24 hours of readings, for the sensor page's connection note. */
+    dayOfReadings: suspend () -> List<GlucoseReading> = { emptyList() },
 ) {
     val context = LocalContext.current
     var page by rememberSaveable { mutableStateOf<YouPage?>(null) }
@@ -198,6 +201,11 @@ fun SettingsScreen(
                                 context.toast(context.getString(R.string.toast_sensor_forgotten))
                             },
                         )
+                        if (pairing != null && sourceKind == SourceKind.LIBRE_BLE) {
+                            Gap()
+                            SectionLabel(stringResource(R.string.sensor_connection_title))
+                            ConnectionHealth(dayOfReadings, saveIntervalMinutes)
+                        }
                         Gap()
                         SectionLabel(stringResource(R.string.settings_source_title))
                         if (pairing != null) {
