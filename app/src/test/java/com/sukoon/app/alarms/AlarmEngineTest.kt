@@ -3,6 +3,7 @@ package com.sukoon.app.alarms
 import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.data.source.SourceKind
 import com.sukoon.app.data.source.TrendDirection
+import java.time.Duration
 import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -116,5 +117,16 @@ class AlarmEngineTest {
         assertEquals(60, s.lowMgDl) // can't sit at or below urgent (55)
         assertEquals(400, s.highMgDl)
         assertEquals(10, s.signalLossMinutes)
+    }
+
+    @Test
+    fun `no readings keeps repeating every 30 minutes however old the last reading is`() {
+        val t0 = Instant.parse("2026-10-07T03:00:00Z")
+        val last = GlucoseReading(t0, 120, TrendDirection.STEADY, SourceKind.LIBRE_BLE)
+        val first = AlarmEngine.evaluate(listOf(last), t0.plus(Duration.ofMinutes(20)), AlarmSettings(), AlarmState())
+        assertEquals(listOf(AlarmType.SIGNAL_LOSS), first.fire.map { it.type })
+        val later = AlarmEngine.evaluate(listOf(last), t0.plus(Duration.ofMinutes(50)), AlarmSettings(), first.state)
+        assertEquals(listOf(AlarmType.SIGNAL_LOSS), later.fire.map { it.type }) // an hour-old reading still counts
+        assertTrue(later.cleared.isEmpty())
     }
 }

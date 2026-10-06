@@ -38,6 +38,9 @@
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- SignalWatchdog: wake Sukoon on time if the phone stopped it (exact alarms; USE_EXACT_ALARM from 13, SCHEDULE before). -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
     <uses-feature android:name="android.hardware.telephony" android:required="false" />
 
     <!-- Health Connect (health/HealthConnectSync.kt): meals in, glucose out. -->
@@ -141,6 +144,10 @@
 
         <receiver
             android:name=".alarms.AlarmActionReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".alarms.SignalWatchdog"
             android:exported="false" />
 
         <receiver

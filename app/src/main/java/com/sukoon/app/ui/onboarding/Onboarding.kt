@@ -93,6 +93,7 @@ import com.sukoon.app.ui.theme.StateHigh
 import com.sukoon.app.ui.theme.StateLow
 import java.util.Locale
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.collectAsState
 
 private enum class Step { WELCOME, ROLE, ACCOUNT, SENSOR, PERMISSIONS, ALARMS, EMERGENCY, EXTRAS, CODE, FOLLOW_ALERTS, READY }
 
@@ -623,7 +624,8 @@ private fun ReadyStep(container: AppContainer, onDone: () -> Unit) {
                 Done(life != null && life !is SensorLife.Ended, stringResource(R.string.ob_done_sensor))
                 Done(true, stringResource(R.string.ob_done_alarms))
                 Done(contacts.isNotEmpty(), if (contacts.isNotEmpty()) stringResource(R.string.ob_done_contact, contacts.first().name) else stringResource(R.string.ob_done_no_contact))
-                Done(container.sharing.supabase.session.value != null, stringResource(R.string.ob_done_sharing))
+                val session by container.sharing.supabase.session.collectAsState()
+                Done(session != null, stringResource(R.string.ob_done_sharing))
             }
         }
         PrimaryButton(stringResource(R.string.ob_go_home), onClick = onDone)

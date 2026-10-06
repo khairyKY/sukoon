@@ -41,6 +41,8 @@ class AlarmMonitor(
     private val emergency: EmergencyAlerts,
     private val scope: CoroutineScope,
     private val enabled: () -> Boolean,
+    /** Re-arms [SignalWatchdog] (wake Sukoon after this long without a reading). */
+    private val watchdog: (Duration) -> Unit = {},
 ) {
     private val mutex = Mutex()
     private var state = AlarmState()
@@ -67,6 +69,8 @@ class AlarmMonitor(
     fun start() {
         scope.launch {
             repository.readingsSince(System.currentTimeMillis() - WINDOW.toMillis()).first().forEach(::keep)
+            // However old: after a restart with the sensor quiet for an hour, "no readings" must still go off.
+            repository.latestReading.first()?.let(::keep)
             val minuteTicks = flow {
                 while (true) {
                     emit(null)
@@ -75,7 +79,10 @@ class AlarmMonitor(
             }
             merge(repository.liveReadings.map<GlucoseReading, GlucoseReading?> { it }, minuteTicks).collect { reading ->
                 mutex.withLock {
-                    if (reading != null) keep(reading)
+                    if (reading != null) {
+                        keep(reading)
+                        if (enabled()) watchdog(Duration.ofMinutes(settings.alarmSettings.signalLossMinutes + WATCHDOG_SLACK_MINUTES))
+                    }
                     evaluateLocked()
                 }
             }
@@ -157,7 +164,9 @@ class AlarmMonitor(
             _escalation.value = EscalationPhase.Idle
             return
         }
-        val result = AlarmEngine.evaluate(recent.values.toList(), now, settings.alarmSettings, state)
+        // The newest reading always counts, however old: the 30-minute window alone would forget it and end
+        // "no readings" (and its emergency escalation) half an hour after the sensor went quiet.
+        val result = AlarmEngine.evaluate((recent.values + listOfNotNull(newest)).distinct(), now, settings.alarmSettings, state)
         state = result.state
         _active.value = state.activeSince.keys // before showing: the alert screen checks it as it opens
         result.cleared.forEach {
@@ -205,6 +214,7 @@ class AlarmMonitor(
 
     private companion object {
         val WINDOW: Duration = Duration.ofMinutes(30)
+        const val WATCHDOG_SLACK_MINUTES = 2L
         val TEST_VALUES = mapOf(AlarmType.URGENT_LOW to 52, AlarmType.LOW to 64, AlarmType.GOING_LOW to 82, AlarmType.HIGH to 262)
     }
 }

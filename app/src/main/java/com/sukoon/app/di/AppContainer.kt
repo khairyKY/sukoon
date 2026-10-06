@@ -54,6 +54,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import com.sukoon.app.data.repository.EntryPhotos
 import com.sukoon.app.alarms.AlarmLog
+import com.sukoon.app.alarms.SignalWatchdog
 
 /**
  * Manual dependency container (ponytail: no Hilt/Koin for a graph this small). Owns the
@@ -131,6 +132,7 @@ class AppContainer(private val context: Context) {
         emergency = emergency,
         scope = appScope,
         enabled = { _sourceKind.value == SourceKind.LIBRE_BLE },
+        watchdog = { SignalWatchdog.arm(context, it) },
     )
 
     val followerWatch = FollowerWatch(context, sharing, settings, notifier, appScope)

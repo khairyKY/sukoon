@@ -46,6 +46,11 @@ android {
         jvmTarget = "17"
     }
 
+    lint {
+        // False positive with Kotlin 2 (K2 UAST): it flags produceState lambdas that do assign `value`.
+        disable += "ProduceStateDoesNotAssignValue"
+    }
+
     buildFeatures {
         compose = true
         buildConfig = true // About screen shows the version
