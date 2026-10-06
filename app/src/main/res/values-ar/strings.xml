@@ -960,4 +960,20 @@
     <string name="home_btn_log_carbs">سجّل اللي أخدته</string>
     <string name="home_headline_still_low">لسه واطي. خد ١٥ جرام كمان.</string>
     <string name="home_low_again_action">عدّت ١٥ دقيقة ولسه تحت ٧٠: خد ١٥ جرام سكريات سريعة كمان (عصير، أقراص جلوكوز)، وبعدين دوس عالجته تاني.</string>
+    <string name="alarms_see_hear">شوف واسمع كل منبّه</string>
+    <string name="alarms_preview_body">اسمع بيشغّل الصوت ٥ ثواني. شوف بيعرض التنبيه كله بصوته، ومكتوب عليه تجربة.</string>
+    <string name="alarms_hear">اسمع</string>
+    <string name="alarms_see">شوف</string>
+    <string name="alarms_sound_phone">صوت الموبايل</string>
+    <string name="alarms_hours">%1$d س</string>
+    <string name="alarms_always_on">شغّال دايمًا</string>
+    <string name="alarms_sum_urgent">تحت %1$d · %2$s · تأجيل لحد ٥ دقايق</string>
+    <string name="alarms_sum_low">تحت %1$d · %2$s · تأجيل %3$s</string>
+    <string name="alarms_sum_going_low">هبوط خلال ٢٠ دقيقة · %1$s</string>
+    <string name="alarms_sum_high">فوق %1$d · %2$s · تأجيل %3$s</string>
+    <string name="alarms_sum_signal">بعد %1$d دقيقة · %2$s · تأجيل ٣٠ دقيقة</string>
+    <string name="alarms_sum_quiet">%1$s–%2$s · الهبوط بيرن دايمًا</string>
+    <string name="alarms_line_low">يرن تحت</string>
+    <string name="alarms_line_high">يرن فوق</string>
+    <string name="alarms_signal_after">يرن بعد</string>
 </resources>

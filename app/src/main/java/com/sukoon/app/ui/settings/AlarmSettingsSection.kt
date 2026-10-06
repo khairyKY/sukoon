@@ -28,7 +28,6 @@ import com.sukoon.app.data.prefs.SettingsPrefs
 import com.sukoon.app.ui.components.NumberChips
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.Sage
-import com.sukoon.app.ui.theme.StateUrgent
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -65,6 +64,24 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.ui.res.painterResource
+import com.sukoon.app.ui.logbook.outline
+import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
+import com.sukoon.app.ui.theme.SageDeep
+import com.sukoon.app.ui.theme.StateHigh
+import com.sukoon.app.ui.theme.StateLow
+import com.sukoon.app.ui.theme.TextMuted
 
 private val LOW_LEVELS = listOf(60, 65, 70, 75, 80, 90, 100)
 private val HIGH_LEVELS = listOf(180, 200, 220, 250, 280, 300, 350)
@@ -74,7 +91,7 @@ private val HIGH_SNOOZES = listOf(30, 60, 120)
 
 /** You → Alarms. Urgent low is shown but not editable: it's always on at 55. Every alarm can have its own sound. */
 @Composable
-fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> Unit, onTest: () -> Unit, onPreview: (AlarmType) -> Unit) {
+fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> Unit, onTest: (AlarmType) -> Unit, onPreview: (AlarmType) -> Unit) {
     val context = LocalContext.current
     var pickingFor by rememberSaveable { mutableStateOf<AlarmType?>(null) }
     fun setSound(type: AlarmType, sound: AlarmSound?) {
@@ -131,61 +148,236 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
         onPlay = { onPreview(type) },
     )
 
-    Card {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+    var open by rememberSaveable { mutableStateOf<AlarmType?>(null) }
+    var previewing by rememberSaveable { mutableStateOf(false) }
+    fun toggleOpen(type: AlarmType) {
+        open = if (open == type) null else type
+    }
+    @Composable
+    fun soundName(type: AlarmType) = settings.sounds[type]?.name ?: stringResource(R.string.alarms_sound_phone)
+
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 50.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.5.dp, Sage, RoundedCornerShape(14.dp))
+            .clickable { previewing = true },
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(painterResource(R.drawable.ic_play), contentDescription = null, tint = SageDeep, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(stringResource(R.string.alarms_see_hear), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = SageDeep)
+    }
+    Spacer(Modifier.height(12.dp))
+
+    ListCard {
+        AlarmRow(
+            AlarmType.URGENT_LOW,
+            stringResource(R.string.alarms_sum_urgent, AlarmSettings.URGENT_LOW_MG_DL, soundName(AlarmType.URGENT_LOW)),
+            on = null,
+            open = open == AlarmType.URGENT_LOW,
+            onOpen = { toggleOpen(AlarmType.URGENT_LOW) },
+        ) {
+            Text(stringResource(R.string.alarms_urgent_body, AlarmSettings.URGENT_LOW_MG_DL), fontSize = 12.5.sp, color = CaptionMuted)
+            Sound(AlarmType.URGENT_LOW)
+        }
+        AlarmRow(
+            AlarmType.LOW,
+            stringResource(R.string.alarms_sum_low, settings.lowMgDl, soundName(AlarmType.LOW), snoozeLabel(settings.lowSnoozeMinutes)),
+            on = settings.lowEnabled,
+            open = open == AlarmType.LOW,
+            onOpen = { toggleOpen(AlarmType.LOW) },
+            onToggle = { onChange(settings.copy(lowEnabled = it)) },
+        ) {
+            Label(R.string.alarms_line_low)
+            NumberChips(LOW_LEVELS, settings.lowMgDl, 60..110, { stringResource(R.string.alarms_below, it) }, enabled = settings.lowEnabled) {
+                onChange(settings.copy(lowMgDl = it))
+            }
+            Label(R.string.alarms_low_repeat)
+            NumberChips(LOW_SNOOZES, settings.lowSnoozeMinutes, 5..60, { stringResource(R.string.alarms_minutes, it) }, enabled = settings.lowEnabled) {
+                onChange(settings.copy(lowSnoozeMinutes = it))
+            }
+            Sound(AlarmType.LOW, settings.lowEnabled)
+        }
+        AlarmRow(
+            AlarmType.GOING_LOW,
+            stringResource(R.string.alarms_sum_going_low, soundName(AlarmType.GOING_LOW)),
+            on = settings.goingLowEnabled,
+            open = open == AlarmType.GOING_LOW,
+            onOpen = { toggleOpen(AlarmType.GOING_LOW) },
+            onToggle = { onChange(settings.copy(goingLowEnabled = it)) },
+        ) {
+            Text(stringResource(R.string.alarms_going_low_body), fontSize = 12.5.sp, color = CaptionMuted)
+            Sound(AlarmType.GOING_LOW, settings.goingLowEnabled)
+        }
+        AlarmRow(
+            AlarmType.HIGH,
+            stringResource(R.string.alarms_sum_high, settings.highMgDl, soundName(AlarmType.HIGH), snoozeLabel(settings.highSnoozeMinutes)),
+            on = settings.highEnabled,
+            open = open == AlarmType.HIGH,
+            onOpen = { toggleOpen(AlarmType.HIGH) },
+            onToggle = { onChange(settings.copy(highEnabled = it)) },
+        ) {
+            Label(R.string.alarms_line_high)
+            NumberChips(HIGH_LEVELS, settings.highMgDl, 150..400, { stringResource(R.string.alarms_above, it) }, enabled = settings.highEnabled) {
+                onChange(settings.copy(highMgDl = it))
+            }
+            Label(R.string.alarms_high_repeat)
+            NumberChips(HIGH_SNOOZES, settings.highSnoozeMinutes, 15..240, { stringResource(R.string.alarms_minutes, it) }, enabled = settings.highEnabled) {
+                onChange(settings.copy(highSnoozeMinutes = it))
+            }
+            Sound(AlarmType.HIGH, settings.highEnabled)
+        }
+        AlarmRow(
+            AlarmType.SIGNAL_LOSS,
+            stringResource(R.string.alarms_sum_signal, settings.signalLossMinutes, soundName(AlarmType.SIGNAL_LOSS)),
+            on = settings.signalLossEnabled,
+            open = open == AlarmType.SIGNAL_LOSS,
+            onOpen = { toggleOpen(AlarmType.SIGNAL_LOSS) },
+            onToggle = { onChange(settings.copy(signalLossEnabled = it)) },
+            last = true,
+        ) {
+            Label(R.string.alarms_signal_after)
+            NumberChips(SIGNAL_MINUTES, settings.signalLossMinutes, 10..120, { stringResource(R.string.alarms_after_minutes, it) }, enabled = settings.signalLossEnabled) {
+                onChange(settings.copy(signalLossMinutes = it))
+            }
+            Sound(AlarmType.SIGNAL_LOSS, settings.signalLossEnabled)
+        }
+    }
+    Spacer(Modifier.height(12.dp))
+
+    // Quiet highs at night: one row, the hours open under it while it's on.
+    val quiet = settings.quietHighsFrom >= 0
+    ListCard {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Icon(painterResource(R.drawable.ic_moon), contentDescription = null, tint = TextMuted, modifier = Modifier.size(18.dp))
             Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.alarms_urgent), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = StateUrgent)
-                Text(stringResource(R.string.alarms_urgent_body, AlarmSettings.URGENT_LOW_MG_DL), fontSize = 12.sp, color = CaptionMuted)
+                Text(stringResource(R.string.alarms_quiet), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                Text(
+                    if (quiet) stringResource(R.string.alarms_sum_quiet, hourLabel(settings.quietHighsFrom), hourLabel(settings.quietHighsTo)) else stringResource(R.string.alarms_quiet_body),
+                    fontSize = 12.5.sp,
+                    color = CaptionMuted,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
             }
-            Box(
-                Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(StateUrgent)
-                    .clickable(onClick = onTest)
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
-            ) {
-                Text(stringResource(R.string.alarms_test), color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp)
+            Switch(
+                checked = quiet,
+                onCheckedChange = { on -> onChange(if (on) settings.copy(quietHighsFrom = 23, quietHighsTo = 7) else settings.copy(quietHighsFrom = -1, quietHighsTo = -1)) },
+                colors = SwitchDefaults.colors(checkedTrackColor = Sage),
+            )
+        }
+        AnimatedVisibility(quiet) {
+            Column(Modifier.fillMaxWidth().padding(start = 44.dp, end = 14.dp, bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Label(R.string.alarms_quiet_from)
+                NumberChips(listOf(21, 22, 23, 0), settings.quietHighsFrom, 0..23, { hourLabel(it) }) { onChange(settings.copy(quietHighsFrom = it)) }
+                Label(R.string.alarms_quiet_to)
+                NumberChips(listOf(6, 7, 8, 9), settings.quietHighsTo, 0..23, { hourLabel(it) }) { onChange(settings.copy(quietHighsTo = it)) }
             }
         }
-        Sound(AlarmType.URGENT_LOW)
+    }
 
-        Toggle(R.string.alarms_low, R.string.alarms_low_body, settings.lowEnabled) { onChange(settings.copy(lowEnabled = it)) }
-        NumberChips(LOW_LEVELS, settings.lowMgDl, 60..110, { stringResource(R.string.alarms_below, it) }, enabled = settings.lowEnabled) {
-            onChange(settings.copy(lowMgDl = it))
-        }
-        Label(R.string.alarms_low_repeat)
-        NumberChips(LOW_SNOOZES, settings.lowSnoozeMinutes, 5..60, { stringResource(R.string.alarms_minutes, it) }, enabled = settings.lowEnabled) {
-            onChange(settings.copy(lowSnoozeMinutes = it))
-        }
-        Sound(AlarmType.LOW, settings.lowEnabled)
+    if (previewing) SeeAndHear(onDismiss = { previewing = false }, onHear = onPreview, onSee = { previewing = false; onTest(it) })
+}
 
-        Toggle(R.string.alarms_going_low, R.string.alarms_going_low_body, settings.goingLowEnabled) { onChange(settings.copy(goingLowEnabled = it)) }
-        Sound(AlarmType.GOING_LOW, settings.goingLowEnabled)
+/** "15 min", "1 h", "2 h": how long an alarm stays quiet after its snooze. */
+@Composable
+private fun snoozeLabel(minutes: Int) =
+    if (minutes >= 60 && minutes % 60 == 0) stringResource(R.string.alarms_hours, minutes / 60) else stringResource(R.string.alarms_minutes, minutes)
 
-        Toggle(R.string.alarms_high, R.string.alarms_high_body, settings.highEnabled) { onChange(settings.copy(highEnabled = it)) }
-        NumberChips(HIGH_LEVELS, settings.highMgDl, 150..400, { stringResource(R.string.alarms_above, it) }, enabled = settings.highEnabled) {
-            onChange(settings.copy(highMgDl = it))
-        }
-        Label(R.string.alarms_high_repeat)
-        NumberChips(HIGH_SNOOZES, settings.highSnoozeMinutes, 15..240, { stringResource(R.string.alarms_minutes, it) }, enabled = settings.highEnabled) {
-            onChange(settings.copy(highSnoozeMinutes = it))
-        }
-        Toggle(R.string.alarms_quiet, R.string.alarms_quiet_body, settings.quietHighsFrom >= 0) { on ->
-            onChange(if (on) settings.copy(quietHighsFrom = 22, quietHighsTo = 7) else settings.copy(quietHighsFrom = -1, quietHighsTo = -1))
-        }
-        if (settings.quietHighsFrom >= 0) {
-            Label(R.string.alarms_quiet_from)
-            NumberChips(listOf(21, 22, 23, 0), settings.quietHighsFrom, 0..23, { hourLabel(it) }) { onChange(settings.copy(quietHighsFrom = it)) }
-            Label(R.string.alarms_quiet_to)
-            NumberChips(listOf(6, 7, 8, 9), settings.quietHighsTo, 0..23, { hourLabel(it) }) { onChange(settings.copy(quietHighsTo = it)) }
-        }
-        Sound(AlarmType.HIGH, settings.highEnabled)
+@Composable
+private fun ListCard(content: @Composable ColumnScope.() -> Unit) = Column(
+    Modifier
+        .fillMaxWidth()
+        .clip(RoundedCornerShape(18.dp))
+        .background(MaterialTheme.colorScheme.surface)
+        .border(1.dp, outline(), RoundedCornerShape(18.dp)),
+    content = content,
+)
 
-        Toggle(R.string.alarms_signal, R.string.alarms_signal_body, settings.signalLossEnabled) { onChange(settings.copy(signalLossEnabled = it)) }
-        NumberChips(SIGNAL_MINUTES, settings.signalLossMinutes, 10..120, { stringResource(R.string.alarms_after_minutes, it) }, enabled = settings.signalLossEnabled) {
-            onChange(settings.copy(signalLossMinutes = it))
+/** One alarm: its colour, name and settings in a line, its switch (a lock for urgent low); tap to open its settings. */
+@Composable
+private fun AlarmRow(
+    type: AlarmType,
+    summary: String,
+    on: Boolean?,
+    open: Boolean,
+    onOpen: () -> Unit,
+    onToggle: (Boolean) -> Unit = {},
+    last: Boolean = false,
+    details: @Composable ColumnScope.() -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        AlarmDot(type)
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(alarmLabel(type)), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+            Text(summary, fontSize = 12.5.sp, color = CaptionMuted, modifier = Modifier.padding(top = 2.dp))
         }
-        Sound(AlarmType.SIGNAL_LOSS, settings.signalLossEnabled)
+        if (on == null) {
+            Icon(painterResource(R.drawable.ic_lock), contentDescription = stringResource(R.string.alarms_always_on), tint = TextMuted, modifier = Modifier.size(18.dp))
+        } else {
+            Switch(checked = on, onCheckedChange = onToggle, colors = SwitchDefaults.colors(checkedTrackColor = Sage))
+        }
+    }
+    AnimatedVisibility(open) {
+        Column(Modifier.fillMaxWidth().padding(start = 36.dp, end = 14.dp, bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp), content = details)
+    }
+    if (!last) HorizontalDivider(color = outline().copy(alpha = 0.08f))
+}
+
+/** Lows coral (going low as a ring: not there yet), highs amber, no readings grey. */
+@Composable
+private fun AlarmDot(type: AlarmType) {
+    val color = when (type) {
+        AlarmType.URGENT_LOW, AlarmType.LOW, AlarmType.GOING_LOW -> StateLow
+        AlarmType.HIGH -> StateHigh
+        AlarmType.SIGNAL_LOSS -> TextMuted
+    }
+    val dot = Modifier.size(10.dp).clip(CircleShape)
+    Box(if (type == AlarmType.GOING_LOW) dot.border(2.dp, color, CircleShape) else dot.background(color))
+}
+
+/** Every alarm in turn: hear its sound for 5 seconds, or see its full alert (marked TEST). */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SeeAndHear(onDismiss: () -> Unit, onHear: (AlarmType) -> Unit, onSee: (AlarmType) -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = MaterialTheme.colorScheme.background) {
+        Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 28.dp)) {
+            Text(stringResource(R.string.alarms_see_hear), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.alarms_preview_body), fontSize = 13.sp, color = CaptionMuted, modifier = Modifier.padding(top = 6.dp, bottom = 14.dp))
+            ListCard {
+                AlarmType.entries.forEachIndexed { i, type ->
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        AlarmDot(type)
+                        Text(stringResource(alarmLabel(type)), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
+                        PillButton(stringResource(R.string.alarms_hear), filled = false) { onHear(type) }
+                        PillButton(stringResource(R.string.alarms_see), filled = true) { onSee(type) }
+                    }
+                    if (i < AlarmType.entries.lastIndex) HorizontalDivider(color = outline().copy(alpha = 0.08f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PillButton(label: String, filled: Boolean, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .heightIn(min = 40.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .then(if (filled) Modifier.background(Sage) else Modifier.border(1.dp, outline(), RoundedCornerShape(20.dp)))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (filled) Color.White else MaterialTheme.colorScheme.onBackground)
     }
 }
 
@@ -266,7 +458,7 @@ fun AlarmReach(sensorIsSource: Boolean) {
     SetupChecklist(only = ALARM_SETUP)
 }
 
-private val ALARM_SETUP = setOf(SetupItem.NOTIFICATIONS, SetupItem.FULL_SCREEN, SetupItem.OVERLAY, SetupItem.DND, SetupItem.BATTERY)
+internal val ALARM_SETUP = setOf(SetupItem.NOTIFICATIONS, SetupItem.FULL_SCREEN, SetupItem.OVERLAY, SetupItem.DND, SetupItem.BATTERY)
 
 /** The last alarms, newest first: each one that went off (and what got through), each answer, each ending. */
 @Composable
@@ -333,17 +525,6 @@ private fun Card(content: @Composable () -> Unit) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) { content() }
-}
-
-@Composable
-private fun Toggle(titleRes: Int, bodyRes: Int, checked: Boolean, onChange: (Boolean) -> Unit) {
-    Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text(stringResource(titleRes), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-            Text(stringResource(bodyRes), fontSize = 12.sp, color = CaptionMuted)
-        }
-        Switch(checked = checked, onCheckedChange = onChange, colors = SwitchDefaults.colors(checkedTrackColor = Sage))
-    }
 }
 
 @Composable

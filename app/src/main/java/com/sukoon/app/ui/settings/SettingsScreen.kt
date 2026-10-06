@@ -119,7 +119,7 @@ fun SettingsScreen(
     onSaveGeminiKey: (String) -> Unit,
     alarmSettings: AlarmSettings,
     onAlarmSettings: (AlarmSettings) -> Unit,
-    onTestAlarm: () -> Unit,
+    onTestAlarm: (AlarmType) -> Unit,
     onPreviewAlarm: (AlarmType) -> Unit,
     emergency: EmergencySettings,
     emergencyAlerts: EmergencyAlerts,
@@ -216,11 +216,20 @@ fun SettingsScreen(
                         CalibrationSection(calibration)
                     }
                     YouPage.ALARMS -> {
-                        SectionLabel(stringResource(R.string.alarms_reach_title))
-                        AlarmReach(sensorIsSource = sourceKind == SourceKind.LIBRE_BLE)
-                        Gap()
+                        // Whether alarms can reach you goes first while something stops them, else after the alarms (design "You · Alarms").
+                        val blocked = sourceKind != SourceKind.LIBRE_BLE || missing.any { it in ALARM_SETUP }
+                        if (blocked) {
+                            SectionLabel(stringResource(R.string.alarms_reach_title))
+                            AlarmReach(sensorIsSource = sourceKind == SourceKind.LIBRE_BLE)
+                            Gap()
+                        }
                         AlarmSettingsSection(alarmSettings, onAlarmSettings, onTestAlarm, onPreviewAlarm)
                         Gap()
+                        if (!blocked) {
+                            SectionLabel(stringResource(R.string.alarms_reach_title))
+                            AlarmReach(sensorIsSource = true)
+                            Gap()
+                        }
                         SectionLabel(stringResource(R.string.alarms_history_title))
                         AlarmHistory(alarmLog)
                     }

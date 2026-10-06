@@ -120,7 +120,7 @@ class AlarmActivity : ComponentActivity() {
                         val treatable = s.person == null && (s.type == AlarmType.URGENT_LOW || s.type == AlarmType.LOW)
                         fun snooze(minutes: Int, treated: Boolean) = answer {
                             when {
-                                s.test -> container.alarms.endTest()
+                                s.test -> container.alarms.endTest(s.type)
                                 s.person != null -> container.followerWatch.acknowledge(s.person, s.type, minutes)
                                 else -> container.alarms.acknowledge(s.type, minutes, treated = treated)
                             }

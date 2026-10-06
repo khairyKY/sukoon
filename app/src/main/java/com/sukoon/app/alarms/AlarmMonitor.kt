@@ -115,8 +115,8 @@ class AlarmMonitor(
         lows.forEach { acknowledge(it, if (it == AlarmType.URGENT_LOW) 5 else settings.alarmSettings.lowSnoozeMinutes, treated = true) }
     }
 
-    /** Answering the test alarm: stop it without touching a real alarm's state. */
-    fun endTest() = notifier.cancel(AlarmType.URGENT_LOW)
+    /** Answering a test alarm: stop it without touching a real alarm's state. */
+    fun endTest(type: AlarmType) = notifier.cancel(type)
 
     /** "I'm OK": answers the escalated alarm; if the texts already went out, tells the contacts so they can stand down. */
     suspend fun imOk() {
@@ -135,8 +135,8 @@ class AlarmMonitor(
         }
     }
 
-    /** You → Alarms → Test: the real urgent-low path (sound, notification, full screen), marked as a test. */
-    fun test() = notifier.show(Alert(AlarmType.URGENT_LOW, 52, 0), settings.alarmSettings, test = true)
+    /** You → Alarms → See and hear: [type]'s real path (sound, notification, full screen) with a sample value, marked as a test. */
+    fun test(type: AlarmType) = notifier.show(Alert(type, TEST_VALUES[type], 25), settings.alarmSettings, test = true)
 
     /** You → Alarms → a sound's "Play it". */
     fun preview(type: AlarmType) = notifier.preview(type, settings.alarmSettings)
@@ -205,5 +205,6 @@ class AlarmMonitor(
 
     private companion object {
         val WINDOW: Duration = Duration.ofMinutes(30)
+        val TEST_VALUES = mapOf(AlarmType.URGENT_LOW to 52, AlarmType.LOW to 64, AlarmType.GOING_LOW to 82, AlarmType.HIGH to 262)
     }
 }

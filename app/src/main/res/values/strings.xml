@@ -960,4 +960,20 @@
     <string name="home_btn_log_carbs">Log what you had</string>
     <string name="home_headline_still_low">Still low. Have another 15 g.</string>
     <string name="home_low_again_action">It\'s been 15 minutes and you\'re still under 70: have another 15 g of fast carbs (juice, glucose tablets), then press I\'ve treated it again.</string>
+    <string name="alarms_see_hear">See and hear each alarm</string>
+    <string name="alarms_preview_body">Hear plays its sound for 5 seconds. See shows the whole alert, marked TEST, with its sound.</string>
+    <string name="alarms_hear">Hear</string>
+    <string name="alarms_see">See</string>
+    <string name="alarms_sound_phone">phone sound</string>
+    <string name="alarms_hours">%1$d h</string>
+    <string name="alarms_always_on">Always on</string>
+    <string name="alarms_sum_urgent">Below %1$d · %2$s · snooze up to 5 min</string>
+    <string name="alarms_sum_low">Below %1$d · %2$s · snooze %3$s</string>
+    <string name="alarms_sum_going_low">Low within 20 min · %1$s</string>
+    <string name="alarms_sum_high">Above %1$d · %2$s · snooze %3$s</string>
+    <string name="alarms_sum_signal">After %1$d min · %2$s · snooze 30 min</string>
+    <string name="alarms_sum_quiet">%1$s–%2$s · lows always sound</string>
+    <string name="alarms_line_low">Sound below</string>
+    <string name="alarms_line_high">Sound above</string>
+    <string name="alarms_signal_after">Sound after</string>
 </resources>
