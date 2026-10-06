@@ -222,7 +222,6 @@
     <string name="setup_oem_why">سامسونج وغيرها بيحطّوا الأبلكيشنز في وضع نوم. خلّي سكون “مش بينام” / غير مقيّد.</string>
     <string name="setup_allow">اسمح</string>
     <string name="setup_open">افتح</string>
-    <string name="setup_banner">لسه %1$d إعدادات محتاجة تتظبط علشان القرايات والتنبيهات تبقى مضمونة.</string>
     <string name="setup_fix">ظبّط</string>
     <string name="setup_later">بعدين</string>
 
@@ -995,6 +994,21 @@
     <string name="apps_ai_key_ending">مفتاح Gemini آخره %1$s</string>
     <string name="sensor_connection_title">الاتصال</string>
     <string name="sensor_gaps_none">آخر ٢٤ ساعة: مفيش انقطاع في القراءات.</string>
-    <string name="sensor_gaps">آخر ٢٤ ساعة: %1$d انقطاع، أطولهم %2$d دقيقة الساعة %3$s.</string>
     <string name="sensor_gaps_why">الانقطاع غالبًا معناه إن الموبايل كان بعيد عن الحساس (كام متر، وأقل لو فيه جسم أو حيطة في النص)، أو إن الموبايل وقّف سكون في الخلفية: راجع بنود البطارية في أنت ← المنبّهات.</string>
+    <plurals name="setup_banner">
+        <item quantity="zero">كل الإعدادات متظبطة.</item>
+        <item quantity="one">لسه إعداد واحد محتاج يتظبط علشان القرايات والتنبيهات تبقى مضمونة.</item>
+        <item quantity="two">لسه إعدادين محتاجين يتظبطوا علشان القرايات والتنبيهات تبقى مضمونة.</item>
+        <item quantity="few">لسه %1$d إعدادات محتاجة تتظبط علشان القرايات والتنبيهات تبقى مضمونة.</item>
+        <item quantity="many">لسه %1$d إعداد محتاج يتظبط علشان القرايات والتنبيهات تبقى مضمونة.</item>
+        <item quantity="other">لسه %1$d إعداد محتاج يتظبط علشان القرايات والتنبيهات تبقى مضمونة.</item>
+    </plurals>
+    <plurals name="sensor_gaps">
+        <item quantity="zero">آخر ٢٤ ساعة: مفيش انقطاع.</item>
+        <item quantity="one">آخر ٢٤ ساعة: انقطاع واحد، %2$d دقيقة الساعة %3$s.</item>
+        <item quantity="two">آخر ٢٤ ساعة: انقطاعين، أطولهم %2$d دقيقة الساعة %3$s.</item>
+        <item quantity="few">آخر ٢٤ ساعة: %1$d انقطاعات، أطولهم %2$d دقيقة الساعة %3$s.</item>
+        <item quantity="many">آخر ٢٤ ساعة: %1$d انقطاع، أطولهم %2$d دقيقة الساعة %3$s.</item>
+        <item quantity="other">آخر ٢٤ ساعة: %1$d انقطاع، أطولهم %2$d دقيقة الساعة %3$s.</item>
+    </plurals>
 </resources>

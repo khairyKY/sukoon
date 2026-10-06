@@ -28,6 +28,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import androidx.compose.ui.res.pluralStringResource
 
 /** How steady the sensor's readings were over a day: the gaps, and the longest one. */
 internal data class ReadingGaps(val gaps: Int, val longestMinutes: Long, val longestAt: Instant?) {
@@ -61,7 +62,7 @@ fun ConnectionHealth(load: suspend () -> List<GlucoseReading>, saveEveryMinutes:
     ) {
         Text(
             if (g.gaps == 0) stringResource(R.string.sensor_gaps_none)
-            else stringResource(R.string.sensor_gaps, g.gaps, g.longestMinutes, TIME.format(g.longestAt)),
+            else pluralStringResource(R.plurals.sensor_gaps, g.gaps, g.gaps, g.longestMinutes, TIME.format(g.longestAt)),
             fontSize = 15.sp,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onBackground,

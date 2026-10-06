@@ -222,7 +222,6 @@
     <string name="setup_oem_why">Samsung and others add their own app sleeping. Set Sukoon to “Never sleeping” / Unrestricted.</string>
     <string name="setup_allow">Allow</string>
     <string name="setup_open">Open</string>
-    <string name="setup_banner">%1$d settings still needed for reliable readings and alarms.</string>
     <string name="setup_fix">Fix</string>
     <string name="setup_later">Later</string>
 
@@ -995,6 +994,13 @@
     <string name="apps_ai_key_ending">Gemini key ending %1$s</string>
     <string name="sensor_connection_title">Connection</string>
     <string name="sensor_gaps_none">Last 24 hours: no gaps in your readings.</string>
-    <string name="sensor_gaps">Last 24 hours: %1$d gaps, the longest %2$d min at %3$s.</string>
     <string name="sensor_gaps_why">Gaps usually mean the phone was out of the sensor\'s reach (a few metres, less through a body or a wall), or the phone stopped Sukoon in the background: check the battery items under You → Alarms.</string>
+    <plurals name="setup_banner">
+        <item quantity="one">One setting still needed for reliable readings and alarms.</item>
+        <item quantity="other">%1$d settings still needed for reliable readings and alarms.</item>
+    </plurals>
+    <plurals name="sensor_gaps">
+        <item quantity="one">Last 24 hours: one gap, %2$d min at %3$s.</item>
+        <item quantity="other">Last 24 hours: %1$d gaps, the longest %2$d min at %3$s.</item>
+    </plurals>
 </resources>

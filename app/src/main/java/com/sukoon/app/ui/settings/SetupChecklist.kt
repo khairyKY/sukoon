@@ -43,6 +43,7 @@ import com.sukoon.app.platform.SetupItem
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.Sage
 import com.sukoon.app.ui.theme.StateHigh
+import androidx.compose.ui.res.pluralStringResource
 
 /** Re-reads what's missing every time the app comes back to the foreground (the fixes happen in Settings). */
 @Composable
@@ -127,7 +128,7 @@ fun SetupBanner(missing: List<SetupItem>, onFix: () -> Unit, onLater: () -> Unit
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            stringResource(R.string.setup_banner, missing.size),
+            pluralStringResource(R.plurals.setup_banner, missing.size, missing.size),
             fontSize = 12.5.sp,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.weight(1f),
