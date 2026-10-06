@@ -88,6 +88,8 @@ import kotlinx.coroutines.delay
 import androidx.compose.foundation.layout.width
 import java.time.Duration
 import java.time.Instant
+import com.sukoon.app.ui.components.MiniGraph
+import com.sukoon.app.ui.theme.NeutralWarm
 
 /**
  * The Home/Now screen, in every state it can be in (docs/design-screens.md §2). Copy, colors,
@@ -598,15 +600,16 @@ private fun InsulinStillWorking(brief: Brief?) {
 @Composable
 private fun RecentChart(readings: List<GlucoseReading>, dimmed: Boolean = false) {
     if (readings.isEmpty()) return
-    val zone = remember { ZoneId.systemDefault() }
-    Column(Modifier.padding(horizontal = 20.dp).alpha(if (dimmed) 0.4f else 1f)) {
-        GlucoseChart(readings, GraphRange.H3, emptyList(), zone, height = 132.dp, interactive = false)
+    // Home keeps its bar strip (Kai, 2026-10-07); Trends has the line chart.
+    Column(Modifier.padding(horizontal = 22.dp)) {
+        MiniGraph(readings, now = Instant.now(), dimmed = dimmed)
         Text(
-            stringResource(R.string.home_last_3_hours_hint),
-            fontSize = 11.sp,
-            color = CaptionMuted,
+            text = stringResource(R.string.home_last_3_hours).uppercase(),
+            fontSize = 9.5.sp,
+            letterSpacing = 1.sp,
+            color = NeutralWarm,
+            modifier = Modifier.fillMaxWidth().padding(top = 7.dp),
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
         )
     }
 }

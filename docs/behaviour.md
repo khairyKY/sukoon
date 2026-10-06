@@ -30,7 +30,7 @@ Picked first by the sensor's life, then by the newest reading. One state at a ti
 | **Signal lost** | Newest reading older than 10 min | The last value greyed, how long ago, help to reconnect |
 | **Urgent** | Under **55** | Red banner, big number, "Do this now: 15 g fast carbs", *I've treated it* / *Alert emergency contact* |
 | **Low** | 55 to 69 | Big number, "You're going low", *I've treated it* / *Snooze 15 min* |
-| **In range** | 70 to 180 | Number, 3-hour chart, your chosen stats, the message |
+| **In range** | 70 to 180 | Number, last 3 hours as bars (one per 15 min, a low or high in it shows), your chosen stats, the message |
 | **High** | Over 180 | Same layout as in range, amber |
 
 Urgent on Home starts exactly where the urgent-low alarm does (under 55). Time-in-range figures

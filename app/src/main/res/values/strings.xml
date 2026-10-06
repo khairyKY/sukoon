@@ -1007,4 +1007,5 @@
     <string name="follow_urgent_for">Below 55 for %1$s. Call now.</string>
     <string name="follow_heading_low">%1$s is heading low.</string>
     <string name="follow_heading_low_in">Could be under 70 in about %1$d min.</string>
+    <string name="home_last_3_hours">Last 3 hours</string>
 </resources>

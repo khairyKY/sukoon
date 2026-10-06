@@ -1015,4 +1015,5 @@
     <string name="follow_urgent_for">تحت ٥٥ بقاله %1$s. اتصل دلوقتي.</string>
     <string name="follow_heading_low">سكر %1$s نازل ناحية الهبوط.</string>
     <string name="follow_heading_low_in">ممكن يبقى تحت ٧٠ في حوالي %1$d دقيقة.</string>
+    <string name="home_last_3_hours">آخر ٣ ساعات</string>
 </resources>
