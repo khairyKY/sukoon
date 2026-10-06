@@ -909,4 +909,9 @@
     <string name="stats_hint_health">هيطلب إذن من Health Connect</string>
     <string name="stats_done">تمام · %1$d من ٤</string>
     <string name="stats_full">اخترت أربعة: شيل واحد علشان تبدّله.</string>
+    <string name="you_theme">الشكل</string>
+    <string name="you_language">اللغة</string>
+    <string name="you_language_phone">بتمشي بلغة موبايلك</string>
+    <string name="you_language_note">بالعربي كل الشاشات بتتقري من اليمين للشمال، والمنبّهات والرسائل لجهات الطوارئ بتتغيّر كمان.</string>
+    <string name="you_language_old">سكون بيمشي بلغة موبايلك. غيّرها من إعدادات الموبايل.</string>
 </resources>

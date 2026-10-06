@@ -909,4 +909,9 @@
     <string name="stats_hint_health">Asks Health Connect for access</string>
     <string name="stats_done">Done · %1$d of 4</string>
     <string name="stats_full">Four chosen: untick one to swap it.</string>
+    <string name="you_theme">Theme</string>
+    <string name="you_language">Language</string>
+    <string name="you_language_phone">Follows your phone\'s language</string>
+    <string name="you_language_note">In Arabic every screen reads right to left, and alarms and texts to your contacts switch too.</string>
+    <string name="you_language_old">Sukoon follows your phone\'s language. Change it in your phone\'s settings.</string>
 </resources>

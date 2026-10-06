@@ -244,6 +244,7 @@ internal fun GlucoseChart(
     }
     val measurer = rememberTextMeasurer()
     val caption = TextStyle(fontSize = 12.sp, color = CaptionMuted)
+    val pinColors = LogEventType.entries.associateWith { colorForLogEventType(it) }
     val span = (tEnd - tStart).toFloat()
     var selected by remember(range) { mutableStateOf<GlucoseReading?>(null) }
     // Graph draw-on (motion spec): 900 ms left to right on each range; "remove animations" shows it whole.
@@ -319,7 +320,7 @@ internal fun GlucoseChart(
             events.forEach { event ->
                 if (event.timestampMillis in tStart..tEnd) {
                     val ex = x(event.timestampMillis)
-                    val color = colorForLogEventType(event.logType)
+                    val color = pinColors.getValue(event.logType)
                     val meter = event.value?.toInt()?.takeIf { event.logType == LogEventType.FINGERSTICK }
                     if (meter != null) {
                         drawCircle(Color.White, radius = 7f, center = Offset(ex, y(meter)))

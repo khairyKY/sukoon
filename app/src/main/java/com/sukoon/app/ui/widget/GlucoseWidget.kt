@@ -123,6 +123,8 @@ class GlucoseWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = GlucoseWidget()
 }
 
+private val WIDGET_CAPTION = Color(0xFF5E6B64) // CaptionMuted's light tone: widgets draw outside the app theme
+
 /** Resolved colors for one background choice; [darkGraph] picks the bitmap's line/band shade. */
 private class Palette(val background: ColorProvider, val text: ColorProvider, val muted: ColorProvider, val darkGraph: Boolean) {
     companion object {
@@ -130,10 +132,10 @@ private class Palette(val background: ColorProvider, val text: ColorProvider, va
             WidgetBackground.AUTO -> Palette(
                 DayNightColor(day = SurfaceLight, night = SurfaceDark),
                 DayNightColor(day = OnCanvasLight, night = OnCanvasDark),
-                DayNightColor(day = CaptionMuted, night = NeutralWarm),
+                DayNightColor(day = WIDGET_CAPTION, night = NeutralWarm),
                 nightNow,
             )
-            WidgetBackground.LIGHT -> Palette(ColorProvider(SurfaceLight), ColorProvider(OnCanvasLight), ColorProvider(CaptionMuted), false)
+            WidgetBackground.LIGHT -> Palette(ColorProvider(SurfaceLight), ColorProvider(OnCanvasLight), ColorProvider(WIDGET_CAPTION), false)
             WidgetBackground.DARK -> Palette(ColorProvider(SurfaceDark), ColorProvider(OnCanvasDark), ColorProvider(NeutralWarm), true)
             WidgetBackground.CLEAR -> Palette(ColorProvider(Color.Transparent), ColorProvider(Color.White), ColorProvider(Color.White.copy(alpha = 0.8f)), true)
         }

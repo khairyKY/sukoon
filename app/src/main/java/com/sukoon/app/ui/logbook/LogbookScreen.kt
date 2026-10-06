@@ -68,7 +68,6 @@ import com.sukoon.app.ui.theme.CanvasDark
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
 import com.sukoon.app.ui.theme.Motion.staggerIn
-import com.sukoon.app.ui.theme.OnCanvasLight
 import com.sukoon.app.ui.theme.PillHighBg
 import com.sukoon.app.ui.theme.PillHighText
 import com.sukoon.app.ui.theme.PillLowBg
@@ -404,7 +403,7 @@ internal fun GlucosePill(reading: GlucoseReading, label: String = String.format(
     val (background, text) = when {
         reading.glucoseMgDl < 70 -> PillLowBg to PillLowText
         reading.glucoseMgDl > 180 -> PillHighBg to PillHighText
-        else -> PillNeutralBg to OnCanvasLight
+        else -> PillNeutralBg to MaterialTheme.colorScheme.onBackground
     }
     Text(
         label,

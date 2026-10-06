@@ -5,6 +5,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.Color
 
 private val DarkColors = darkColorScheme(
     primary = SageLight,
@@ -18,7 +20,7 @@ private val DarkColors = darkColorScheme(
 )
 
 private val LightColors = lightColorScheme(
-    primary = SageDeep,
+    primary = Color(0xFF2E5C4A), // SageDeep's light tone
     onPrimary = SurfaceLight,
     secondary = Sage,
     background = CanvasLight,
@@ -34,9 +36,11 @@ fun SukoonTheme(
     content: @Composable () -> Unit,
 ) {
     val colors = if (darkTheme) DarkColors else LightColors
-    MaterialTheme(
-        colorScheme = colors,
-        typography = Typography,
-        content = content,
-    )
+    CompositionLocalProvider(LocalDarkTheme provides darkTheme) {
+        MaterialTheme(
+            colorScheme = colors,
+            typography = Typography,
+            content = content,
+        )
+    }
 }

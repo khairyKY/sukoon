@@ -371,6 +371,7 @@ private fun latestLine(r: GlucoseReading?): String {
     return "${String.format(Locale.getDefault(), "%d", r.glucoseMgDl)} ${r.trend.arrow} · $age"
 }
 
+@Composable
 private fun latestColor(r: GlucoseReading?): Color = when {
     r == null || Duration.between(r.timestamp, Instant.now()).toMinutes() > 10 -> CaptionMuted
     r.glucoseMgDl < 70 -> StateLow

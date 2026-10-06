@@ -718,8 +718,9 @@ private fun ColumnScope.WarmingUpContent(state: HomeUiState.WarmingUp) {
             verticalArrangement = Arrangement.Center,
         ) {
             Box(modifier = Modifier.size(150.dp), contentAlignment = Alignment.Center) {
+                val track = PillNeutralBg
                 androidx.compose.foundation.Canvas(modifier = Modifier.size(150.dp)) {
-                    drawCircle(color = PillNeutralBg, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 6.dp.toPx()))
+                    drawCircle(color = track, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 6.dp.toPx()))
                     drawArc(
                         color = StateHigh,
                         startAngle = -45f,

@@ -79,6 +79,16 @@ import com.sukoon.app.ui.widget.WidgetsCard
 import java.time.Duration
 import java.time.Instant
 import java.util.Locale
+import android.app.LocaleManager
+import android.os.Build
+import android.os.LocaleList
+import com.sukoon.app.ui.theme.CanvasDark
+import com.sukoon.app.ui.theme.CanvasLight
+import com.sukoon.app.ui.theme.OnCanvasDark
+import com.sukoon.app.ui.theme.OnCanvasLight
+import com.sukoon.app.ui.theme.SurfaceDark
+import com.sukoon.app.ui.theme.SurfaceLight
+import com.sukoon.app.ui.theme.SageLight
 
 /** The You tab's sections (design "You, divided"): each opens its own page from the hub. */
 private enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
@@ -160,7 +170,7 @@ fun SettingsScreen(
                     YouPage.INSULIN to stringResource(R.string.you_insulin_summary, insulinAction.peakMinutes, formatHours(insulinAction.durationMinutes)),
                     YouPage.APPS to stringResource(R.string.you_apps_summary),
                     YouPage.REPORTS to stringResource(R.string.you_reports_summary),
-                    YouPage.APPEARANCE to themeLabel(themeMode),
+                    YouPage.APPEARANCE to "${themeLabel(themeMode)} · ${languageLabel()}",
                     YouPage.HELP to stringResource(R.string.you_help_summary),
                 )
                 YouPage.entries.chunked(2).forEach { row ->
@@ -229,8 +239,11 @@ fun SettingsScreen(
                         ExportSection(buildCsv)
                     }
                     YouPage.APPEARANCE -> {
-                        SectionLabel(stringResource(R.string.appearance_title))
-                        ChoiceChips(ThemeMode.entries, themeMode, { themeLabel(it) }) { onThemeMode(it) }
+                        SectionLabel(stringResource(R.string.you_theme))
+                        ThemeCards(themeMode, onThemeMode)
+                        Gap()
+                        SectionLabel(stringResource(R.string.you_language))
+                        LanguageChoice()
                         Gap()
                         SectionLabel(stringResource(R.string.widgets_title))
                         WidgetsCard()
@@ -390,6 +403,18 @@ private fun themeLabel(mode: ThemeMode): String = stringResource(
     },
 )
 
+/** The app's language as chosen in Appearance ("English", "العربية", or "Like the phone"). */
+@Composable
+private fun languageLabel(): String {
+    if (Build.VERSION.SDK_INT < 33) return stringResource(R.string.theme_auto)
+    val chosen = LocalContext.current.getSystemService(LocaleManager::class.java).applicationLocales.takeIf { !it.isEmpty }?.get(0)?.language
+    return when (chosen) {
+        "en" -> "English"
+        "ar" -> "العربية"
+        else -> stringResource(R.string.theme_auto)
+    }
+}
+
 private fun formatHours(minutes: Int): String =
     if (minutes % 60 == 0) String.format(Locale.getDefault(), "%d", minutes / 60) else String.format(Locale.getDefault(), "%.1f", minutes / 60.0)
 
@@ -413,6 +438,88 @@ private fun AiKey(geminiKey: String, onSave: (String) -> Unit) {
         context.toast(context.getString(if (keyInput.isBlank()) R.string.toast_ai_key_removed else R.string.settings_ai_saved))
     }
     if (geminiKey.isNotBlank()) Text(stringResource(R.string.settings_ai_saved), fontSize = 11.5.sp, color = Sage, modifier = Modifier.padding(top = 6.dp))
+}
+
+/** Like the phone / light / dark, each drawn as a tiny screen (design "You · Appearance"). */
+@Composable
+private fun ThemeCards(selected: ThemeMode, onSelect: (ThemeMode) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        ThemeMode.entries.forEach { mode ->
+            val on = mode == selected
+            Column(
+                Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(if (on) 2.dp else 1.dp, if (on) Sage else outline(), RoundedCornerShape(16.dp))
+                    .clickable { onSelect(mode) }
+                    .padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Row(Modifier.fillMaxWidth().height(88.dp).clip(RoundedCornerShape(10.dp))) {
+                    if (mode != ThemeMode.DARK) MiniScreen(dark = false, Modifier.weight(1f))
+                    if (mode != ThemeMode.LIGHT) MiniScreen(dark = true, Modifier.weight(1f))
+                }
+                Text(themeLabel(mode), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 8.dp, bottom = 2.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun MiniScreen(dark: Boolean, modifier: Modifier) {
+    Column(modifier.fillMaxSize().background(if (dark) CanvasDark else CanvasLight).padding(horizontal = 6.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        Box(Modifier.fillMaxWidth(0.7f).height(6.dp).clip(RoundedCornerShape(3.dp)).background(if (dark) OnCanvasDark else OnCanvasLight))
+        Box(Modifier.fillMaxWidth().height(24.dp).clip(RoundedCornerShape(6.dp)).background(if (dark) SurfaceDark else SurfaceLight))
+        Box(Modifier.fillMaxWidth().height(14.dp).clip(RoundedCornerShape(5.dp)).background(if (dark) SageLight else Sage))
+    }
+}
+
+/**
+ * The app's language, whatever the phone's (Android 13+ per-app language; it re-draws at once).
+ * Older phones follow the phone's language.
+ */
+@Composable
+private fun LanguageChoice() {
+    if (Build.VERSION.SDK_INT < 33) {
+        Text(stringResource(R.string.you_language_old), fontSize = 13.sp, color = CaptionMuted)
+        return
+    }
+    val context = LocalContext.current
+    val manager = context.getSystemService(LocaleManager::class.java)
+    val current = manager.applicationLocales.takeIf { !it.isEmpty }?.get(0)?.language
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, outline(), RoundedCornerShape(18.dp)),
+    ) {
+        listOf(
+            null to stringResource(R.string.theme_auto),
+            "en" to "English",
+            "ar" to "العربية المصرية",
+        ).forEach { (tag, label) ->
+            val on = tag == current
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp)
+                    .clickable(enabled = !on) { manager.applicationLocales = if (tag == null) LocaleList.getEmptyLocaleList() else LocaleList.forLanguageTags(tag) }
+                    .padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                    if (tag == null) Text(stringResource(R.string.you_language_phone), fontSize = 12.5.sp, color = CaptionMuted)
+                }
+                Box(Modifier.size(20.dp).clip(CircleShape).border(2.dp, if (on) Sage else CaptionMuted.copy(alpha = 0.5f), CircleShape), contentAlignment = Alignment.Center) {
+                    if (on) Box(Modifier.size(9.dp).clip(CircleShape).background(Sage))
+                }
+            }
+        }
+    }
+    Text(stringResource(R.string.you_language_note), fontSize = 13.sp, color = CaptionMuted, modifier = Modifier.padding(top = 10.dp, start = 4.dp, end = 4.dp))
 }
 
 @Composable

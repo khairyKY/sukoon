@@ -204,7 +204,7 @@ class AlarmActivity : ComponentActivity() {
 private val AlarmType.screenColor: Color
     get() = when (this) {
         AlarmType.URGENT_LOW, AlarmType.LOW, AlarmType.GOING_LOW -> StateUrgent
-        AlarmType.HIGH -> PillHighText
+        AlarmType.HIGH -> Color(0xFF8A5A1E) // deep amber
         AlarmType.SIGNAL_LOSS -> CanvasDark
     }
 
