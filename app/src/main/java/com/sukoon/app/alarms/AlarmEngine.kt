@@ -22,7 +22,7 @@ data class AlarmSettings(
     val lowMgDl: Int = 70,
     val goingLowEnabled: Boolean = true,
     val highEnabled: Boolean = true,
-    val highMgDl: Int = 250,
+    val highMgDl: Int = 180, // the top of the target range: high on Home and the alarm start together
     val signalLossEnabled: Boolean = true,
     val signalLossMinutes: Int = 20,
     val lowSnoozeMinutes: Int = 15,

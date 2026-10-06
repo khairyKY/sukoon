@@ -42,7 +42,8 @@ class SettingsPrefs(context: Context) {
             lowMgDl = prefs.getInt(KEY_LOW, 70),
             goingLowEnabled = prefs.getBoolean(KEY_GOING_LOW_ON, true),
             highEnabled = prefs.getBoolean(KEY_HIGH_ON, true),
-            highMgDl = prefs.getInt(KEY_HIGH, 250),
+            // ponytail: a new key so the old 250 default (written by any alarm change) becomes 180; a value chosen by hand carries over.
+            highMgDl = prefs.getInt(KEY_HIGH, prefs.getInt(KEY_HIGH_OLD, 250).takeIf { it != 250 } ?: AlarmSettings().highMgDl),
             signalLossEnabled = prefs.getBoolean(KEY_SIGNAL_ON, true),
             signalLossMinutes = prefs.getInt(KEY_SIGNAL, 20),
             lowSnoozeMinutes = prefs.getInt(KEY_LOW_SNOOZE, 15),
@@ -152,7 +153,8 @@ class SettingsPrefs(context: Context) {
         private const val KEY_LOW = "alarm_low"
         private const val KEY_GOING_LOW_ON = "alarm_going_low_on"
         private const val KEY_HIGH_ON = "alarm_high_on"
-        private const val KEY_HIGH = "alarm_high"
+        private const val KEY_HIGH = "alarm_high2"
+        private const val KEY_HIGH_OLD = "alarm_high"
         private const val KEY_SIGNAL_ON = "alarm_signal_on"
         private const val KEY_SIGNAL = "alarm_signal_minutes"
         private const val KEY_LOW_SNOOZE = "alarm_low_snooze"
