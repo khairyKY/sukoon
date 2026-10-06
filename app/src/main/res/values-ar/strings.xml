@@ -863,4 +863,16 @@
     <string name="follow_number_private">بيتحفظ على الموبايل ده بس، علشان الاتصال والرسائل.</string>
     <string name="follow_nobody_title">لسه مش بتتابع حد</string>
     <string name="follow_nobody_body">اطلب منهم كود الدعوة بتاع سكون.</string>
+    <string name="hc_activity">التمارين في سجلك</string>
+    <string name="hc_activity_body">من MyFitnessPal وتطبيقات تانية، ١٠ دقايق أو أكتر، كنشاط في السجل.</string>
+    <string name="workout_walk">مشي</string>
+    <string name="workout_run">جري</string>
+    <string name="workout_bike">عجلة</string>
+    <string name="workout_swim">سباحة</string>
+    <string name="workout_strength">تمارين قوة</string>
+    <string name="workout_yoga">يوجا</string>
+    <string name="workout_hike">مشي طويل</string>
+    <string name="workout_hiit">تمارين متقطعة</string>
+    <string name="workout_football">كورة</string>
+    <string name="workout_other">تمرين</string>
 </resources>

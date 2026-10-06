@@ -863,4 +863,16 @@
     <string name="follow_number_private">Kept on this phone only, for Call and Message.</string>
     <string name="follow_nobody_title">You\'re not following anyone yet</string>
     <string name="follow_nobody_body">Ask them for their Sukoon invite code.</string>
+    <string name="hc_activity">Workouts into your logbook</string>
+    <string name="hc_activity_body">From MyFitnessPal and other apps, 10 minutes or longer, as Activity entries.</string>
+    <string name="workout_walk">Walk</string>
+    <string name="workout_run">Run</string>
+    <string name="workout_bike">Bike</string>
+    <string name="workout_swim">Swim</string>
+    <string name="workout_strength">Strength training</string>
+    <string name="workout_yoga">Yoga</string>
+    <string name="workout_hike">Hike</string>
+    <string name="workout_hiit">Interval training</string>
+    <string name="workout_football">Football</string>
+    <string name="workout_other">Workout</string>
 </resources>

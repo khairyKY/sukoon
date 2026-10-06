@@ -34,11 +34,20 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.json.JSONObject
+import androidx.health.connect.client.records.ExerciseSessionRecord
+import androidx.health.connect.client.records.HydrationRecord
+import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.Record
+import androidx.health.connect.client.aggregate.AggregateMetric
+import androidx.health.connect.client.request.AggregateRequest
+import java.time.LocalDate
+import kotlin.reflect.KClass
 
 /**
  * Health Connect, both ways. In: meals other apps log there (MyFitnessPal writes each meal's
- * totals) become Logbook carb entries, kept in step as the meal changes or is deleted. Out:
- * Sukoon's sensor readings become blood-glucose records other health apps can use.
+ * totals, with every nutrient) become Logbook meals, and workouts of 10 minutes or more become
+ * Activity entries, both kept in step as they change or are deleted; today's steps and water are
+ * read for Home. Out: Sukoon's sensor readings become blood-glucose records other apps can use.
  *
  * Reading in the background needs Health Connect's background-read permission (asked for when
  * the phone supports it); without it, syncing happens whenever Sukoon is open.
@@ -56,11 +65,21 @@ class HealthConnectSync(
     private val client by lazy { HealthConnectClient.getOrCreate(context) }
 
     val readMeals = HealthPermission.getReadPermission(NutritionRecord::class)
+    val readActivity = HealthPermission.getReadPermission(ExerciseSessionRecord::class)
+    val readWater = HealthPermission.getReadPermission(HydrationRecord::class)
+    val readSteps = HealthPermission.getReadPermission(StepsRecord::class)
     val writeGlucose = HealthPermission.getWritePermission(BloodGlucoseRecord::class)
+
+    /** Steps and water so far today (null: not allowed, or nothing logged). */
+    data class Today(val steps: Long?, val waterLiters: Double?)
 
     var importMeals: Boolean
         get() = prefs.getBoolean(KEY_IMPORT, true)
         set(value) = prefs.edit().putBoolean(KEY_IMPORT, value).apply()
+
+    var importActivity: Boolean
+        get() = prefs.getBoolean(KEY_IMPORT_ACTIVITY, true)
+        set(value) = prefs.edit().putBoolean(KEY_IMPORT_ACTIVITY, value).apply()
 
     var shareGlucose: Boolean
         get() = prefs.getBoolean(KEY_EXPORT, true)
@@ -71,9 +90,12 @@ class HealthConnectSync(
 
     val available: Boolean get() = status() == HealthConnectClient.SDK_AVAILABLE
 
-    /** What to ask for: meals in, glucose out, and background reading where the phone has it. */
+    /** What to ask for: meals, workouts, steps and water in, glucose out, and background reading where the phone has it. */
     fun wantedPermissions(): Set<String> = buildSet {
         add(readMeals)
+        add(readActivity)
+        add(readSteps)
+        add(readWater)
         add(writeGlucose)
         if (client.features.getFeatureStatus(HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND) == HealthConnectFeatures.FEATURE_STATUS_AVAILABLE) {
             add(HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND)
@@ -95,22 +117,49 @@ class HealthConnectSync(
     suspend fun sync(): Result = mutex.withLock {
         if (!available) return@withLock Result(0, 0, 0)
         val granted = granted()
-        val (added, updated) = if (importMeals && readMeals in granted) importNutrition() else 0 to 0
+        val types = buildSet {
+            if (importMeals && readMeals in granted) add(NutritionRecord::class)
+            if (importActivity && readActivity in granted) add(ExerciseSessionRecord::class)
+        }
+        val (added, updated) = if (types.isNotEmpty()) importRecords(types) else 0 to 0
         val shared = if (shareGlucose && writeGlucose in granted) exportReadings() else 0
         Result(added, updated, shared)
     }
 
-    /** Meals via Health Connect's change log: everything from 7 days back the first time, then only what changed. */
-    private suspend fun importNutrition(): Pair<Int, Int> {
-        // Entries imported before nutrients were kept: read the last 7 days again once, onto the same entries.
-        if (prefs.getInt(KEY_IMPORT_VERSION, 1) < IMPORT_VERSION) {
-            prefs.edit().remove(KEY_TOKEN).putInt(KEY_IMPORT_VERSION, IMPORT_VERSION).apply()
+    /** Steps and water since midnight, as far as they're allowed. */
+    suspend fun today(): Today {
+        if (!available) return Today(null, null)
+        val granted = granted()
+        val metrics = buildSet<AggregateMetric<*>> {
+            if (readSteps in granted) add(StepsRecord.COUNT_TOTAL)
+            if (readWater in granted) add(HydrationRecord.VOLUME_TOTAL)
+        }
+        if (metrics.isEmpty()) return Today(null, null)
+        val midnight = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant()
+        val result = client.aggregate(AggregateRequest(metrics, TimeRangeFilter.between(midnight, Instant.now())))
+        return Today(result[StepsRecord.COUNT_TOTAL], result[HydrationRecord.VOLUME_TOTAL]?.inLiters)
+    }
+
+    /**
+     * Meals and workouts via Health Connect's change log: everything from 7 days back the first time
+     * (or when what's imported changes), then only what changed.
+     */
+    private suspend fun importRecords(types: Set<KClass<out Record>>): Pair<Int, Int> {
+        // A new kind of record, or entries imported before nutrients were kept: read the last 7 days again, onto the same entries.
+        val kinds = types.mapNotNull { it.simpleName }.sorted().joinToString(",")
+        if (prefs.getInt(KEY_IMPORT_VERSION, 1) < IMPORT_VERSION || prefs.getString(KEY_TOKEN_TYPES, null) != kinds) {
+            prefs.edit().remove(KEY_TOKEN).putInt(KEY_IMPORT_VERSION, IMPORT_VERSION).putString(KEY_TOKEN_TYPES, kinds).apply()
         }
         var added = 0
         var updated = 0
         val ids = mealIds()
-        suspend fun importOne(record: NutritionRecord) {
-            when (upsertMeal(record, ids)) {
+        suspend fun importOne(record: Record) {
+            val outcome = when (record) {
+                is NutritionRecord -> upsertMeal(record, ids)
+                is ExerciseSessionRecord -> upsertActivity(record, ids)
+                else -> null
+            }
+            when (outcome) {
                 true -> added++
                 false -> updated++
                 null -> Unit
@@ -119,8 +168,10 @@ class HealthConnectSync(
         var token = prefs.getString(KEY_TOKEN, null)
         if (token == null) {
             // Take the token first so nothing written meanwhile is missed.
-            token = client.getChangesToken(ChangesTokenRequest(setOf(NutritionRecord::class)))
-            client.readRecords(ReadRecordsRequest(NutritionRecord::class, TimeRangeFilter.after(Instant.now().minus(Duration.ofDays(7))))).records.forEach { importOne(it) }
+            token = client.getChangesToken(ChangesTokenRequest(types))
+            val since = TimeRangeFilter.after(Instant.now().minus(Duration.ofDays(7)))
+            if (NutritionRecord::class in types) client.readRecords(ReadRecordsRequest(NutritionRecord::class, since)).records.forEach { importOne(it) }
+            if (ExerciseSessionRecord::class in types) client.readRecords(ReadRecordsRequest(ExerciseSessionRecord::class, since)).records.forEach { importOne(it) }
         } else {
             while (true) {
                 val response = client.getChanges(token!!)
@@ -128,11 +179,11 @@ class HealthConnectSync(
                     // Tokens expire after ~30 days unused: start over from a fresh one.
                     prefs.edit().remove(KEY_TOKEN).apply()
                     saveMealIds(ids)
-                    return importNutrition().let { (a, u) -> (a + added) to (u + updated) }
+                    return importRecords(types).let { (a, u) -> (a + added) to (u + updated) }
                 }
                 for (change in response.changes) {
                     when (change) {
-                        is UpsertionChange -> (change.record as? NutritionRecord)?.let { importOne(it) }
+                        is UpsertionChange -> importOne(change.record)
                         is DeletionChange -> ids.remove(change.recordId)?.let { logbook.deleteById(it) }
                     }
                 }
@@ -179,6 +230,48 @@ class HealthConnectSync(
         }
     }
 
+    /** true = new logbook entry, false = updated, null = skipped (ours, or under 10 minutes). */
+    private suspend fun upsertActivity(record: ExerciseSessionRecord, ids: MutableMap<String, Long>): Boolean? {
+        if (record.metadata.dataOrigin.packageName == context.packageName) return null
+        val existing = ids[record.metadata.id]
+        val minutes = Duration.between(record.startTime, record.endTime).toMinutes()
+        if (minutes < MIN_WORKOUT_MINUTES) {
+            // ponytail: short sessions skipped so a phone's auto-detected strolls don't flood the logbook.
+            existing?.let { logbook.deleteById(it); ids.remove(record.metadata.id) }
+            return null
+        }
+        val event = EventEntity(
+            id = existing ?: 0,
+            timestampMillis = record.startTime.toEpochMilli(),
+            type = LogEventType.ACTIVITY.name,
+            value = minutes.toDouble(),
+            note = record.title?.takeIf { it.isNotBlank() } ?: workoutName(record.exerciseType),
+            source = record.metadata.dataOrigin.packageName,
+        )
+        return if (existing != null) {
+            logbook.update(event)
+            false
+        } else {
+            ids[record.metadata.id] = logbook.insert(event)
+            true
+        }
+    }
+
+    private fun workoutName(type: Int): String = context.getString(
+        when (type) {
+            ExerciseSessionRecord.EXERCISE_TYPE_WALKING -> R.string.workout_walk
+            ExerciseSessionRecord.EXERCISE_TYPE_RUNNING, ExerciseSessionRecord.EXERCISE_TYPE_RUNNING_TREADMILL -> R.string.workout_run
+            ExerciseSessionRecord.EXERCISE_TYPE_BIKING, ExerciseSessionRecord.EXERCISE_TYPE_BIKING_STATIONARY -> R.string.workout_bike
+            ExerciseSessionRecord.EXERCISE_TYPE_SWIMMING_POOL, ExerciseSessionRecord.EXERCISE_TYPE_SWIMMING_OPEN_WATER -> R.string.workout_swim
+            ExerciseSessionRecord.EXERCISE_TYPE_STRENGTH_TRAINING, ExerciseSessionRecord.EXERCISE_TYPE_WEIGHTLIFTING -> R.string.workout_strength
+            ExerciseSessionRecord.EXERCISE_TYPE_YOGA -> R.string.workout_yoga
+            ExerciseSessionRecord.EXERCISE_TYPE_HIKING -> R.string.workout_hike
+            ExerciseSessionRecord.EXERCISE_TYPE_HIGH_INTENSITY_INTERVAL_TRAINING -> R.string.workout_hiit
+            ExerciseSessionRecord.EXERCISE_TYPE_SOCCER -> R.string.workout_football
+            else -> R.string.workout_other
+        },
+    )
+
     /** Saved real-sensor readings newer than the cursor (2 days back the first time), as interstitial blood glucose. */
     private suspend fun exportReadings(): Int {
         val since = maxOf(prefs.getLong(KEY_EXPORT_CURSOR, 0L), System.currentTimeMillis() - TimeUnit.DAYS.toMillis(2))
@@ -203,7 +296,7 @@ class HealthConnectSync(
         return readings.size
     }
 
-    /** Health Connect record id → Logbook event id, so later changes land on the same entry. */
+    /** Health Connect record id (meals and workouts) → Logbook event id, so later changes land on the same entry. */
     private fun mealIds(): MutableMap<String, Long> {
         val json = runCatching { JSONObject(prefs.getString(KEY_MEAL_IDS, "{}") ?: "{}") }.getOrDefault(JSONObject())
         return json.keys().asSequence().associateWith { json.getLong(it) }.toMutableMap()
@@ -222,7 +315,10 @@ class HealthConnectSync(
         const val KEY_TOKEN = "hc_nutrition_token"
         const val KEY_MEAL_IDS = "hc_meal_ids"
         const val KEY_IMPORT_VERSION = "hc_import_version"
-        const val IMPORT_VERSION = 2 // 2: nutrients, meal type and source app
+        const val IMPORT_VERSION = 3 // 2: nutrients, meal type and source app; 3: workouts
+        const val KEY_IMPORT_ACTIVITY = "hc_import_activity"
+        const val KEY_TOKEN_TYPES = "hc_token_types"
+        const val MIN_WORKOUT_MINUTES = 10
         const val KEY_EXPORT_CURSOR = "hc_export_cursor"
         const val MAX_BATCH = 1000
     }

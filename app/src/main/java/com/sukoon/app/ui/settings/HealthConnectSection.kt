@@ -51,6 +51,7 @@ fun HealthConnectSection(sync: HealthConnectSync) {
     var granted by remember { mutableStateOf<Set<String>>(emptySet()) }
     var checks by remember { mutableIntStateOf(0) }
     var importMeals by remember { mutableStateOf(sync.importMeals) }
+    var importActivity by remember { mutableStateOf(sync.importActivity) }
     var shareGlucose by remember { mutableStateOf(sync.shareGlucose) }
     var busy by remember { mutableStateOf(false) }
     LaunchedEffect(checks) { granted = runCatching { sync.granted() }.getOrDefault(emptySet()) }
@@ -101,6 +102,11 @@ fun HealthConnectSection(sync: HealthConnectSync) {
                     importMeals = it
                     sync.importMeals = it
                     if (it && sync.readMeals !in granted) request.launch(sync.wantedPermissions())
+                }
+                Toggle(stringResource(R.string.hc_activity), stringResource(R.string.hc_activity_body), importActivity) {
+                    importActivity = it
+                    sync.importActivity = it
+                    if (it && sync.readActivity !in granted) request.launch(sync.wantedPermissions())
                 }
                 Toggle(stringResource(R.string.hc_export), stringResource(R.string.hc_export_body), shareGlucose) {
                     shareGlucose = it
