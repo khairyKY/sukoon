@@ -39,6 +39,9 @@ import com.sukoon.app.ui.theme.StateHigh
 import com.sukoon.app.ui.theme.StateLow
 import java.util.Locale
 import com.sukoon.app.ui.theme.Motion.staggerIn
+import com.sukoon.app.ui.theme.SageLight
+import com.sukoon.app.ui.theme.SageDeep
+import com.sukoon.app.ui.theme.PillLowText
 
 /**
  * Trends → Insights. Gated by a one-time acknowledgement; afterwards a standing one-line reminder
@@ -173,11 +176,90 @@ private fun InsightCard(insight: Insight) {
                 if (insight.level != Level.GOOD) Discuss(stringResource(R.string.insight_meter_discuss))
                 Source(stringResource(R.string.insight_src_meter))
             }
+            is Insight.WeekOverWeek -> {
+                Title(stringResource(R.string.insight_week_title))
+                Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
+                    Compare(stringResource(R.string.insight_week_in_range), "${insight.inRange}%", insight.inRange - insight.inRangeBefore, higherIsBetter = true, Modifier.weight(1f))
+                    Compare(stringResource(R.string.insight_week_average), "${insight.mean}", insight.mean - insight.meanBefore, higherIsBetter = false, Modifier.weight(1f))
+                    Compare(stringResource(R.string.insight_week_lows), "${insight.lows}", insight.lows - insight.lowsBefore, higherIsBetter = false, Modifier.weight(1f))
+                }
+                Source(stringResource(R.string.insight_src_tir))
+            }
+            is Insight.CarbResponse -> {
+                val top = insight.slots.maxBy { it.per10g }
+                val bottom = insight.slots.minBy { it.per10g }
+                Title(if (top.per10g >= bottom.per10g * 3 / 2 && top.per10g - bottom.per10g >= 5) stringResource(R.string.insight_carb_title_slot, slot(top.slot).lowercase()) else stringResource(R.string.insight_carb_title))
+                Body(stringResource(R.string.insight_carb_body))
+                val max = insight.slots.maxOf { it.per10g }.coerceAtLeast(1)
+                insight.slots.forEach { s ->
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(slot(s.slot), fontSize = 13.sp, color = CaptionMuted, modifier = Modifier.width(84.dp))
+                        Box(Modifier.weight(1f)) {
+                            Box(Modifier.fillMaxWidth((s.per10g.coerceAtLeast(1).toFloat() / max).coerceIn(0.05f, 1f)).height(10.dp).clip(RoundedCornerShape(5.dp)).background(if (s == top && insight.slots.size > 1) StateHigh else SageLight))
+                        }
+                        Text(String.format(Locale.getDefault(), "%+d", s.per10g), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(start = 8.dp))
+                    }
+                }
+                Note(stringResource(R.string.insight_carb_peak, insight.peakMinutes))
+                Discuss(stringResource(R.string.insight_carb_discuss))
+                Source(stringResource(R.string.insight_src_carb))
+            }
+            is Insight.RichMeals -> {
+                Title(stringResource(R.string.insight_rich_title))
+                Body(stringResource(R.string.insight_rich_body, insight.richPeak, insight.leanPeak, signed(insight.richAt4h), signed(insight.leanAt4h), insight.rich))
+                if (insight.level == Level.ATTENTION) Discuss(stringResource(R.string.insight_rich_discuss))
+                Source(stringResource(R.string.insight_src_rich))
+            }
+            is Insight.Rebounds -> {
+                Title(stringResource(R.string.insight_rebound_title))
+                Body(stringResource(R.string.insight_rebound_body, insight.rebounds, insight.lows))
+                Discuss(stringResource(R.string.insight_rebound_discuss))
+                Source(stringResource(R.string.insight_src_rebound))
+            }
+            is Insight.ActivityLows -> {
+                Title(stringResource(R.string.insight_activity_title))
+                Body(stringResource(R.string.insight_activity_body, insight.followed, insight.workouts, insight.overnight))
+                Discuss(stringResource(R.string.insight_activity_discuss))
+                Source(stringResource(R.string.insight_src_activity))
+            }
+            is Insight.Nights -> {
+                Title(stringResource(R.string.insight_nights_title))
+                Body(stringResource(R.string.insight_nights_body, insight.inRange, insight.nights, insight.withLows))
+                if (insight.level == Level.ATTENTION) Discuss(stringResource(R.string.insight_nights_discuss))
+                Source(stringResource(R.string.insight_src_lows))
+            }
+            is Insight.CarbDays -> {
+                Title(stringResource(R.string.insight_carbdays_title))
+                Body(stringResource(R.string.insight_carbdays_body, insight.splitGrams, insight.higherTir, insight.lowerTir, insight.days))
+                if (insight.level == Level.ATTENTION) Discuss(stringResource(R.string.insight_carbdays_discuss))
+                Source(stringResource(R.string.insight_src_carbdays))
+            }
         }
     }
 }
 
 private fun hour(h: Int) = String.format(Locale.getDefault(), "%02d:00", h)
+private fun signed(v: Int) = String.format(Locale.getDefault(), "%+d", v)
+
+/** A number this week and how it moved since last week, coloured by whether that's better. */
+@Composable
+private fun Compare(label: String, value: String, delta: Int, higherIsBetter: Boolean, modifier: Modifier) {
+    Column(modifier) {
+        Text(label, fontSize = 12.sp, color = CaptionMuted)
+        Text(value, fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground)
+        val better = if (higherIsBetter) delta > 0 else delta < 0
+        Text(
+            if (delta == 0) "±0" else signed(delta),
+            fontSize = 12.5.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = when {
+                delta == 0 -> CaptionMuted
+                better -> SageDeep
+                else -> PillLowText
+            },
+        )
+    }
+}
 private fun number(v: Double) = String.format(Locale.getDefault(), "%.1f", v)
 
 @Composable

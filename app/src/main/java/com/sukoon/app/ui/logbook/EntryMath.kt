@@ -8,6 +8,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import kotlin.math.abs
+import com.sukoon.app.insights.InsightEngine
 
 /** A meal's nutrients beyond its carbs: MyFitnessPal brings them, and a meal can be given them by hand. */
 data class Nutrients(
@@ -101,4 +102,4 @@ internal fun todayTotals(events: List<EventEntity>, now: Instant, zone: ZoneId):
 }
 
 /** Lots of fat or protein: the rise can come 3 to 5 hours later (a rule of thumb, shown for awareness). */
-internal fun slowMeal(fat: Double?, protein: Double?): Boolean = (fat ?: 0.0) >= 20 || (protein ?: 0.0) >= 25
+internal fun slowMeal(fat: Double?, protein: Double?): Boolean = InsightEngine.richMeal(fat, protein)

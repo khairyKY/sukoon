@@ -181,6 +181,19 @@ object AiPrompts {
             is Insight.Formulas -> ""
             is Insight.MeterAgreement -> "Sensor vs finger-pricks: ${insight.agreeing} of ${insight.checks} within the 20/20 band; " +
                 "the sensor averages ${insight.meanDiffPercent}% against the meter."
+            is Insight.WeekOverWeek -> "Last 7 days vs the 7 before: in range ${insight.inRange}% vs ${insight.inRangeBefore}%, " +
+                "average ${insight.mean} vs ${insight.meanBefore}, lows ${insight.lows} vs ${insight.lowsBefore}."
+            is Insight.CarbResponse -> "Rise per 10 g carbs with the insulin taken: " +
+                insight.slots.joinToString { "${it.slot.name.lowercase()} +${it.per10g} (${it.meals} meals)" } +
+                "; meals usually peak ${insight.peakMinutes} min after eating [Hinshaw et al. 2013]."
+            is Insight.RichMeals -> "Meals with 20 g+ fat or 25 g+ protein (${insight.rich}) peaked at ${insight.richPeak} min vs ${insight.leanPeak} for " +
+                "others (${insight.lean}), and were ${insight.richAt4h} vs ${insight.leanAt4h} mg/dL from the start 4 h after eating [Bell et al. 2015]."
+            is Insight.Rebounds -> "${insight.rebounds} of ${insight.lows} lows were followed by >180 within 2 h (possible over-treatment; 15-15 rule)."
+            is Insight.ActivityLows -> "${insight.followed} of ${insight.workouts} workouts were followed by a low within 24 h " +
+                "(${insight.overnight} overnight) [Riddell et al. 2017]."
+            is Insight.Nights -> "${insight.inRange} of ${insight.nights} nights stayed 70–180 from 00 to 06; ${insight.withLows} nights had a low."
+            is Insight.CarbDays -> "Days over ${insight.splitGrams} g carbs: ${insight.higherTir}% in range vs ${insight.lowerTir}% on lighter days " +
+                "(${insight.days} days) [Evert et al. 2019]."
         }
     }
 

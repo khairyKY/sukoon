@@ -110,6 +110,54 @@ sealed interface Insight {
         override val level = Level.INFO
     }
 
+    /** The last 7 days against the 7 before (Battelino et al. 2019 targets). */
+    data class WeekOverWeek(val inRange: Int, val inRangeBefore: Int, val mean: Int, val meanBefore: Int, val lows: Int, val lowsBefore: Int) : Insight {
+        override val level = when {
+            inRange - inRangeBefore <= -5 || lows > lowsBefore + 1 -> Level.ATTENTION
+            inRange - inRangeBefore >= 3 && lows <= lowsBefore -> Level.GOOD
+            else -> Level.INFO
+        }
+    }
+
+    data class SlotRise(val slot: MealSlot, val per10g: Int, val meals: Int)
+
+    /**
+     * How far glucose rose per 10 g of carbs at each meal, with the insulin taken, and when meals
+     * usually peak. Insulin action varies through the day (Hinshaw et al., Diabetes 2013).
+     */
+    data class CarbResponse(val slots: List<SlotRise>, val peakMinutes: Int) : Insight {
+        override val level = Level.INFO
+    }
+
+    /** Meals with plenty of fat or protein: later peaks, still up hours later (Bell et al., Diabetes Care 2015). */
+    data class RichMeals(val rich: Int, val lean: Int, val richPeak: Int, val leanPeak: Int, val richAt4h: Int, val leanAt4h: Int) : Insight {
+        override val level = if (richAt4h - leanAt4h >= 30) Level.ATTENTION else Level.INFO
+    }
+
+    /** Lows followed within 2 h by a high: often more than the 15 g a low needs (ADA Standards of Care). */
+    data class Rebounds(val rebounds: Int, val lows: Int) : Insight {
+        override val level = Level.ATTENTION
+    }
+
+    /** Lows in the 24 h after a logged workout (Riddell et al., Lancet Diabetes Endocrinol 2017). */
+    data class ActivityLows(val followed: Int, val workouts: Int, val overnight: Int) : Insight {
+        override val level = Level.ATTENTION
+    }
+
+    /** Midnight to 6 am: nights spent in range, and nights with a low. */
+    data class Nights(val inRange: Int, val nights: Int, val withLows: Int) : Insight {
+        override val level = when {
+            withLows >= 2 -> Level.ATTENTION
+            withLows == 0 && inRange * 10 >= nights * 7 -> Level.GOOD
+            else -> Level.INFO
+        }
+    }
+
+    /** Time in range on the higher-carb half of logged days against the lower (Evert et al., Diabetes Care 2019). */
+    data class CarbDays(val higherTir: Int, val lowerTir: Int, val splitGrams: Int, val days: Int) : Insight {
+        override val level = if (lowerTir - higherTir >= 10) Level.ATTENTION else Level.INFO
+    }
+
     /** Finger-pricks vs the sensor at that moment, judged by the 20/20 band (see [MeterCheck]). */
     data class MeterAgreement(val checks: Int, val agreeing: Int, val meanDiffPercent: Int) : Insight {
         override val level = if (agreeing * 100 >= checks * 80) Level.GOOD else Level.ATTENTION
@@ -163,6 +211,13 @@ object InsightEngine {
         stacking(lows, events)?.let(out::add)
         formulas(events, zone)?.let(out::add)
         meterAgreement(readings, events)?.let(out::add)
+        weekOverWeek(readings, now)?.let(out::add)
+        carbResponse(meals)?.let(out::add)
+        richMeals(meals)?.let(out::add)
+        rebounds(lows, readings)?.let(out::add)
+        activityLows(events, lows, zone)?.let(out::add)
+        nights(readings, zone)?.let(out::add)
+        carbDays(readings, events, now, zone)?.let(out::add)
         return out.sortedByDescending { it.level.ordinal } // urgent first, good last
     }
 
@@ -319,7 +374,21 @@ object InsightEngine {
 
     // --- meals ---------------------------------------------------------------------------------
 
-    internal data class MealResult(val slot: MealSlot, val rise: Int, val at2h: Int?, val lowWithin4h: Boolean, val insulin: Double, val preBolusMinutes: Long?, val carbs: Double)
+    internal data class MealResult(
+        val slot: MealSlot,
+        val rise: Int,
+        val at2h: Int?,
+        val lowWithin4h: Boolean,
+        val insulin: Double,
+        val preBolusMinutes: Long?,
+        val carbs: Double,
+        /** Minutes from eating to the highest reading within 4 h. */
+        val peakMinutes: Long = 0,
+        /** Glucose 4 h after eating minus at the meal (null without a reading then). */
+        val change4h: Int? = null,
+        val fat: Double? = null,
+        val protein: Double? = null,
+    )
 
     internal fun slotFor(hour: Int) = when (hour) {
         in 4..10 -> MealSlot.BREAKFAST
@@ -348,6 +417,10 @@ object InsightEngine {
                 insulin = doses.sumOf { it.value ?: 0.0 },
                 preBolusMinutes = doses.minOfOrNull { it.timestampMillis }?.let { (meal.timestampMillis - it) / 60_000 },
                 carbs = meal.value ?: 0.0,
+                peakMinutes = Duration.between(t, after4h.maxBy { it.glucoseMgDl }.timestamp).toMinutes(),
+                change4h = nearest(t.plus(Duration.ofHours(4)), Duration.ofMinutes(20))?.glucoseMgDl?.minus(pre.glucoseMgDl),
+                fat = meal.fat,
+                protein = meal.protein,
             )
         }
 
@@ -396,4 +469,74 @@ object InsightEngine {
     }
 
     private fun median(values: List<Int>): Int = values.sorted().let { if (it.isEmpty()) 0 else it[it.size / 2] }
+
+    // --- comparisons, meals in detail, lows after things, nights ----------------------------------
+
+    /** Lots of fat or protein: the rise can come 3 to 5 hours later (a rule of thumb, Bell et al. 2015). */
+    fun richMeal(fat: Double?, protein: Double?): Boolean = (fat ?: 0.0) >= 20 || (protein ?: 0.0) >= 25
+
+    private fun weekOverWeek(r: List<GlucoseReading>, now: Instant): Insight.WeekOverWeek? {
+        val split = now.minus(Duration.ofDays(7))
+        val (recent, before) = r.partition { it.timestamp > split }
+        if (r.isEmpty() || coveragePercent(recent, now) < 50 || before.isEmpty() || Duration.between(before.first().timestamp, split).toDays() < 5) return null
+        val a = summary(recent, now) ?: return null
+        val b = summary(before, split) ?: return null
+        return Insight.WeekOverWeek(a.inRange.roundToInt(), b.inRange.roundToInt(), a.meanMgDl, b.meanMgDl, lowEpisodes(recent).size, lowEpisodes(before).size)
+    }
+
+    private fun carbResponse(meals: List<MealResult>): Insight.CarbResponse? {
+        val counted = meals.filter { it.carbs >= 10 }
+        val slots = counted.groupBy { it.slot }.filterValues { it.size >= 3 }
+            .map { (slot, ms) -> Insight.SlotRise(slot, median(ms.map { (it.rise * 10 / it.carbs).roundToInt() }), ms.size) }
+            .sortedBy { it.slot.ordinal }
+        if (slots.size < 2) return null
+        return Insight.CarbResponse(slots, median(counted.map { it.peakMinutes.toInt() }))
+    }
+
+    private fun richMeals(meals: List<MealResult>): Insight.RichMeals? {
+        val (rich, lean) = meals.filter { it.fat != null || it.protein != null }.partition { richMeal(it.fat, it.protein) }
+        val richLater = rich.mapNotNull { it.change4h }
+        val leanLater = lean.mapNotNull { it.change4h }
+        if (rich.size < 3 || lean.size < 3 || richLater.size < 2 || leanLater.size < 2) return null
+        return Insight.RichMeals(rich.size, lean.size, median(rich.map { it.peakMinutes.toInt() }), median(lean.map { it.peakMinutes.toInt() }), median(richLater), median(leanLater))
+    }
+
+    private fun rebounds(lows: List<Episode>, r: List<GlucoseReading>): Insight.Rebounds? {
+        if (lows.size < 3) return null
+        val n = lows.count { low -> r.any { it.timestamp > low.end && it.timestamp <= low.end.plus(Duration.ofHours(2)) && it.glucoseMgDl > 180 } }
+        return if (n >= 2 && n * 10 >= lows.size * 3) Insight.Rebounds(n, lows.size) else null
+    }
+
+    private fun activityLows(events: List<EventEntity>, lows: List<Episode>, zone: ZoneId): Insight.ActivityLows? {
+        val workouts = events.filter { it.logType == LogEventType.ACTIVITY && (it.value ?: 0.0) >= 15 }
+        if (workouts.size < 2) return null
+        val followed = workouts.mapNotNull { w ->
+            val t = Instant.ofEpochMilli(w.timestampMillis)
+            lows.firstOrNull { it.start > t && it.start <= t.plus(Duration.ofHours(24)) }
+        }
+        if (followed.size < 2) return null
+        return Insight.ActivityLows(followed.size, workouts.size, followed.count { it.start.atZone(zone).hour < 6 })
+    }
+
+    private fun nights(r: List<GlucoseReading>, zone: ZoneId): Insight.Nights? {
+        val nights = r.filter { it.timestamp.atZone(zone).hour < 6 }
+            .groupBy { it.timestamp.atZone(zone).toLocalDate() }.values
+            .filter { it.size >= 2 && Duration.between(it.first().timestamp, it.last().timestamp) >= Duration.ofHours(4) }
+        if (nights.size < 5) return null
+        return Insight.Nights(nights.count { n -> n.all { it.glucoseMgDl in 70..180 } }, nights.size, nights.count { lowEpisodes(it).isNotEmpty() })
+    }
+
+    private fun carbDays(r: List<GlucoseReading>, events: List<EventEntity>, now: Instant, zone: ZoneId): Insight.CarbDays? {
+        val today = now.atZone(zone).toLocalDate()
+        val carbs = events.filter { it.logType == LogEventType.CARB }
+            .groupBy { Instant.ofEpochMilli(it.timestampMillis).atZone(zone).toLocalDate() }
+            .mapValues { (_, meals) -> meals.sumOf { it.value ?: 0.0 } }
+        val byDay = r.groupBy { it.timestamp.atZone(zone).toLocalDate() }
+        val days = carbs.keys.filter { d -> d != today && byDay[d]?.let { Duration.between(it.first().timestamp, it.last().timestamp) >= Duration.ofHours(12) } == true }
+            .sortedBy { carbs.getValue(it) }
+        if (days.size < 6) return null
+        val half = days.size / 2
+        fun tir(ds: List<java.time.LocalDate>) = ds.map { d -> byDay.getValue(d).let { summary(it, it.last().timestamp)!!.inRange } }.average().roundToInt()
+        return Insight.CarbDays(tir(days.takeLast(half)), tir(days.take(half)), carbs.getValue(days[half]).roundToInt(), days.size)
+    }
 }

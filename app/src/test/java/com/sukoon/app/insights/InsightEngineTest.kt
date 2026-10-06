@@ -182,6 +182,81 @@ class InsightEngineTest {
     }
 
     @Test
+    fun `carb response compares the rise per 10 g at each meal`() {
+        // Breakfast 08:00 40 g → +80 (20 per 10 g); dinner 19:00 40 g → +40 (10 per 10 g). Peak 60 min after.
+        val readings = series(6) { _, m ->
+            when (m) {
+                in 8 * 60..9 * 60 -> 120 + (m - 8 * 60) * 80 / 60
+                in 19 * 60..20 * 60 -> 120 + (m - 19 * 60) * 40 / 60
+                else -> 120
+            }
+        }
+        val events = (0 until 5).flatMap { listOf(event(it, 8 * 60, "CARB", 40.0), event(it, 19 * 60, "CARB", 40.0)) }
+        val c = InsightEngine.analyze(readings, events, now, zone).find<Insight.CarbResponse>()!!
+        assertEquals(listOf(MealSlot.BREAKFAST to 20, MealSlot.DINNER to 10), c.slots.map { it.slot to it.per10g })
+        assertEquals(60, c.peakMinutes)
+    }
+
+    @Test
+    fun `fat or protein heavy meals are still up four hours later`() {
+        // Lunch 13:00 each day; days 0-2 carry 30 g fat and stay +60 at 4 h, days 3-5 come back to start.
+        val readings = series(6) { d, m -> if (m in 13 * 60 + 30..17 * 60 + 15) (if (d < 3) 180 else if (m < 15 * 60) 170 else 120) else 120 }
+        val events = (0 until 6).map { d -> event(d, 13 * 60, "CARB", 50.0).copy(fat = if (d < 3) 30.0 else 5.0) }
+        val rich = InsightEngine.analyze(readings, events, now, zone).find<Insight.RichMeals>()!!
+        assertEquals(3, rich.rich)
+        assertEquals(60, rich.richAt4h)
+        assertEquals(0, rich.leanAt4h)
+        assertEquals(Level.ATTENTION, rich.level)
+        assertTrue(InsightEngine.richMeal(fat = null, protein = 25.0))
+    }
+
+    @Test
+    fun `lows followed by a high within 2 hours are rebounds`() {
+        // A low at 03:00 every day; on days 1, 3 and 5 it is followed by 220 at 04:00.
+        val readings = series(6) { d, m ->
+            when {
+                m in 3 * 60..3 * 60 + 25 -> 60
+                d % 2 == 1 && m in 4 * 60..4 * 60 + 30 -> 220
+                else -> 130
+            }
+        }
+        val reb = InsightEngine.analyze(readings, emptyList(), now, zone).find<Insight.Rebounds>()!!
+        assertEquals(3, reb.rebounds)
+        assertEquals(6, reb.lows)
+    }
+
+    @Test
+    fun `lows within a day of a workout are linked to it`() {
+        // Workouts at 18:00 on days 1 and 3, lows at 02:00 the night after.
+        val readings = series(6) { d, m -> if (d in setOf(2, 4) && m in 2 * 60..2 * 60 + 25) 62 else 130 }
+        val events = listOf(event(1, 18 * 60, "ACTIVITY", 45.0), event(3, 18 * 60, "ACTIVITY", 30.0), event(4, 18 * 60, "ACTIVITY", 5.0))
+        val a = InsightEngine.analyze(readings, events, now, zone).find<Insight.ActivityLows>()!!
+        assertEquals(2, a.followed)
+        assertEquals(2, a.workouts) // the 5-minute walk doesn't count
+        assertEquals(2, a.overnight)
+    }
+
+    @Test
+    fun `nights count in-range nights and nights with a low`() {
+        val readings = series(6) { d, m -> if (d == 2 && m in 60..90) 60 else if (d == 4 && m in 120..180) 200 else 120 }
+        val n = InsightEngine.analyze(readings, emptyList(), now, zone).find<Insight.Nights>()!!
+        assertEquals(6, n.nights)
+        assertEquals(4, n.inRange)
+        assertEquals(1, n.withLows)
+    }
+
+    @Test
+    fun `this week is compared with the week before`() {
+        // Week 1 averages 160 with afternoons at 220; week 2 is flat 120.
+        val readings = series(14) { d, m -> if (d < 7 && m in 12 * 60..18 * 60) 220 else 120 }
+        val w = InsightEngine.analyze(readings, emptyList(), day0.plus(Duration.ofDays(14)), zone).find<Insight.WeekOverWeek>()!!
+        assertEquals(100, w.inRange)
+        assertTrue(w.inRangeBefore < 80)
+        assertTrue(w.mean < w.meanBefore)
+        assertEquals(Level.GOOD, w.level)
+    }
+
+    @Test
     fun `the most serious observations come first`() {
         val readings = series(6) { d, m -> if (d in setOf(1, 2, 4, 5) && m in 180..210) 60 else 130 }
         val out = InsightEngine.analyze(readings, emptyList(), now, zone)
