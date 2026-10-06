@@ -1,0 +1,10 @@
+Fonts bundled with Sukoon (res/font), both under the SIL Open Font License, Version 1.1
+(https://openfontlicense.org):
+
+Hanken Grotesk (hanken_grotesk.ttf)
+Copyright 2021 The Hanken Grotesk Project Authors (https://github.com/marcologous/hanken-grotesk)
+
+Newsreader (newsreader.ttf)
+Copyright 2020 The Newsreader Project Authors (http://github.com/productiontype/Newsreader)
+
+Both are the Latin subsets as served by Google Fonts, converted from WOFF2 to TTF unchanged.
