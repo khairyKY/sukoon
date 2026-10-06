@@ -21,6 +21,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import com.sukoon.app.sharing.Followed
 
 /**
  * Alerts about the people this phone follows. Every minute their last 30 minutes of readings go
@@ -45,6 +46,11 @@ class FollowerWatch(
 
     /** Each followed person's alarms going on right now: their alert screen closes itself once one is over. */
     val active: StateFlow<Map<String, Set<AlarmType>>> = _active.asStateFlow()
+
+    private val _people = MutableStateFlow<List<Followed>>(emptyList())
+
+    /** The people this phone follows and their newest reading, as of the last check (the Following widget). */
+    val people: StateFlow<List<Followed>> = _people.asStateFlow()
 
     private fun publish() {
         _active.value = states.mapValues { it.value.activeSince.keys }
@@ -85,6 +91,7 @@ class FollowerWatch(
 
     private suspend fun checkLocked() {
         val following = if (sharing.supabase.session.value != null && alertsOn) sharing.following() else emptyList()
+        _people.value = following
         if (following.isEmpty()) {
             states.forEach { (id, state) -> state.activeSince.keys.forEach { notifier.cancel(it, id) } }
             states.clear()

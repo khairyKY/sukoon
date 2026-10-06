@@ -213,7 +213,7 @@ class AppContainer(private val context: Context) {
             }
         }
         appScope.launch {
-            merge(glucoseRepository.latestReading.map { }, minuteTicks).conflate().collect {
+            merge(glucoseRepository.latestReading.map { }, logbookRepository.eventsSince(0).map { }, followerWatch.people.map { }, minuteTicks).conflate().collect {
                 runCatching { GlucoseWidget.refreshAll(context) }
                 delay(WIDGET_MIN_INTERVAL_MS)
             }

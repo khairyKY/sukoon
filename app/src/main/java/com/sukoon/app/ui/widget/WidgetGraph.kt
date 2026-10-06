@@ -23,6 +23,28 @@ object WidgetGraph {
     // RemoteViews ship bitmaps across processes; past ~1–2 MP the launcher can refuse them.
     private const val MAX_PIXELS = 1_200_000
 
+    /** Today's time in range as a ring (sage arc over a faint track), for the Ring widget; null = no readings today. */
+    fun ring(percent: Int?, sizePx: Int, dark: Boolean): Bitmap {
+        val s = sizePx.coerceIn(1, 1000)
+        val bitmap = Bitmap.createBitmap(s, s, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val stroke = s * 0.085f
+        val box = android.graphics.RectF(stroke, stroke, s - stroke, s - stroke)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeWidth = stroke
+            strokeCap = Paint.Cap.ROUND
+        }
+        paint.color = (if (dark) SageLight else Sage).toArgb()
+        paint.alpha = if (dark) 50 else 40
+        canvas.drawArc(box, 0f, 360f, false, paint)
+        if (percent != null && percent > 0) {
+            paint.alpha = 255
+            canvas.drawArc(box, -90f, 360f * percent.coerceAtMost(100) / 100f, false, paint)
+        }
+        return bitmap
+    }
+
     fun render(samples: List<GlucoseSample>, from: Instant, to: Instant, widthPx: Int, heightPx: Int, dark: Boolean): Bitmap {
         var w = widthPx.coerceAtLeast(1)
         var h = heightPx.coerceAtLeast(1)

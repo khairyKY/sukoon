@@ -11,16 +11,54 @@ import java.time.Instant
 import java.time.ZoneId
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import com.sukoon.app.data.db.EventEntity
+import com.sukoon.app.data.db.LogEventType
+import com.sukoon.app.data.db.logType
+import com.sukoon.app.insulin.InsulinOnBoard
+import com.sukoon.app.insulin.InsulinAction
+import com.sukoon.app.reminders.BasalReminder
 
-/** Per-widget settings, chosen in WidgetConfigActivity and stored in that widget's Glance state. */
+/** Where a widget can sit: its launcher cells (columns × rows). Each has its own widget entry, so "Add to home screen" drops it at that size. */
+enum class WidgetSize(val cols: Int, val rows: Int) { SMALL(1, 1), WIDE(2, 1), SQUARE(2, 2), STRIP(4, 1), LARGE(4, 2) }
+
+/** What a widget can show besides the glucose number. Each style offers the ones that fit it ([WidgetStyle.infos]). */
+enum class WidgetInfo { ARROW, CHANGE, AGO, GRAPH, TIR, CARBS, KCAL, IOB, LONG }
+
+/** The widget designs (design canvas "Round 3 · Widgets"), the sizes each reads well at, and what each can show. */
+enum class WidgetStyle(val sizes: List<WidgetSize>, val infos: List<WidgetInfo>, val defaults: Set<WidgetInfo>) {
+    NUMBER(listOf(WidgetSize.SMALL, WidgetSize.WIDE), listOf(WidgetInfo.ARROW, WidgetInfo.CHANGE, WidgetInfo.AGO), setOf(WidgetInfo.ARROW, WidgetInfo.AGO)),
+    CARD(
+        listOf(WidgetSize.SQUARE, WidgetSize.LARGE, WidgetSize.WIDE),
+        listOf(WidgetInfo.ARROW, WidgetInfo.CHANGE, WidgetInfo.AGO, WidgetInfo.GRAPH, WidgetInfo.TIR),
+        setOf(WidgetInfo.ARROW, WidgetInfo.CHANGE, WidgetInfo.AGO, WidgetInfo.GRAPH, WidgetInfo.TIR),
+    ),
+    GRAPH(listOf(WidgetSize.LARGE, WidgetSize.STRIP), listOf(WidgetInfo.ARROW, WidgetInfo.AGO, WidgetInfo.TIR), setOf(WidgetInfo.ARROW, WidgetInfo.AGO)),
+    RING(listOf(WidgetSize.SQUARE), listOf(WidgetInfo.ARROW, WidgetInfo.AGO), setOf(WidgetInfo.ARROW)),
+    TODAY(
+        listOf(WidgetSize.STRIP, WidgetSize.SQUARE, WidgetSize.LARGE),
+        listOf(WidgetInfo.CARBS, WidgetInfo.KCAL, WidgetInfo.IOB, WidgetInfo.TIR, WidgetInfo.LONG),
+        setOf(WidgetInfo.CARBS, WidgetInfo.KCAL, WidgetInfo.IOB, WidgetInfo.TIR),
+    ),
+    INSULIN(listOf(WidgetSize.SQUARE, WidgetSize.STRIP), listOf(WidgetInfo.IOB, WidgetInfo.LONG), setOf(WidgetInfo.IOB, WidgetInfo.LONG)),
+    FOLLOWING(listOf(WidgetSize.SMALL, WidgetSize.WIDE, WidgetSize.SQUARE), listOf(WidgetInfo.ARROW, WidgetInfo.AGO), setOf(WidgetInfo.ARROW, WidgetInfo.AGO)),
+}
+
+/** Per-widget settings, chosen in the widget maker and stored in that widget's Glance state. */
 data class WidgetOptions(
-    /** 0 hides the graph. */
+    val style: WidgetStyle = WidgetStyle.CARD,
+    /** How far back the graph goes, when it shows one. */
     val graphHours: Int = 3,
-    val showDetails: Boolean = true,
+    val info: Set<WidgetInfo> = style.defaults,
     val background: WidgetBackground = WidgetBackground.AUTO,
+    /** [WidgetStyle.FOLLOWING]: whose glucose (their user id); null = the first person followed. */
+    val person: String? = null,
 ) {
+    fun shows(item: WidgetInfo) = item in info && item in style.infos
+    val graphShown: Boolean get() = style == WidgetStyle.GRAPH || shows(WidgetInfo.GRAPH)
+    val showDetails: Boolean get() = shows(WidgetInfo.AGO) || shows(WidgetInfo.CHANGE)
+
     companion object {
-        val GRAPH_CHOICES = listOf(0, 1, 3, 6, 12, 24)
+        val GRAPH_CHOICES = listOf(1, 3, 6, 12, 24)
     }
 }
 
@@ -88,3 +126,47 @@ val TrendDirection.arrow: String
         TrendDirection.RISING -> "↗"
         TrendDirection.RISING_FAST -> "↑"
     }
+
+/** The followed person a [WidgetStyle.FOLLOWING] widget shows. */
+data class PersonReading(val name: String, val mgDl: Int?, val trend: TrendDirection?, val minutesAgo: Long?, val stale: Boolean)
+
+/** Today's numbers and insulin for the Today and Insulin widgets. Pure + clock-injected. */
+data class WidgetExtras(
+    val carbs: Double,
+    val kcal: Double?,
+    val iob: Double,
+    val lastRapidUnits: Double?,
+    val lastRapidAt: Instant?,
+    /** Long-acting logged in the last 12 hours (the reminder's rule): when. */
+    val longTakenAt: Instant?,
+    /** The last long-acting amount: what the widget's "Took it" logs. */
+    val lastLongDose: Double?,
+    val person: PersonReading? = null,
+) {
+    companion object {
+        val NONE = WidgetExtras(0.0, null, 0.0, null, null, null, null)
+
+        fun build(events: List<EventEntity>, now: Instant, zone: ZoneId, action: InsulinAction, person: PersonReading? = null): WidgetExtras {
+            val midnight = now.atZone(zone).toLocalDate().atStartOfDay(zone).toInstant().toEpochMilli()
+            val today = events.filter { it.timestampMillis in midnight..now.toEpochMilli() }
+            val meals = today.filter { it.logType == LogEventType.CARB }
+            val rapid = events.filter { it.logType == LogEventType.INSULIN && it.timestampMillis <= now.toEpochMilli() }.maxByOrNull { it.timestampMillis }
+            val long = events.filter { it.logType == LogEventType.BASAL && it.timestampMillis <= now.toEpochMilli() }.maxByOrNull { it.timestampMillis }
+            return WidgetExtras(
+                carbs = meals.sumOf { it.value ?: 0.0 },
+                kcal = meals.mapNotNull { it.kcal }.takeIf { it.isNotEmpty() }?.sum(),
+                iob = InsulinOnBoard.total(events, now, action),
+                lastRapidUnits = rapid?.value,
+                lastRapidAt = rapid?.let { Instant.ofEpochMilli(it.timestampMillis) },
+                longTakenAt = long?.let { Instant.ofEpochMilli(it.timestampMillis) }?.takeIf { BasalReminder.taken(listOfNotNull(long), now) },
+                lastLongDose = BasalReminder.lastDose(events),
+                person = person,
+            )
+        }
+
+        fun person(name: String, latest: GlucoseReading?, now: Instant): PersonReading {
+            val age = latest?.let { Duration.between(it.timestamp, now) }
+            return PersonReading(name, latest?.glucoseMgDl, latest?.trend, age?.toMinutes()?.coerceAtLeast(0), age == null || age > HomeUiStateMapper.STALE_AFTER)
+        }
+    }
+}

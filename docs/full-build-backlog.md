@@ -60,6 +60,8 @@ Designs: the "Sukoon — onboarding, logbook & settings redesign" canvas (claude
 - ✅ docs/behaviour.md: every state, rule and answer.
 - ✅ Brand fonts bundled (Hanken Grotesk, Newsreader; variable, OFL).
 - ✅ You → Alarms and You → Apps & data rebuilt to their design boards; "See and hear each alarm".
+- ✅ Long-acting reminder (You → Insulin), pull down on Home or the Logbook to sync MyFitnessPal, MyFitnessPal always in the meal entry, Home's bar strip back (a low or high in 15 min shows).
+- ✅ Widgets (design "Round 3 · Widgets"): seven styles (Number, Number + graph, Graph, Ring, Today, Insulin with "Took it", Following), five landing sizes, and a widget maker (You → Appearance) with the real widget as its preview; "Add to home screen" places it at the chosen size; the launcher's reconfigure opens the maker too.
 - ⏸ Why alerts didn't reach Kai on the 5c3be68 build: needs the phone on USB (logcat, notification channels, app ops).
 
 Rules: no APK builds or installs unless Kai asks (compile + unit tests only); no AI attribution in commits or PRs.

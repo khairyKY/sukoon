@@ -93,6 +93,9 @@ class BasalReminder : BroadcastReceiver() {
             at(context, nextAt(ZonedDateTime.now(), settings.minuteOfDay).toInstant(), daily)
         }
 
+        /** What "Took it" sends: from the notification, and from the Insulin widget. */
+        fun tookIntent(context: Context): Intent = Intent(context, BasalReminder::class.java).setAction(ACTION_TOOK)
+
         /** Takes the notification away (the dose is logged, or the reminder was turned off). */
         fun dismiss(context: Context) {
             context.getSystemService(NotificationManager::class.java).cancel(NOTIFICATION_ID)
@@ -154,7 +157,7 @@ class BasalReminder : BroadcastReceiver() {
                 .setContentIntent(open)
                 .setAutoCancel(true)
                 .setOnlyAlertOnce(false)
-            if (units != null) builder.addAction(0, context.getString(R.string.reminder_basal_took, units), pending(context, 2, Intent(context, BasalReminder::class.java).setAction(ACTION_TOOK)))
+            if (units != null) builder.addAction(0, context.getString(R.string.reminder_basal_took, units), pending(context, 2, tookIntent(context)))
             else builder.addAction(0, context.getString(R.string.reminder_basal_log), open)
             builder.addAction(0, context.getString(R.string.reminder_basal_later), pending(context, 3, Intent(context, BasalReminder::class.java).setAction(ACTION_LATER).putExtra(EXTRA_NAG, nag)))
             runCatching { manager.notify(NOTIFICATION_ID, builder.build()) }

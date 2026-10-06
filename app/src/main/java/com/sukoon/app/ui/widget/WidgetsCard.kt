@@ -35,6 +35,17 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.sukoon.app.R
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.Sage
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.state.getAppWidgetState
+import androidx.glance.state.PreferencesGlanceStateDefinition
+import com.sukoon.app.ui.logbook.outline
+import com.sukoon.app.ui.widget.GlucoseWidget.Companion.toWidgetOptions
 
 /**
  * You → Home-screen widgets. "Add widget" asks the launcher to pin one (no hunting through the
@@ -46,61 +57,72 @@ import com.sukoon.app.ui.theme.Sage
 fun WidgetsCard() {
     val context = LocalContext.current
     val manager = remember { AppWidgetManager.getInstance(context) }
-    val provider = remember { ComponentName(context, GlucoseWidgetReceiver::class.java) }
     var placed by remember { mutableStateOf(emptyList<Int>()) }
+    var making by remember { mutableStateOf<Int?>(null) } // -1: a new one; else the widget being edited
 
     // Re-read on every resume: the user adds/removes widgets on the home screen, outside the app.
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(lifecycle) {
-        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) { placed = manager.getAppWidgetIds(provider).toList() }
+        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            placed = GlucoseWidget.RECEIVERS.flatMap { manager.getAppWidgetIds(ComponentName(context, it)).toList() }
+        }
     }
 
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Text(stringResource(R.string.widgets_body), fontSize = 12.5.sp, color = CaptionMuted)
-        placed.forEachIndexed { index, id ->
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    stringResource(R.string.widgets_item, index + 1),
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    stringResource(R.string.widgets_edit),
-                    color = Sage,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 13.sp,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .clickable {
-                            context.startActivity(
-                                Intent(context, WidgetConfigActivity::class.java).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id),
-                            )
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(stringResource(R.string.widgets_body_maker), fontSize = 13.sp, lineHeight = 18.sp, color = CaptionMuted)
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 52.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(Sage)
+                .clickable { making = -1 },
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(stringResource(R.string.widgets_make), color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        }
+        if (placed.isNotEmpty()) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(1.dp, outline(), RoundedCornerShape(18.dp))
+                    .padding(horizontal = 14.dp, vertical = 4.dp),
+            ) {
+                placed.forEachIndexed { index, id ->
+                    val options by produceState<WidgetOptions?>(null, id) {
+                        value = runCatching { getAppWidgetState(context, PreferencesGlanceStateDefinition, GlanceAppWidgetManager(context).getGlanceIdBy(id)).toWidgetOptions() }.getOrNull()
+                    }
+                    Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(options?.let { styleName(it.style) } ?: stringResource(R.string.widgets_item, index + 1), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                            sizeOfPlaced(context, id)?.let { Text(sizeName(it), fontSize = 12.5.sp, color = CaptionMuted) }
                         }
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                )
+                        Box(
+                            Modifier
+                                .heightIn(min = 40.dp)
+                                .clip(RoundedCornerShape(20.dp))
+                                .border(1.dp, outline(), RoundedCornerShape(20.dp))
+                                .clickable { making = id }
+                                .padding(horizontal = 14.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(stringResource(R.string.widgets_edit), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                        }
+                    }
+                    if (index < placed.lastIndex) HorizontalDivider(color = outline().copy(alpha = 0.08f))
+                }
             }
         }
-        if (manager.isRequestPinAppWidgetSupported) {
-            Box(
-                Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Sage)
-                    .clickable { manager.requestPinAppWidget(provider, null, null) }
-                    .padding(horizontal = 18.dp, vertical = 10.dp),
-            ) {
-                Text(stringResource(R.string.widgets_add), color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+    }
+
+    making?.let { which ->
+        Dialog(onDismissRequest = { making = null }, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+            WidgetMaker(editId = which.takeIf { it >= 0 }) {
+                making = null
+                placed = GlucoseWidget.RECEIVERS.flatMap { manager.getAppWidgetIds(ComponentName(context, it)).toList() }
             }
-        } else {
-            Text(stringResource(R.string.widgets_add_manually), fontSize = 12.sp, color = CaptionMuted)
         }
     }
 }
