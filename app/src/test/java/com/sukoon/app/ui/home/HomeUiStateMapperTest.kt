@@ -86,9 +86,9 @@ class HomeUiStateMapperTest {
 
     @Test
     fun `bracket boundaries land on the expected Home states`() {
-        // Mirrors GlucoseMetrics.bracketFor cutoffs so a change there can't silently reshuffle Home.
-        assertTrue(HomeUiStateMapper.map(SourceStatus.Connected, reading(53), recent, now) is HomeUiState.Urgent)
-        assertTrue(HomeUiStateMapper.map(SourceStatus.Connected, reading(54), recent, now) is HomeUiState.Low)
+        // Urgent follows the urgent-low alarm (under 55); the rest mirrors GlucoseMetrics.bracketFor.
+        assertTrue(HomeUiStateMapper.map(SourceStatus.Connected, reading(54), recent, now) is HomeUiState.Urgent)
+        assertTrue(HomeUiStateMapper.map(SourceStatus.Connected, reading(55), recent, now) is HomeUiState.Low)
         assertTrue(HomeUiStateMapper.map(SourceStatus.Connected, reading(69), recent, now) is HomeUiState.Low)
         assertTrue(HomeUiStateMapper.map(SourceStatus.Connected, reading(70), recent, now) is HomeUiState.InRange)
         assertTrue(HomeUiStateMapper.map(SourceStatus.Connected, reading(180), recent, now) is HomeUiState.InRange)

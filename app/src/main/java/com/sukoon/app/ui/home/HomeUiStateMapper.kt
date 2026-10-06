@@ -7,6 +7,7 @@ import com.sukoon.app.domain.metrics.GlucoseMetrics.RangeBracket
 import java.time.Duration
 import java.time.Instant
 import com.sukoon.app.data.source.libre.SensorLife
+import com.sukoon.app.alarms.AlarmSettings
 
 /**
  * Pure mapping from raw source signals (status + latest reading + recent window) to [HomeUiState].
@@ -63,9 +64,10 @@ object HomeUiStateMapper {
     )
 
     private fun connected(reading: GlucoseReading, recent: List<GlucoseReading>): HomeUiState =
-        when (GlucoseMetrics.bracketFor(reading.glucoseMgDl)) {
-            RangeBracket.VERY_LOW -> HomeUiState.Urgent(reading.glucoseMgDl, reading.trend)
-            RangeBracket.LOW -> HomeUiState.Low(reading.glucoseMgDl, reading.trend)
+        // Urgent exactly when the urgent-low alarm sounds (under 55), not at the stats' 54 line.
+        if (reading.glucoseMgDl < AlarmSettings.URGENT_LOW_MG_DL) HomeUiState.Urgent(reading.glucoseMgDl, reading.trend)
+        else when (GlucoseMetrics.bracketFor(reading.glucoseMgDl)) {
+            RangeBracket.VERY_LOW, RangeBracket.LOW -> HomeUiState.Low(reading.glucoseMgDl, reading.trend)
             RangeBracket.IN_RANGE -> HomeUiState.InRange(reading.glucoseMgDl, reading.trend, recent)
             RangeBracket.HIGH, RangeBracket.VERY_HIGH -> HomeUiState.High(reading.glucoseMgDl, reading.trend, recent)
         }
