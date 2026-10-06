@@ -107,14 +107,25 @@ fun HomeScreen(
     onAddInsulin: () -> Unit = {},
     /** Rapid insulin still active, shown beside the shortcuts when there is any. */
     insulinOnBoard: Double = 0.0,
+    /** Today's numbers, and which of them the user chose to see. */
+    stats: Map<HomeStat, Double> = emptyMap(),
+    chosenStats: List<HomeStat> = emptyList(),
+    onChooseStats: () -> Unit = {},
 ) {
-    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard)) {
+    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats)) {
         HomeContent(state, brief, modifier, onTreated, onSnooze, onAlertEmergencyContact, onTroubleshoot, onPairSensor, onEnterCodeManually)
     }
 }
 
-/** Home's quick-log shortcuts, reached from every state's top bar without threading them through each one. */
-private class Shortcuts(val onFood: () -> Unit, val onInsulin: () -> Unit, val insulinOnBoard: Double = 0.0)
+/** Home's quick-log shortcuts and today's stats, reached from any state without threading them through each one. */
+private class Shortcuts(
+    val onFood: () -> Unit,
+    val onInsulin: () -> Unit,
+    val insulinOnBoard: Double = 0.0,
+    val stats: Map<HomeStat, Double> = emptyMap(),
+    val chosenStats: List<HomeStat> = emptyList(),
+    val onChooseStats: () -> Unit = {},
+)
 private val LocalShortcuts = staticCompositionLocalOf { Shortcuts({}, {}) }
 
 @Composable
@@ -352,7 +363,9 @@ private fun ColumnScope.InRangeContent(state: HomeUiState.InRange, brief: Brief?
         }
         Spacer(Modifier.height(22.dp))
         RecentChart(state.recentReadings)
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(16.dp))
+        StatsRow()
+        Spacer(Modifier.height(12.dp))
         BriefCards(brief)
     }
 }
@@ -421,7 +434,9 @@ private fun ColumnScope.HighContent(state: HomeUiState.High, brief: Brief?) {
         }
         Spacer(Modifier.height(22.dp))
         RecentChart(state.recentReadings)
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(16.dp))
+        StatsRow()
+        Spacer(Modifier.height(12.dp))
         BriefCards(brief)
     }
 }
@@ -535,6 +550,44 @@ private fun RecentChart(readings: List<GlucoseReading>, dimmed: Boolean = false)
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
         )
+    }
+}
+
+/** Today's chosen numbers (design "Home · your stats"); "Choose" opens the picker. */
+@Composable
+private fun StatsRow() {
+    val s = LocalShortcuts.current
+    Column(Modifier.padding(horizontal = 20.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.home_today).uppercase(), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp, color = CaptionMuted, modifier = Modifier.weight(1f))
+            Text(
+                stringResource(R.string.home_choose_stats),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = s.onChooseStats).padding(horizontal = 6.dp, vertical = 8.dp),
+            )
+        }
+        if (s.chosenStats.isNotEmpty()) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                s.chosenStats.forEach { stat -> StatTile(stat, s.stats[stat], Modifier.weight(1f)) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatTile(stat: HomeStat, value: Double?, modifier: Modifier) {
+    Column(
+        modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f), RoundedCornerShape(14.dp))
+            .padding(horizontal = 10.dp, vertical = 9.dp),
+    ) {
+        Text(statLabel(stat), fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted, maxLines = 1)
+        Text(value?.let { statValue(stat, it) } ?: "—", fontFamily = HeadlineSerifFontFamily, fontSize = 21.sp, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, modifier = Modifier.padding(top = 2.dp))
+        Text(statUnit(stat), fontSize = 11.5.sp, color = CaptionMuted, maxLines = 1)
     }
 }
 

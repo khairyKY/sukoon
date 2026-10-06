@@ -86,6 +86,8 @@ import com.sukoon.app.ui.home.FollowingTrends
 import androidx.compose.material3.Surface
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.sukoon.app.ui.home.HomeStat
+import com.sukoon.app.ui.home.StatsPicker
 
 /**
  * Top-level navigation, per the shipped design's 3-tab bottom bar (Now / Trends / You) — not the
@@ -140,8 +142,28 @@ fun MainScaffold() {
                 }
                 val repository = home.glucoseRepository
                 val homeViewModel: HomeViewModel = viewModel(
-                    factory = HomeViewModel.factory(repository, home::sensorLife, home.logbookRepository, home.alarms.treatedAt) { home.settings.insulinAction },
+                    factory = HomeViewModel.factory(
+                        repository,
+                        home::sensorLife,
+                        home.logbookRepository,
+                        home.alarms.treatedAt,
+                        actionOf = { home.settings.insulinAction },
+                        healthToday = {
+                            home.healthConnect.today().let { today ->
+                                buildMap {
+                                    today.steps?.let { put(HomeStat.STEPS, it.toDouble()) }
+                                    today.waterLiters?.let { put(HomeStat.WATER, it) }
+                                }
+                            }
+                        },
+                    ),
                 )
+                val stats by homeViewModel.stats.collectAsStateWithLifecycle()
+                var chosenStats by remember { mutableStateOf(home.settings.homeStats) }
+                var pickingStats by remember { mutableStateOf(false) }
+                if (pickingStats) {
+                    StatsPicker(chosenStats, home.healthConnect, onChange = { home.settings.homeStats = it; chosenStats = it }, onDismiss = { pickingStats = false })
+                }
                 val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
                 val brief by homeViewModel.brief.collectAsStateWithLifecycle()
                 val toYou = { navController.navigateToTab(SukoonTab.YOU) }
@@ -216,6 +238,9 @@ fun MainScaffold() {
                         onAddFood = { pendingEntry = LogEventType.CARB; navController.navigateToTab(SukoonTab.TRENDS) },
                         onAddInsulin = { pendingEntry = LogEventType.INSULIN; navController.navigateToTab(SukoonTab.TRENDS) },
                         insulinOnBoard = insulinOnBoard,
+                        stats = stats,
+                        chosenStats = chosenStats,
+                        onChooseStats = { pickingStats = true },
                     )
                 }
             }

@@ -7,6 +7,9 @@ import com.sukoon.app.alarms.AlarmSound
 import com.sukoon.app.alarms.AlarmType
 import com.sukoon.app.emergency.EmergencySettings
 import com.sukoon.app.insulin.InsulinAction
+import com.sukoon.app.ui.home.HomeStat
+import com.sukoon.app.ui.home.DEFAULT_HOME_STATS
+import com.sukoon.app.ui.home.MAX_HOME_STATS
 
 /**
  * User settings, in the app's prefs file (sukoon_prefs). ponytail: plain private
@@ -116,6 +119,13 @@ class SettingsPrefs(context: Context) {
         prefs.edit().apply { if (phone.isNullOrBlank()) remove(KEY_FOLLOWED_PHONE + personId) else putString(KEY_FOLLOWED_PHONE + personId, phone) }.apply()
     }
 
+    /** The numbers Home shows for today, in order (at most four). */
+    var homeStats: List<HomeStat>
+        get() = prefs.getString(KEY_HOME_STATS, null)?.let { saved ->
+            saved.split(',').mapNotNull { name -> HomeStat.entries.firstOrNull { it.name == name } }
+        } ?: DEFAULT_HOME_STATS
+        set(value) = prefs.edit().putString(KEY_HOME_STATS, value.take(MAX_HOME_STATS).joinToString(",") { it.name }).apply()
+
     /** Home's getting-started card, once the user has said "Got it". */
     var gettingStartedDismissed: Boolean
         get() = prefs.getBoolean(KEY_START_DISMISSED, false)
@@ -131,6 +141,7 @@ class SettingsPrefs(context: Context) {
         val SAVE_INTERVAL_RANGE = 1..60
         private const val KEY_SOURCE = "source_kind"
         private const val KEY_ROLE = "user_role"
+        private const val KEY_HOME_STATS = "home_stats"
         private const val KEY_ONBOARDED = "onboarded"
         private const val KEY_OLD_DISCLAIMER = "disclaimer_accepted" // the disclaimer gate's key, from before onboarding
         private const val KEY_FOLLOWED_PHONE = "followed_phone_"

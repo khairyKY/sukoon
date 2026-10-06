@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.shareIn
 
 /**
  * Drives the Home screen. Thin by design: it just observes the app-scoped [GlucoseRepository]'s
@@ -35,6 +36,8 @@ class HomeViewModel(
     logbook: LogbookRepository? = null,
     treatedAt: Flow<Instant?> = flowOf(null),
     private val actionOf: () -> InsulinAction = { InsulinAction() },
+    /** Today's steps and water from Health Connect (absent: not allowed or nothing logged). */
+    private val healthToday: (suspend () -> Map<HomeStat, Double>)? = null,
 ) : ViewModel() {
 
     // Re-evaluates freshness when no new reading arrives — otherwise a silent source would leave
@@ -64,16 +67,26 @@ class HomeViewModel(
      * again on every reading and tick. ponytail: the window starts when Home opens and only grows
      * while it stays open; the rules look back from now, so older rows only cost a little memory.
      */
-    val brief: StateFlow<Brief?> = (System.currentTimeMillis() - BRIEF_WINDOW_MS).let { since ->
-        combine(
-            repository.readingsSince(since),
-            logbook?.eventsSince(since) ?: flowOf(emptyList()),
-            treatedAt,
-            ticker,
-        ) { readings, events, treated, _ ->
-            HomeBriefs.of(readings, events, Instant.now(), ZoneId.systemDefault(), actionOf(), lifeOf(), treated)
-        }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
+    private val since = System.currentTimeMillis() - BRIEF_WINDOW_MS
+    private val dayReadings = repository.readingsSince(since).shareIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), replay = 1)
+    private val dayEvents = (logbook?.eventsSince(since) ?: flowOf(emptyList())).shareIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), replay = 1)
+
+    val brief: StateFlow<Brief?> = combine(dayReadings, dayEvents, treatedAt, ticker) { readings, events, treated, _ ->
+        HomeBriefs.of(readings, events, Instant.now(), ZoneId.systemDefault(), actionOf(), lifeOf(), treated)
+    }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
+
+    /** Health Connect's steps and water, asked again every few minutes (they come from other apps). */
+    private val health = flow {
+        while (true) {
+            emit(healthToday?.let { runCatching { it() }.getOrNull() }.orEmpty())
+            delay(HEALTH_EVERY_MS)
+        }
     }
+
+    /** Home's chosen numbers for today ([todayStats] plus Health Connect's). */
+    val stats: StateFlow<Map<HomeStat, Double>> = combine(dayReadings, dayEvents, health, ticker) { readings, events, fromHealth, _ ->
+        todayStats(events, readings, Instant.now(), ZoneId.systemDefault()) + fromHealth
+    }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptyMap())
 
     /** The paired sensor's life, for Home's "ends soon" banner (null on demo data). */
     val sensorLife: StateFlow<SensorLife?> = ticker.map { lifeOf() }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
@@ -85,6 +98,7 @@ class HomeViewModel(
         private const val BRIEF_WINDOW_MS = 24 * 3_600_000L
         private const val STOP_TIMEOUT_MS = 5_000L
         private const val TICK_MS = 30_000L
+        private const val HEALTH_EVERY_MS = 5 * 60_000L
 
         fun factory(
             repository: GlucoseRepository,
@@ -92,8 +106,9 @@ class HomeViewModel(
             logbook: LogbookRepository? = null,
             treatedAt: Flow<Instant?> = flowOf(null),
             actionOf: () -> InsulinAction = { InsulinAction() },
+            healthToday: (suspend () -> Map<HomeStat, Double>)? = null,
         ) = viewModelFactory {
-            initializer { HomeViewModel(repository, lifeOf, logbook, treatedAt, actionOf) }
+            initializer { HomeViewModel(repository, lifeOf, logbook, treatedAt, actionOf, healthToday) }
         }
     }
 }
