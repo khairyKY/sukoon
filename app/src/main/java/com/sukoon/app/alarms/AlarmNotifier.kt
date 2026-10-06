@@ -21,6 +21,9 @@ import android.os.PowerManager
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import android.media.AudioManager
+import android.os.Build
+import kotlin.math.ceil
 
 /** The alarm's name, for the notification and the alert screen. */
 internal val AlarmType.titleRes: Int
@@ -65,13 +68,15 @@ internal fun AlarmType.defaultSnooze(settings: AlarmSettings): Int = when (this)
  * user's chosen sound (a phone sound or their own file) and a sound that won't play falls back to
  * a default instead of leaving the alarm silent.
  */
-class AlarmNotifier(private val context: Context) {
+class AlarmNotifier(private val context: Context, private val log: AlarmLog) {
 
     private val manager = context.getSystemService(NotificationManager::class.java)
     private val main = Handler(Looper.getMainLooper())
     private var player: MediaPlayer? = null
     private var playing: AlarmType? = null
     private var playingFor: String? = null // whose alarm is sounding: a followed person's id, or null for this phone's own
+    private val audio = context.getSystemService(AudioManager::class.java)
+    private var restoreVolume: Int? = null // the alarm volume before a low raised it
     private val wakeLock = context.getSystemService(PowerManager::class.java)
         .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "sukoon:emergency")
         .apply { setReferenceCounted(false) }
@@ -88,7 +93,7 @@ class AlarmNotifier(private val context: Context) {
         val body = alarmBody(context, alert.type, alert.minutesSinceReading, who)
 
         val snoozeMinutes = alert.type.defaultSnooze(settings)
-        val treating = alert.type == AlarmType.URGENT_LOW && person == null
+        val treating = (alert.type == AlarmType.URGENT_LOW || alert.type == AlarmType.LOW) && person == null
         val snoozeLabel = when {
             treating -> context.getString(R.string.alarm_action_treating)
             alert.type == AlarmType.URGENT_LOW -> context.getString(R.string.alarm_action_ok)
@@ -111,15 +116,18 @@ class AlarmNotifier(private val context: Context) {
             .addAction(0, snoozeLabel, actionIntent(alert.type, snoozeMinutes, requestCode = alert.type.ordinal, person = person, treated = treating && !test))
             .setFullScreenIntent(PendingIntent.getActivity(context, 1, screen, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT), true)
         // With "display over other apps" Android lets us open the alert screen from the background.
-        if (Settings.canDrawOverlays(context)) runCatching { context.startActivity(Intent(screen).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        val overlaid = Settings.canDrawOverlays(context) && runCatching { context.startActivity(Intent(screen).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess
         val posted = NotificationManagerCompat.from(context).areNotificationsEnabled() &&
             manager.getNotificationChannel(channel)?.importance != NotificationManager.IMPORTANCE_NONE
         if (posted) manager.notify(person, notificationId(alert.type), builder.build())
         // Lows always sound; highs and signal loss stay quiet if the user blocked their notifications.
-        when {
+        val sounded = when {
             alert.type == AlarmType.URGENT_LOW -> play(alert.type, settings, loop = true, URGENT_SOUND_MS, person)
             alert.type.loud || posted -> play(alert.type, settings, loop = false, SOUND_MS, person)
+            else -> false
         }
+        val fullScreen = posted && (Build.VERSION.SDK_INT < 34 || manager.canUseFullScreenIntent())
+        log.add(AlarmLog.Entry(Instant.now(), alert.type, AlarmLog.Kind.FIRED, alert.mgDl, sounded = sounded, screen = overlaid || fullScreen, posted = posted, test = test, who = who))
     }
 
     /** Keeps the CPU up through the emergency countdown, so sleep can't delay the texts. */
@@ -180,7 +188,9 @@ class AlarmNotifier(private val context: Context) {
     )
 
     /** You → Alarms → a sound's "Play it": a few seconds of what this alarm will sound like. */
-    fun preview(type: AlarmType, settings: AlarmSettings) = play(type, settings, loop = true, PREVIEW_MS)
+    fun preview(type: AlarmType, settings: AlarmSettings) {
+        play(type, settings, loop = true, PREVIEW_MS)
+    }
 
     @Synchronized
     fun cancel(type: AlarmType, person: String? = null) {
@@ -195,6 +205,8 @@ class AlarmNotifier(private val context: Context) {
         player = null
         playing = null
         playingFor = null
+        restoreVolume?.let { runCatching { audio.setStreamVolume(AudioManager.STREAM_ALARM, it, 0) } }
+        restoreVolume = null
     }
 
     /**
@@ -203,8 +215,9 @@ class AlarmNotifier(private val context: Context) {
      * leave an alarm silent. Lows use the alarm stream; highs and signal loss the notification one.
      */
     @Synchronized
-    private fun play(type: AlarmType, settings: AlarmSettings, loop: Boolean, durationMs: Long, person: String? = null) {
+    private fun play(type: AlarmType, settings: AlarmSettings, loop: Boolean, durationMs: Long, person: String? = null): Boolean {
         stopSound()
+        if (type.loud) audible(if (type == AlarmType.URGENT_LOW) 0.8 else 0.5)
         val attributes = AudioAttributes.Builder()
             .setUsage(if (type.loud) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_NOTIFICATION_EVENT)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
@@ -216,6 +229,17 @@ class AlarmNotifier(private val context: Context) {
         playing = type
         playingFor = person
         main.postDelayed(::stopSound, durationMs)
+        return player != null
+    }
+
+    /**
+     * A low must be heard even with the alarm volume turned down: lift it to [share] of the maximum
+     * while it sounds, and put it back after ([stopSound]). Never lowers it.
+     */
+    private fun audible(share: Double) {
+        val floor = ceil(audio.getStreamMaxVolume(AudioManager.STREAM_ALARM) * share).toInt()
+        val now = audio.getStreamVolume(AudioManager.STREAM_ALARM)
+        if (now < floor && runCatching { audio.setStreamVolume(AudioManager.STREAM_ALARM, floor, 0) }.isSuccess) restoreVolume = now
     }
 
     private fun actionIntent(type: AlarmType, minutes: Int, requestCode: Int, person: String?, treated: Boolean = false): PendingIntent = PendingIntent.getBroadcast(
@@ -297,6 +321,11 @@ class AlarmNotifier(private val context: Context) {
                 null
             }
         }
+
+        /** True when the user switched off one of the alarm channels in the phone's settings (the app's notifications can still be on). */
+        fun alarmChannelBlocked(context: Context): Boolean =
+            context.getSystemService(NotificationManager::class.java).notificationChannels
+                .any { it.id.startsWith("alarm") && it.importance == NotificationManager.IMPORTANCE_NONE }
 
         /** Whether [uri] would play: checked when the user picks a file, before any alarm relies on it. */
         fun canPlay(context: Context, uri: Uri): Boolean {

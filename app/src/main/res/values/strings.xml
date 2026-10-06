@@ -943,4 +943,21 @@
     <string name="insight_carbdays_body">On days above %1$d g of carbs you were in range %2$d%% of the time, against %3$d%% on lighter days (%4$d days logged).</string>
     <string name="insight_carbdays_discuss">Which meals on bigger days are hardest to cover.</string>
     <string name="insight_src_carbdays">Nutrition therapy consensus (Evert et al., Diabetes Care 2019)</string>
+    <string name="alarms_reach_title">Can alarms reach you?</string>
+    <string name="alarms_off_demo">Alarms are off right now: they only sound for your sensor\'s readings, never for demo data. Choose your sensor under You → Sensor.</string>
+    <string name="alarms_history_title">What your alarms did</string>
+    <string name="alarm_log_empty">Nothing yet. Press Test above to hear the urgent low alarm, and it will show here.</string>
+    <string name="alarm_log_reached">Sounded and took the screen</string>
+    <string name="alarm_log_no_sound">No sound played</string>
+    <string name="alarm_log_no_screen">Couldn\'t take the screen</string>
+    <string name="alarm_log_no_notification">Notifications off</string>
+    <string name="alarm_log_treated">%1$s: you\'re treating it</string>
+    <string name="alarm_log_snoozed">%1$s: snoozed %2$d min</string>
+    <string name="alarm_log_dismissed">%1$s: swiped away</string>
+    <string name="alarm_log_resolved">%1$s: over</string>
+    <string name="home_treated_wait">Check again in %1$d min</string>
+    <string name="home_treated_check">Check your glucose now</string>
+    <string name="home_btn_log_carbs">Log what you had</string>
+    <string name="home_headline_still_low">Still low. Have another 15 g.</string>
+    <string name="home_low_again_action">It\'s been 15 minutes and you\'re still under 70: have another 15 g of fast carbs (juice, glucose tablets), then press I\'ve treated it again.</string>
 </resources>

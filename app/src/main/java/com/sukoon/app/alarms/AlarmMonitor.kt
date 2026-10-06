@@ -37,6 +37,7 @@ class AlarmMonitor(
     private val repository: GlucoseRepository,
     private val settings: SettingsPrefs,
     private val notifier: AlarmNotifier,
+    private val log: AlarmLog,
     private val emergency: EmergencyAlerts,
     private val scope: CoroutineScope,
     private val enabled: () -> Boolean,
@@ -88,6 +89,12 @@ class AlarmMonitor(
      */
     suspend fun acknowledge(type: AlarmType, minutes: Int, treated: Boolean = false) {
         if (treated) _treatedAt.value = Instant.now()
+        val kind = when {
+            treated -> AlarmLog.Kind.TREATED
+            minutes > 0 -> AlarmLog.Kind.SNOOZED
+            else -> AlarmLog.Kind.DISMISSED
+        }
+        log.add(AlarmLog.Entry(Instant.now(), type, kind, minutes = minutes))
         notifier.stopSound()
         mutex.withLock {
             val now = Instant.now()
@@ -97,6 +104,19 @@ class AlarmMonitor(
         }
         if (minutes > 0) notifier.cancel(type)
     }
+
+    /**
+     * Home's "I've treated it": answers whichever low is going off (an urgent low checks back in 5
+     * minutes, a low after its snooze) and starts the 15 minutes Home counts down. Works with no
+     * alarm going off too: the countdown is the point.
+     */
+    suspend fun treated() {
+        val lows = _active.value.filter { it == AlarmType.URGENT_LOW || it == AlarmType.LOW || it == AlarmType.GOING_LOW }.ifEmpty { listOf(AlarmType.LOW) }
+        lows.forEach { acknowledge(it, if (it == AlarmType.URGENT_LOW) 5 else settings.alarmSettings.lowSnoozeMinutes, treated = true) }
+    }
+
+    /** Answering the test alarm: stop it without touching a real alarm's state. */
+    fun endTest() = notifier.cancel(AlarmType.URGENT_LOW)
 
     /** "I'm OK": answers the escalated alarm; if the texts already went out, tells the contacts so they can stand down. */
     suspend fun imOk() {
@@ -140,7 +160,10 @@ class AlarmMonitor(
         val result = AlarmEngine.evaluate(recent.values.toList(), now, settings.alarmSettings, state)
         state = result.state
         _active.value = state.activeSince.keys // before showing: the alert screen checks it as it opens
-        result.cleared.forEach(notifier::cancel)
+        result.cleared.forEach {
+            notifier.cancel(it)
+            log.add(AlarmLog.Entry(now, it, AlarmLog.Kind.RESOLVED))
+        }
         result.fire.forEach { notifier.show(it, settings.alarmSettings) }
         escalateLocked(now)
     }

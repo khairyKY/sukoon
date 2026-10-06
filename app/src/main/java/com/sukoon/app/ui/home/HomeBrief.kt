@@ -30,7 +30,8 @@ sealed interface Brief {
     val step: Step?
 
     // Below 70.
-    data class Low(val insulin: Double) : Brief { override val step = Step.FAST_CARBS }
+    /** [again]: treated 15 to 60 minutes ago and still under 70 (the 15-15 rule's second round). */
+    data class Low(val insulin: Double, val again: Boolean = false) : Brief { override val step = Step.FAST_CARBS }
     data class Treated(val at: Instant) : Brief { override val step = Step.RECHECK }
 
     // Worth acting on.
@@ -93,7 +94,8 @@ object HomeBriefs {
 
         if (v < 70) {
             val treated = listOfNotNull(treatedAt, last(LogEventType.CARB, TREATMENT_WAIT.toMinutes())?.at()).filter { it > now.minus(TREATMENT_WAIT) }.maxOrNull()
-            return if (treated != null) Brief.Treated(treated) else Brief.Low(insulin)
+            val earlier = listOfNotNull(treatedAt, last(LogEventType.CARB, 60)?.at()).any { it > ago(60) }
+            return if (treated != null) Brief.Treated(treated) else Brief.Low(insulin, again = earlier)
         }
 
         val hour = now.atZone(zone).hour

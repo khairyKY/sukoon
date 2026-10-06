@@ -89,6 +89,7 @@ import com.sukoon.app.ui.theme.OnCanvasLight
 import com.sukoon.app.ui.theme.SurfaceDark
 import com.sukoon.app.ui.theme.SurfaceLight
 import com.sukoon.app.ui.theme.SageLight
+import com.sukoon.app.alarms.AlarmLog
 
 /** The You tab's sections (design "You, divided"): each opens its own page from the hub. */
 private enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
@@ -140,6 +141,7 @@ fun SettingsScreen(
     onUploadNow: suspend () -> UploadStatus,
     buildCsv: suspend (Int) -> Pair<String, Int>,
     modifier: Modifier = Modifier,
+    alarmLog: List<AlarmLog.Entry> = emptyList(),
 ) {
     val context = LocalContext.current
     var page by rememberSaveable { mutableStateOf<YouPage?>(null) }
@@ -213,7 +215,15 @@ fun SettingsScreen(
                         SectionLabel(stringResource(R.string.calibration_title))
                         CalibrationSection(calibration)
                     }
-                    YouPage.ALARMS -> AlarmSettingsSection(alarmSettings, onAlarmSettings, onTestAlarm, onPreviewAlarm)
+                    YouPage.ALARMS -> {
+                        SectionLabel(stringResource(R.string.alarms_reach_title))
+                        AlarmReach(sensorIsSource = sourceKind == SourceKind.LIBRE_BLE)
+                        Gap()
+                        AlarmSettingsSection(alarmSettings, onAlarmSettings, onTestAlarm, onPreviewAlarm)
+                        Gap()
+                        SectionLabel(stringResource(R.string.alarms_history_title))
+                        AlarmHistory(alarmLog)
+                    }
                     YouPage.PEOPLE -> {
                         SectionLabel(stringResource(R.string.emergency_title))
                         EmergencySection(emergency, emergencyAlerts, onEmergency)

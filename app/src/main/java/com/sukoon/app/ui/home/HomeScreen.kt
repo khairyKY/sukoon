@@ -81,6 +81,13 @@ import com.sukoon.app.ui.graph.GlucoseChart
 import com.sukoon.app.ui.graph.GraphRange
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.runtime.produceState
+import kotlinx.coroutines.delay
+import androidx.compose.foundation.layout.width
+import java.time.Duration
+import java.time.Instant
 
 /**
  * The Home/Now screen, in every state it can be in (docs/design-screens.md §2). Copy, colors,
@@ -387,7 +394,13 @@ private fun ColumnScope.LowContent(state: HomeUiState.Low, brief: Brief?, onTrea
             Text(text = "${stringResource(R.string.home_unit_mgdl)} · ${trendLabel(state.trend)}", fontSize = 12.sp, color = CaptionMuted)
         }
         Text(
-            text = stringResource(if (brief is Brief.Treated) R.string.home_headline_treated else R.string.home_headline_going_low),
+            text = stringResource(
+                when {
+                    brief is Brief.Treated -> R.string.home_headline_treated
+                    brief is Brief.Low && brief.again -> R.string.home_headline_still_low
+                    else -> R.string.home_headline_going_low
+                },
+            ),
             fontFamily = HeadlineSerifFontFamily,
             fontSize = 26.sp,
             lineHeight = 32.sp,
@@ -400,6 +413,8 @@ private fun ColumnScope.LowContent(state: HomeUiState.Low, brief: Brief?, onTrea
             labelColor = Sage,
             content = if (brief is Brief.Treated) {
                 treatedText(brief)
+            } else if (brief is Brief.Low && brief.again) {
+                androidx.compose.ui.text.AnnotatedString(stringResource(R.string.home_low_again_action))
             } else {
                 buildAnnotatedString {
                     append(stringResource(R.string.home_low_action_prefix))
@@ -411,8 +426,13 @@ private fun ColumnScope.LowContent(state: HomeUiState.Low, brief: Brief?, onTrea
         InsulinStillWorking(brief)
         Spacer(Modifier.weight(1f))
         Column(modifier = Modifier.padding(vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            ActionButton(stringResource(R.string.home_btn_treated), filled = true, onClick = onTreated)
-            ActionButton(stringResource(R.string.home_btn_snooze_15), filled = false, onClick = onSnooze)
+            if (brief is Brief.Treated) {
+                TreatedButton(brief.at)
+                ActionButton(stringResource(R.string.home_btn_log_carbs), filled = false, onClick = LocalShortcuts.current.onFood)
+            } else {
+                ActionButton(stringResource(R.string.home_btn_treated), filled = true, onClick = treatedWithHaptic(onTreated))
+                ActionButton(stringResource(R.string.home_btn_snooze_15), filled = false, onClick = onSnooze)
+            }
         }
     }
 }
@@ -487,7 +507,8 @@ private fun ColumnScope.UrgentContent(state: HomeUiState.Urgent, brief: Brief?, 
         InsulinStillWorking(brief)
         Spacer(Modifier.weight(1f))
         Column(modifier = Modifier.padding(vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-            ActionButton(stringResource(R.string.home_btn_treated), filled = true, onClick = onTreated)
+            if (brief is Brief.Treated) TreatedButton(brief.at)
+            else ActionButton(stringResource(R.string.home_btn_treated), filled = true, onClick = treatedWithHaptic(onTreated))
             ActionButton(stringResource(R.string.home_btn_alert_emergency), filled = false, onClick = onAlertEmergencyContact)
         }
     }
@@ -514,6 +535,43 @@ private fun ActionCard(labelColor: Color, content: androidx.compose.ui.text.Anno
         Text(text = content, fontSize = 13.5.sp, lineHeight = 19.sp, color = MaterialTheme.colorScheme.onSurface)
     }
 }
+
+/** A firm buzz with the press, so it registers even before the screen changes. */
+@Composable
+private fun treatedWithHaptic(onTreated: () -> Unit): () -> Unit {
+    val haptic = LocalHapticFeedback.current
+    return {
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        onTreated()
+    }
+}
+
+/** In place of "I've treated it" once pressed: the 15 minutes counting down, then "check now". */
+@Composable
+private fun TreatedButton(at: Instant) {
+    val left by produceState(treatedMinutesLeft(at), at) {
+        while (value > 0) {
+            delay(10_000)
+            value = treatedMinutesLeft(at)
+        }
+    }
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(SageMist).padding(15.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(painterResource(R.drawable.ic_check), contentDescription = null, tint = com.sukoon.app.ui.theme.SageDeep, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(
+            if (left > 0) stringResource(R.string.home_treated_wait, left) else stringResource(R.string.home_treated_check),
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 14.sp,
+            color = com.sukoon.app.ui.theme.SageDeep,
+        )
+    }
+}
+
+private fun treatedMinutesLeft(at: Instant) = ((Duration.between(Instant.now(), at.plusSeconds(15 * 60)).seconds + 59) / 60).coerceAtLeast(0).toInt()
 
 /** The 15-15 rule once a low is treated: wait the 15 minutes, then check before having more. */
 @Composable

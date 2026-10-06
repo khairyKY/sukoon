@@ -54,6 +54,17 @@ import com.sukoon.app.alarms.AlarmNotifier
 import com.sukoon.app.alarms.AlarmSound
 import com.sukoon.app.alarms.AlarmType
 import com.sukoon.app.ui.components.toast
+import com.sukoon.app.alarms.AlarmLog
+import com.sukoon.app.alarms.titleRes
+import com.sukoon.app.platform.SetupItem
+import com.sukoon.app.ui.theme.PillLowBg
+import com.sukoon.app.ui.theme.PillLowText
+import androidx.compose.foundation.layout.height
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 private val LOW_LEVELS = listOf(60, 65, 70, 75, 80, 90, 100)
 private val HIGH_LEVELS = listOf(180, 200, 220, 250, 280, 300, 350)
@@ -237,6 +248,79 @@ fun ReadingsSection(intervalMinutes: Int, onChange: (Int) -> Unit) {
         NumberChips(SettingsPrefs.SAVE_INTERVALS, intervalMinutes, SettingsPrefs.SAVE_INTERVAL_RANGE, { stringResource(R.string.alarms_minutes, it) }) { onChange(it) }
         Text(stringResource(R.string.readings_body), fontSize = 12.sp, color = CaptionMuted)
     }
+}
+
+/** Whether an alarm would get through right now: the sensor is the source, and the phone lets it sound and show. */
+@Composable
+fun AlarmReach(sensorIsSource: Boolean) {
+    if (!sensorIsSource) {
+        Text(
+            stringResource(R.string.alarms_off_demo),
+            fontSize = 13.sp,
+            lineHeight = 18.sp,
+            color = PillLowText,
+            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(PillLowBg).padding(14.dp),
+        )
+        Spacer(Modifier.height(10.dp))
+    }
+    SetupChecklist(only = ALARM_SETUP)
+}
+
+private val ALARM_SETUP = setOf(SetupItem.NOTIFICATIONS, SetupItem.FULL_SCREEN, SetupItem.OVERLAY, SetupItem.DND, SetupItem.BATTERY)
+
+/** The last alarms, newest first: each one that went off (and what got through), each answer, each ending. */
+@Composable
+fun AlarmHistory(entries: List<AlarmLog.Entry>) = Card {
+    if (entries.isEmpty()) {
+        Text(stringResource(R.string.alarm_log_empty), fontSize = 13.sp, color = CaptionMuted)
+    } else {
+        entries.asReversed().take(20).forEach { LogRow(it) }
+    }
+}
+
+@Composable
+private fun LogRow(e: AlarmLog.Entry) {
+    val name = listOfNotNull(
+        if (e.test) stringResource(R.string.alarm_test_prefix) else null,
+        e.who?.let { "$it ·" },
+        stringResource(e.type.titleRes),
+    ).joinToString(" ")
+    val missed = listOfNotNull(
+        if (!e.sounded) stringResource(R.string.alarm_log_no_sound) else null,
+        if (!e.screen) stringResource(R.string.alarm_log_no_screen) else null,
+        if (!e.posted) stringResource(R.string.alarm_log_no_notification) else null,
+    )
+    val what = when (e.kind) {
+        AlarmLog.Kind.FIRED -> name + (e.mgDl?.let { " · $it" } ?: "")
+        AlarmLog.Kind.TREATED -> stringResource(R.string.alarm_log_treated, name)
+        AlarmLog.Kind.SNOOZED -> stringResource(R.string.alarm_log_snoozed, name, e.minutes)
+        AlarmLog.Kind.DISMISSED -> stringResource(R.string.alarm_log_dismissed, name)
+        AlarmLog.Kind.RESOLVED -> stringResource(R.string.alarm_log_resolved, name)
+    }
+    Row(verticalAlignment = Alignment.Top) {
+        Text(logTime(e.at), fontSize = 12.5.sp, color = CaptionMuted, modifier = Modifier.width(76.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                what,
+                fontSize = 13.5.sp,
+                fontWeight = if (e.kind == AlarmLog.Kind.FIRED) FontWeight.SemiBold else FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+            if (e.kind == AlarmLog.Kind.FIRED) {
+                Text(
+                    missed.joinToString(" · ").ifEmpty { stringResource(R.string.alarm_log_reached) },
+                    fontSize = 12.sp,
+                    color = if (missed.isEmpty()) CaptionMuted else PillLowText,
+                )
+            }
+        }
+    }
+}
+
+private fun logTime(at: Instant): String {
+    val zone = ZoneId.systemDefault()
+    val today = at.atZone(zone).toLocalDate() == LocalDate.now(zone)
+    return DateTimeFormatter.ofPattern(if (today) "HH:mm" else "EEE HH:mm", Locale.getDefault()).format(at.atZone(zone))
 }
 
 @Composable

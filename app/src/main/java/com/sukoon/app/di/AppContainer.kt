@@ -53,6 +53,7 @@ import java.time.Duration
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import com.sukoon.app.data.repository.EntryPhotos
+import com.sukoon.app.alarms.AlarmLog
 
 /**
  * Manual dependency container (ponytail: no Hilt/Koin for a graph this small). Owns the
@@ -117,12 +118,16 @@ class AppContainer(private val context: Context) {
 
     val sharing = Sharing(context, supabase, glucoseRepository, appScope)
 
-    private val notifier = AlarmNotifier(context)
+    /** What the alarms did (You → Alarms). */
+    val alarmLog = AlarmLog(context)
+
+    private val notifier = AlarmNotifier(context, alarmLog)
 
     val alarms = AlarmMonitor(
         repository = glucoseRepository,
         settings = settings,
         notifier = notifier,
+        log = alarmLog,
         emergency = emergency,
         scope = appScope,
         enabled = { _sourceKind.value == SourceKind.LIBRE_BLE },

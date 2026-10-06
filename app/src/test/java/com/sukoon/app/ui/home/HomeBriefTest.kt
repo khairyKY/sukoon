@@ -44,7 +44,8 @@ class HomeBriefTest {
         val pressed = now.minusSeconds(5 * 60)
         assertEquals(Brief.Treated(pressed), brief(low, treatedAt = pressed))
         assertEquals(Step.RECHECK, brief(low, treatedAt = pressed)!!.step)
-        assertEquals(Brief.Low(0.0), brief(low, treatedAt = now.minusSeconds(20 * 60))) // 15 minutes are up: treat again
+        assertEquals(Brief.Low(0.0, again = true), brief(low, treatedAt = now.minusSeconds(20 * 60))) // 15 minutes are up: treat again
+        assertEquals(Brief.Low(0.0), brief(low, treatedAt = now.minusSeconds(90 * 60))) // an hour on, a new low
         assertTrue(brief(low, listOf(event(LogEventType.CARB, 15.0, 3))) is Brief.Treated) // logged juice counts too
     }
 

@@ -119,8 +119,11 @@ class AlarmActivity : ComponentActivity() {
                         val settings = container.settings.alarmSettings
                         val treatable = s.person == null && (s.type == AlarmType.URGENT_LOW || s.type == AlarmType.LOW)
                         fun snooze(minutes: Int, treated: Boolean) = answer {
-                            if (s.person != null) container.followerWatch.acknowledge(s.person, s.type, minutes)
-                            else container.alarms.acknowledge(s.type, minutes, treated = treated && !s.test)
+                            when {
+                                s.test -> container.alarms.endTest()
+                                s.person != null -> container.followerWatch.acknowledge(s.person, s.type, minutes)
+                                else -> container.alarms.acknowledge(s.type, minutes, treated = treated)
+                            }
                         }
                         Takeover(
                             title = listOfNotNull(

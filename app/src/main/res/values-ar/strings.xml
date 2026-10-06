@@ -943,4 +943,21 @@
     <string name="insight_carbdays_body">في الأيام اللي فيها أكتر من %1$d جرام كربوهيدرات كنت في المعدل %2$d%% من الوقت، مقابل %3$d%% في الأيام الأخف (%4$d يوم متسجّل).</string>
     <string name="insight_carbdays_discuss">أنهي وجبات في الأيام الكبيرة أصعب في التغطية.</string>
     <string name="insight_src_carbdays">توافق العلاج الغذائي (Evert وآخرون، Diabetes Care 2019)</string>
+    <string name="alarms_reach_title">المنبّهات توصلك؟</string>
+    <string name="alarms_off_demo">المنبّهات مقفولة دلوقتي: بتشتغل بس على قراءات الحساس بتاعك، عمرها ما بتشتغل على بيانات التجربة. اختار الحساس من أنت ← الحساس.</string>
+    <string name="alarms_history_title">المنبّهات عملت إيه</string>
+    <string name="alarm_log_empty">لسه مفيش. دوس تجربة فوق علشان تسمع منبّه الهبوط الشديد، وهيظهر هنا.</string>
+    <string name="alarm_log_reached">رنّ وظهر على الشاشة</string>
+    <string name="alarm_log_no_sound">مرنّش</string>
+    <string name="alarm_log_no_screen">مقدرش يظهر على الشاشة</string>
+    <string name="alarm_log_no_notification">الإشعارات مقفولة</string>
+    <string name="alarm_log_treated">%1$s: بتعالجه</string>
+    <string name="alarm_log_snoozed">%1$s: اتأجل %2$d دقيقة</string>
+    <string name="alarm_log_dismissed">%1$s: اتشال من الإشعارات</string>
+    <string name="alarm_log_resolved">%1$s: خلص</string>
+    <string name="home_treated_wait">قيس تاني بعد %1$d دقيقة</string>
+    <string name="home_treated_check">شوف السكر دلوقتي</string>
+    <string name="home_btn_log_carbs">سجّل اللي أخدته</string>
+    <string name="home_headline_still_low">لسه واطي. خد ١٥ جرام كمان.</string>
+    <string name="home_low_again_action">عدّت ١٥ دقيقة ولسه تحت ٧٠: خد ١٥ جرام سكريات سريعة كمان (عصير، أقراص جلوكوز)، وبعدين دوس عالجته تاني.</string>
 </resources>

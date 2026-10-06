@@ -12,6 +12,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.sukoon.app.R
 import com.sukoon.app.data.prefs.SettingsPrefs
+import com.sukoon.app.alarms.AlarmNotifier
 
 /**
  * Everything Sukoon needs from the OS to be a reliable CGM app, with how to check and how to fix
@@ -43,7 +44,7 @@ object SetupCheck {
     fun isDone(context: Context, item: SetupItem): Boolean {
         val notifications = context.getSystemService(NotificationManager::class.java)
         return when (item) {
-            SetupItem.NOTIFICATIONS -> NotificationManagerCompat.from(context).areNotificationsEnabled()
+            SetupItem.NOTIFICATIONS -> NotificationManagerCompat.from(context).areNotificationsEnabled() && !AlarmNotifier.alarmChannelBlocked(context)
             SetupItem.BLUETOOTH -> bluetoothPermissions().all { granted(context, it) }
             SetupItem.BATTERY -> BatteryOptimization.isIgnoringBatteryOptimizations(context)
             SetupItem.FULL_SCREEN -> Build.VERSION.SDK_INT < 34 || notifications.canUseFullScreenIntent()

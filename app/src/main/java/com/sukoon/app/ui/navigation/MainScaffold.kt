@@ -219,13 +219,7 @@ fun MainScaffold() {
                         onPairSensor = toYou,
                         onEnterCodeManually = toYou,
                         onTroubleshoot = toYou,
-                        // "I've treated it": urgent re-checks in 5 min; a plain low after its usual snooze.
-                        onTreated = {
-                            scope.launch {
-                                if (homeState is HomeUiState.Urgent) alarms.acknowledge(AlarmType.URGENT_LOW, 5, treated = true)
-                                else alarms.acknowledge(AlarmType.LOW, settings.alarmSettings.lowSnoozeMinutes, treated = true)
-                            }
-                        },
+                        onTreated = { scope.launch { alarms.treated() } },
                         onSnooze = { scope.launch { alarms.acknowledge(AlarmType.LOW, 15) } },
                         onAlertEmergencyContact = {
                             if (emergencyAlerts.contacts.isEmpty()) {
@@ -330,6 +324,7 @@ fun MainScaffold() {
                         alarmSettings = container.settings.alarmSettings
                     },
                     onTestAlarm = container.alarms::test,
+                    alarmLog = container.alarmLog.entries.collectAsStateWithLifecycle().value,
                     onPreviewAlarm = container.alarms::preview,
                     emergency = emergency,
                     emergencyAlerts = container.emergency,
