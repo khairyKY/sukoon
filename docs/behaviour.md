@@ -152,4 +152,4 @@ Emergency texts are never sent from a follower's phone.
 ## 7. Known limits
 
 - Snoozes, "treated at" and the emergency clock live in memory: if Android kills the app, they reset (the alarm comes back sooner, not later).
-- If the phone kills the app while it isn't running in the background, no alarm can sound. That's why the battery items in the check above matter.
+- If the phone kills the app, nothing inside it can sound. A watchdog covers that: every reading pushes a system alarm to just past your no-readings line (20 min + 2 by default). If readings stop because the app was killed, Android wakes Sukoon there; the sensor and alarms restart, and *No readings* goes off if the sensor is still quiet. It checks again every 5 minutes until readings return. The battery items in the check above still matter: they keep it from coming to that.
