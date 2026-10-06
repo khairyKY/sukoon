@@ -48,7 +48,19 @@ Designs: the "Sukoon — onboarding, logbook & settings redesign" canvas (claude
 - ✅ You divided: hub (profile, "N things need you", eight sections with live summaries) and a page per section.
 - ✅ Adding entries, direction A (Kai's pick of three): tiles + "Again", a big number pad, meal + rapid insulin + when injected on one screen, undo. MyFitnessPal meals bring every nutrient (Room v3) and show MyFitnessPal's own icon (from the phone), what the meal did to glucose, and "Add insulin" when none was logged; pick a MyFitnessPal meal to add its insulin. "Powered by MyFitnessPal" not used: it would claim a partnership.
 - ✅ Onboarding by role (wearer / follower / both; account optional for a wearer) with each role's steps; follower Home (their live number, chart, words, Call/Message) and Trends; a strip of followed people for "both".
-- Next ideas: bundle the brand fonts (Newsreader, Hanken Grotesk) so the app matches the designs exactly; per-alarm "see it" previews; connection-health notes in You → Sensor.
+- Next ideas: connection-health notes in You → Sensor.
+
+## MyFitnessPal, smarter insights, polish (Kai, 2026-10-06 → 07)
+- ✅ MyFitnessPal workouts (10 min+) as Activity entries, today's steps and water, all through Health Connect.
+- ✅ Home stats you choose (up to 4 of calories, carbs, protein, fat, rapid/long insulin, time in range, average, lows, steps, water), between the chart and the message.
+- ✅ Dark mode done properly (theme-aware tokens, every hard-coded colour fixed) and the app's language chosen inside the app (Like the phone / English / Egyptian Arabic, Android 13+).
+- ✅ Smarter insights: this week vs last, carbs per 10 g at each meal, fat/protein-rich meals 4 h later, highs after treating a low, lows after workouts, nights, bigger-carb days; each with its source, all in the AI brief.
+- ✅ Alarms: "What your alarms did" (every alarm, what got through, every answer), "Can alarms reach you?", lows lift the alarm volume while they sound, "I'm treating it" on a low's notification, the high alarm defaults to 180.
+- ✅ "I've treated it" answers whichever low is sounding, buzzes, counts down the 15 minutes, then "Still low. Have another 15 g." Home urgent starts where the urgent alarm does (under 55).
+- ✅ docs/behaviour.md: every state, rule and answer.
+- ✅ Brand fonts bundled (Hanken Grotesk, Newsreader; variable, OFL).
+- ✅ You → Alarms and You → Apps & data rebuilt to their design boards; "See and hear each alarm".
+- ⏸ Why alerts didn't reach Kai on the 5c3be68 build: needs the phone on USB (logcat, notification channels, app ops).
 
 Rules: no APK builds or installs unless Kai asks (compile + unit tests only); no AI attribution in commits or PRs.
 

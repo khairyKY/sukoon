@@ -101,7 +101,7 @@ a high 10 below its line.
 | **Snooze choices** | Alert screen | Same, with your chosen minutes (urgent capped at 5) |
 | **Swipe the notification away** | Notification | Counts as an answer (restarts the emergency clock), no snooze |
 | **I've treated it** | Home, while low or urgent | Answers whichever low is sounding, buzzes, and the button becomes "Check again in N min", then "Check your glucose now". *Log what you had* opens a carbs entry |
-| **Test** | You → Alarms | The real urgent-low path, marked TEST. Answering it never touches a real alarm |
+| **See and hear each alarm** | You → Alarms | *Hear* plays an alarm's sound for 5 s; *See* runs its real path (sound, notification, full screen) with a sample value, marked TEST. Answering it never touches a real alarm |
 
 The alert screen closes by itself once its alarm is over (back in range, signal back).
 
@@ -113,7 +113,7 @@ something didn't get through, it says what, in red.
 
 ### Can alarms reach you?
 
-The top of You → Alarms checks each of these and gives a one-tap fix for anything missing (the
+You → Alarms checks each of these (at the top while something is wrong, under the alarms otherwise) and gives a one-tap fix for anything missing (the
 Home banner shows too):
 
 - notifications on, and no alarm channel switched off in the phone's settings
