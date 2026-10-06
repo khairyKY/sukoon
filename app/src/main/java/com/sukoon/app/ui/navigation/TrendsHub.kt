@@ -77,6 +77,7 @@ fun TrendsHub(
     onAcknowledgeInsights: () -> Unit,
     pendingEntry: LogEventType?,
     onPendingEntryHandled: () -> Unit,
+    onSync: (suspend () -> String)? = null,
     reportState: ReportUiState,
     onSelectReportDays: (Int) -> Unit,
     reportName: String,
@@ -107,6 +108,7 @@ fun TrendsHub(
                 modifier = Modifier.weight(1f),
                 onEstimateCarbs = onEstimateCarbs,
                 onEntryPhoto = onEntryPhoto,
+                onSync = onSync,
                 openNewEntry = pendingEntry,
                 onOpenedEntry = onPendingEntryHandled,
             )

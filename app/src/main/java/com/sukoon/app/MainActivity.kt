@@ -17,6 +17,8 @@ import com.sukoon.app.ui.theme.SukoonTheme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
 import com.sukoon.app.data.prefs.ThemeMode
+import android.content.Intent
+import com.sukoon.app.data.db.LogEventType
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,6 +26,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val container = (application as SukoonApp).container
+        takeEntry(intent)
         val themeMode = container.themeMode
         setContent {
             val mode by themeMode.collectAsState()
@@ -42,5 +45,21 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        takeEntry(intent)
+    }
+
+    /** A notification asked for a new entry (the long-acting reminder's "Log it"): the Logbook opens it. */
+    private fun takeEntry(intent: Intent) {
+        val type = intent.getStringExtra(EXTRA_ENTRY)?.let { name -> LogEventType.entries.firstOrNull { it.name == name } } ?: return
+        intent.removeExtra(EXTRA_ENTRY)
+        (application as SukoonApp).container.requestedEntry.value = type
+    }
+
+    companion object {
+        const val EXTRA_ENTRY = "entry"
     }
 }

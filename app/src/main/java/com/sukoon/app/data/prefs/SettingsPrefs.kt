@@ -10,6 +10,7 @@ import com.sukoon.app.insulin.InsulinAction
 import com.sukoon.app.ui.home.HomeStat
 import com.sukoon.app.ui.home.DEFAULT_HOME_STATS
 import com.sukoon.app.ui.home.MAX_HOME_STATS
+import com.sukoon.app.reminders.BasalReminderSettings
 
 /**
  * User settings, in the app's prefs file (sukoon_prefs). ponytail: plain private
@@ -98,6 +99,11 @@ class SettingsPrefs(context: Context) {
         get() = InsulinAction(prefs.getInt(KEY_INSULIN_PEAK, 75), prefs.getInt(KEY_INSULIN_DURATION, 300)).sanitized()
         set(value) = prefs.edit().putInt(KEY_INSULIN_PEAK, value.peakMinutes).putInt(KEY_INSULIN_DURATION, value.durationMinutes).apply()
 
+    /** You → Insulin: the long-acting reminder. */
+    var basalReminder: BasalReminderSettings
+        get() = BasalReminderSettings(prefs.getBoolean(KEY_BASAL_REMINDER, false), prefs.getInt(KEY_BASAL_MINUTE, 22 * 60).coerceIn(0, 1439))
+        set(value) = prefs.edit().putBoolean(KEY_BASAL_REMINDER, value.enabled).putInt(KEY_BASAL_MINUTE, value.minuteOfDay).apply()
+
     /** You → Appearance. */
     var themeMode: ThemeMode
         get() = ThemeMode.entries.firstOrNull { it.name == prefs.getString(KEY_THEME, null) } ?: ThemeMode.AUTO
@@ -163,6 +169,8 @@ class SettingsPrefs(context: Context) {
         private const val KEY_SOUND_NAME = "alarm_sound_name_"
         private const val KEY_EMERGENCY_CONTACTS = "emergency_contacts"
         private const val KEY_INSULIN_PEAK = "insulin_peak_minutes"
+        private const val KEY_BASAL_REMINDER = "basal_reminder_on"
+        private const val KEY_BASAL_MINUTE = "basal_reminder_minute"
         private const val KEY_START_DISMISSED = "getting_started_dismissed"
         private const val KEY_QUIET_FROM = "alarm_quiet_highs_from"
         private const val KEY_QUIET_TO = "alarm_quiet_highs_to"

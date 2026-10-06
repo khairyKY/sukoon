@@ -93,6 +93,7 @@ import com.sukoon.app.alarms.AlarmLog
 import android.net.Uri
 import androidx.compose.material3.HorizontalDivider
 import com.sukoon.app.data.source.GlucoseReading
+import com.sukoon.app.reminders.BasalReminderSettings
 
 /** The You tab's sections (design "You, divided"): each opens its own page from the hub. */
 private enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
@@ -147,6 +148,9 @@ fun SettingsScreen(
     alarmLog: List<AlarmLog.Entry> = emptyList(),
     /** The last 24 hours of readings, for the sensor page's connection note. */
     dayOfReadings: suspend () -> List<GlucoseReading> = { emptyList() },
+    basalReminder: BasalReminderSettings = BasalReminderSettings(),
+    onBasalReminder: (BasalReminderSettings) -> Unit = {},
+    usualBasalMinute: suspend () -> Int? = { null },
 ) {
     val context = LocalContext.current
     var page by rememberSaveable { mutableStateOf<YouPage?>(null) }
@@ -250,7 +254,12 @@ fun SettingsScreen(
                         SectionLabel(stringResource(R.string.sharing_title))
                         SharingSection(sharing, followerWatch)
                     }
-                    YouPage.INSULIN -> InsulinSection(insulinAction, onInsulinAction)
+                    YouPage.INSULIN -> {
+                        SectionLabel(stringResource(R.string.reminder_basal_section))
+                        BasalReminderCard(basalReminder, onBasalReminder, usualBasalMinute)
+                        Gap()
+                        InsulinSection(insulinAction, onInsulinAction)
+                    }
                     YouPage.APPS -> {
                         HealthConnectSection(healthConnect)
                         Spacer(Modifier.height(10.dp))

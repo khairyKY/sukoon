@@ -91,6 +91,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.sukoon.app.ui.components.PullToSync
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 
 internal val hmFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
 
@@ -117,6 +120,8 @@ fun LogbookScreen(
     /** Set by Home's shortcuts: open a new entry of this type once, then [onOpenedEntry]. */
     openNewEntry: LogEventType? = null,
     onOpenedEntry: () -> Unit = {},
+    /** Pull down: bring in MyFitnessPal's latest; returns what to say. */
+    onSync: (suspend () -> String)? = null,
 ) {
     val context = LocalContext.current
     val view = LocalView.current
@@ -153,7 +158,7 @@ fun LogbookScreen(
         }
     }
 
-    Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    PullToSync(onSync, modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
             Spacer(Modifier.height(16.dp))
             Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
@@ -166,7 +171,8 @@ fun LogbookScreen(
             }
             Spacer(Modifier.height(8.dp))
             if (state.events.isEmpty()) {
-                LogbookEmptyState(onLogFirst = { adding = true }, modifier = Modifier.weight(1f))
+                // Scrollable, so pulling down to sync works on an empty day too.
+                LogbookEmptyState(onLogFirst = { adding = true }, modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()))
             } else {
                 LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(bottom = 96.dp)) {
                     itemsIndexed(groups, key = { _, g -> g.main.id }) { i, group ->

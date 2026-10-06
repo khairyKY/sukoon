@@ -97,6 +97,7 @@ import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.sukoon.app.health.HealthConnectSync
 
 /** What one amount box takes: decimals or whole numbers, how many digits, and its one-tap amounts. */
 internal enum class AmountField(val decimals: Boolean, val maxWhole: Int, val quick: List<Int>) {
@@ -693,9 +694,15 @@ private fun MealActions(
             }
         }
         if (canEstimate) ActionButton(R.drawable.ic_sparkle, stringResource(R.string.carb_ai_estimate), Modifier.weight(1f), onClick = onEstimate)
+        val mfp = rememberSourceApp(HealthConnectSync.MFP)
         if (appMeals.isNotEmpty()) {
             val app = rememberSourceApp(appMeals.first().source.orEmpty())
             ActionButton(null, app.label, Modifier.weight(1.3f), appIcon = app, onClick = onAppMeals)
+        } else if (mfp.installed) {
+            // Nothing from MyFitnessPal today yet: open it to log the meal there; it comes back through Health Connect.
+            ActionButton(null, mfp.label, Modifier.weight(1.3f), appIcon = mfp) {
+                context.packageManager.getLaunchIntentForPackage(HealthConnectSync.MFP)?.let { runCatching { context.startActivity(it) } }
+            }
         }
         Box(
             Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f)).clickable(onClick = onMore),

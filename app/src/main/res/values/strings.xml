@@ -1008,4 +1008,25 @@
     <string name="follow_heading_low">%1$s is heading low.</string>
     <string name="follow_heading_low_in">Could be under 70 in about %1$d min.</string>
     <string name="home_last_3_hours">Last 3 hours</string>
+    <string name="reminder_channel">Reminders</string>
+    <string name="reminder_basal_title">Long-acting insulin</string>
+    <string name="reminder_basal_body">Not logged in the last 12 hours. Tap to log it.</string>
+    <string name="reminder_basal_body_dose">Not logged in the last 12 hours. Your last dose was %1$s U.</string>
+    <string name="reminder_basal_took">Took it · %1$s U</string>
+    <string name="reminder_basal_log">Log it</string>
+    <string name="reminder_basal_later">In 30 min</string>
+    <string name="reminder_basal_section">Reminder</string>
+    <string name="reminder_basal_setting">Remind me about long-acting</string>
+    <string name="reminder_basal_on">Every day at %1$s, unless you\'ve logged it in the 12 hours before. Again every 30 min, 3 times.</string>
+    <string name="reminder_basal_off">A nudge at your time if your long-acting dose isn\'t logged.</string>
+    <string name="reminder_basal_usual">You usually log it around %1$s.</string>
+    <string name="reminder_basal_pick">Remind me at</string>
+    <string name="reminder_basal_set">Set</string>
+    <string name="reminder_basal_change">%1$s · Change</string>
+    <string name="toast_reminder_set">Reminder set for %1$s.</string>
+    <string name="toast_reminder_off">Reminder off.</string>
+    <string name="sync_mfp_new">MyFitnessPal: %1$d new, %2$d updated.</string>
+    <string name="sync_mfp_none">MyFitnessPal: nothing new yet.</string>
+    <string name="sync_mfp_connect">MyFitnessPal isn\'t connected yet: You → Apps &amp; data → Connect.</string>
+    <string name="sync_failed">Couldn\'t sync: %1$s</string>
 </resources>

@@ -105,6 +105,9 @@ class HealthConnectSync(
 
     suspend fun granted(): Set<String> = if (available) client.permissionController.getGrantedPermissions() else emptySet()
 
+    /** Whether meals can come in at all: Health Connect is here and Sukoon may read nutrition. */
+    suspend fun canReadMeals(): Boolean = available && readMeals in granted()
+
     /** Whether this phone's Health Connect can let Sukoon read while it's closed. */
     fun backgroundSupported(): Boolean = available &&
         client.features.getFeatureStatus(HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND) == HealthConnectFeatures.FEATURE_STATUS_AVAILABLE

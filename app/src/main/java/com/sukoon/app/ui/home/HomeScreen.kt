@@ -90,6 +90,7 @@ import java.time.Duration
 import java.time.Instant
 import com.sukoon.app.ui.components.MiniGraph
 import com.sukoon.app.ui.theme.NeutralWarm
+import com.sukoon.app.ui.components.PullToSync
 
 /**
  * The Home/Now screen, in every state it can be in (docs/design-screens.md §2). Copy, colors,
@@ -120,9 +121,13 @@ fun HomeScreen(
     stats: Map<HomeStat, Double> = emptyMap(),
     chosenStats: List<HomeStat> = emptyList(),
     onChooseStats: () -> Unit = {},
+    /** Pull down: bring in MyFitnessPal's latest; returns what to say. */
+    onSync: (suspend () -> String)? = null,
 ) {
     CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats)) {
-        HomeContent(state, brief, modifier, onTreated, onSnooze, onAlertEmergencyContact, onTroubleshoot, onPairSensor, onEnterCodeManually)
+        PullToSync(onSync, modifier) {
+            HomeContent(state, brief, Modifier.fillMaxSize(), onTreated, onSnooze, onAlertEmergencyContact, onTroubleshoot, onPairSensor, onEnterCodeManually)
+        }
     }
 }
 

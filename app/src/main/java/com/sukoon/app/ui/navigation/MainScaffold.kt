@@ -89,6 +89,9 @@ import androidx.compose.ui.window.DialogProperties
 import com.sukoon.app.ui.home.HomeStat
 import com.sukoon.app.ui.home.StatsPicker
 import kotlinx.coroutines.flow.first
+import com.sukoon.app.reminders.BasalReminder
+import com.sukoon.app.ui.settings.minuteLabel
+import java.time.ZoneId
 
 /**
  * Top-level navigation, per the shipped design's 3-tab bottom bar (Now / Trends / You) — not the
@@ -117,6 +120,27 @@ fun MainScaffold() {
     }
     // Home's food/insulin shortcuts: which new entry the Logbook should open on arrival.
     var pendingEntry by rememberSaveable { mutableStateOf<LogEventType?>(null) }
+    // Pull down on Home or the Logbook: MyFitnessPal's latest through Health Connect, and what came in.
+    val syncContext = LocalContext.current
+    val syncMfp: suspend () -> String = {
+        val health = appContainer.healthConnect
+        runCatching {
+            if (!health.canReadMeals()) {
+                syncContext.getString(R.string.sync_mfp_connect)
+            } else {
+                val r = health.sync()
+                if (r.mealsAdded + r.mealsUpdated == 0) syncContext.getString(R.string.sync_mfp_none)
+                else syncContext.getString(R.string.sync_mfp_new, r.mealsAdded, r.mealsUpdated)
+            }
+        }.getOrElse { syncContext.getString(R.string.sync_failed, it.message ?: it.javaClass.simpleName) }
+    }
+    val requested by appContainer.requestedEntry.collectAsStateWithLifecycle()
+    LaunchedEffect(requested) {
+        val type = requested ?: return@LaunchedEffect
+        pendingEntry = type
+        navController.navigateToTab(SukoonTab.TRENDS)
+        appContainer.requestedEntry.value = null
+    }
     Scaffold(
         bottomBar = { SukoonBottomBar(navController) },
     ) { innerPadding ->
@@ -216,6 +240,7 @@ fun MainScaffold() {
                     HomeScreen(
                         state = homeState,
                         brief = brief,
+                        onSync = syncMfp,
                         modifier = Modifier.weight(1f),
                         onPairSensor = toYou,
                         onEnterCodeManually = toYou,
@@ -282,6 +307,7 @@ fun MainScaffold() {
                     onAcknowledgeInsights = insightsViewModel::acknowledge,
                     pendingEntry = pendingEntry,
                     onPendingEntryHandled = { pendingEntry = null },
+                    onSync = syncMfp,
                     reportState = reportState,
                     onSelectReportDays = reportViewModel::selectDays,
                     reportName = container.settings.emergency.yourName,
@@ -296,6 +322,8 @@ fun MainScaffold() {
                 var alarmSettings by remember { mutableStateOf(container.settings.alarmSettings) }
                 var emergency by remember { mutableStateOf(container.settings.emergency) }
                 var insulinAction by remember { mutableStateOf(container.settings.insulinAction) }
+                var basalReminder by remember { mutableStateOf(container.settings.basalReminder) }
+                val youContext = LocalContext.current
                 val themeMode by container.themeMode.collectAsStateWithLifecycle()
                 var saveInterval by remember { mutableIntStateOf(container.settings.saveIntervalMinutes) }
                 var nightscout by remember { mutableStateOf(container.nightscout.config) }
@@ -344,6 +372,16 @@ fun MainScaffold() {
                     onInsulinAction = { changed ->
                         container.settings.insulinAction = changed
                         insulinAction = container.settings.insulinAction
+                    },
+                    basalReminder = basalReminder,
+                    onBasalReminder = { changed ->
+                        container.settings.basalReminder = changed
+                        basalReminder = changed
+                        BasalReminder.schedule(youContext, changed)
+                        youContext.toast(if (changed.enabled) youContext.getString(R.string.toast_reminder_set, minuteLabel(changed.minuteOfDay)) else youContext.getString(R.string.toast_reminder_off))
+                    },
+                    usualBasalMinute = {
+                        BasalReminder.usualMinute(container.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofDays(30).toMillis()).first(), ZoneId.systemDefault())
                     },
                     onEmergency = { changed ->
                         container.settings.emergency = changed.sanitized()

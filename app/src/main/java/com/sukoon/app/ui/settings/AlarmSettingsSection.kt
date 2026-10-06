@@ -82,6 +82,14 @@ import com.sukoon.app.ui.theme.SageDeep
 import com.sukoon.app.ui.theme.StateHigh
 import com.sukoon.app.ui.theme.StateLow
 import com.sukoon.app.ui.theme.TextMuted
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 
 private val LOW_LEVELS = listOf(60, 65, 70, 75, 80, 90, 100)
 private val HIGH_LEVELS = listOf(180, 200, 220, 250, 280, 300, 350)
@@ -269,13 +277,11 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
                 colors = SwitchDefaults.colors(checkedTrackColor = Sage),
             )
         }
-        AnimatedVisibility(quiet) {
-            Column(Modifier.fillMaxWidth().padding(start = 44.dp, end = 14.dp, bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Label(R.string.alarms_quiet_from)
-                NumberChips(listOf(21, 22, 23, 0), settings.quietHighsFrom, 0..23, { hourLabel(it) }) { onChange(settings.copy(quietHighsFrom = it)) }
-                Label(R.string.alarms_quiet_to)
-                NumberChips(listOf(6, 7, 8, 9), settings.quietHighsTo, 0..23, { hourLabel(it) }) { onChange(settings.copy(quietHighsTo = it)) }
-            }
+        Expanded(quiet) {
+            Label(R.string.alarms_quiet_from)
+            NumberChips(listOf(21, 22, 23, 0), settings.quietHighsFrom, 0..23, { hourLabel(it) }) { onChange(settings.copy(quietHighsFrom = it)) }
+            Label(R.string.alarms_quiet_to)
+            NumberChips(listOf(6, 7, 8, 9), settings.quietHighsTo, 0..23, { hourLabel(it) }) { onChange(settings.copy(quietHighsTo = it)) }
         }
     }
 
@@ -319,16 +325,42 @@ private fun AlarmRow(
             Text(stringResource(alarmLabel(type)), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
             Text(summary, fontSize = 12.5.sp, color = CaptionMuted, modifier = Modifier.padding(top = 2.dp))
         }
+        // Points down while closed, up while open: this row opens.
+        val flip = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1f else 1f
+        val turn by animateFloatAsState(if (open) -90f else 90f, label = "chevron")
+        Icon(painterResource(R.drawable.ic_chevron), contentDescription = null, tint = CaptionMuted, modifier = Modifier.size(18.dp).rotate(turn * flip))
         if (on == null) {
             Icon(painterResource(R.drawable.ic_lock), contentDescription = stringResource(R.string.alarms_always_on), tint = TextMuted, modifier = Modifier.size(18.dp))
         } else {
             Switch(checked = on, onCheckedChange = onToggle, colors = SwitchDefaults.colors(checkedTrackColor = Sage))
         }
     }
-    AnimatedVisibility(open) {
-        Column(Modifier.fillMaxWidth().padding(start = 36.dp, end = 14.dp, bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp), content = details)
-    }
+    Expanded(open, details)
     if (!last) HorizontalDivider(color = outline().copy(alpha = 0.08f))
+}
+
+/**
+ * A row's settings, opened under it: they slide straight down (not out of the corner), in a tinted
+ * panel set in from the card's edges, so they read as belonging to the row above, not as rows.
+ */
+@Composable
+private fun Expanded(open: Boolean, content: @Composable ColumnScope.() -> Unit) {
+    AnimatedVisibility(
+        visible = open,
+        enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
+        exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut(),
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(start = 12.dp, end = 12.dp, bottom = 12.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f))
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            content = content,
+        )
+    }
 }
 
 /** Lows coral (going low as a ring: not there yet), highs amber, no readings grey. */

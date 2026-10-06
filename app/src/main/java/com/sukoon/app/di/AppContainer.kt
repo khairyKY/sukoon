@@ -55,6 +55,8 @@ import kotlinx.coroutines.flow.combine
 import com.sukoon.app.data.repository.EntryPhotos
 import com.sukoon.app.alarms.AlarmLog
 import com.sukoon.app.alarms.SignalWatchdog
+import com.sukoon.app.reminders.BasalReminder
+import com.sukoon.app.data.db.LogEventType
 
 /**
  * Manual dependency container (ponytail: no Hilt/Koin for a graph this small). Owns the
@@ -149,8 +151,18 @@ class AppContainer(private val context: Context) {
             ?.let { it.serial to SensorLifecycle.of(it.startMillis, it.lifetimeMinutes, Instant.now()) }
     }
 
+    /** A new entry something outside the app asked for (a reminder's "Log it"); MainScaffold opens it. */
+    val requestedEntry = MutableStateFlow<LogEventType?>(null)
+
     init {
         glucoseRepository.start()
+        BasalReminder.schedule(context, settings.basalReminder)
+        // Long-acting logged anywhere clears its reminder.
+        appScope.launch {
+            logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofHours(12).toMillis()).collect { events ->
+                if (BasalReminder.taken(events, Instant.now())) BasalReminder.dismiss(context)
+            }
+        }
         if (_sourceKind.value == SourceKind.LIBRE_BLE) SensorService.start(context)
         refreshWidgets()
         alarms.start()

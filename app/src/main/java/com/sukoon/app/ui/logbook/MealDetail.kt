@@ -63,7 +63,7 @@ import java.time.Instant
 import java.util.Locale
 
 /** An imported entry's app as this phone has it: its name and its own icon (no copy ships in Sukoon). */
-internal class SourceApp(val packageName: String, val label: String, val icon: ImageBitmap?)
+internal class SourceApp(val packageName: String, val label: String, val icon: ImageBitmap?, val installed: Boolean = icon != null)
 
 private val sourceApps = mutableMapOf<String, SourceApp>()
 private val KNOWN_APPS = mapOf(

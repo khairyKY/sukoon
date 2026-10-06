@@ -151,7 +151,19 @@ Emergency texts are never sent from a follower's phone.
 
 ---
 
-## 7. Known limits
+## 7. Reminders
+
+**Long-acting insulin** (You → Insulin, off until you turn it on). Turning it on asks for a time,
+offering 30 minutes after when you usually log long-acting (from the logbook), or 22:00.
+
+| When | What happens |
+|---|---|
+| The time comes and long-acting was logged in the last 12 hours | Nothing |
+| The time comes and it wasn't | A notification: *Took it · 20 U* (logs your last amount again, now), *In 30 min*, or tap to log it yourself |
+| Still not logged | The notification comes back every 30 minutes, 3 times |
+| You log it anywhere (the logbook, *Took it*) | The notification goes away and the repeats stop |
+
+## 8. Known limits
 
 - Snoozes, "treated at" and the emergency clock live in memory: if Android kills the app, they reset (the alarm comes back sooner, not later).
 - If the phone kills the app, nothing inside it can sound. A watchdog covers that: every reading pushes a system alarm to just past your no-readings line (20 min + 2 by default). If readings stop because the app was killed, Android wakes Sukoon there; the sensor and alarms restart, and *No readings* goes off if the sensor is still quiet. It checks again every 5 minutes until readings return. The battery items in the check above still matter: they keep it from coming to that.

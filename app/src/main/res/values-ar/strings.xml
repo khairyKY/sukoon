@@ -97,7 +97,7 @@
     <string name="ask_suggest_meal">إيه اللي حصل بعد آخر وجبة؟</string>
     <string name="ask_suggest_week">لخّصلي الأسبوع</string>
     <string name="ask_no_key_title">ضيف مفتاح Gemini علشان تبدأ</string>
-    <string name="ask_no_key_body">الذكاء الاصطناعي في سكون شغّال بـ Google Gemini بمفتاحك المجاني من aistudio.google.com. حطّه في أنت ← الذكاء الاصطناعي.</string>
+    <string name="ask_no_key_body">الذكاء الاصطناعي في سكون شغّال بـ Google Gemini بمفتاحك المجاني من aistudio.google.com. حطّه في حسابي ← الذكاء الاصطناعي.</string>
     <string name="ask_open_settings">افتح الإعدادات</string>
 
     <!-- You tab / settings -->
@@ -943,7 +943,7 @@
     <string name="insight_carbdays_discuss">أنهي وجبات في الأيام الكبيرة أصعب في التغطية.</string>
     <string name="insight_src_carbdays">توافق العلاج الغذائي (Evert وآخرون، Diabetes Care 2019)</string>
     <string name="alarms_reach_title">المنبّهات توصلك؟</string>
-    <string name="alarms_off_demo">المنبّهات مقفولة دلوقتي: بتشتغل بس على قراءات الحساس بتاعك، عمرها ما بتشتغل على بيانات التجربة. اختار الحساس من أنت ← الحساس.</string>
+    <string name="alarms_off_demo">المنبّهات مقفولة دلوقتي: بتشتغل بس على قراءات الحساس بتاعك، عمرها ما بتشتغل على بيانات التجربة. اختار الحساس من حسابي ← الحساس.</string>
     <string name="alarms_history_title">المنبّهات عملت إيه</string>
     <string name="alarm_log_empty">لسه مفيش. دوس تجربة فوق علشان تسمع منبّه الهبوط الشديد، وهيظهر هنا.</string>
     <string name="alarm_log_reached">رنّ وظهر على الشاشة</string>
@@ -994,7 +994,7 @@
     <string name="apps_ai_key_ending">مفتاح Gemini آخره %1$s</string>
     <string name="sensor_connection_title">الاتصال</string>
     <string name="sensor_gaps_none">آخر ٢٤ ساعة: مفيش انقطاع في القراءات.</string>
-    <string name="sensor_gaps_why">الانقطاع غالبًا معناه إن الموبايل كان بعيد عن الحساس (كام متر، وأقل لو فيه جسم أو حيطة في النص)، أو إن الموبايل وقّف سكون في الخلفية: راجع بنود البطارية في أنت ← المنبّهات.</string>
+    <string name="sensor_gaps_why">الانقطاع غالبًا معناه إن الموبايل كان بعيد عن الحساس (كام متر، وأقل لو فيه جسم أو حيطة في النص)، أو إن الموبايل وقّف سكون في الخلفية: راجع بنود البطارية في حسابي ← المنبّهات.</string>
     <plurals name="setup_banner">
         <item quantity="zero">كل الإعدادات متظبطة.</item>
         <item quantity="one">لسه إعداد واحد محتاج يتظبط علشان القرايات والتنبيهات تبقى مضمونة.</item>
@@ -1016,4 +1016,25 @@
     <string name="follow_heading_low">سكر %1$s نازل ناحية الهبوط.</string>
     <string name="follow_heading_low_in">ممكن يبقى تحت ٧٠ في حوالي %1$d دقيقة.</string>
     <string name="home_last_3_hours">آخر ٣ ساعات</string>
+    <string name="reminder_channel">تذكيرات</string>
+    <string name="reminder_basal_title">الأنسولين طويل المفعول</string>
+    <string name="reminder_basal_body">مش متسجّل في آخر ١٢ ساعة. دوس علشان تسجّله.</string>
+    <string name="reminder_basal_body_dose">مش متسجّل في آخر ١٢ ساعة. آخر جرعة كانت %1$s وحدة.</string>
+    <string name="reminder_basal_took">أخدتها · %1$s وحدة</string>
+    <string name="reminder_basal_log">سجّلها</string>
+    <string name="reminder_basal_later">بعد ٣٠ دقيقة</string>
+    <string name="reminder_basal_section">تذكير</string>
+    <string name="reminder_basal_setting">فكّرني بالأنسولين طويل المفعول</string>
+    <string name="reminder_basal_on">كل يوم الساعة %1$s، إلا لو سجّلتها في الـ١٢ ساعة اللي قبلها. وبيفكّرك تاني كل ٣٠ دقيقة، ٣ مرات.</string>
+    <string name="reminder_basal_off">تنبيه في ميعادك لو جرعة الأنسولين طويل المفعول مش متسجّلة.</string>
+    <string name="reminder_basal_usual">عادةً بتسجّلها حوالي %1$s.</string>
+    <string name="reminder_basal_pick">فكّرني الساعة</string>
+    <string name="reminder_basal_set">تمام</string>
+    <string name="reminder_basal_change">%1$s · غيّر</string>
+    <string name="toast_reminder_set">التذكير اتظبط على %1$s.</string>
+    <string name="toast_reminder_off">التذكير اتقفل.</string>
+    <string name="sync_mfp_new">MyFitnessPal: %1$d جديد، %2$d اتحدّث.</string>
+    <string name="sync_mfp_none">MyFitnessPal: مفيش جديد لسه.</string>
+    <string name="sync_mfp_connect">MyFitnessPal لسه مش متوصل: حسابي ← التطبيقات والبيانات ← وصّل.</string>
+    <string name="sync_failed">معرفتش أزامن: %1$s</string>
 </resources>
