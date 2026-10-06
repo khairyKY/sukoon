@@ -48,7 +48,7 @@ Designs: the "Sukoon — onboarding, logbook & settings redesign" canvas (claude
 - ✅ You divided: hub (profile, "N things need you", eight sections with live summaries) and a page per section.
 - ✅ Adding entries, direction A (Kai's pick of three): tiles + "Again", a big number pad, meal + rapid insulin + when injected on one screen, undo. MyFitnessPal meals bring every nutrient (Room v3) and show MyFitnessPal's own icon (from the phone), what the meal did to glucose, and "Add insulin" when none was logged; pick a MyFitnessPal meal to add its insulin. "Powered by MyFitnessPal" not used: it would claim a partnership.
 - ✅ Onboarding by role (wearer / follower / both; account optional for a wearer) with each role's steps; follower Home (their live number, chart, words, Call/Message) and Trends; a strip of followed people for "both".
-- Next ideas: connection-health notes in You → Sensor.
+- ✅ Connection note in You → Sensor: the last 24 hours' gaps and the longest (2026-10-07).
 
 ## MyFitnessPal, smarter insights, polish (Kai, 2026-10-06 → 07)
 - ✅ MyFitnessPal workouts (10 min+) as Activity entries, today's steps and water, all through Health Connect.
