@@ -466,12 +466,12 @@ private fun themeLabel(mode: ThemeMode): String = stringResource(
 /** The app's language as chosen in Appearance ("English", "العربية", or "Like the phone"). */
 @Composable
 private fun languageLabel(): String {
-    if (Build.VERSION.SDK_INT < 33) return stringResource(R.string.theme_auto)
+    if (Build.VERSION.SDK_INT < 33) return stringResource(R.string.you_language_auto)
     val chosen = LocalContext.current.getSystemService(LocaleManager::class.java).applicationLocales.takeIf { !it.isEmpty }?.get(0)?.language
     return when (chosen) {
         "en" -> "English"
         "ar" -> "العربية"
-        else -> stringResource(R.string.theme_auto)
+        else -> stringResource(R.string.you_language_auto)
     }
 }
 

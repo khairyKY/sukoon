@@ -1097,4 +1097,5 @@
     <string name="hc_mfp_none_in_hc">Health Connect مفيهوش وجبات من MyFitnessPal الأسبوع ده، يعني MyFitnessPal مش بيشاركها. في MyFitnessPal: المزيد ← Apps &amp; Devices ← دوّر على Health Connect ← Connect، شغّله واسمح بكل الأذونات (انزل في القايمة).</string>
     <string name="hc_last_sync">سكون شاف آخر مرة %1$s: %2$d جديد، %3$d اتحدّث.</string>
     <string name="hc_last_sync_failed">سكون حاول يشوف %1$s ومعرفش: %2$s</string>
+    <string name="you_language_auto">لغة الموبايل</string>
 </resources>
