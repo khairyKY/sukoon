@@ -152,6 +152,9 @@ class AlarmMonitor(
     /** You → Alarms → a sound's "Play it". */
     fun preview(type: AlarmType) = notifier.preview(type, settings.alarmSettings)
 
+    /** A pack's low-alarm sound, before choosing it (at the volume a low alarm plays). */
+    fun previewPack(pack: SoundPack) = notifier.preview(AlarmType.LOW, settings.alarmSettings.let { it.copy(soundPack = pack, sounds = it.sounds - AlarmType.LOW) })
+
     private fun keep(reading: GlucoseReading) {
         recent[reading.timestamp] = reading
         if (newest?.timestamp?.isBefore(reading.timestamp) != false) newest = reading

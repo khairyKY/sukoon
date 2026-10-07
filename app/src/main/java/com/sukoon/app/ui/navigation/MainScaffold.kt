@@ -364,6 +364,7 @@ fun MainScaffold() {
                     alarmLog = container.alarmLog.entries.collectAsStateWithLifecycle().value,
                     dayOfReadings = { container.glucoseRepository.readingsSince(System.currentTimeMillis() - Duration.ofDays(1).toMillis()).first() },
                     onPreviewAlarm = container.alarms::preview,
+                    onPreviewPack = container.alarms::previewPack,
                     emergency = emergency,
                     emergencyAlerts = container.emergency,
                     sharing = container.sharing,

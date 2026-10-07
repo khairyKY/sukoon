@@ -66,6 +66,8 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.border
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
@@ -91,7 +93,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import com.sukoon.app.ui.components.ExpandedPanel
-import com.sukoon.app.alarms.SukoonSounds
+import com.sukoon.app.alarms.SoundPack
 import androidx.compose.ui.res.pluralStringResource
 
 private val LOW_LEVELS = listOf(60, 65, 70, 75, 80, 90, 100)
@@ -102,7 +104,7 @@ private val HIGH_SNOOZES = listOf(30, 60, 120)
 
 /** You → Alarms. Urgent low is shown but not editable: it's always on at 55. Every alarm can have its own sound. */
 @Composable
-fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> Unit, onTest: (AlarmType) -> Unit, onPreview: (AlarmType) -> Unit) {
+fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> Unit, onTest: (AlarmType) -> Unit, onPreview: (AlarmType) -> Unit, onPreviewPack: (SoundPack) -> Unit = {}) {
     val context = LocalContext.current
     var pickingFor by rememberSaveable { mutableStateOf<AlarmType?>(null) }
     fun setSound(type: AlarmType, sound: AlarmSound?) {
@@ -136,12 +138,8 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
 
     @Composable
     fun Sound(type: AlarmType, enabled: Boolean = true) = SoundRow(
-        name = settings.sounds[type]?.name ?: stringResource(SukoonSounds.defaultFor(type).nameRes),
+        name = settings.sounds[type]?.name ?: stringResource(settings.soundPack.nameRes),
         custom = settings.sounds[type] != null,
-        onSukoon = { sound ->
-            if (sound == SukoonSounds.defaultFor(type)) setSound(type, null)
-            else setSound(type, AlarmSound(SukoonSounds.uri(context, sound).toString(), context.getString(sound.nameRes)))
-        },
         enabled = enabled,
         onPhoneSounds = {
             pickingFor = type
@@ -170,7 +168,7 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
         open = if (open == type) null else type
     }
     @Composable
-    fun soundName(type: AlarmType) = settings.sounds[type]?.name ?: stringResource(SukoonSounds.defaultFor(type).nameRes)
+    fun soundName(type: AlarmType) = settings.sounds[type]?.name ?: stringResource(settings.soundPack.nameRes)
 
     Row(
         Modifier
@@ -263,6 +261,8 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
             Sound(AlarmType.SIGNAL_LOSS, settings.signalLossEnabled)
         }
     }
+    Spacer(Modifier.height(12.dp))
+    PackCard(settings.soundPack, onPick = { onChange(settings.copy(soundPack = it)) }, onPlay = onPreviewPack)
     Spacer(Modifier.height(12.dp))
 
     // Quiet highs at night: one row, the hours open under it while it's on.
@@ -397,13 +397,52 @@ private fun PillButton(label: String, filled: Boolean, onClick: () -> Unit) {
     }
 }
 
-/** "Sound · <name>"; tapping opens: phone sounds, your own file, back to default, play it. */
+/**
+ * Sound packs: Sukoon's own sounds as sets, one sound for each alarm. Picking one changes every alarm
+ * that hasn't been given its own sound; play hears its low alarm at the volume a low plays.
+ */
+@Composable
+private fun PackCard(chosen: SoundPack, onPick: (SoundPack) -> Unit, onPlay: (SoundPack) -> Unit) {
+    ListCard {
+        Text(stringResource(R.string.pack_title), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 12.dp))
+        Text(stringResource(R.string.pack_body), fontSize = 12.5.sp, color = CaptionMuted, modifier = Modifier.padding(horizontal = 14.dp, vertical = 2.dp))
+        SoundPack.entries.forEach { pack ->
+            val on = pack == chosen
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp)
+                    .clickable { onPick(pack) }
+                    .padding(start = 14.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Box(
+                    Modifier.size(20.dp).clip(CircleShape).border(2.dp, if (on) Sage else CaptionMuted, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) { if (on) Box(Modifier.size(10.dp).clip(CircleShape).background(Sage)) }
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(pack.nameRes), fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                    Text(stringResource(pack.blurbRes), fontSize = 12.5.sp, color = CaptionMuted)
+                }
+                val play = stringResource(R.string.pack_play, stringResource(pack.nameRes))
+                Box(
+                    Modifier.size(44.dp).clip(CircleShape).clickable { onPlay(pack) }.semantics { contentDescription = play },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(painterResource(R.drawable.ic_play), contentDescription = null, tint = SageDeep, modifier = Modifier.size(18.dp))
+                }
+            }
+        }
+    }
+}
+
+/** "Sound · <name>"; tapping opens: phone sounds, your own file, back to the pack, play it. */
 @Composable
 private fun SoundRow(
     name: String,
     custom: Boolean,
     enabled: Boolean,
-    onSukoon: (SukoonSounds) -> Unit,
     onPhoneSounds: () -> Unit,
     onOwnFile: () -> Unit,
     onDefault: () -> Unit,
@@ -434,9 +473,6 @@ private fun SoundRow(
         }
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
             DropdownMenuItem(text = { Text(stringResource(R.string.alarm_sound_play)) }, onClick = { menu = false; onPlay() })
-            SukoonSounds.entries.forEach { sound ->
-                DropdownMenuItem(text = { Text(stringResource(sound.nameRes)) }, onClick = { menu = false; onSukoon(sound) })
-            }
             DropdownMenuItem(text = { Text(stringResource(R.string.alarm_sound_phone)) }, onClick = { menu = false; onPhoneSounds() })
             DropdownMenuItem(text = { Text(stringResource(R.string.alarm_sound_file)) }, onClick = { menu = false; onOwnFile() })
             if (custom) DropdownMenuItem(text = { Text(stringResource(R.string.alarm_sound_reset)) }, onClick = { menu = false; onDefault() })

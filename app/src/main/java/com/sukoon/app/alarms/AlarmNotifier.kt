@@ -220,8 +220,8 @@ class AlarmNotifier(private val context: Context, private val log: AlarmLog) {
             .build()
         val defaults = listOf(if (type.loud) RingtoneManager.TYPE_ALARM else RingtoneManager.TYPE_NOTIFICATION, RingtoneManager.TYPE_ALARM, RingtoneManager.TYPE_RINGTONE)
             .mapNotNull { RingtoneManager.getActualDefaultRingtoneUri(context, it) }
-        // Your choice, else Sukoon's own sound for this alarm, else the phone's: one always plays.
-        val candidates = (listOfNotNull(settings.sounds[type]?.uri?.let(Uri::parse), SukoonSounds.uri(context, SukoonSounds.defaultFor(type))) + defaults).distinct()
+        // Your choice, else this alarm's sound from your pack, else the phone's: one always plays.
+        val candidates = (listOfNotNull(settings.sounds[type]?.uri?.let(Uri::parse), SukoonSounds.uri(context, settings.soundPack, SoundRole.of(type))) + defaults).distinct()
         player = candidates.firstNotNullOfOrNull { start(context, it, attributes, loop) }
         playing = type
         playingFor = person

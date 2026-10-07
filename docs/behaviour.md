@@ -88,6 +88,7 @@ a high 10 below its line.
 | **High** | Over your high line | 180 | Line 150 to 400, on/off, quiet hours | After its snooze (60 min) | Notification stream, 8 s |
 | **No readings** | No reading for N min | 20 min | 10 to 120, on/off | Every 30 min | Notification stream, 8 s |
 
+- Sounds come from a pack (You → Alarms → Sounds): Astral by default, Orbit, Glass, Clear or Bells, one sound per alarm and one for the long-acting reminder. An alarm given its own phone sound or file keeps it.
 - Urgent low takes over from low, and low from going low. Easing out of an urgent low into a low is the same episode, not a new alarm.
 - Each alarm, every time: a notification, the full-screen alert (over the lock screen, or over any app with "display over other apps"), and its sound. The volume goes back to where it was once the sound stops.
 - Lows sound even if notifications are blocked. Highs and no-readings stay silent if you blocked their notifications.

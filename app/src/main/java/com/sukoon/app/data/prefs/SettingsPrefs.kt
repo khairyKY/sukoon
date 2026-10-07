@@ -5,6 +5,7 @@ import com.sukoon.app.alarms.AlarmSettings
 import com.sukoon.app.data.source.SourceKind
 import com.sukoon.app.alarms.AlarmSound
 import com.sukoon.app.alarms.AlarmType
+import com.sukoon.app.alarms.SoundPack
 import com.sukoon.app.emergency.EmergencySettings
 import com.sukoon.app.insulin.InsulinAction
 import com.sukoon.app.insulin.DoseSettings
@@ -56,6 +57,7 @@ class SettingsPrefs(context: Context) {
             sounds = AlarmType.entries.mapNotNull { type ->
                 prefs.getString(KEY_SOUND + type.name, null)?.let { uri -> type to AlarmSound(uri, prefs.getString(KEY_SOUND_NAME + type.name, null).orEmpty()) }
             }.toMap(),
+            soundPack = SoundPack.entries.firstOrNull { it.name == prefs.getString(KEY_SOUND_PACK, null) } ?: AlarmSettings().soundPack,
         ).sanitized()
         set(value) {
             val edit = prefs.edit()
@@ -70,6 +72,7 @@ class SettingsPrefs(context: Context) {
                 .putInt(KEY_HIGH_SNOOZE, value.highSnoozeMinutes)
                 .putInt(KEY_QUIET_FROM, value.quietHighsFrom)
                 .putInt(KEY_QUIET_TO, value.quietHighsTo)
+                .putString(KEY_SOUND_PACK, value.soundPack.name)
             AlarmType.entries.forEach { type ->
                 val sound = value.sounds[type]
                 if (sound == null) {
@@ -205,6 +208,7 @@ class SettingsPrefs(context: Context) {
         private const val KEY_START_DISMISSED = "getting_started_dismissed"
         private const val KEY_QUIET_FROM = "alarm_quiet_highs_from"
         private const val KEY_QUIET_TO = "alarm_quiet_highs_to"
+        private const val KEY_SOUND_PACK = "alarm_sound_pack"
         private const val KEY_THEME = "theme_mode"
         private const val KEY_INSULIN_DURATION = "insulin_duration_minutes"
         private const val KEY_EMERGENCY_NAME = "emergency_your_name"
