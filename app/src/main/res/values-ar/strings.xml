@@ -1124,4 +1124,20 @@
     <string name="llu_password">الباسورد</string>
     <string name="sharing_invite_send">ابعت</string>
     <string name="sharing_invite_share">تابع السكر بتاعي على سكون. على أندرويد من تطبيق سكون؛ على الآيفون أو أي موبايل افتح %1$s (وحطه على الشاشة الرئيسية). الكود بتاعي: %2$s (بيشتغل مرة واحدة، لمدة ٢٤ ساعة).</string>
+    <string name="source_llu_not_set">اختار اتصال LibreLinkUp من حسابي ← الحساس</string>
+    <string name="source_dexcom_not_set">ادخل على Dexcom من حسابي ← الناس</string>
+    <string name="settings_source_dexcom">Dexcom · %1$s</string>
+    <string name="settings_source_dexcom_body">عن طريق سيرفرات Dexcom، كل ٥ دقايق؛ محتاج نت.</string>
+    <string name="toast_source_dexcom">القرايات دلوقتي جاية من Dexcom Share.</string>
+    <string name="dexcom_title">Dexcom</string>
+    <string name="dexcom_body">قرايات حد لابس Dexcom (G6 وG7 وONE) بحساب Dexcom بتاعه. لازم المشاركة تكون شغّالة في تطبيق Dexcom بتاعه.</string>
+    <string name="dexcom_name">اسمه</string>
+    <string name="dexcom_username">اسم المستخدم أو الإيميل في Dexcom</string>
+    <string name="dexcom_region_world">برّه أمريكا</string>
+    <string name="dexcom_region_us">أمريكا</string>
+    <string name="dexcom_connected">Dexcom اتوصل: %1$d مجم/دل دلوقتي.</string>
+    <string name="dexcom_connected_quiet">Dexcom اتوصل، بس مفيش قرايات في آخر ٣٠ دقيقة. المشاركة شغّالة في تطبيق Dexcom بتاعه؟</string>
+    <string name="dexcom_wrong_login">Dexcom مقبلش الدخول ده. اتأكد من اسم المستخدم والباسورد والمنطقة.</string>
+    <string name="dexcom_unreachable">مقدرتش أوصل لـ Dexcom. اتأكد من النت وجرّب تاني.</string>
+    <string name="dexcom_failed">Dexcom رفض الاتصال. جرّب بعدين.</string>
 </resources>

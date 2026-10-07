@@ -58,7 +58,9 @@ import com.sukoon.app.alarms.SignalWatchdog
 import com.sukoon.app.reminders.BasalReminder
 import com.sukoon.app.data.db.LogEventType
 import com.sukoon.app.sharing.LibreLinkUp
-import com.sukoon.app.sharing.LibreLinkUpSource
+import com.sukoon.app.sharing.CloudSource
+import com.sukoon.app.sharing.DexcomShare
+import com.sukoon.app.R
 
 /**
  * Manual dependency container (ponytail: no Hilt/Koin for a graph this small). Owns the
@@ -88,6 +90,9 @@ class AppContainer(private val context: Context) {
 
     /** Abbott's follow service: people sharing from Abbott's Libre app (Libre 3 too). */
     val libreLinkUp = LibreLinkUp(context)
+
+    /** Dexcom Share: a Dexcom wearer's readings through Dexcom's servers. */
+    val dexcom = DexcomShare(context)
 
     private val source = MutableStateFlow(sourceFor(_sourceKind.value))
 
@@ -124,7 +129,7 @@ class AppContainer(private val context: Context) {
 
     val supabase = Supabase(context, BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_KEY)
 
-    val sharing = Sharing(context, supabase, glucoseRepository, appScope, libreLinkUp)
+    val sharing = Sharing(context, supabase, glucoseRepository, appScope, libreLinkUp, dexcom)
 
     /** What the alarms did (You → Alarms). */
     val alarmLog = AlarmLog(context)
@@ -261,6 +266,15 @@ class AppContainer(private val context: Context) {
         SourceKind.SIMULATED -> SimulatedSource(scope = appScope)
         // ponytail: shares the connected-device foreground service that keeps the process alive; a
         // data-sync service of its own if a phone ever refuses it without Bluetooth permission.
-        SourceKind.LIBRE_LINK_UP -> LibreLinkUpSource(libreLinkUp, { libreLinkUp.ownPatientId }, appScope)
+        SourceKind.LIBRE_LINK_UP -> CloudSource(
+            fetch = { libreLinkUp.ownPatientId?.let { libreLinkUp.readingsOf(it, 0) } },
+            notSetUp = context.getString(R.string.source_llu_not_set),
+            scope = appScope,
+        )
+        SourceKind.DEXCOM_SHARE -> CloudSource(
+            fetch = { if (dexcom.account.value == null) null else dexcom.readings() },
+            notSetUp = context.getString(R.string.source_dexcom_not_set),
+            scope = appScope,
+        )
     }
 }

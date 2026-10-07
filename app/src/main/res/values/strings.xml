@@ -1116,4 +1116,20 @@
     <string name="llu_password">Password</string>
     <string name="sharing_invite_send">Send</string>
     <string name="sharing_invite_share">Follow my glucose on Sukoon. On Android, in the Sukoon app; on an iPhone or any phone, open %1$s (add it to the home screen). My code: %2$s (works once, for 24 hours).</string>
+    <string name="source_llu_not_set">Choose a LibreLinkUp connection in You → Sensor</string>
+    <string name="source_dexcom_not_set">Sign in to Dexcom in You → People</string>
+    <string name="settings_source_dexcom">Dexcom · %1$s</string>
+    <string name="settings_source_dexcom_body">Through Dexcom\'s servers, every 5 minutes; needs the internet.</string>
+    <string name="toast_source_dexcom">Readings now come from Dexcom Share.</string>
+    <string name="dexcom_title">Dexcom</string>
+    <string name="dexcom_body">A Dexcom wearer\'s readings (G6, G7, ONE) with their Dexcom login. Share must be on in their Dexcom app.</string>
+    <string name="dexcom_name">Their name</string>
+    <string name="dexcom_username">Dexcom username or email</string>
+    <string name="dexcom_region_world">Outside the US</string>
+    <string name="dexcom_region_us">United States</string>
+    <string name="dexcom_connected">Dexcom connected: %1$d mg/dL now.</string>
+    <string name="dexcom_connected_quiet">Dexcom connected, but no readings in the last 30 minutes. Is Share on in their Dexcom app?</string>
+    <string name="dexcom_wrong_login">Dexcom didn\'t accept that login. Check the username, password and region.</string>
+    <string name="dexcom_unreachable">Couldn\'t reach Dexcom. Check the internet and try again.</string>
+    <string name="dexcom_failed">Dexcom refused the connection. Try again later.</string>
 </resources>

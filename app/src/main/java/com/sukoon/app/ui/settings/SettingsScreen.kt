@@ -99,6 +99,7 @@ import com.sukoon.app.ui.sharing.LibreLinkUpSection
 import com.sukoon.app.sharing.LibreLinkUp
 import androidx.compose.runtime.produceState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sukoon.app.ui.sharing.DexcomSection
 
 /** The You tab's sections (design "You, divided"): each opens its own page from the hub. */
 private enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
@@ -237,6 +238,13 @@ fun SettingsScreen(
                                 context.toast(context.getString(R.string.toast_source_llu, c.name))
                             }
                         }
+                        val dexcomAccount by sharing.dexcom.account.collectAsStateWithLifecycle()
+                        dexcomAccount?.let { d ->
+                            SourceRow(stringResource(R.string.settings_source_dexcom, d.name.ifBlank { d.username }), stringResource(R.string.settings_source_dexcom_body), sourceKind == SourceKind.DEXCOM_SHARE) {
+                                onSelectSource(SourceKind.DEXCOM_SHARE)
+                                context.toast(context.getString(R.string.toast_source_dexcom))
+                            }
+                        }
                         SourceOption(SourceKind.SIMULATED, sourceKind, R.string.settings_source_demo, R.string.settings_source_demo_body) {
                             onSelectSource(SourceKind.SIMULATED)
                             context.toast(context.getString(R.string.toast_source_demo))
@@ -275,6 +283,9 @@ fun SettingsScreen(
                         Gap()
                         SectionLabel(stringResource(R.string.llu_title))
                         LibreLinkUpSection(sharing.libreLinkUp, sharing, followerWatch)
+                        Gap()
+                        SectionLabel(stringResource(R.string.dexcom_title))
+                        DexcomSection(sharing.dexcom, sharing, followerWatch)
                     }
                     YouPage.INSULIN -> {
                         SectionLabel(stringResource(R.string.reminder_basal_section))

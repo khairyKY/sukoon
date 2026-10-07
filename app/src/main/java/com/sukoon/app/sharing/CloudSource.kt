@@ -19,13 +19,14 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
- * One LibreLinkUp connection as this phone's own glucose: for someone whose sensor talks to Abbott's
- * app (a Libre 3, say). Polls once a minute; the first poll brings in the ~12 hours LibreLinkUp
- * keeps. The readings arrive about a minute after the sensor's, and only while the internet works.
+ * This phone's glucose from a cloud service: a LibreLinkUp connection (someone's Libre on Abbott's
+ * app, a Libre 3 say) or a Dexcom Share account. Polls once a minute; the first poll brings in what
+ * the service keeps (12 h LibreLinkUp, 24 h Dexcom). Readings arrive a little after the sensor's,
+ * and only while the internet works. [fetch] returns null when nothing is set up yet.
  */
-class LibreLinkUpSource(
-    private val llu: LibreLinkUp,
-    private val patientId: () -> String?,
+class CloudSource(
+    private val fetch: suspend () -> List<GlucoseReading>?,
+    private val notSetUp: String,
     private val scope: CoroutineScope,
 ) : GlucoseSource {
 
@@ -56,18 +57,18 @@ class LibreLinkUpSource(
     }
 
     private suspend fun poll() {
-        val id = patientId()
-        if (id == null) {
-            _status.value = SourceStatus.Error("Choose a LibreLinkUp connection in You → Sensor")
-            return
-        }
         try {
-            val fresh = llu.readingsOf(id, 0).filter { it.timestamp > newest }
+            val all = fetch()
+            if (all == null) {
+                _status.value = SourceStatus.Error(notSetUp)
+                return
+            }
+            val fresh = all.filter { it.timestamp > newest }
             fresh.forEach { _readings.emit(it) }
             fresh.lastOrNull()?.let { newest = it.timestamp }
             _status.value = if (Duration.between(newest, Instant.now()) <= HomeUiStateMapper.STALE_AFTER) SourceStatus.Connected else SourceStatus.Stale
         } catch (e: Exception) {
-            _status.value = SourceStatus.Error(e.message ?: "LibreLinkUp unreachable")
+            _status.value = SourceStatus.Error(e.message ?: "unreachable")
         }
     }
 

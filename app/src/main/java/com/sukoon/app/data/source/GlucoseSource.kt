@@ -39,6 +39,8 @@ enum class SourceKind {
     LIBRE_BLE,
     /** A LibreLinkUp connection (Abbott's follow service: any Libre on Abbott's app, Libre 3 included). */
     LIBRE_LINK_UP,
+    /** A Dexcom Share account (G6, G7, ONE through Dexcom's servers). */
+    DEXCOM_SHARE,
     ;
 
     /** Real glucose (not demo data): alarms sound for it, it's shared, it goes to other apps. */
