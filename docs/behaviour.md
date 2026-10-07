@@ -187,7 +187,26 @@ the other side. Rapid and long-acting rotate separately.
 It shows on You → Insulin & logbook (with the last 30 days on the body map) and as an insight in
 Trends (Frid et al., Mayo Clin Proc 2016).
 
-## 9. Known limits
+## 9. Dose suggestions (beta)
+
+Off until turned on in You → Insulin & logbook. Carb counting: a carb ratio per meal (breakfast
+04–10, lunch 11–15, dinner 16–21, late otherwise), a correction factor and a target. Any box can
+stay empty, and that part is then left out. Sources: docs/research/dosing-sources.md.
+
+| Part | How |
+|---|---|
+| Meal | carbs ÷ that meal's ratio |
+| Correction | (glucose now − target) ÷ correction factor; below target it takes some off |
+| Insulin still working | Offsets the correction only, never the meal (earlier insulin is busy with earlier food) |
+| Result | Never below 0, rounded **down** to the pen step (0.5 or 1 u), capped at your maximum (default 10 u) |
+| Under 70, or under 100 and falling | No suggestion: "treat that first (15 g)" |
+
+Shown on new rapid entries (a meal, insulin for an imported meal, or insulin alone) with its maths.
+*Use* puts it in the amount; only Save logs it. With enough complete days in the logbook, the card
+offers the textbook starting points (500 and 1800 rules) to fill empty boxes. While it's on, the AI
+assistant may work out doses with the same maths and settings.
+
+## 10. Known limits
 
 - Snoozes, answers, "treated at" and texts already sent are kept across a restart. A countdown cut off by one starts again from 60 seconds (with its screen and sound) if the alarm is still unanswered.
 - If the phone kills the app, nothing inside it can sound. A watchdog covers that: every reading pushes a system alarm to just past your no-readings line (20 min + 2 by default). If readings stop because the app was killed, Android wakes Sukoon there; the sensor and alarms restart, and *No readings* goes off if the sensor is still quiet. It checks again every 5 minutes until readings return. The battery items in the check above still matter: they keep it from coming to that.

@@ -7,6 +7,8 @@ import com.sukoon.app.alarms.AlarmSound
 import com.sukoon.app.alarms.AlarmType
 import com.sukoon.app.emergency.EmergencySettings
 import com.sukoon.app.insulin.InsulinAction
+import com.sukoon.app.insulin.DoseSettings
+import com.sukoon.app.insights.MealSlot
 import com.sukoon.app.ui.home.HomeStat
 import com.sukoon.app.ui.home.DEFAULT_HOME_STATS
 import com.sukoon.app.ui.home.MAX_HOME_STATS
@@ -104,6 +106,29 @@ class SettingsPrefs(context: Context) {
         get() = BasalReminderSettings(prefs.getBoolean(KEY_BASAL_REMINDER, false), prefs.getInt(KEY_BASAL_MINUTE, 22 * 60).coerceIn(0, 1439))
         set(value) = prefs.edit().putBoolean(KEY_BASAL_REMINDER, value.enabled).putInt(KEY_BASAL_MINUTE, value.minuteOfDay).apply()
 
+    /** You → Insulin: beta dose suggestions. An empty number is stored as absent. */
+    var doseSettings: DoseSettings
+        get() {
+            fun number(key: String) = if (prefs.contains(key)) prefs.getFloat(key, 0f).toDouble() else null
+            return DoseSettings(
+                enabled = prefs.getBoolean(KEY_DOSE_ON, false),
+                carbRatio = MealSlot.entries.mapNotNull { slot -> number(KEY_DOSE_RATIO + slot.name)?.let { slot to it } }.toMap(),
+                correctionFactor = number(KEY_DOSE_FACTOR),
+                target = prefs.getInt(KEY_DOSE_TARGET, 110).coerceIn(80, 180),
+                maxDose = number(KEY_DOSE_MAX) ?: 10.0,
+                step = number(KEY_DOSE_STEP) ?: 0.5,
+            )
+        }
+        set(value) = prefs.edit().apply {
+            fun number(key: String, v: Double?) { if (v == null) remove(key) else putFloat(key, v.toFloat()) }
+            putBoolean(KEY_DOSE_ON, value.enabled)
+            MealSlot.entries.forEach { number(KEY_DOSE_RATIO + it.name, value.carbRatio[it]) }
+            number(KEY_DOSE_FACTOR, value.correctionFactor)
+            putInt(KEY_DOSE_TARGET, value.target)
+            number(KEY_DOSE_MAX, value.maxDose)
+            number(KEY_DOSE_STEP, value.step)
+        }.apply()
+
     /** You → Appearance. */
     var themeMode: ThemeMode
         get() = ThemeMode.entries.firstOrNull { it.name == prefs.getString(KEY_THEME, null) } ?: ThemeMode.AUTO
@@ -169,6 +194,12 @@ class SettingsPrefs(context: Context) {
         private const val KEY_SOUND_NAME = "alarm_sound_name_"
         private const val KEY_EMERGENCY_CONTACTS = "emergency_contacts"
         private const val KEY_INSULIN_PEAK = "insulin_peak_minutes"
+        private const val KEY_DOSE_ON = "dose_beta"
+        private const val KEY_DOSE_RATIO = "dose_ratio_" // + MealSlot name
+        private const val KEY_DOSE_FACTOR = "dose_factor"
+        private const val KEY_DOSE_TARGET = "dose_target"
+        private const val KEY_DOSE_MAX = "dose_max"
+        private const val KEY_DOSE_STEP = "dose_step"
         private const val KEY_BASAL_REMINDER = "basal_reminder_on"
         private const val KEY_BASAL_MINUTE = "basal_reminder_minute"
         private const val KEY_START_DISMISSED = "getting_started_dismissed"

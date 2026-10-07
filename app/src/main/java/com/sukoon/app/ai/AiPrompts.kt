@@ -18,6 +18,8 @@ import com.sukoon.app.data.source.nearestTo
 import com.sukoon.app.insights.Insight
 import com.sukoon.app.insights.InsightEngine
 import com.sukoon.app.insulin.InjectionRegion
+import com.sukoon.app.insulin.DoseSettings
+import com.sukoon.app.insights.MealSlot
 import com.sukoon.app.insulin.InjectionSite
 import com.sukoon.app.insulin.InsulinAction
 import com.sukoon.app.insulin.InsulinOnBoard
@@ -36,13 +38,17 @@ object AiPrompts {
      */
     const val PERSONAL_CONTEXT = ""
 
-    private val ASK_RULES = """
+    private const val NO_DOSE_RULE = "Never tell them how many insulin units to take and never suggest changing doses, ratios or basal; for treatment changes, suggest raising it with their diabetes team. Describing patterns is fine."
+
+    // Beta, Kai testing on himself (docs/research/dosing-sources.md): the same maths as the app's Dose.advise.
+    private const val DOSE_RULE = "Dose suggestions are on (beta; they test on themselves). You may work out a rapid dose from DOSE SETTINGS with the app's maths: carbs ÷ that meal's ratio, plus (glucose − target) ÷ correction factor, where active insulin offsets only the correction; round down to their pen step and never go above their maximum. Show the maths and call it a suggestion to check. Never suggest insulin under 70, or under 100 and falling: say to treat the low first. If a number is missing, say which one instead of guessing it. You may point out when logged meals suggest a ratio looks off, with those meals as evidence. Long-acting changes stay with their diabetes team."
+
+    private fun askRules(doses: Boolean) = """
         You are the assistant inside Sukoon, a calm glucose app for a person with type 1 diabetes
         who wears a FreeStyle Libre 2. You help them understand their own data and logbook.
         Rules:
         - Ground every claim in the DATA below and cite times and numbers. If the data doesn't show it, say so.
-        - Never tell them how many insulin units to take and never suggest changing doses, ratios or
-          basal; for treatment changes, suggest raising it with their diabetes team. Describing patterns is fine.
+        - ${if (doses) DOSE_RULE else NO_DOSE_RULE}
         - If the latest reading is under 70 mg/dL or falling fast toward it, start by saying to treat with
           15 g of fast carbs and recheck in 15 minutes.
         - Be calm and brief: 2–6 short sentences or a few "•" bullets. Plain text — no markdown, no headings.
@@ -50,7 +56,7 @@ object AiPrompts {
         - If DATA SOURCE is SIMULATED, say once that this is demo data, not their real readings.
         - INSIGHTS are computed by the app from these readings with the cited consensus rules: use their
           numbers rather than re-deriving them, and keep their caveats. ACTIVE INSULIN is rapid insulin
-          still working; mention stacking risk if it matters, never a dose.
+          still working; mention stacking risk if it matters.
         Targets: in range 70–180 mg/dL, low < 70, very low < 54, high > 180, very high > 250.
     """.trimIndent()
 
@@ -71,8 +77,9 @@ object AiPrompts {
         now: Instant,
         zone: ZoneId,
         insulinAction: InsulinAction = InsulinAction(),
+        dose: DoseSettings = DoseSettings(),
     ): String =
-        listOf(ASK_RULES, PERSONAL_CONTEXT, "DATA\n" + dataBrief(readings, events, now, zone, insulinAction))
+        listOf(askRules(dose.enabled), PERSONAL_CONTEXT, "DATA\n" + dataBrief(readings, events, now, zone, insulinAction), doseLine(dose))
             .filter { it.isNotBlank() }
             .joinToString("\n\n")
 
@@ -211,6 +218,15 @@ object AiPrompts {
             InjectionRegion.ARM -> "upper arm"
             InjectionRegion.BUTTOCK -> "buttock"
         }
+
+    /** "DOSE SETTINGS: …" while beta is on; empty numbers say so, so the model doesn't invent them. */
+    private fun doseLine(dose: DoseSettings): String {
+        if (!dose.enabled) return ""
+        fun n(x: Double?) = x?.let { if (it % 1.0 == 0.0) it.toLong().toString() else it.toString() }
+        val ratios = MealSlot.entries.joinToString { s -> "${s.name.lowercase()} " + (n(dose.carbRatio[s])?.let { "1 u per $it g" } ?: "not set") }
+        return "DOSE SETTINGS (beta): carb ratio $ratios; correction " + (n(dose.correctionFactor)?.let { "1 u lowers $it mg/dL" } ?: "not set") +
+            "; target ${dose.target} mg/dL; maximum ${n(dose.maxDose)} u; pen step ${n(dose.step)} u. Meals: breakfast 04–10, lunch 11–15, dinner 16–21, late otherwise."
+    }
 
     // Exact extremes (with times) matter: the 15-minute averages below smooth away short lows.
     private fun summary(label: String, readings: List<GlucoseReading>, time: DateTimeFormatter): String {

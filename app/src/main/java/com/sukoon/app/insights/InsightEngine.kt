@@ -463,7 +463,7 @@ object InsightEngine {
         return if (stacked >= 2) Insight.Stacking(stacked, lows.size) else null
     }
 
-    private fun formulas(events: List<EventEntity>, zone: ZoneId): Insight.Formulas? {
+    internal fun formulas(events: List<EventEntity>, zone: ZoneId): Insight.Formulas? {
         val byDay = events.groupBy { Instant.ofEpochMilli(it.timestampMillis).atZone(zone).toLocalDate() }
         val totals = byDay.values.mapNotNull { day ->
             val basal = day.filter { it.logType == LogEventType.BASAL }.sumOf { it.value ?: 0.0 }

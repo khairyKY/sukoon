@@ -1345,4 +1345,25 @@
     <string name="insight_src_rotation">Frid وزملاؤه، Mayo Clin Proc ٢٠١٦ (FIT)</string>
     <string name="help_sites_title">أماكن الحقن</string>
     <string name="help_sites_body">لما تسجّل إنسولين سريع أو طويل المفعول، «فين؟» بتاخد المكان والناحية بلمسة واحدة على رسمة الجسم (شمالك على الشمال، قدّام وورا). ده اختياري، وتقدر تضيفه بعدين لما تفتح الإدخال. الدايرة المتقطّعة هي المكان اللي بتستخدمه وارتاح أكتر. تغيير المكان مهم: الحقن في نفس المكان كل مرة ممكن يعمل كتل تحت الجلد (lipohypertrophy) تمتص الإنسولين بشكل مش منتظم. البطن أسرع امتصاص (ابعد كام سنتي عن السرّة)، بعدها ضهر الدراع، وجنب الفخد، وأعلى المقعدة من بره؛ ناس كتير بتخلّي منطقة واحدة للطويل المفعول وبتغيّر جواها. صفحة الإنسولين بتوريك آخر ٣٠ يوم. المصدر: Frid وزملاؤه، Mayo Clin Proc ٢٠١٦.</string>
+
+    <!-- اقتراح الجرعات (تجريبي) -->
+    <string name="dose_title">اقتراح الجرعات · تجريبي</string>
+    <string name="dose_off_body">بيقترح جرعة سريع من الكربوهيدرات والسكر والإنسولين اللي لسه شغال، والحسبة قدامك. مقفول لحد ما تشغّله.</string>
+    <string name="dose_warning">للتجربة على نفسك. راجع كل اقتراح: ده مش بديل عن دكتورك.</string>
+    <string name="dose_ratio_label">الوحدة بتغطّي (جم كربوهيدرات)</string>
+    <string name="dose_factor_label">الوحدة بتنزّل (مج/دل)</string>
+    <string name="dose_target_label">الهدف</string>
+    <string name="dose_max_label">أقصى جرعة</string>
+    <string name="dose_step_label">خطوة القلم</string>
+    <string name="dose_empty_hint">سيب الخانة فاضية لو مش عارفها: الجزء ده مش هيتحسب.</string>
+    <string name="dose_start_points">من السجل (%1$d يوم كامل، %2$s وحدة في اليوم): حوالي وحدة لكل %3$s جم، والوحدة بتنزّل حوالي %4$s مج/دل. دي نقط بداية من الكتب: راجعها مع دكتورك.</string>
+    <string name="dose_use_start">استخدم دول</string>
+    <string name="dose_suggested">المقترح · تجريبي</string>
+    <string name="dose_use">استخدم</string>
+    <string name="dose_treat_low">واطي أو بينزل: عالج ده الأول (١٥ جم سكريات سريعة). مفيش إنسولين مقترح.</string>
+    <string name="dose_meal">%1$s جم ÷ %2$s = %3$s</string>
+    <string name="dose_correction">%1$s عشان %2$d</string>
+    <string name="dose_on_board">%1$s لسه شغالين بيغطّوا جزء</string>
+    <string name="dose_rounded">مقرّب لتحت</string>
+    <string name="dose_capped">عند أقصى جرعة</string>
 </resources>

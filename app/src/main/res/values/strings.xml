@@ -1257,4 +1257,25 @@
     <string name="insight_src_rotation">Frid et al., Mayo Clin Proc 2016 (FIT)</string>
     <string name="help_sites_title">Injection sites</string>
     <string name="help_sites_body">When you log rapid or long-acting insulin, “Where?” takes the spot and the side in one tap on the body map (your left is on the left, front and back). It\'s optional, and you can add it later by opening the entry. The dashed ring is the spot you use that has rested longest. Moving around matters: the same spot again and again can form lumps under the skin (lipohypertrophy) that take up insulin unevenly. The belly acts fastest (keep a few centimetres from the navel), then the back of the upper arms, the outer thighs and the upper outer buttocks; many people keep one area for long-acting and move around within it. You → Insulin &amp; logbook shows the last 30 days. Source: Frid et al., Mayo Clin Proc 2016.</string>
+
+    <!-- Dose suggestions (beta) -->
+    <string name="dose_title">Dose suggestions · beta</string>
+    <string name="dose_off_body">Suggests a rapid dose from the carbs, your glucose and the insulin still working, with the maths shown. Off until you turn it on.</string>
+    <string name="dose_warning">For testing on yourself. Check every suggestion: it doesn\'t replace your care team.</string>
+    <string name="dose_ratio_label">1 unit covers (g of carbs)</string>
+    <string name="dose_factor_label">1 u lowers (mg/dL)</string>
+    <string name="dose_target_label">Target</string>
+    <string name="dose_max_label">Most in one dose</string>
+    <string name="dose_step_label">Pen step</string>
+    <string name="dose_empty_hint">Leave a box empty if you don\'t know it: that part is left out.</string>
+    <string name="dose_start_points">From your logbook (%1$d complete days, %2$s u a day): about 1 u per %3$s g, and 1 u lowers about %4$s mg/dL. Textbook starting points: check them with your doctor.</string>
+    <string name="dose_use_start">Use these</string>
+    <string name="dose_suggested">Suggested · beta</string>
+    <string name="dose_use">Use</string>
+    <string name="dose_treat_low">Low or dropping: treat that first (15 g of fast carbs). No insulin suggested.</string>
+    <string name="dose_meal">%1$s g ÷ %2$s = %3$s</string>
+    <string name="dose_correction">%1$s for %2$d</string>
+    <string name="dose_on_board">%1$s still working covers part</string>
+    <string name="dose_rounded">rounded down</string>
+    <string name="dose_capped">capped at your maximum</string>
 </resources>
