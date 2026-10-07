@@ -37,7 +37,8 @@ class RatioLearnerTest {
         val learned = learn((0L until 5).map { lunch(it, 5.0, 50) }).single()
         assertEquals(MealSlot.LUNCH, learned.slot)
         assertEquals(10.0, learned.ratio, 1e-9)
-        assertEquals(5, learned.meals)
+        assertEquals(5, learned.meals.size)
+        assertEquals(50, learned.meals.first().change4h)
     }
 
     @Test

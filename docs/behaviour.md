@@ -210,9 +210,9 @@ assistant may work out doses with the same maths and settings.
 its rapid insulin (an hour before to 30 min after), starting between 70 and 250, nothing else eaten
 from an hour before to 4 h after, no extra insulin in those 4 h, and under 0.5 u still working from
 before. Its ratio is carbs ÷ (insulin + glucose change at 4 h ÷ correction factor); the factor is
-yours, or the 1800 rule's estimate. With 5 or more clean meals at a meal time, the card shows the
-median and the middle half ("Lunch: 7 clean meals point to 1 u per 11 g (9–13)") and *Use* moves the
-ratio toward it by at most 20% at a time. Nothing changes until you press it.
+yours, or the 1800 rule's estimate. With 5 or more clean meals at a meal time, that meal's tile shows
+"Meals say 1 : 11 · Why?". *Why?* lists those meals (date, carbs, insulin, change at 4 h, the ratio
+each points to) and the middle half; *Use* moves the ratio toward the median by at most 20% at a time. Nothing changes until you press it.
 
 ## 10. Known limits
 

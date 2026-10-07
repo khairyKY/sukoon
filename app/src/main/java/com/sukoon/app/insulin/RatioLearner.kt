@@ -20,8 +20,11 @@ object RatioLearner {
 
     const val MIN_MEALS = 5
 
+    /** One clean meal and the ratio it points to: the evidence shown under "Why?". */
+    data class Meal(val atMillis: Long, val carbs: Double, val insulin: Double, val change4h: Int, val ratio: Double)
+
     /** What the clean meals of one meal time point to: the median ratio and the middle half of them. */
-    data class Learned(val slot: MealSlot, val ratio: Double, val low: Double, val high: Double, val meals: Int)
+    data class Learned(val slot: MealSlot, val ratio: Double, val low: Double, val high: Double, val meals: List<Meal>, val factor: Double)
 
     fun learn(readings: List<GlucoseReading>, events: List<EventEntity>, correctionFactor: Double, zone: ZoneId, action: InsulinAction): List<Learned> {
         if (correctionFactor <= 0) return emptyList()
@@ -38,13 +41,13 @@ object RatioLearner {
             if (otherFood || lateInsulin || before >= 0.5) return@mapNotNull null
             val needed = r.insulin + change / correctionFactor
             if (needed < 0.3) return@mapNotNull null
-            (r.carbs / needed).takeIf { it in 3.0..60.0 }?.let { r.slot to it }
+            (r.carbs / needed).takeIf { it in 3.0..60.0 }?.let { r.slot to Meal(t, r.carbs, r.insulin, change, it) }
         }
         return ratios.groupBy({ it.first }, { it.second }).mapNotNull { (slot, values) ->
             if (values.size < MIN_MEALS) return@mapNotNull null
-            val v = values.sorted()
+            val v = values.map { it.ratio }.sorted()
             fun at(q: Double) = v[((v.size - 1) * q).roundToInt()]
-            Learned(slot, half(at(0.5)), half(at(0.25)), half(at(0.75)), v.size)
+            Learned(slot, half(at(0.5)), half(at(0.25)), half(at(0.75)), values.sortedByDescending { it.atMillis }, correctionFactor)
         }.sortedBy { it.slot.ordinal }
     }
 

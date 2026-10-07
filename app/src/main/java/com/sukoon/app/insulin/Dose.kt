@@ -22,7 +22,7 @@ data class DoseSettings(
 
 sealed interface DoseAdvice {
     /** Under 70, or under 100 and dropping: treat that, no insulin. */
-    data object TreatLowFirst : DoseAdvice
+    data class TreatLowFirst(val glucose: Int) : DoseAdvice
 
     data class Suggestion(
         val units: Double,
@@ -36,6 +36,9 @@ sealed interface DoseAdvice {
         /** Insulin still working that the correction made room for. */
         val onBoardUsed: Double,
         val capped: Boolean,
+        val slot: MealSlot,
+        val target: Int,
+        val factor: Double?,
     ) : DoseAdvice
 }
 
@@ -55,7 +58,7 @@ object Dose {
         onBoard: Double,
     ): DoseAdvice? {
         val falling = trend == TrendDirection.FALLING || trend == TrendDirection.FALLING_FAST
-        if (glucose != null && (glucose < 70 || (glucose < 100 && falling))) return DoseAdvice.TreatLowFirst
+        if (glucose != null && (glucose < 70 || (glucose < 100 && falling))) return DoseAdvice.TreatLowFirst(glucose)
         val ratio = settings.carbRatio[slot]?.takeIf { it > 0 }
         val meal = if (carbs != null && carbs > 0 && ratio != null) carbs / ratio else null
         val factor = settings.correctionFactor?.takeIf { it > 0 }
@@ -73,6 +76,9 @@ object Dose {
             glucose = glucose,
             onBoardUsed = if (raw != null && raw > 0) minOf(raw, onBoard) else 0.0,
             capped = rounded > settings.maxDose,
+            slot = slot,
+            target = settings.target,
+            factor = factor,
         )
     }
 }

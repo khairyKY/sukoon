@@ -1347,33 +1347,48 @@
     <string name="help_sites_body">لما تسجّل إنسولين سريع أو طويل المفعول، «فين؟» بتاخد المكان والناحية بلمسة واحدة على رسمة الجسم (شمالك على الشمال، قدّام وورا). ده اختياري، وتقدر تضيفه بعدين لما تفتح الإدخال. الدايرة المتقطّعة هي المكان اللي بتستخدمه وارتاح أكتر. تغيير المكان مهم: الحقن في نفس المكان كل مرة ممكن يعمل كتل تحت الجلد (lipohypertrophy) تمتص الإنسولين بشكل مش منتظم. البطن أسرع امتصاص (ابعد كام سنتي عن السرّة)، بعدها ضهر الدراع، وجنب الفخد، وأعلى المقعدة من بره؛ ناس كتير بتخلّي منطقة واحدة للطويل المفعول وبتغيّر جواها. صفحة الإنسولين بتوريك آخر ٣٠ يوم. المصدر: Frid وزملاؤه، Mayo Clin Proc ٢٠١٦.</string>
 
     <!-- اقتراح الجرعات (تجريبي) -->
-    <string name="dose_title">اقتراح الجرعات · تجريبي</string>
     <string name="dose_off_body">بيقترح جرعة سريع من الكربوهيدرات والسكر والإنسولين اللي لسه شغال، والحسبة قدامك. مقفول لحد ما تشغّله.</string>
-    <string name="dose_warning">للتجربة على نفسك. راجع كل اقتراح: ده مش بديل عن دكتورك.</string>
-    <string name="dose_ratio_label">الوحدة بتغطّي (جم كربوهيدرات)</string>
-    <string name="dose_factor_label">الوحدة بتنزّل (مج/دل)</string>
-    <string name="dose_target_label">الهدف</string>
     <string name="dose_max_label">أقصى جرعة</string>
     <string name="dose_step_label">خطوة القلم</string>
-    <string name="dose_empty_hint">سيب الخانة فاضية لو مش عارفها: الجزء ده مش هيتحسب.</string>
     <string name="dose_start_points">من السجل (%1$d يوم كامل، %2$s وحدة في اليوم): حوالي وحدة لكل %3$s جم، والوحدة بتنزّل حوالي %4$s مج/دل. دي نقط بداية من الكتب: راجعها مع دكتورك.</string>
     <string name="dose_use_start">استخدم دول</string>
     <string name="dose_suggested">المقترح · تجريبي</string>
     <string name="dose_use">استخدم</string>
-    <string name="dose_treat_low">واطي أو بينزل: عالج ده الأول (١٥ جم سكريات سريعة). مفيش إنسولين مقترح.</string>
-    <string name="dose_meal">%1$s جم ÷ %2$s = %3$s</string>
-    <string name="dose_correction">%1$s عشان %2$d</string>
-    <string name="dose_on_board">%1$s لسه شغالين بيغطّوا جزء</string>
-    <string name="dose_rounded">مقرّب لتحت</string>
-    <string name="dose_capped">عند أقصى جرعة</string>
-    <plurals name="dose_learned">
-        <item quantity="zero">%1$s: %2$d وجبة نضيفة بتقول وحدة لكل %3$s جم (%4$s–%5$s)</item>
-        <item quantity="one">%1$s: وجبة نضيفة بتقول وحدة لكل %3$s جم (%4$s–%5$s)</item>
-        <item quantity="two">%1$s: وجبتين نضاف بيقولوا وحدة لكل %3$s جم (%4$s–%5$s)</item>
-        <item quantity="few">%1$s: %2$d وجبات نضيفة بتقول وحدة لكل %3$s جم (%4$s–%5$s)</item>
-        <item quantity="many">%1$s: %2$d وجبة نضيفة بتقول وحدة لكل %3$s جم (%4$s–%5$s)</item>
-        <item quantity="other">%1$s: %2$d وجبة نضيفة بتقول وحدة لكل %3$s جم (%4$s–%5$s)</item>
-    </plurals>
-    <string name="dose_learned_use">استخدم %1$s</string>
     <string name="dose_learning_needs">التعلّم من وجباتك: محتاج ٥ وجبات نضيفة في نفس الميعاد (متسجّل معاها الإنسولين، ومفيش أكل تاني لمدة ٤ ساعات) ومعامل تصحيح، أو ٣ أيام كاملة.</string>
+    <string name="dose_switch">اقترح جرعة السريع</string>
+    <string name="dose_beta">تجريبي</string>
+    <string name="dose_warning">للتجربة على نفسك. راجع كل اقتراح.</string>
+    <string name="dose_ratio_label">الوحدة بتغطّي</string>
+    <string name="dose_factor_label">الوحدة بتنزّل</string>
+    <string name="dose_target_label">الهدف</string>
+    <string name="dose_more">أقصى حد %1$s · القلم %2$s</string>
+    <string name="dose_empty_hint">دوس على الخانة عشان تغيّرها. الفاضية مش بتدخل في الحسبة. مش متأكد؟ سيبها فاضية: وجباتك هتملاها مع الوقت.</string>
+    <string name="dose_meals_say">الوجبات بتقول ١ : %1$s · ليه؟</string>
+    <string name="dose_why_eyebrow">%1$s · متعلّم</string>
+    <string name="dose_why_title">وجباتك بتقول ١ : %1$s</string>
+    <plurals name="dose_why_body">
+        <item quantity="zero">%1$d وجبة نضيفة في ٣٠ يوم، بين ١ : %2$s و١ : %3$s.</item>
+        <item quantity="one">وجبة نضيفة في ٣٠ يوم، بين ١ : %2$s و١ : %3$s.</item>
+        <item quantity="two">وجبتين نضاف في ٣٠ يوم، بين ١ : %2$s و١ : %3$s.</item>
+        <item quantity="few">%1$d وجبات نضيفة في ٣٠ يوم. أغلبها بين ١ : %2$s و١ : %3$s.</item>
+        <item quantity="many">%1$d وجبة نضيفة في ٣٠ يوم. أغلبها بين ١ : %2$s و١ : %3$s.</item>
+        <item quantity="other">%1$d وجبة نضيفة في ٣٠ يوم. أغلبها بين ١ : %2$s و١ : %3$s.</item>
+    </plurals>
+    <string name="dose_why_current">إنت بتستخدم ١ : %1$s.</string>
+    <string name="dose_why_row">%1$s جم · %2$s وحدة · %3$s بعد ٤ ساعات</string>
+    <string name="dose_why_rule">الوجبة بتتحسب لو مفيش أكل تاني لمدة ٤ ساعات، ومفيش إنسولين زيادة، ومفيش إنسولين لسه شغال من قبلها. كل وجبة بتقول كانت محتاجة إيه: الكربوهيدرات ÷ (الإنسولين + التغيير ÷ %1$s).</string>
+    <string name="dose_why_use">استخدم ١ : %1$s في %2$s</string>
+    <string name="dose_why_step">خطوة خطوة: ٢٠٪ بالكتير في كل تغيير.</string>
+    <string name="dose_low_title">عالج الهبوط الأول</string>
+    <string name="dose_low_body">إنت على %1$d. خد ١٥ جم سكريات سريعة وقيس تاني بعد ١٥ دقيقة. مفيش إنسولين مقترح وإنت واطي أو بتنزل تحت ١٠٠.</string>
+    <string name="dose_r_meal">الوجبة</string>
+    <string name="dose_r_meal_how">%1$s جم ÷ %2$s (%3$s)</string>
+    <string name="dose_r_corr">التصحيح</string>
+    <string name="dose_r_corr_how">%1$d ← %2$d، ÷ %3$s</string>
+    <string name="dose_r_iob">لسه شغال</string>
+    <string name="dose_r_iob_how">بيغطّي التصحيح</string>
+    <string name="dose_r_round">مقرّب لتحت</string>
+    <string name="dose_r_round_how">على قد القلم</string>
+    <string name="dose_r_capped">بالكتير</string>
+    <string name="dose_r_capped_how">أقصى جرعة ليك</string>
 </resources>

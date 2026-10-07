@@ -1259,29 +1259,44 @@
     <string name="help_sites_body">When you log rapid or long-acting insulin, “Where?” takes the spot and the side in one tap on the body map (your left is on the left, front and back). It\'s optional, and you can add it later by opening the entry. The dashed ring is the spot you use that has rested longest. Moving around matters: the same spot again and again can form lumps under the skin (lipohypertrophy) that take up insulin unevenly. The belly acts fastest (keep a few centimetres from the navel), then the back of the upper arms, the outer thighs and the upper outer buttocks; many people keep one area for long-acting and move around within it. You → Insulin &amp; logbook shows the last 30 days. Source: Frid et al., Mayo Clin Proc 2016.</string>
 
     <!-- Dose suggestions (beta) -->
-    <string name="dose_title">Dose suggestions · beta</string>
     <string name="dose_off_body">Suggests a rapid dose from the carbs, your glucose and the insulin still working, with the maths shown. Off until you turn it on.</string>
-    <string name="dose_warning">For testing on yourself. Check every suggestion: it doesn\'t replace your care team.</string>
-    <string name="dose_ratio_label">1 unit covers (g of carbs)</string>
-    <string name="dose_factor_label">1 u lowers (mg/dL)</string>
-    <string name="dose_target_label">Target</string>
     <string name="dose_max_label">Most in one dose</string>
     <string name="dose_step_label">Pen step</string>
-    <string name="dose_empty_hint">Leave a box empty if you don\'t know it: that part is left out.</string>
     <string name="dose_start_points">From your logbook (%1$d complete days, %2$s u a day): about 1 u per %3$s g, and 1 u lowers about %4$s mg/dL. Textbook starting points: check them with your doctor.</string>
     <string name="dose_use_start">Use these</string>
     <string name="dose_suggested">Suggested · beta</string>
     <string name="dose_use">Use</string>
-    <string name="dose_treat_low">Low or dropping: treat that first (15 g of fast carbs). No insulin suggested.</string>
-    <string name="dose_meal">%1$s g ÷ %2$s = %3$s</string>
-    <string name="dose_correction">%1$s for %2$d</string>
-    <string name="dose_on_board">%1$s still working covers part</string>
-    <string name="dose_rounded">rounded down</string>
-    <string name="dose_capped">capped at your maximum</string>
-    <plurals name="dose_learned">
-        <item quantity="one">%1$s: %2$d clean meal points to 1 u per %3$s g (%4$s–%5$s)</item>
-        <item quantity="other">%1$s: %2$d clean meals point to 1 u per %3$s g (%4$s–%5$s)</item>
-    </plurals>
-    <string name="dose_learned_use">Use %1$s</string>
     <string name="dose_learning_needs">Learning from your meals: it needs 5 clean meals at a meal time (logged with their insulin, nothing else eaten for 4 h) and a correction factor, or 3 complete days.</string>
+    <string name="dose_switch">Suggest my rapid dose</string>
+    <string name="dose_beta">BETA</string>
+    <string name="dose_warning">For testing on yourself. Check every suggestion.</string>
+    <string name="dose_ratio_label">1 unit covers</string>
+    <string name="dose_factor_label">1 unit lowers</string>
+    <string name="dose_target_label">Aim for</string>
+    <string name="dose_more">At most %1$s · pen %2$s</string>
+    <string name="dose_empty_hint">Tap a box to change it. An empty one is left out of the maths. Not sure? Leave them empty: your meals fill them in over time.</string>
+    <string name="dose_meals_say">Meals say 1 : %1$s · Why?</string>
+    <string name="dose_why_eyebrow">%1$s · learned</string>
+    <string name="dose_why_title">Your meals say 1 : %1$s</string>
+    <plurals name="dose_why_body">
+        <item quantity="one">%1$d clean meal in 30 days, landing between 1 : %2$s and 1 : %3$s.</item>
+        <item quantity="other">%1$d clean meals in 30 days. Most of them land between 1 : %2$s and 1 : %3$s.</item>
+    </plurals>
+    <string name="dose_why_current">You use 1 : %1$s.</string>
+    <string name="dose_why_row">%1$s g · %2$s u · %3$s at 4 h</string>
+    <string name="dose_why_rule">A meal counts when nothing else was eaten for 4 h, no insulin was added, and none was still working from before. Each tells what it needed: carbs ÷ (insulin + change ÷ %1$s).</string>
+    <string name="dose_why_use">Use 1 : %1$s for %2$s</string>
+    <string name="dose_why_step" formatted="false">One step at a time: at most 20% per change.</string>
+    <string name="dose_low_title">Treat the low first</string>
+    <string name="dose_low_body">You\'re at %1$d. Have 15 g of fast carbs and check again in 15 minutes. No insulin is suggested while you\'re low or dropping under 100.</string>
+    <string name="dose_r_meal">Meal</string>
+    <string name="dose_r_meal_how">%1$s g ÷ %2$s (%3$s)</string>
+    <string name="dose_r_corr">Correction</string>
+    <string name="dose_r_corr_how">%1$d → %2$d, ÷ %3$s</string>
+    <string name="dose_r_iob">Still working</string>
+    <string name="dose_r_iob_how">covers the correction</string>
+    <string name="dose_r_round">Rounded down</string>
+    <string name="dose_r_round_how">to your pen</string>
+    <string name="dose_r_capped">At most</string>
+    <string name="dose_r_capped_how">your maximum</string>
 </resources>

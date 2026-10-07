@@ -37,8 +37,8 @@ class DoseTest {
 
     @Test
     fun `lows and drops come first, and empty numbers say nothing`() {
-        assertEquals(DoseAdvice.TreatLowFirst, advise(45.0, 65))
-        assertEquals(DoseAdvice.TreatLowFirst, advise(45.0, 95, TrendDirection.FALLING))
+        assertEquals(DoseAdvice.TreatLowFirst(65), advise(45.0, 65))
+        assertEquals(DoseAdvice.TreatLowFirst(95), advise(45.0, 95, TrendDirection.FALLING))
         assertNull(advise(45.0, 160, s = DoseSettings(enabled = true))) // no ratio, no factor
         assertNull(Dose.advise(settings, MealSlot.DINNER, 45.0, null, null, 0.0)) // no dinner ratio, no glucose
     }
