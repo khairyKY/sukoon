@@ -65,6 +65,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -755,7 +756,7 @@ private fun AppMealPicker(meals: List<EventEntity>, onPick: (EventEntity) -> Uni
                 ) {
                     Column(Modifier.weight(1f)) {
                         Text("${mealTitle(meal)} · ${hmFormatter.format(Instant.ofEpochMilli(meal.timestampMillis))}", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                        meal.note?.let { Text(it, fontSize = 12.5.sp, color = CaptionMuted, maxLines = 1) }
+                        meal.note?.let { Text(it, fontSize = 12.5.sp, color = CaptionMuted, maxLines = 1, overflow = TextOverflow.Ellipsis) }
                     }
                     Text("${formatAmountLocalized(meal.value ?: 0.0)}${stringResource(R.string.logbook_unit_grams)}", fontFamily = HeadlineSerifFontFamily, fontSize = 21.sp, color = MaterialTheme.colorScheme.onBackground)
                 }

@@ -40,6 +40,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sukoon.app.BuildConfig
@@ -445,8 +446,9 @@ private fun SectionCard(page: YouPage, summary: String, modifier: Modifier, onCl
             Icon(painterResource(page.icon), contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
         }
         Column(Modifier.padding(top = 10.dp)) {
-            Text(stringResource(page.title), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1)
-            Text(summary, fontSize = 12.5.sp, color = CaptionMuted, maxLines = 1)
+            // Ellipsis, not the default clip: a clip drops whole words, so "MyFitnessPal, Nightscout, AI" showed as "MyFitnessPal,".
+            Text(stringResource(page.title), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(summary, fontSize = 12.5.sp, color = CaptionMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -519,7 +521,7 @@ private fun ServiceRow(title: String, summary: String, action: String, prominent
     Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Column(Modifier.weight(1f)) {
             Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-            Text(summary, fontSize = 12.5.sp, color = CaptionMuted, maxLines = 1, modifier = Modifier.padding(top = 2.dp))
+            Text(summary, fontSize = 12.5.sp, color = CaptionMuted, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
         }
         Box(
             Modifier
