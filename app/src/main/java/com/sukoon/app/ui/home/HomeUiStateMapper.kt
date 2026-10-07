@@ -6,6 +6,8 @@ import com.sukoon.app.domain.metrics.GlucoseMetrics
 import com.sukoon.app.domain.metrics.GlucoseMetrics.RangeBracket
 import java.time.Duration
 import java.time.Instant
+import com.sukoon.app.data.source.libre.SensorLife
+import com.sukoon.app.alarms.AlarmSettings
 
 /**
  * Pure mapping from raw source signals (status + latest reading + recent window) to [HomeUiState].
@@ -18,35 +20,55 @@ import java.time.Instant
  */
 object HomeUiStateMapper {
 
+    /** PLAN.md §5: a reading older than this is never presented as current, whatever the source says. */
+    val STALE_AFTER: Duration = Duration.ofMinutes(10)
+
     fun map(
         status: SourceStatus,
         latest: GlucoseReading?,
-        recentMgDl: List<Int>,
+        /** The last few hours, oldest first: Home's chart. */
+        recent: List<GlucoseReading>,
         now: Instant,
-    ): HomeUiState = when (status) {
-        SourceStatus.Disconnected, is SourceStatus.Error -> HomeUiState.NoSensor
-
-        // The simulator jumps straight to Connected, so this branch is dead until Track B. A real
-        // sensor's warm-up countdown comes from the sensor session (warmupEndsAtMillis), not from
-        // this payload-less status — hence the placeholder. LibreBleSource will supply real minutes.
-        SourceStatus.WarmingUp -> HomeUiState.WarmingUp(minutesRemaining = 0)
-
-        SourceStatus.Stale -> HomeUiState.Stale(
-            lastGlucoseMgDl = latest?.glucoseMgDl ?: 0,
-            minutesAgo = latest?.let { Duration.between(it.timestamp, now).toMinutes().toInt() } ?: 0,
-            recentReadings = recentMgDl,
-        )
-
-        // Connecting can briefly hold a prior reading; show it if present, else the empty state.
-        SourceStatus.Connecting,
-        SourceStatus.Connected -> latest?.let { connected(it, recentMgDl) } ?: HomeUiState.NoSensor
+        /** The paired sensor's life (null on demo data): the real warm-up countdown, and "ended". */
+        life: SensorLife? = null,
+    ): HomeUiState = when (life) {
+        is SensorLife.Ended -> HomeUiState.SensorEnded
+        is SensorLife.WarmingUp -> HomeUiState.WarmingUp(life.minutesLeft)
+        else -> byStatus(status, latest, recent, now)
     }
 
-    private fun connected(reading: GlucoseReading, recentMgDl: List<Int>): HomeUiState =
-        when (GlucoseMetrics.bracketFor(reading.glucoseMgDl)) {
-            RangeBracket.VERY_LOW -> HomeUiState.Urgent(reading.glucoseMgDl, reading.trend)
-            RangeBracket.LOW -> HomeUiState.Low(reading.glucoseMgDl, reading.trend)
-            RangeBracket.IN_RANGE -> HomeUiState.InRange(reading.glucoseMgDl, reading.trend, recentMgDl)
-            RangeBracket.HIGH, RangeBracket.VERY_HIGH -> HomeUiState.High(reading.glucoseMgDl, reading.trend, recentMgDl)
+    private fun byStatus(status: SourceStatus, latest: GlucoseReading?, recent: List<GlucoseReading>, now: Instant): HomeUiState = when (status) {
+        SourceStatus.Disconnected -> HomeUiState.NoSensor
+
+        // The countdown comes from the paired sensor's start (life, above); this is only a fallback.
+        SourceStatus.WarmingUp -> HomeUiState.WarmingUp(minutesRemaining = 0)
+
+        SourceStatus.Stale -> latest?.let { stale(it, recent, now) } ?: HomeUiState.NoSensor
+
+        // Freshness comes from the reading's own age, not the status: a source can report Connected
+        // while no packet has arrived for a while, and a transient Error (one bad BLE packet)
+        // shouldn't hide a reading that's still minutes old.
+        SourceStatus.Connecting,
+        SourceStatus.Connected,
+        is SourceStatus.Error -> when {
+            latest == null -> HomeUiState.NoSensor
+            Duration.between(latest.timestamp, now) > STALE_AFTER -> stale(latest, recent, now)
+            else -> connected(latest, recent)
+        }
+    }
+
+    private fun stale(latest: GlucoseReading, recent: List<GlucoseReading>, now: Instant) = HomeUiState.Stale(
+        lastGlucoseMgDl = latest.glucoseMgDl,
+        minutesAgo = Duration.between(latest.timestamp, now).toMinutes().toInt(),
+        recentReadings = recent,
+    )
+
+    private fun connected(reading: GlucoseReading, recent: List<GlucoseReading>): HomeUiState =
+        // Urgent exactly when the urgent-low alarm sounds (under 55), not at the stats' 54 line.
+        if (reading.glucoseMgDl < AlarmSettings.URGENT_LOW_MG_DL) HomeUiState.Urgent(reading.glucoseMgDl, reading.trend)
+        else when (GlucoseMetrics.bracketFor(reading.glucoseMgDl)) {
+            RangeBracket.VERY_LOW, RangeBracket.LOW -> HomeUiState.Low(reading.glucoseMgDl, reading.trend)
+            RangeBracket.IN_RANGE -> HomeUiState.InRange(reading.glucoseMgDl, reading.trend, recent)
+            RangeBracket.HIGH, RangeBracket.VERY_HIGH -> HomeUiState.High(reading.glucoseMgDl, reading.trend, recent)
         }
 }

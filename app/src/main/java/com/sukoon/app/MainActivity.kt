@@ -11,38 +11,55 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.sukoon.app.data.prefs.DisclaimerPrefs
 import com.sukoon.app.ui.navigation.MainScaffold
-import com.sukoon.app.ui.onboarding.DisclaimerGateScreen
+import com.sukoon.app.ui.onboarding.Onboarding
 import com.sukoon.app.ui.theme.SukoonTheme
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.collectAsState
+import com.sukoon.app.data.prefs.ThemeMode
+import android.content.Intent
+import com.sukoon.app.data.db.LogEventType
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val disclaimerPrefs = DisclaimerPrefs(applicationContext)
-
+        val container = (application as SukoonApp).container
+        takeEntry(intent)
+        val themeMode = container.themeMode
         setContent {
-            SukoonTheme {
-                var disclaimerAccepted by remember { mutableStateOf(disclaimerPrefs.hasAccepted()) }
+            val mode by themeMode.collectAsState()
+            SukoonTheme(
+                darkTheme = when (mode) {
+                    ThemeMode.AUTO -> isSystemInDarkTheme()
+                    ThemeMode.LIGHT -> false
+                    ThemeMode.DARK -> true
+                },
+            ) {
+                var onboarded by remember { mutableStateOf(container.settings.onboarded) }
 
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    if (disclaimerAccepted) {
-                        // Post-disclaimer: the 3-tab shell (Now/Trends/You). The Now tab hosts the
-                        // live SimulatedSource-driven Home; Trends/You are placeholders until their
-                        // screens land (A3/A4/A9/A10).
-                        MainScaffold()
-                    } else {
-                        DisclaimerGateScreen(
-                            onAccept = {
-                                disclaimerPrefs.setAccepted()
-                                disclaimerAccepted = true
-                            },
-                        )
-                    }
+                    // First run: welcome (with the disclaimer), role, account, then that role's setup.
+                    if (onboarded) MainScaffold() else Onboarding(container) { onboarded = true }
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        takeEntry(intent)
+    }
+
+    /** A notification asked for a new entry (the long-acting reminder's "Log it"): the Logbook opens it. */
+    private fun takeEntry(intent: Intent) {
+        val type = intent.getStringExtra(EXTRA_ENTRY)?.let { name -> LogEventType.entries.firstOrNull { it.name == name } } ?: return
+        intent.removeExtra(EXTRA_ENTRY)
+        (application as SukoonApp).container.requestedEntry.value = type
+    }
+
+    companion object {
+        const val EXTRA_ENTRY = "entry"
     }
 }

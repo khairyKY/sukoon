@@ -1,24 +1,77 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!--
-    BLE-stream / foreground-service / CALL_PHONE permissions are intentionally not declared yet —
-    they belong to later Phase 1 (BLE) and Phase 2 (emergency-call) tasks.
-    -->
-
     <!-- Required to fire ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS (see platform/BatteryOptimization.kt) -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <uses-permission android:name="android.permission.NFC" />
+
+    <!-- Gemini AI. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Direct Libre 2 connection over Bluetooth LE (data/source/libre/LibreBleSource.kt). -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <!-- Location: BLE scanning before Android 12, and (optional) the map link in emergency texts. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
+
+    <!-- Keeps the sensor connection alive in the background (platform/SensorService.kt). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <!-- Watching someone you follow (platform/FollowService.kt): no device involved, hence "special use". -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- Restart reading the sensor after a reboot or an update (platform/BootReceiver.kt). -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Alarms (alarms/): urgent low takes over the screen and may bypass Do Not Disturb. -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Emergency contacts (emergency/): text everyone and call the first one when an urgent low goes unanswered. -->
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- SignalWatchdog: wake Sukoon on time if the phone stopped it (exact alarms; USE_EXACT_ALARM from 13, SCHEDULE before). -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
+
+    <!-- Health Connect (health/HealthConnectSync.kt): meals in, glucose out. -->
+    <uses-permission android:name="android.permission.health.READ_NUTRITION" />
+    <uses-permission android:name="android.permission.health.READ_EXERCISE" />
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_HYDRATION" />
+    <uses-permission android:name="android.permission.health.WRITE_BLOOD_GLUCOSE" />
+    <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND" />
+
+    <queries>
+        <!-- Health Connect's own app on Android 13 and older; MyFitnessPal for its name on imported meals. -->
+        <package android:name="com.google.android.apps.healthdata" />
+        <package android:name="com.myfitnesspal.android" />
+    </queries>
     <!-- required=false: SimulatedSource and future viewer-only clients don't need NFC hardware. -->
     <uses-feature android:name="android.hardware.nfc" android:required="false" />
 
     <application
         android:name=".SukoonApp"
+        android:localeConfig="@xml/locales_config"
         android:allowBackup="true"
         android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
         android:theme="@style/Theme.Sukoon"
-        android:supportsRtl="true">
+        android:supportsRtl="true"
+        android:usesCleartextTraffic="true">
+        <!-- ponytail: cleartext allowed app-wide because the Nightscout upload target is usually a
+             self-hosted http URL on a LAN/Tailscale IP (Tailscale already encrypts the hop). Narrow
+             it with a network-security-config if a public https-only Nightscout becomes the norm. -->
 
         <activity
             android:name=".MainActivity"
@@ -28,7 +81,152 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Health Connect's "why does this app want access" link (Android 13 and older). -->
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
         </activity>
+
+        <!-- The same link on Android 14+, where Health Connect is part of the system. -->
+        <activity-alias
+            android:name="ViewPermissionUsageActivity"
+            android:exported="true"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- Lets the camera app write the meal photo for the AI carb estimate. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- Home-screen glucose widget, resizable 1×1 up to half the screen (ui/widget/). -->
+        <receiver
+            android:name=".ui.widget.GlucoseWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/glucose_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.WidgetSmallReceiver"
+            android:exported="true"
+            android:label="@string/widget_label_small">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/glucose_widget_small" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.WidgetWideReceiver"
+            android:exported="true"
+            android:label="@string/widget_label_wide">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/glucose_widget_wide" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.WidgetStripReceiver"
+            android:exported="true"
+            android:label="@string/widget_label_strip">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/glucose_widget_strip" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.WidgetLargeReceiver"
+            android:exported="true"
+            android:label="@string/widget_label_large">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/glucose_widget_large" />
+        </receiver>
+
+        <!-- The widget maker's "Add to home screen": the launcher reports which widget it placed. -->
+        <receiver
+            android:name=".ui.widget.WidgetPinnedReceiver"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.widget.WidgetConfigActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Sukoon">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".alarms.AlarmActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:showWhenLocked="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Sukoon"
+            android:turnScreenOn="true" />
+
+        <receiver
+            android:name=".alarms.AlarmActionReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".alarms.SignalWatchdog"
+            android:exported="false" />
+
+        <receiver
+            android:name=".reminders.BasalReminder"
+            android:exported="false" />
+
+        <receiver
+            android:name=".platform.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+        <service
+            android:name=".platform.FollowService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Watches a family member's live glucose readings and sounds alarms when they are dangerously low or stop arriving." />
+        </service>
+        <service
+            android:name=".platform.SensorService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
 
     </application>
 

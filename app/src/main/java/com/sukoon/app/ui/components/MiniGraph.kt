@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,23 +16,29 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.ui.theme.Sage
 import com.sukoon.app.ui.theme.StateHigh
 import com.sukoon.app.ui.theme.StateLow
+import java.time.Duration
+import java.time.Instant
+import kotlin.math.roundToInt
 
 /**
- * The small "last N hours" bar strip shown on Home (screens 5a/8e/8h). Bar height is the
- * glucose value normalized against [maxMgDl]; bar color follows the same TIR brackets the
- * metrics module uses, so this reads the graph the same way the Insights tab will later.
+ * Home's bar strip (screens 5a/8e/8h): one bar per 15 minutes of the last 3 hours. Each bar is the
+ * bucket's lowest reading if any was under 70, its highest if any was over 180, else its average,
+ * so a short low or high shows instead of being averaged away. A bucket with no readings is a gap.
  */
 @Composable
 fun MiniGraph(
-    readingsMgDl: List<Int>,
+    readings: List<GlucoseReading>,
+    now: Instant,
     modifier: Modifier = Modifier,
     height: Dp = 56.dp,
-    maxMgDl: Int = 260,
     dimmed: Boolean = false,
 ) {
+    val bars = homeBars(readings, now)
+    val top = maxOf(260, bars.filterNotNull().maxOrNull() ?: 0)
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -40,16 +47,35 @@ fun MiniGraph(
         horizontalArrangement = Arrangement.spacedBy(5.dp),
         verticalAlignment = Alignment.Bottom,
     ) {
-        readingsMgDl.forEach { value ->
-            val fraction = (value.toFloat() / maxMgDl).coerceIn(0.08f, 1f)
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .height(height * fraction)
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(colorFor(value)),
-            )
+        bars.forEach { value ->
+            if (value == null) {
+                Spacer(Modifier.weight(1f))
+            } else {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(height * (value.toFloat() / top).coerceIn(0.08f, 1f))
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(colorFor(value)),
+                )
+            }
+        }
+    }
+}
+
+/** [count] buckets of [span] ending at [now], oldest first; null = no readings in that bucket. */
+internal fun homeBars(readings: List<GlucoseReading>, now: Instant, count: Int = 12, span: Duration = Duration.ofHours(3)): List<Int?> {
+    val step = span.dividedBy(count.toLong())
+    val start = now.minus(span)
+    return (0 until count).map { i ->
+        val from = start.plus(step.multipliedBy(i.toLong()))
+        val to = from.plus(step)
+        val values = readings.filter { it.timestamp >= from && (it.timestamp < to || (i == count - 1 && it.timestamp <= now)) }.map { it.glucoseMgDl }
+        when {
+            values.isEmpty() -> null
+            values.min() < 70 -> values.min()
+            values.max() > 180 -> values.max()
+            else -> values.average().roundToInt()
         }
     }
 }

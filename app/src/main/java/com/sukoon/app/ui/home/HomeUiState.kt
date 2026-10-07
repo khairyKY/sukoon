@@ -1,6 +1,7 @@
 package com.sukoon.app.ui.home
 
 import com.sukoon.app.data.source.TrendDirection
+import com.sukoon.app.data.source.GlucoseReading
 
 /**
  * Every visual state the Home screen can be in (docs/design-screens.md §2, screens
@@ -12,7 +13,7 @@ sealed interface HomeUiState {
     data class InRange(
         val glucoseMgDl: Int,
         val trend: TrendDirection,
-        val recentReadings: List<Int>,
+        val recentReadings: List<GlucoseReading>,
     ) : HomeUiState
 
     data class Low(val glucoseMgDl: Int, val trend: TrendDirection) : HomeUiState
@@ -20,7 +21,7 @@ sealed interface HomeUiState {
     data class High(
         val glucoseMgDl: Int,
         val trend: TrendDirection,
-        val recentReadings: List<Int>,
+        val recentReadings: List<GlucoseReading>,
     ) : HomeUiState
 
     data class Urgent(val glucoseMgDl: Int, val trend: TrendDirection) : HomeUiState
@@ -30,8 +31,11 @@ sealed interface HomeUiState {
     data class Stale(
         val lastGlucoseMgDl: Int,
         val minutesAgo: Int,
-        val recentReadings: List<Int>,
+        val recentReadings: List<GlucoseReading>,
     ) : HomeUiState
 
     data object NoSensor : HomeUiState
+
+    /** The paired sensor reached the end of its life: time for a new one. */
+    data object SensorEnded : HomeUiState
 }

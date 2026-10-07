@@ -6,7 +6,7 @@
 
 **Hardware available in-house (the unblocker):** Kai is diabetic, always wears an EU Libre 2, has an NFC + Bluetooth Android phone, and can sacrifice an expiring sensor to experiment on. So the validation loop (B7) is runnable now — not blocked on hardware as earlier assumed. A spare/expiring sensor is ideal for the *plumbing* stages (B1/B2/B4) even if it no longer streams valid glucose — test the mechanics separately from the numbers.
 
-**Licensing (locked):** clean-room reimplementation from the *publicly documented method* only. Do **not** copy xDrip+/Juggluco/GlucoseDirect source — GPL-3.0 would force Sukoon open. Read them to understand the approach; write ours independently. (PLAN §1.)
+**Licensing — UPDATED (2026-10-03, Kai): port MIT-licensed code with attribution.** The Libre 2 EU decoder is a Kotlin port of GlucoseDirect (MIT), whose Libre 2 code descends from DiaBLE and LibreTools (both MIT) — notices in `THIRD_PARTY_NOTICES.md`. GPL sources (xDrip+, Juggluco, xdripswift) stay off-limits so Sukoon stays fully owned. (Replaces the 2026-07-15 "clean-room only" rule; the goal — no GPL obligations — is unchanged.)
 
 **Overriding safety rule:** nothing in B3–B6 is "done" until the validation loop (B7) shows decoded numbers matching LibreLink/finger-prick. Wrong crypto fails *silently* — it produces plausible-but-wrong glucose, which is a patient-safety risk, not a bug. Code that "runs" is not code that's correct here.
 
@@ -30,7 +30,7 @@ Libre 2 ships with BLE *disabled*; a one-time NFC activation command provisions 
 - Persist activation state to the `SensorSessionEntity` (a sensor is activated once, then streams for its life).
 - **Accept:** after activation, the sensor begins BLE-advertising; the activation response is captured and stored.
 
-## B3 — Key derivation (clean-room) — **the hard part**  ⬜  · *(new issue, replaces the stub)*
+## B3 — Key derivation — ◐ ported (`Libre2.kt`: FRAM/BLE keys, streaming-unlock payload), awaiting B7  · *(new issue, replaces the stub)*
 Implement `LibreKeyDerivation` from the public spec: UID + patch info + activation response → the BLE streaming key + connection PIN.
 - Replace `UnimplementedLibreKeyDerivation`.
 - Pure/testable where possible (known-vector tests once B7 yields a known-good vector from Kai's sensor).
@@ -42,7 +42,7 @@ Implement `LibreKeyDerivation` from the public spec: UID + patch info + activati
 - **Accept:** a stable subscribed connection that delivers raw encrypted notification packets. (Spare sensor fine for connection mechanics.)
 
 ## B5 — Decrypt the BLE stream (AES-CFB)  ⬜  · *(new issue)*
-- Decrypt notification payloads with the B3 key (AES-CFB — confirmed from the DiaBox APK's `libaescfb.so`, reimplemented clean-room).
+- Decrypt notification payloads with the B3 key. ◐ Ported: Libre 2 EU uses the community-documented XOR keystream (not AES — DiaBox's `libaescfb.so` is likely for newer firmware). Every packet is CRC-checked; a sensor whose packets fail CRC is rejected, never displayed.
 - Parse decrypted bytes into raw sensor value(s) + timestamp/counter.
 - **Accept:** decrypted packets parse into a plausible, monotonic-in-time raw series (final correctness is B7).
 
@@ -83,10 +83,24 @@ The safety-critical acceptance test. This is where "clean-room from the method" 
 
 ---
 
+## Fallback F1 — bundle DiaBox's native decoder via JNI (only if B3/B7 stalls)  ⬜  · *not planned, documented so it isn't re-litigated*
+
+If the clean-room key derivation (B3) can't be made to pass B7 after real effort, the escape hatch is the xDrip "OOP2" trick: ship DiaBox's native libs (`libjniLibre.so`, `libaescfb.so`, the `v112F/v113B/v115G/v116A` algo libs — all extracted in `_apk-analysis/`) in `app/src/main/jniLibs/` and call them over JNI from `LibreBleSource`, replacing B3+B5+B6 wholesale.
+
+Why it's the fallback and not the plan (decided 2026-07-15):
+- **Redistribution:** they're someone else's binaries from a closed-source APK. Fine for a private daily driver, not for a public repo or a portfolio piece.
+- **Black box:** when a sensor misbehaves you get no stack, no way to fix it, no way to unit-test the decode. B7's regression fixture becomes the only signal you have.
+- **ABI + firmware locked:** ships as-is for four firmware versions and one ABI set; a newer EU firmware means waiting for DiaBox to ship a new lib — i.e. the dependency Sukoon exists to remove.
+- **Kills B8/B10:** the pluggable-variant seam and the calibration math both assume we own the raw→glucose step.
+
+Do NOT reach for this to save time on B3. It's for the case where B7 proves the public key-derivation spec no longer matches EU firmware and fresh reverse-engineering is the only alternative. Reskinning/patching the DiaBox APK itself is *not* an option at all — both APKs are Baidu-Shell-protected with the real classes encrypted at runtime (see `docs/research/diabox-apk-analysis.md`); the native libs are the only reusable artifact in there.
+
+---
+
 ## Dependency map
 - **B1 → B2 → B3 → B4 → B5 → B6** is a hard chain (each needs the prior). **B7** gates B3–B6. **B8** wraps B3–B6. **B9** wraps B4. **B10** extends B6.
 - Fastest early signal: **B1 + B2 + B4** (the plumbing) can be proven on the spare sensor before the crypto (B3) is right — de-risks the Android BLE/NFC mechanics separately from the decoding.
-- **The gating unknown:** B3/B7 is iterative and may need many cycles; worst case, EU firmware has shifted since the community's public docs and a fresh reverse-engineering step is needed. Track A is unaffected either way.
+- **The gating unknown:** B3/B7 is iterative and may need many cycles; worst case, EU firmware has shifted since the community's public docs and a fresh reverse-engineering step is needed (→ **F1** is the escape hatch, at the cost of B8/B10 and a public repo). Track A is unaffected either way.
 
 ## When Track B lands
 Flip the A10 data-source picker from Simulated → Libre. The whole Track A app — Home, alerts, logbook, insights, sharing, emergency, widget — runs on real glucose, unchanged. That is the payoff of building everything against the abstraction.

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -15,12 +17,22 @@ android {
         // and foreground-service behavior we need for continuous BLE collection anyway.
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 7
+        versionName = "0.6.1"
+
+        // Followers backend (Supabase): URL + publishable key from the gitignored local.properties.
+        val local = Properties().apply {
+            rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+        }
+        buildConfigField("String", "SUPABASE_URL", "\"${local.getProperty("supabase.url", "")}\"")
+        buildConfigField("String", "SUPABASE_KEY", "\"${local.getProperty("supabase.publishableKey", "")}\"")
     }
 
     buildTypes {
         release {
+            // Phone test installs: non-debuggable runs Compose at full speed (ART optimisation + baseline
+            // profiles); signed with the debug key so it updates the existing install in place.
+            signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
@@ -34,8 +46,14 @@ android {
         jvmTarget = "17"
     }
 
+    lint {
+        // False positive with Kotlin 2 (K2 UAST): it flags produceState lambdas that do assign `value`.
+        disable += "ProduceStateDoesNotAssignValue"
+    }
+
     buildFeatures {
         compose = true
+        buildConfig = true // About screen shows the version
     }
 }
 
@@ -57,6 +75,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
+    // Home-screen widgets (ui/widget/): Compose-style RemoteViews that know their exact resized size.
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.health.connect) // MyFitnessPal meals in, glucose out (health/)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
@@ -65,4 +86,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    // android.jar's org.json is a stub on the JVM; the real one lets parser tests run off-device.
+    testImplementation(libs.json)
 }

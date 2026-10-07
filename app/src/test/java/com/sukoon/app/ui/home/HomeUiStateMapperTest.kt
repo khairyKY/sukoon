@@ -8,14 +8,23 @@ import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.sukoon.app.data.source.libre.SensorLife
 
 class HomeUiStateMapperTest {
 
     private val now: Instant = Instant.parse("2026-07-16T10:00:00Z")
-    private val recent = listOf(100, 105, 110, 108, 112)
-
     private fun reading(mgDl: Int, at: Instant = now) =
         GlucoseReading(at, mgDl, TrendDirection.STEADY, SourceKind.SIMULATED)
+
+    private val recent = listOf(100, 105, 110, 108, 112).mapIndexed { i, v -> reading(v, now.minusSeconds((4 - i) * 60L)) }
+
+    @Test
+    fun `the paired sensor's life wins - real warm-up minutes, and ended`() {
+        val warming = HomeUiStateMapper.map(SourceStatus.Connecting, null, emptyList(), now, SensorLife.WarmingUp(42))
+        assertEquals(HomeUiState.WarmingUp(42), warming)
+        val ended = HomeUiStateMapper.map(SourceStatus.Error("Sensor has expired"), reading(140, now.minusSeconds(3600)), recent, now, SensorLife.Ended(now))
+        assertEquals(HomeUiState.SensorEnded, ended)
+    }
 
     @Test
     fun `disconnected maps to NoSensor`() {
@@ -23,8 +32,22 @@ class HomeUiStateMapperTest {
     }
 
     @Test
-    fun `error maps to NoSensor`() {
-        assertEquals(HomeUiState.NoSensor, HomeUiStateMapper.map(SourceStatus.Error("boom"), reading(110), recent, now))
+    fun `error with no reading maps to NoSensor`() {
+        assertEquals(HomeUiState.NoSensor, HomeUiStateMapper.map(SourceStatus.Error("boom"), null, emptyList(), now))
+    }
+
+    @Test
+    fun `error with a fresh reading still shows it (one failed poll must not blank the screen)`() {
+        assertTrue(HomeUiStateMapper.map(SourceStatus.Error("timeout"), reading(110, now.minusSeconds(120)), recent, now) is HomeUiState.InRange)
+    }
+
+    @Test
+    fun `connected but older than 10 min is Stale, never shown as current`() {
+        val state = HomeUiStateMapper.map(SourceStatus.Connected, reading(60, now.minusSeconds(11 * 60)), recent, now)
+        assertTrue(state is HomeUiState.Stale)
+        assertEquals(11, (state as HomeUiState.Stale).minutesAgo)
+        // ...and exactly 10 min old is still current.
+        assertTrue(HomeUiStateMapper.map(SourceStatus.Connected, reading(110, now.minusSeconds(10 * 60)), recent, now) is HomeUiState.InRange)
     }
 
     @Test
@@ -63,9 +86,9 @@ class HomeUiStateMapperTest {
 
     @Test
     fun `bracket boundaries land on the expected Home states`() {
-        // Mirrors GlucoseMetrics.bracketFor cutoffs so a change there can't silently reshuffle Home.
-        assertTrue(HomeUiStateMapper.map(SourceStatus.Connected, reading(53), recent, now) is HomeUiState.Urgent)
-        assertTrue(HomeUiStateMapper.map(SourceStatus.Connected, reading(54), recent, now) is HomeUiState.Low)
+        // Urgent follows the urgent-low alarm (under 55); the rest mirrors GlucoseMetrics.bracketFor.
+        assertTrue(HomeUiStateMapper.map(SourceStatus.Connected, reading(54), recent, now) is HomeUiState.Urgent)
+        assertTrue(HomeUiStateMapper.map(SourceStatus.Connected, reading(55), recent, now) is HomeUiState.Low)
         assertTrue(HomeUiStateMapper.map(SourceStatus.Connected, reading(69), recent, now) is HomeUiState.Low)
         assertTrue(HomeUiStateMapper.map(SourceStatus.Connected, reading(70), recent, now) is HomeUiState.InRange)
         assertTrue(HomeUiStateMapper.map(SourceStatus.Connected, reading(180), recent, now) is HomeUiState.InRange)
