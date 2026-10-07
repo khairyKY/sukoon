@@ -103,6 +103,9 @@ import com.sukoon.app.ui.sharing.DexcomSection
 import com.sukoon.app.platform.Updates
 import androidx.compose.ui.res.pluralStringResource
 import com.sukoon.app.data.db.EventEntity
+import com.sukoon.app.insights.Insight
+import com.sukoon.app.insulin.DoseSettings
+import com.sukoon.app.insulin.RatioLearner
 
 /** The You tab's sections (design "You, divided"): each opens its own page from the hub. */
 private enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
@@ -163,6 +166,12 @@ fun SettingsScreen(
     updates: Updates? = null,
     /** The last month's doses logged with an injection site. */
     injectionSites: suspend () -> List<EventEntity> = { emptyList() },
+    doseSettings: DoseSettings = DoseSettings(),
+    onDoseSettings: (DoseSettings) -> Unit = {},
+    /** Textbook starting points from the logbook's daily totals, when there are enough days. */
+    doseStartingPoints: suspend () -> Insight.Formulas? = { null },
+    /** Every meal's verdict and the ratios learned from the clean ones, given the correction factor (null: estimate it). */
+    learningReport: suspend (Double?) -> RatioLearner.Report = { RatioLearner.Report(emptyList(), null, false, emptyList()) },
 ) {
     val context = LocalContext.current
     var page by rememberSaveable { mutableStateOf<YouPage?>(null) }
@@ -300,7 +309,9 @@ fun SettingsScreen(
                         SectionLabel(stringResource(R.string.sites_title))
                         InjectionSitesCard(injectionSites)
                         Gap()
-                        InsulinSection(insulinAction, onInsulinAction)
+                        InsulinSection(insulinAction, onInsulinAction, doseSettings.step) { onDoseSettings(doseSettings.copy(step = it)) }
+                        Gap()
+                        DoseCard(doseSettings, onDoseSettings, doseStartingPoints, learningReport, insulinAction.durationMinutes / 60)
                     }
                     YouPage.APPS -> {
                         HealthConnectSection(healthConnect)

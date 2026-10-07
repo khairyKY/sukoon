@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.ai
 
+import com.sukoon.app.insulin.DoseSettings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -37,6 +38,7 @@ class AskViewModel(
     private val glucoseRepository: GlucoseRepository,
     private val logbookRepository: LogbookRepository,
     private val gemini: GeminiClient,
+    private val doseSettings: () -> DoseSettings = { DoseSettings() },
     private val insulinAction: () -> InsulinAction = { InsulinAction() },
 ) : ViewModel() {
 
@@ -59,6 +61,7 @@ class AskViewModel(
                     now = Instant.now(),
                     zone = ZoneId.systemDefault(),
                     insulinAction = insulinAction(),
+                    dose = doseSettings(),
                 )
                 gemini.generate(system, turns)
             }
@@ -80,8 +83,8 @@ class AskViewModel(
     companion object {
         private val WINDOW_MILLIS = TimeUnit.DAYS.toMillis(7)
 
-        fun factory(glucoseRepository: GlucoseRepository, logbookRepository: LogbookRepository, gemini: GeminiClient, insulinAction: () -> InsulinAction = { InsulinAction() }) = viewModelFactory {
-            initializer { AskViewModel(glucoseRepository, logbookRepository, gemini, insulinAction) }
+        fun factory(glucoseRepository: GlucoseRepository, logbookRepository: LogbookRepository, gemini: GeminiClient, doseSettings: () -> DoseSettings = { DoseSettings() }, insulinAction: () -> InsulinAction = { InsulinAction() }) = viewModelFactory {
+            initializer { AskViewModel(glucoseRepository, logbookRepository, gemini, doseSettings, insulinAction) }
         }
     }
 }

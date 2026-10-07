@@ -100,6 +100,9 @@ import kotlinx.coroutines.withContext
 import com.sukoon.app.health.HealthConnectSync
 import androidx.compose.ui.res.pluralStringResource
 import com.sukoon.app.insulin.InjectionSites
+import com.sukoon.app.insulin.Dose
+import com.sukoon.app.insulin.DoseSettings
+import com.sukoon.app.insights.InsightEngine
 import com.sukoon.app.insulin.injectionSite
 
 /** What one amount box takes: decimals or whole numbers, how many digits, and its one-tap amounts. */
@@ -223,6 +226,7 @@ internal fun EntryEditor(
     appMeals: List<EventEntity>,
     photoFile: File?,
     siteHistory: List<EventEntity>,
+    doseSettings: DoseSettings,
     onEstimateCarbs: (suspend (String, ByteArray?) -> CarbEstimate)?,
     onSave: (EntryDraft) -> Unit,
     onUpdate: (EventEntity, ByteArray?, Boolean) -> Unit,
@@ -231,7 +235,7 @@ internal fun EntryEditor(
 ) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            EditorContent(request, glucoseNow, insulinOnBoard, appMeals, photoFile, siteHistory, onEstimateCarbs, onSave, onUpdate, onDelete, onDismiss)
+            EditorContent(request, glucoseNow, insulinOnBoard, appMeals, photoFile, siteHistory, doseSettings, onEstimateCarbs, onSave, onUpdate, onDelete, onDismiss)
         }
     }
 }
@@ -245,6 +249,7 @@ private fun EditorContent(
     appMeals: List<EventEntity>,
     photoFile: File?,
     siteHistory: List<EventEntity>,
+    doseSettings: DoseSettings,
     onEstimateCarbs: (suspend (String, ByteArray?) -> CarbEstimate)?,
     onSave: (EntryDraft) -> Unit,
     onUpdate: (EventEntity, ByteArray?, Boolean) -> Unit,
@@ -294,6 +299,14 @@ private fun EditorContent(
         type == LogEventType.INSULIN || type == LogEventType.BASAL -> type
         isMeal && existing == null && rapid != null -> LogEventType.INSULIN
         else -> null
+    }
+    // Beta: what the carbs, the glucose now and the insulin still working add up to (new rapid doses only).
+    val advice = if (doseSettings.enabled && existing == null && (meal != null || isMeal || type == LogEventType.INSULIN)) {
+        val carbs = if (meal != null) meal.value else if (isMeal) value(AmountField.CARBS) else null
+        val hour = (if (meal != null) Instant.ofEpochMilli(meal.timestampMillis) else at()).atZone(ZoneId.systemDefault()).hour
+        Dose.advise(doseSettings, InsightEngine.slotFor(hour), carbs, glucoseNow?.glucoseMgDl, glucoseNow?.trend, insulinOnBoard)
+    } else {
+        null
     }
     val valid = when {
         meal != null -> rapid != null
@@ -382,6 +395,12 @@ private fun EditorContent(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
+            advice?.let { a ->
+                DoseLine(a) { units ->
+                    values[AmountField.RAPID] = formatAmount(units)
+                    active = AmountField.RAPID
+                }
+            }
             if ((isMeal && (rapid != null || active == AmountField.RAPID)) || meal != null) {
                 ChoiceRow(
                     listOf(stringResource(R.string.logbook_prebolus_with), stringResource(R.string.logbook_prebolus_min, 10), stringResource(R.string.logbook_prebolus_min, 20)),
@@ -449,9 +468,11 @@ private fun EditorContent(
 
         if (active != null && type != LogEventType.NOTE) {
             val field = active!!
+            // Insulin takes a decimal point only for a half-unit pen (You → Insulin).
+            val decimals = if (field == AmountField.RAPID || field == AmountField.LONG) doseSettings.step < 1 else field.decimals
             AmountPad(
-                decimals = field.decimals,
-                onKey = { key -> values[field] = Keypad.press(values[field].orEmpty(), key, field.decimals, field.maxWhole) },
+                decimals = decimals,
+                onKey = { key -> values[field] = Keypad.press(values[field].orEmpty(), key, decimals, field.maxWhole) },
                 onClear = { values[field] = "" },
                 modifier = Modifier.padding(top = 10.dp),
             )

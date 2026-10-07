@@ -22,8 +22,8 @@ android {
         // and foreground-service behavior we need for continuous BLE collection anyway.
         minSdk = 26
         targetSdk = 35
-        versionCode = 7
-        versionName = "0.6.1"
+        versionCode = 9
+        versionName = "0.7.0"
 
         // Followers backend (Supabase): URL + publishable key from the gitignored local.properties.
         buildConfigField("String", "SUPABASE_URL", "\"${localProps.getProperty("supabase.url", "")}\"")

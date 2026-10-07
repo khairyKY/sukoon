@@ -272,7 +272,7 @@ private fun Compare(label: String, value: String, delta: Int, higherIsBetter: Bo
 private fun number(v: Double) = String.format(Locale.getDefault(), "%.1f", v)
 
 @Composable
-private fun slot(slot: MealSlot) = stringResource(
+internal fun slot(slot: MealSlot) = stringResource(
     when (slot) {
         MealSlot.BREAKFAST -> R.string.meal_breakfast
         MealSlot.LUNCH -> R.string.meal_lunch

@@ -84,9 +84,9 @@ a high 10 below its line.
 |---|---|---|---|---|---|
 | **Urgent low** | Under 55 | Always on | Nothing: can't be turned off or moved | Every **5 min**; snooze capped at 5 | Alarm stream, looping 1 min, alarm volume lifted to at least 80% |
 | **Low** | Under your low line | 70 | Line 60 to 110, on/off | After its snooze (15 min) | Alarm stream, 30 s, volume lifted to at least 50% |
-| **Going low** | Heading under your low line within 20 min | On | On/off | Once per episode | Alarm stream, volume lifted to at least 50% |
-| **High** | Over your high line | 180 | Line 150 to 400, on/off, quiet hours | After its snooze (60 min) | Notification stream |
-| **No readings** | No reading for N min | 20 min | 10 to 120, on/off | Every 30 min | Notification stream |
+| **Going low** | Heading under your low line within 20 min | On | On/off | Once per episode | Alarm stream, 8 s, volume lifted to at least 50% |
+| **High** | Over your high line | 180 | Line 150 to 400, on/off, quiet hours | After its snooze (60 min) | Notification stream, 8 s |
+| **No readings** | No reading for N min | 20 min | 10 to 120, on/off | Every 30 min | Notification stream, 8 s |
 
 - Urgent low takes over from low, and low from going low. Easing out of an urgent low into a low is the same episode, not a new alarm.
 - Each alarm, every time: a notification, the full-screen alert (over the lock screen, or over any app with "display over other apps"), and its sound. The volume goes back to where it was once the sound stops.
@@ -187,7 +187,50 @@ the other side. Rapid and long-acting rotate separately.
 It shows on You → Insulin & logbook (with the last 30 days on the body map) and as an insight in
 Trends (Frid et al., Mayo Clin Proc 2016).
 
-## 9. Known limits
+## 9. Dose suggestions (beta)
+
+Off until turned on in You → Insulin & logbook. Carb counting: a carb ratio per meal (breakfast
+04–10, lunch 11–15, dinner 16–21, late otherwise), a correction factor and a target. Any box can
+stay empty, and that part is then left out. Sources: docs/research/dosing-sources.md.
+
+| Part | How |
+|---|---|
+| Meal | carbs ÷ that meal's ratio |
+| Correction | (glucose now − target) ÷ correction factor; below target it takes some off |
+| Insulin still working | Offsets the correction only, never the meal (earlier insulin is busy with earlier food) |
+| Result | Never below 0, rounded **down** to the pen step (0.5 or 1 u), capped at your maximum (default 10 u) |
+| Under 70, or under 100 and falling | No suggestion: "treat that first (15 g)" |
+
+Shown on new rapid entries (a meal, insulin for an imported meal, or insulin alone) with its maths.
+*Use* puts it in the amount; only Save logs it. With enough complete days in the logbook, the card
+offers the textbook starting points (500 and 1800 rules) to fill empty boxes. While it's on, the AI
+assistant may work out doses with the same maths and settings.
+
+**Learning the ratios** from the last 30 days, whether suggestions are on or off (You → Insulin →
+*Learning from your meals*). Every meal gets a verdict; a meal counts (is *clean*) when:
+
+| Check | Left out as |
+|---|---|
+| 10 g or more | Under 10 g of carbs |
+| Rapid insulin logged from an hour before to 30 min after | No insulin logged with it |
+| Readings at the start and 4 h later | Readings missing |
+| Started between 70 and 250 | Started out of range |
+| Nothing else eaten from an hour before to 4 h after | Something else eaten |
+| No more insulin in those 4 h | More insulin within 4 h |
+| Under 0.5 u still working from before | Insulin still working |
+| No workout from 2 h before to 4 h after | A workout around it |
+| Under 35 g of fat and of protein | Very rich |
+
+A clean meal's ratio is carbs ÷ (insulin + glucose change at 4 h ÷ correction factor); the factor is
+yours, or the 1800 rule's estimate (says which). With 5 or more clean meals at a meal time the
+Learning screen and that meal's tile show the median and the middle half; *Use* moves the ratio toward
+it by at most 20% at a time. Nothing changes until you press it. The screen lists every clean meal,
+what was left out and why, and exports it all as CSV. *How to make a meal count* is the checklist.
+
+**Pens**: whole units by default (You → Insulin → Your pens). The insulin keypad takes a decimal point
+only for half-unit pens, and suggestions round down to the pen.
+
+## 10. Known limits
 
 - Snoozes, answers, "treated at" and texts already sent are kept across a restart. A countdown cut off by one starts again from 60 seconds (with its screen and sound) if the alarm is still unanswered.
 - If the phone kills the app, nothing inside it can sound. A watchdog covers that: every reading pushes a system alarm to just past your no-readings line (20 min + 2 by default). If readings stop because the app was killed, Android wakes Sukoon there; the sensor and alarms restart, and *No readings* goes off if the sensor is still quiet. It checks again every 5 minutes until readings return. The battery items in the check above still matter: they keep it from coming to that.

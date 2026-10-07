@@ -93,6 +93,10 @@ import com.sukoon.app.reminders.BasalReminder
 import com.sukoon.app.ui.settings.minuteLabel
 import java.time.ZoneId
 import com.sukoon.app.ui.settings.UpdateBanner
+import com.sukoon.app.insights.InsightEngine
+import com.sukoon.app.insulin.RatioLearner
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Top-level navigation, per the shipped design's 3-tab bottom bar (Now / Trends / You) — not the
@@ -281,7 +285,7 @@ fun MainScaffold() {
                 val logbookViewModel: LogbookViewModel = viewModel(factory = LogbookViewModel.factory(container.logbookRepository, container.glucoseRepository, container.gemini, container.entryPhotos) { container.settings.insulinAction })
                 val logbookState by logbookViewModel.uiState.collectAsStateWithLifecycle()
                 val askViewModel: AskViewModel = viewModel(
-                    factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini) { container.settings.insulinAction },
+                    factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini, doseSettings = { container.settings.doseSettings }) { container.settings.insulinAction },
                 )
                 val askState by askViewModel.uiState.collectAsStateWithLifecycle()
                 val insightsViewModel: InsightsViewModel = viewModel(
@@ -313,6 +317,7 @@ fun MainScaffold() {
                     reportState = reportState,
                     onSelectReportDays = reportViewModel::selectDays,
                     reportName = container.settings.emergency.yourName,
+                    doseSettings = { container.settings.doseSettings },
                 )
             }
             composable(SukoonTab.YOU.route) {
@@ -325,6 +330,7 @@ fun MainScaffold() {
                 var emergency by remember { mutableStateOf(container.settings.emergency) }
                 var insulinAction by remember { mutableStateOf(container.settings.insulinAction) }
                 var basalReminder by remember { mutableStateOf(container.settings.basalReminder) }
+                var doseSettings by remember { mutableStateOf(container.settings.doseSettings) }
                 val youContext = LocalContext.current
                 val themeMode by container.themeMode.collectAsStateWithLifecycle()
                 var saveInterval by remember { mutableIntStateOf(container.settings.saveIntervalMinutes) }
@@ -385,6 +391,26 @@ fun MainScaffold() {
                     },
                     usualBasalMinute = {
                         BasalReminder.usualMinute(container.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofDays(30).toMillis()).first(), ZoneId.systemDefault())
+                    },
+                    doseSettings = doseSettings,
+                    onDoseSettings = { changed ->
+                        container.settings.doseSettings = changed
+                        doseSettings = changed
+                    },
+                    doseStartingPoints = {
+                        InsightEngine.formulas(container.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofDays(14).toMillis()).first(), ZoneId.systemDefault())
+                    },
+                    learningReport = { factor ->
+                        withContext(Dispatchers.Default) {
+                            val since = System.currentTimeMillis() - Duration.ofDays(30).toMillis()
+                            RatioLearner.report(
+                                container.glucoseRepository.readingsSince(since).first(),
+                                container.logbookRepository.eventsSince(since).first(),
+                                factor,
+                                ZoneId.systemDefault(),
+                                container.settings.insulinAction,
+                            )
+                        }
                     },
                     injectionSites = {
                         container.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofDays(30).toMillis()).first().filter { it.site != null }

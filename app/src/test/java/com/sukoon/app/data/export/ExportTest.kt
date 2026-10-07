@@ -18,8 +18,8 @@ class ExportTest {
         val csv = CsvExport.build(
             readings = listOf(GlucoseReading(t.plusSeconds(600), 182, TrendDirection.RISING, SourceKind.LIBRE_BLE)),
             events = listOf(
-                EventEntity(timestampMillis = t.plusSeconds(300).toEpochMilli(), type = "CARB", value = 60.0, note = "koshari, large"),
-                EventEntity(timestampMillis = t.toEpochMilli(), type = "INSULIN", value = 6.0),
+                EventEntity(timestampMillis = t.plusSeconds(300).toEpochMilli(), type = "CARB", value = 60.0, note = "koshari, large", source = "com.myfitnesspal.android", protein = 28.0, fat = 22.0, kcal = 640.0),
+                EventEntity(timestampMillis = t.toEpochMilli(), type = "INSULIN", value = 6.0, site = "ABDOMEN_LEFT"),
                 EventEntity(timestampMillis = t.plusSeconds(900).toEpochMilli(), type = "BASAL", value = 18.0),
             ),
             zone = ZoneOffset.ofHours(3),
@@ -27,10 +27,10 @@ class ExportTest {
         assertEquals(
             listOf(
                 CsvExport.HEADER,
-                "2026-10-03T07:00:00+03:00,insulin,,6,rapid,,",
-                "2026-10-03T07:05:00+03:00,meal,60,,,182,\"koshari, large\"",
-                "2026-10-03T07:10:00+03:00,glucose,,,,182,",
-                "2026-10-03T07:15:00+03:00,insulin,,18,basal,182,",
+                "2026-10-03T07:00:00+03:00,insulin,,6,rapid,,,abdomen_left,,,,,",
+                "2026-10-03T07:05:00+03:00,meal,60,,,182,\"koshari, large\",,com.myfitnesspal.android,,28,22,640",
+                "2026-10-03T07:10:00+03:00,glucose,,,,182,,,,,,,",
+                "2026-10-03T07:15:00+03:00,insulin,,18,basal,182,,,,,,,",
             ),
             csv.trimEnd().lines(),
         )
@@ -39,7 +39,7 @@ class ExportTest {
     @Test
     fun `finger-pricks export as fingerstick rows and nightscout BG checks`() {
         val prick = EventEntity(timestampMillis = t.toEpochMilli(), type = "FINGERSTICK", value = 112.0)
-        assertEquals("2026-10-03T04:00:00Z,fingerstick,,,,112,", CsvExport.build(emptyList(), listOf(prick), ZoneOffset.UTC).trimEnd().lines()[1])
+        assertEquals("2026-10-03T04:00:00Z,fingerstick,,,,112,,,,,,,", CsvExport.build(emptyList(), listOf(prick), ZoneOffset.UTC).trimEnd().lines()[1])
         val json = NightscoutUploader.treatmentJson(prick)
         assertEquals("BG Check", json.getString("eventType"))
         assertEquals(112.0, json.getDouble("glucose"), 0.0)

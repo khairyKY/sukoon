@@ -396,6 +396,9 @@ object InsightEngine {
         val change4h: Int? = null,
         val fat: Double? = null,
         val protein: Double? = null,
+        /** Glucose at the meal. */
+        val start: Int = 0,
+        val atMillis: Long = 0,
     )
 
     internal fun slotFor(hour: Int) = when (hour) {
@@ -429,6 +432,8 @@ object InsightEngine {
                 change4h = nearest(t.plus(Duration.ofHours(4)), Duration.ofMinutes(20))?.glucoseMgDl?.minus(pre.glucoseMgDl),
                 fat = meal.fat,
                 protein = meal.protein,
+                start = pre.glucoseMgDl,
+                atMillis = meal.timestampMillis,
             )
         }
 
@@ -463,7 +468,7 @@ object InsightEngine {
         return if (stacked >= 2) Insight.Stacking(stacked, lows.size) else null
     }
 
-    private fun formulas(events: List<EventEntity>, zone: ZoneId): Insight.Formulas? {
+    internal fun formulas(events: List<EventEntity>, zone: ZoneId): Insight.Formulas? {
         val byDay = events.groupBy { Instant.ofEpochMilli(it.timestampMillis).atZone(zone).toLocalDate() }
         val totals = byDay.values.mapNotNull { day ->
             val basal = day.filter { it.logType == LogEventType.BASAL }.sumOf { it.value ?: 0.0 }

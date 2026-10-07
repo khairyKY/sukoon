@@ -65,6 +65,7 @@ import com.sukoon.app.data.db.logType
 import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.insights.MeterCheck
 import com.sukoon.app.insulin.injectionSite
+import com.sukoon.app.insulin.DoseSettings
 import com.sukoon.app.ui.theme.CanvasDark
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
@@ -123,6 +124,8 @@ fun LogbookScreen(
     onOpenedEntry: () -> Unit = {},
     /** Pull down: bring in MyFitnessPal's latest; returns what to say. */
     onSync: (suspend () -> String)? = null,
+    /** Beta dose suggestions, read when an entry opens. */
+    doseSettings: () -> DoseSettings = { DoseSettings() },
 ) {
     val context = LocalContext.current
     val view = LocalView.current
@@ -240,6 +243,7 @@ fun LogbookScreen(
             appMeals = appMeals,
             photoFile = existing?.let { state.photos[it.id] },
             siteHistory = state.siteHistory,
+            doseSettings = remember(request) { doseSettings() },
             onEstimateCarbs = onEstimateCarbs,
             onSave = { draft ->
                 editor = null

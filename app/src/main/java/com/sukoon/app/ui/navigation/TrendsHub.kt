@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.navigation
 
+import com.sukoon.app.insulin.DoseSettings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -82,6 +83,7 @@ fun TrendsHub(
     onSelectReportDays: (Int) -> Unit,
     reportName: String,
     modifier: Modifier = Modifier,
+    doseSettings: () -> DoseSettings = { DoseSettings() },
 ) {
     var subTab by rememberSaveable { mutableStateOf(TrendsSubTab.GRAPH) }
     if (pendingEntry != null) subTab = TrendsSubTab.LOGBOOK
@@ -111,6 +113,7 @@ fun TrendsHub(
                 onSync = onSync,
                 openNewEntry = pendingEntry,
                 onOpenedEntry = onPendingEntryHandled,
+                doseSettings = doseSettings,
             )
             TrendsSubTab.INSIGHTS -> InsightsScreen(insightsState, onAcknowledgeInsights, Modifier.weight(1f))
             TrendsSubTab.REPORT -> ReportScreen(reportState, reportName, onSelectReportDays, Modifier.weight(1f))
