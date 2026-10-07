@@ -9,6 +9,7 @@ import java.time.Instant
 import java.time.ZoneId
 import kotlin.math.abs
 import com.sukoon.app.insights.InsightEngine
+import com.sukoon.app.insulin.InjectionSite
 
 /** A meal's nutrients beyond its carbs: MyFitnessPal brings them, and a meal can be given them by hand. */
 data class Nutrients(
@@ -31,6 +32,8 @@ data class EntryDraft(
     val insulin: Double? = null,
     val preBolusMinutes: Int = 0,
     val nutrients: Nutrients? = null,
+    /** Where the insulin went: the dose itself, or a meal's rapid insulin. */
+    val site: InjectionSite? = null,
 )
 
 /** The amount pad: digits, one decimal place where the unit allows it, delete. */

@@ -48,6 +48,7 @@ private val TOPICS = listOf(
     R.string.help_sources_title to R.string.help_sources_body,
     R.string.help_mfp_title to R.string.help_mfp_body,
     R.string.help_reminders_title to R.string.help_reminders_body,
+    R.string.help_sites_title to R.string.help_sites_body,
     R.string.help_sharing_title to R.string.help_sharing_body,
     R.string.help_data_title to R.string.help_data_body,
     R.string.help_calibration_title to R.string.help_calibration_body,

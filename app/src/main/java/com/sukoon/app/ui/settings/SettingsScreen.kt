@@ -102,6 +102,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sukoon.app.ui.sharing.DexcomSection
 import com.sukoon.app.platform.Updates
 import androidx.compose.ui.res.pluralStringResource
+import com.sukoon.app.data.db.EventEntity
 
 /** The You tab's sections (design "You, divided"): each opens its own page from the hub. */
 private enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
@@ -160,6 +161,8 @@ fun SettingsScreen(
     onBasalReminder: (BasalReminderSettings) -> Unit = {},
     usualBasalMinute: suspend () -> Int? = { null },
     updates: Updates? = null,
+    /** The last month's doses logged with an injection site. */
+    injectionSites: suspend () -> List<EventEntity> = { emptyList() },
 ) {
     val context = LocalContext.current
     var page by rememberSaveable { mutableStateOf<YouPage?>(null) }
@@ -293,6 +296,9 @@ fun SettingsScreen(
                     YouPage.INSULIN -> {
                         SectionLabel(stringResource(R.string.reminder_basal_section))
                         BasalReminderCard(basalReminder, onBasalReminder, usualBasalMinute)
+                        Gap()
+                        SectionLabel(stringResource(R.string.sites_title))
+                        InjectionSitesCard(injectionSites)
                         Gap()
                         InsulinSection(insulinAction, onInsulinAction)
                     }

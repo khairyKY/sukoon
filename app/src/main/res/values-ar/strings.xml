@@ -1294,4 +1294,55 @@
         <item quantity="many">مفيش حاجة من الحساس من %1$d دقيقة. خلّي الموبايل قريّب والبلوتوث شغّال.</item>
         <item quantity="other">مفيش حاجة من الحساس من %1$d دقيقة. خلّي الموبايل قريّب والبلوتوث شغّال.</item>
     </plurals>
+
+    <!-- أماكن الحقن -->
+    <string name="site_where">فين؟</string>
+    <string name="site_skip">تخطّي</string>
+    <string name="site_add">إضافة</string>
+    <string name="site_change">تغيير</string>
+    <string name="site_optional">اختياري</string>
+    <string name="site_next">الجاي: %1$s</string>
+    <string name="site_suggested">المقترح الجاي</string>
+    <string name="site_dashed">الدايرة المتقطّعة: المكان اللي ارتاح أكتر.</string>
+    <string name="site_front">قدّام</string>
+    <string name="site_back">ورا</string>
+    <string name="site_l">شمال</string>
+    <string name="site_r">يمين</string>
+    <string name="site_abdomen_left">البطن، شمال</string>
+    <string name="site_abdomen_right">البطن، يمين</string>
+    <string name="site_thigh_left">الفخد الشمال</string>
+    <string name="site_thigh_right">الفخد اليمين</string>
+    <string name="site_arm_left">الدراع الشمال</string>
+    <string name="site_arm_right">الدراع اليمين</string>
+    <string name="site_buttock_left">المقعدة، شمال</string>
+    <string name="site_buttock_right">المقعدة، يمين</string>
+    <string name="site_last_today">آخر مرة هنا النهارده</string>
+    <string name="site_last_yesterday">آخر مرة هنا امبارح</string>
+    <string name="site_not_lately">ماستخدمتهوش من فترة</string>
+    <plurals name="site_last_days">
+        <item quantity="zero">آخر مرة هنا من %1$d يوم</item>
+        <item quantity="one">آخر مرة هنا من يوم</item>
+        <item quantity="two">آخر مرة هنا من يومين</item>
+        <item quantity="few">آخر مرة هنا من %1$d أيام</item>
+        <item quantity="many">آخر مرة هنا من %1$d يوم</item>
+        <item quantity="other">آخر مرة هنا من %1$d يوم</item>
+    </plurals>
+    <string name="sites_title">أماكن الحقن</string>
+    <string name="sites_empty">سجّل كل جرعة راحت فين (اختياري)، وسكون يقترح المكان اللي ارتاح أكتر.</string>
+    <plurals name="sites_doses">
+        <item quantity="zero">%1$d جرعة في آخر ٣٠ يوم</item>
+        <item quantity="one">جرعة واحدة في آخر ٣٠ يوم</item>
+        <item quantity="two">جرعتين في آخر ٣٠ يوم</item>
+        <item quantity="few">%1$d جرعات في آخر ٣٠ يوم</item>
+        <item quantity="many">%1$d جرعة في آخر ٣٠ يوم</item>
+        <item quantity="other">%1$d جرعة في آخر ٣٠ يوم</item>
+    </plurals>
+    <string name="sites_crowded">%1$s: %2$d من %3$d جرعة في أسبوعين. غيّر المكان: الحقن في نفس المكان كل مرة ممكن يعمل كتل تخلّي الإنسولين أبطأ.</string>
+    <string name="sites_speed">البطن أسرع، بعده الدراع، الفخد، المقعدة. التفاصيل في الدليل.</string>
+    <string name="insight_rotation_title">مكان حقن واحد واخد أغلب الجرعات</string>
+    <string name="insight_rotation_body">%1$s: %2$d من %3$d جرعة في آخر أسبوعين (%4$s).</string>
+    <string name="insight_rotation_discuss">لو فيه كتل أو جلد ناشف مكان الحقن، وإزاي توزّع الجرعات على أماكن أكتر، بينهم عرض صباع.</string>
+    <string name="insight_src_rotation">Frid وزملاؤه، Mayo Clin Proc ٢٠١٦ (FIT)</string>
+    <string name="help_sites_title">أماكن الحقن</string>
+    <string name="help_sites_body">لما تسجّل إنسولين سريع أو طويل المفعول، «فين؟» بتاخد المكان والناحية بلمسة واحدة على رسمة الجسم (شمالك على الشمال، قدّام وورا). ده اختياري، وتقدر تضيفه بعدين لما تفتح الإدخال. الدايرة المتقطّعة هي المكان اللي بتستخدمه وارتاح أكتر. تغيير المكان مهم: الحقن في نفس المكان كل مرة ممكن يعمل كتل تحت الجلد (lipohypertrophy) تمتص الإنسولين بشكل مش منتظم. البطن أسرع امتصاص (ابعد كام سنتي عن السرّة)، بعدها ضهر الدراع، وجنب الفخد، وأعلى المقعدة من بره؛ ناس كتير بتخلّي منطقة واحدة للطويل المفعول وبتغيّر جواها. صفحة الإنسولين بتوريك آخر ٣٠ يوم. المصدر: Frid وزملاؤه، Mayo Clin Proc ٢٠١٦.</string>
 </resources>

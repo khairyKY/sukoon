@@ -11,6 +11,8 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 import com.sukoon.app.domain.metrics.GlucoseMetrics
+import com.sukoon.app.insulin.InjectionSite
+import com.sukoon.app.insulin.InjectionSites
 
 enum class Level { GOOD, INFO, ATTENTION, URGENT }
 
@@ -162,6 +164,11 @@ sealed interface Insight {
     data class MeterAgreement(val checks: Int, val agreeing: Int, val meanDiffPercent: Int) : Insight {
         override val level = if (agreeing * 100 >= checks * 80) Level.GOOD else Level.ATTENTION
     }
+
+    /** One injection spot taking half or more of 10+ doses of a kind in 2 weeks (Frid et al., Mayo Clin Proc 2016). */
+    data class Rotation(val site: InjectionSite, val count: Int, val total: Int, val longActing: Boolean) : Insight {
+        override val level = Level.ATTENTION
+    }
 }
 
 /**
@@ -218,6 +225,7 @@ object InsightEngine {
         activityLows(events, lows, zone)?.let(out::add)
         nights(readings, zone)?.let(out::add)
         carbDays(readings, events, now, zone)?.let(out::add)
+        InjectionSites.crowded(events, now, WINDOW_DAYS)?.let { out += Insight.Rotation(it.site, it.count, it.total, it.type == LogEventType.BASAL) }
         return out.sortedByDescending { it.level.ordinal } // urgent first, good last
     }
 

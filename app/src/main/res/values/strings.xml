@@ -1214,4 +1214,47 @@
         <item quantity="one">Nothing from your sensor for %1$d minutes. Keep the phone close and Bluetooth on.</item>
         <item quantity="other">Nothing from your sensor for %1$d minutes. Keep the phone close and Bluetooth on.</item>
     </plurals>
+
+    <!-- Injection sites: where a dose went, and rotating them -->
+    <string name="site_where">Where?</string>
+    <string name="site_skip">Skip</string>
+    <string name="site_add">Add</string>
+    <string name="site_change">Change</string>
+    <string name="site_optional">Optional</string>
+    <string name="site_next">Next: %1$s</string>
+    <string name="site_suggested">Suggested next</string>
+    <string name="site_dashed">Dashed ring: the spot that has rested longest.</string>
+    <string name="site_front">Front</string>
+    <string name="site_back">Back</string>
+    <string name="site_l">L</string>
+    <string name="site_r">R</string>
+    <string name="site_abdomen_left">Left belly</string>
+    <string name="site_abdomen_right">Right belly</string>
+    <string name="site_thigh_left">Left thigh</string>
+    <string name="site_thigh_right">Right thigh</string>
+    <string name="site_arm_left">Left arm</string>
+    <string name="site_arm_right">Right arm</string>
+    <string name="site_buttock_left">Left buttock</string>
+    <string name="site_buttock_right">Right buttock</string>
+    <string name="site_last_today">last here today</string>
+    <string name="site_last_yesterday">last here yesterday</string>
+    <string name="site_not_lately">not used lately</string>
+    <plurals name="site_last_days">
+        <item quantity="one">last here %1$d day ago</item>
+        <item quantity="other">last here %1$d days ago</item>
+    </plurals>
+    <string name="sites_title">Injection sites</string>
+    <string name="sites_empty">Log where each dose goes (it\'s optional) and Sukoon suggests the spot that has rested longest.</string>
+    <plurals name="sites_doses">
+        <item quantity="one">%1$d dose in 30 days</item>
+        <item quantity="other">%1$d doses in 30 days</item>
+    </plurals>
+    <string name="sites_crowded">%1$s: %2$d of %3$d doses in 2 weeks. Move around: the same spot again and again can form lumps that slow insulin down.</string>
+    <string name="sites_speed">Belly acts fastest, then arms, thighs, buttocks. More in the Guide.</string>
+    <string name="insight_rotation_title">One injection spot does most of the work</string>
+    <string name="insight_rotation_body">%1$s took %2$d of %3$d doses in the last 2 weeks (%4$s).</string>
+    <string name="insight_rotation_discuss">Any lumps or firm skin where you inject, and spreading doses over more spots, a finger-width apart.</string>
+    <string name="insight_src_rotation">Frid et al., Mayo Clin Proc 2016 (FIT)</string>
+    <string name="help_sites_title">Injection sites</string>
+    <string name="help_sites_body">When you log rapid or long-acting insulin, “Where?” takes the spot and the side in one tap on the body map (your left is on the left, front and back). It\'s optional, and you can add it later by opening the entry. The dashed ring is the spot you use that has rested longest. Moving around matters: the same spot again and again can form lumps under the skin (lipohypertrophy) that take up insulin unevenly. The belly acts fastest (keep a few centimetres from the navel), then the back of the upper arms, the outer thighs and the upper outer buttocks; many people keep one area for long-acting and move around within it. You → Insulin &amp; logbook shows the last 30 days. Source: Frid et al., Mayo Clin Proc 2016.</string>
 </resources>

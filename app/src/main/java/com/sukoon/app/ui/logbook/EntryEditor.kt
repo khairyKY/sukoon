@@ -99,6 +99,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.sukoon.app.health.HealthConnectSync
 import androidx.compose.ui.res.pluralStringResource
+import com.sukoon.app.insulin.InjectionSites
+import com.sukoon.app.insulin.injectionSite
 
 /** What one amount box takes: decimals or whole numbers, how many digits, and its one-tap amounts. */
 internal enum class AmountField(val decimals: Boolean, val maxWhole: Int, val quick: List<Int>) {
@@ -220,6 +222,7 @@ internal fun EntryEditor(
     insulinOnBoard: Double,
     appMeals: List<EventEntity>,
     photoFile: File?,
+    siteHistory: List<EventEntity>,
     onEstimateCarbs: (suspend (String, ByteArray?) -> CarbEstimate)?,
     onSave: (EntryDraft) -> Unit,
     onUpdate: (EventEntity, ByteArray?, Boolean) -> Unit,
@@ -228,7 +231,7 @@ internal fun EntryEditor(
 ) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            EditorContent(request, glucoseNow, insulinOnBoard, appMeals, photoFile, onEstimateCarbs, onSave, onUpdate, onDelete, onDismiss)
+            EditorContent(request, glucoseNow, insulinOnBoard, appMeals, photoFile, siteHistory, onEstimateCarbs, onSave, onUpdate, onDelete, onDismiss)
         }
     }
 }
@@ -241,6 +244,7 @@ private fun EditorContent(
     insulinOnBoard: Double,
     appMeals: List<EventEntity>,
     photoFile: File?,
+    siteHistory: List<EventEntity>,
     onEstimateCarbs: (suspend (String, ByteArray?) -> CarbEstimate)?,
     onSave: (EntryDraft) -> Unit,
     onUpdate: (EventEntity, ByteArray?, Boolean) -> Unit,
@@ -249,6 +253,8 @@ private fun EditorContent(
 ) {
     val existing = request.existing
     val base = existing ?: request.prefill
+    // A dose repeated with "Again" already has its amount: straight to where it goes.
+    val repeatedDose = existing == null && request.prefill?.value != null && (request.type == LogEventType.INSULIN || request.type == LogEventType.BASAL)
     var type by remember { mutableStateOf(request.type) }
     var forMeal by remember { mutableStateOf(request.forMeal) }
     val values = remember {
@@ -262,7 +268,9 @@ private fun EditorContent(
             }
         }
     }
-    var active by remember { mutableStateOf(if (request.forMeal != null) AmountField.RAPID else mainField(request.type)) }
+    var active by remember { mutableStateOf(if (request.forMeal != null) AmountField.RAPID else if (repeatedDose) null else mainField(request.type)) }
+    var site by remember { mutableStateOf(existing?.injectionSite) }
+    var siteOpen by remember { mutableStateOf(repeatedDose) }
     var note by remember { mutableStateOf(base?.note ?: "") }
     var preBolus by remember { mutableIntStateOf(0) }
     var minutesAgo by remember { mutableIntStateOf(if (existing == null) 0 else -1) }
@@ -280,6 +288,13 @@ private fun EditorContent(
     val main = mainField(type)
     val rapid = value(AmountField.RAPID)
     val amount = main?.let(::value)
+    // Which insulin's rotation "Where?" follows: the dose's own kind, or a meal's rapid once it has one.
+    val siteType = when {
+        meal != null -> LogEventType.INSULIN
+        type == LogEventType.INSULIN || type == LogEventType.BASAL -> type
+        isMeal && existing == null && rapid != null -> LogEventType.INSULIN
+        else -> null
+    }
     val valid = when {
         meal != null -> rapid != null
         type == LogEventType.NOTE -> note.isNotBlank()
@@ -307,6 +322,7 @@ private fun EditorContent(
                     protein = value(AmountField.PROTEIN),
                     fat = value(AmountField.FAT),
                     kcal = value(AmountField.KCAL),
+                    site = if (siteType != null) site?.name else existing.site,
                 ),
                 photo,
                 photoRemoved,
@@ -314,7 +330,7 @@ private fun EditorContent(
             return
         }
         if (meal != null) {
-            onSave(EntryDraft(LogEventType.INSULIN, rapid, null, Instant.ofEpochMilli(meal.timestampMillis).minusSeconds(preBolus * 60L)))
+            onSave(EntryDraft(LogEventType.INSULIN, rapid, null, Instant.ofEpochMilli(meal.timestampMillis).minusSeconds(preBolus * 60L), site = site))
             return
         }
         val nutrients = Nutrients(fiber = value(AmountField.FIBER), protein = value(AmountField.PROTEIN), fat = value(AmountField.FAT), kcal = value(AmountField.KCAL))
@@ -328,6 +344,7 @@ private fun EditorContent(
                 insulin = rapid.takeIf { isMeal },
                 preBolusMinutes = preBolus,
                 nutrients = nutrients.takeIf { isMeal && it != Nutrients() },
+                site = site.takeIf { siteType != null },
             ),
         )
     }
@@ -378,9 +395,34 @@ private fun EditorContent(
             if (field != null && field.quick.isNotEmpty()) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     field.quick.forEach { n ->
-                        PillButton(String.format(Locale.getDefault(), "%d", n), Modifier.weight(1f)) { values[field] = n.toString() }
+                        PillButton(String.format(Locale.getDefault(), "%d", n), Modifier.weight(1f)) {
+                            values[field] = n.toString()
+                            // A one-tap dose is a whole dose: on to where it goes.
+                            if (field == AmountField.RAPID || field == AmountField.LONG) {
+                                active = null
+                                siteOpen = true
+                            }
+                        }
                     }
                 }
+            }
+            if (siteType != null) {
+                val history = remember(siteHistory, existing) { siteHistory.filter { it.id != existing?.id } }
+                WherePanel(
+                    site = site,
+                    suggested = remember(history, siteType) { InjectionSites.next(history, siteType) },
+                    lastUsed = { InjectionSites.lastUsed(history, siteType, it) },
+                    open = siteOpen && active == null,
+                    onOpen = {
+                        siteOpen = true
+                        active = null
+                    },
+                    onPick = { site = it },
+                    onSkip = {
+                        site = null
+                        siteOpen = false
+                    },
+                )
             }
             if (isMeal) {
                 if (showMore) {

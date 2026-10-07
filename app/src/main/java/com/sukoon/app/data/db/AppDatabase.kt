@@ -14,7 +14,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         EventEntity::class,
         CalibrationEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -32,7 +32,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "sukoon.db",
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { instance = it }
             }
 
         // v2: unique index on readings.timestampMillis (see ReadingEntity). Keep the first copy
@@ -50,6 +50,13 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE events ADD COLUMN source TEXT")
                 db.execSQL("ALTER TABLE events ADD COLUMN mealType INTEGER")
                 listOf("fiber", "sugar", "protein", "fat", "kcal").forEach { db.execSQL("ALTER TABLE events ADD COLUMN $it REAL") }
+            }
+        }
+
+        // v4: where an insulin dose went (injection site rotation).
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE events ADD COLUMN site TEXT")
             }
         }
     }

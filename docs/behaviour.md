@@ -166,7 +166,28 @@ offering 30 minutes after when you usually log long-acting (from the logbook), o
 | Still not logged | The notification comes back every 30 minutes, 3 times |
 | You log it anywhere (the logbook, *Took it*) | The notification goes away and the repeats stop |
 
-## 8. Known limits
+## 8. Injection sites
+
+Rapid and long-acting entries (and a meal's rapid insulin) ask **Where?**, optionally. Two figures,
+front as you look down and back from behind, so your left is on the left in both: belly, thighs,
+back of the upper arms, upper outer buttocks, each left or right. One tap picks the spot and the side.
+
+| Situation | What the editor does |
+|---|---|
+| New dose | The amount pad first; a one-tap amount, or tapping *Where?*, folds the pad and opens the body map |
+| *Again* on a dose | Straight to the body map (the amount is already there) |
+| Editing a dose | *Where?* shows its spot; tap to change it |
+| *Skip* | No site; the entry shows *Where?* in the logbook, and tapping it adds one later |
+
+**The dashed ring** is the suggestion: of the spots you've used for that kind of insulin in the last
+30 days, the one rested longest (never the last one). With only one spot so far, the same place on
+the other side. Rapid and long-acting rotate separately.
+
+**One spot doing most of the work**: 10 or more doses of a kind in 14 days, half or more in one spot.
+It shows on You → Insulin & logbook (with the last 30 days on the body map) and as an insight in
+Trends (Frid et al., Mayo Clin Proc 2016).
+
+## 9. Known limits
 
 - Snoozes, answers, "treated at" and texts already sent are kept across a restart. A countdown cut off by one starts again from 60 seconds (with its screen and sound) if the alarm is still unanswered.
 - If the phone kills the app, nothing inside it can sound. A watchdog covers that: every reading pushes a system alarm to just past your no-readings line (20 min + 2 by default). If readings stop because the app was killed, Android wakes Sukoon there; the sensor and alarms restart, and *No readings* goes off if the sensor is still quiet. It checks again every 5 minutes until readings return. The battery items in the check above still matter: they keep it from coming to that.

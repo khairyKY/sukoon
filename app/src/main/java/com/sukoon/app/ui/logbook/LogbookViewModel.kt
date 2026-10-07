@@ -50,10 +50,13 @@ class LogbookViewModel(
 
     private val since = System.currentTimeMillis() - WINDOW_MILLIS
 
-    // Readings ride along so each finger-prick can show what the sensor said at that moment.
-    val uiState: StateFlow<LogbookUiState> = combine(repository.eventsSince(since), glucose.readingsSince(since - MeterCheck.WINDOW_MS), photoVersion) { events, readings, _ ->
+    // Readings ride along so each finger-prick can show what the sensor said at that moment. Events
+    // load for a month: the doses' injection sites suggest the next spot; the list shows the window.
+    val uiState: StateFlow<LogbookUiState> = combine(repository.eventsSince(since - SITES_MILLIS), glucose.readingsSince(since - MeterCheck.WINDOW_MS), photoVersion) { month, readings, _ ->
+        val events = month.filter { it.timestampMillis >= since }
         LogbookUiState(
             events = events.sortedByDescending { it.timestampMillis },
+            siteHistory = month.filter { it.site != null },
             meterChecks = events.filter { it.logType == LogEventType.FINGERSTICK }.mapNotNull { e ->
                 e.value?.let { MeterCheck.of(it.roundToInt(), e.timestampMillis, readings) }?.let { e.id to it }
             }.toMap(),
@@ -79,7 +82,8 @@ class LogbookViewModel(
     fun save(draft: EntryDraft): Deferred<List<Long>> = viewModelScope.async {
         val ids = mutableListOf<Long>()
         draft.insulin?.takeIf { it > 0 }?.let { units ->
-            ids += repository.log(LogEventType.INSULIN, units, null, at = draft.at.minusSeconds(draft.preBolusMinutes * 60L))
+            val at = draft.at.minusSeconds(draft.preBolusMinutes * 60L)
+            ids += repository.insert(EventEntity(timestampMillis = at.toEpochMilli(), type = LogEventType.INSULIN.name, value = units, site = draft.site?.name))
         }
         val n = draft.nutrients
         val id = repository.insert(
@@ -88,6 +92,7 @@ class LogbookViewModel(
                 type = draft.type.name,
                 value = draft.amount,
                 note = draft.note,
+                site = draft.site?.name?.takeIf { draft.type == LogEventType.INSULIN || draft.type == LogEventType.BASAL },
                 fiber = n?.fiber,
                 sugar = n?.sugar,
                 protein = n?.protein,
@@ -142,6 +147,7 @@ class LogbookViewModel(
 
     companion object {
         private val WINDOW_MILLIS = TimeUnit.HOURS.toMillis(24)
+        private val SITES_MILLIS = TimeUnit.DAYS.toMillis(30)
 
         fun factory(repository: LogbookRepository, glucose: GlucoseRepository, gemini: GeminiClient, photos: EntryPhotos, insulinAction: () -> InsulinAction) = viewModelFactory {
             initializer { LogbookViewModel(repository, glucose, gemini, insulinAction, photos) }

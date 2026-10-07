@@ -386,6 +386,9 @@ fun MainScaffold() {
                     usualBasalMinute = {
                         BasalReminder.usualMinute(container.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofDays(30).toMillis()).first(), ZoneId.systemDefault())
                     },
+                    injectionSites = {
+                        container.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofDays(30).toMillis()).first().filter { it.site != null }
+                    },
                     onEmergency = { changed ->
                         container.settings.emergency = changed.sanitized()
                         emergency = container.settings.emergency

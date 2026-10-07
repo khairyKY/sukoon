@@ -31,6 +31,8 @@ data class EventEntity(
     val protein: Double? = null,
     val fat: Double? = null,
     val kcal: Double? = null,
+    /** Where an insulin dose went (InjectionSite.name); null = not given. */
+    val site: String? = null,
 )
 
 /** INSULIN = rapid-acting (bolus, e.g. Apidra); BASAL = long-acting (e.g. Toujeo). Stored by name, so adding one needs no migration. */

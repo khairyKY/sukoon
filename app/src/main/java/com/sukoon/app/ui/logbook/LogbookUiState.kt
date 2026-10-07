@@ -20,4 +20,6 @@ data class LogbookUiState(
     val photos: Map<Long, File> = emptyMap(),
     /** The window's readings, oldest first: what a meal did to glucose. */
     val readings: List<GlucoseReading> = emptyList(),
+    /** The last 30 days' doses logged with an injection site: what to suggest next. */
+    val siteHistory: List<EventEntity> = emptyList(),
 )
