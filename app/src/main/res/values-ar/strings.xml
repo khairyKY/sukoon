@@ -1517,4 +1517,12 @@
     <string name="home_correction_eyebrow">تصحيح · تجريبي</string>
     <string name="home_correction_log">سجّله</string>
     <string name="home_correction_body">إنت على %1$d، فوق مداك، ومكلتش من ساعتين: (%1$d − %2$d) ÷ %3$s، مقرّب لتحت.</string>
+    <string name="learn_fit_title">من كل اللي سجّلته</string>
+    <string name="learn_fit_none">لسه مش كفاية. بيقرا كل وجبة وكل تصحيح ليهم قرايات بعد ٤ ساعات (من غير أكل تاني ولا إنسولين تاني): محتاج ٨ على الأقل، ٣ منهم في نفس الميعاد، بكميات كربوهيدرات وإنسولين مختلفة.</string>
+    <string name="learn_fit_body">وجبات: %1$d · تصحيحات لوحدها: %2$d، متقريين مع بعض.</string>
+    <string name="learn_fit_factor">الوحدة بتنزّل حوالي %1$s مج/دل</string>
+    <string name="learn_you_use_value">إنت بتستخدم %1$s</string>
+    <string name="learn_use_value">استخدم %1$s</string>
+    <string name="learn_fit_note">التغيير بعد ٤ ساعات ≈ الكربوهيدرات × a − الإنسولين × b: ‏b هو الوحدة بتنزّلك قد إيه، وb ÷ a نسبة كل وجبة. مش محتاج أرقام عشان يبدأ. «استخدم» بيحرّك الرقم ٢٠٪ بالكتير كل مرة.</string>
+    <string name="learn_data_says">بياناتك بتقول %1$s · استخدم %2$s</string>
 </resources>

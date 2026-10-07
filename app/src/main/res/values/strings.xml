@@ -1405,4 +1405,12 @@
     <string name="home_correction_eyebrow">Correction · beta</string>
     <string name="home_correction_log">Log it</string>
     <string name="home_correction_body">You\'re at %1$d, above your range, and haven\'t eaten in 2 hours: (%1$d − %2$d) ÷ %3$s, rounded down.</string>
+    <string name="learn_fit_title">From everything you\'ve logged</string>
+    <string name="learn_fit_none">Not enough yet. It reads every meal and correction with readings 4 hours later (nothing else eaten, no other insulin): it needs at least 8, 3 at one meal time, with different amounts of carbs and insulin.</string>
+    <string name="learn_fit_body">Meals: %1$d · corrections on their own: %2$d, read together.</string>
+    <string name="learn_fit_factor">1 unit lowers about %1$s mg/dL</string>
+    <string name="learn_you_use_value">you use %1$s</string>
+    <string name="learn_use_value">Use %1$s</string>
+    <string name="learn_fit_note" formatted="false">Each one\'s change at 4 hours ≈ carbs × a − insulin × b: b is how far 1 unit lowers you, b ÷ a is each meal\'s ratio. It needs no numbers to start from. Use moves a number at most 20% at a time.</string>
+    <string name="learn_data_says">Your data says %1$s · Use %2$s</string>
 </resources>

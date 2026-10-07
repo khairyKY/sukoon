@@ -168,6 +168,20 @@ fun DoseCard(
             Column(DoseTile.modifier(Modifier.weight(1.3f))) {
                 Text(stringResource(R.string.dose_factor_label), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted)
                 DoseNumberField(settings.correctionFactor, suffix = stringResource(R.string.home_unit_mgdl)) { onChange(settings.copy(correctionFactor = it)) }
+                // What everything logged says (the fit), one 20% step at a time.
+                report?.fit?.let { fit ->
+                    val next = RatioLearner.step(settings.correctionFactor, fit.factor)
+                    if (settings.correctionFactor == null || next != settings.correctionFactor) {
+                        Text(
+                            stringResource(R.string.learn_data_says, formatAmountLocalized(fit.factor), formatAmountLocalized(next)),
+                            modifier = Modifier.padding(top = 8.dp).fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(SageMist)
+                                .clickable { onChange(settings.copy(correctionFactor = next)) }.padding(horizontal = 8.dp, vertical = 8.dp),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = SageDeep,
+                        )
+                    }
+                }
             }
             Column(DoseTile.modifier(Modifier.weight(1f))) {
                 Text(stringResource(R.string.dose_target_label), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted)

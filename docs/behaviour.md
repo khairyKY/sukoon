@@ -234,6 +234,15 @@ Learning screen and that meal's tile show the median and the middle half; *Use* 
 it by at most 20% at a time. Nothing changes until you press it. The screen lists every clean meal,
 what was left out and why, and exports it all as CSV. *How to make a meal count* is the checklist.
 
+**From everything you've logged** (top of the Learning screen, and a "Your data says" strip on the
+correction tile): least squares over every usable meal and every correction taken on its own in the
+30 days, change at 4 h ≈ a(meal time) × carbs − b × insulin. b is how far 1 unit lowers you, b ÷ a
+each meal time's ratio. It needs no numbers to start from, and a meal without insulin still counts.
+A point counts when nothing else was eaten and no other insulin taken (an hour before to 4 h after),
+none was still working, no workout, not very rich, starting 70–300 with readings then and 4 h later.
+It shows once there are 8 points with 3 at one meal time and the answer is plausible (1 u lowers
+10–300, ratios 1:3 to 1:60). *Use* moves each number at most 20% at a time.
+
 **Correction on Home**: with suggestions on and a correction factor set, Home shows "Correction · beta"
 when the reading is fresh and above your range, nothing with carbs was logged in the last 2 hours,
 and under 0.5 u is still working (otherwise Home's message already says to give it time). It shows

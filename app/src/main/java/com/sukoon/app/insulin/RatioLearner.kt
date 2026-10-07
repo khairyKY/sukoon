@@ -44,8 +44,90 @@ object RatioLearner {
     /** What the clean meals of one meal time point to: the median ratio and the middle half of them. */
     data class Learned(val slot: MealSlot, val ratio: Double, val low: Double, val high: Double, val meals: List<Meal>, val factor: Double)
 
-    /** Everything for the Learning screen: every meal, newest first, the factor used and the lessons. */
-    data class Report(val meals: List<Meal>, val factor: Double?, val factorEstimated: Boolean, val learned: List<Learned>)
+    /** Everything for the Learning screen: every meal, newest first, the factor used, the lessons, and the fit over everything. */
+    data class Report(val meals: List<Meal>, val factor: Double?, val factorEstimated: Boolean, val learned: List<Learned>, val fit: Fit? = null)
+
+    /** What all usable meals and corrections say together: how far 1 unit lowers you, and each meal time's ratio. */
+    data class Fit(val factor: Double, val ratios: Map<MealSlot, Double>, val meals: Int, val corrections: Int)
+
+    const val MIN_POINTS = 8
+    const val MIN_PER_SLOT = 3
+
+    /**
+     * Least squares over every usable meal and correction-only dose of the window: the glucose change
+     * at 4 h ≈ a(meal time) × carbs − b × insulin. b is the correction factor, b ÷ a that meal's ratio.
+     * Needs no factor to start from, and uses everyday meals (no insulin is fine). A point counts when
+     * nothing else was eaten, no other insulin was taken and none was still working, no workout, not
+     * very rich, starting 70–300 with readings at the start and 4 h later. Null until there's enough,
+     * with different amounts in it, and the answer is plausible.
+     */
+    fun fit(readings: List<GlucoseReading>, events: List<EventEntity>, zone: ZoneId, action: InsulinAction): Fit? {
+        val r = readings.sortedBy { it.timestamp }
+        val sorted = events.sortedBy { it.timestampMillis }
+        val hour = Duration.ofHours(1).toMillis()
+        fun near(at: Long, toleranceMin: Long) = r.filter { kotlin.math.abs(it.timestamp.toEpochMilli() - at) <= toleranceMin * 60_000 }.minByOrNull { kotlin.math.abs(it.timestamp.toEpochMilli() - at) }
+        fun quiet(t: Long, dose: EventEntity?) =
+            sorted.none { it.logType == LogEventType.ACTIVITY && it.timestampMillis in (t - 2 * hour)..(t + 4 * hour) } &&
+                InsulinOnBoard.total(sorted.filter { it.timestampMillis < t - hour }, Instant.ofEpochMilli(t), action) < 0.5 &&
+                sorted.none { it.logType == LogEventType.INSULIN && it !== dose && it.timestampMillis in (t + 30 * 60_000L + 1)..(t + 4 * hour) }
+        data class Point(val slot: MealSlot?, val carbs: Double, val insulin: Double, val change: Double)
+        val results = InsightEngine.mealResults(r, sorted, zone).associateBy { it.atMillis }
+        val meals = sorted.filter { it.logType == LogEventType.CARB && (it.value ?: 0.0) >= MIN_CARBS }.mapNotNull { meal ->
+            val t = meal.timestampMillis
+            val res = results[t] ?: return@mapNotNull null
+            val change = res.change4h ?: return@mapNotNull null
+            val alone = sorted.count { it.logType == LogEventType.CARB && (it.value ?: 0.0) > 0 && it.timestampMillis in (t - hour)..(t + 4 * hour) } == 1
+            val rich = (meal.fat ?: 0.0) >= RICH_GRAMS || (meal.protein ?: 0.0) >= RICH_GRAMS
+            if (res.start !in 70..300 || !alone || rich || !quiet(t, null)) return@mapNotNull null
+            Point(res.slot, res.carbs, res.insulin, change.toDouble())
+        }
+        val corrections = sorted.filter { it.logType == LogEventType.INSULIN && (it.value ?: 0.0) > 0 }.mapNotNull { dose ->
+            val t = dose.timestampMillis
+            val ate = sorted.any { it.logType == LogEventType.CARB && (it.value ?: 0.0) > 0 && it.timestampMillis in (t - hour)..(t + 4 * hour) }
+            val other = sorted.any { it.logType == LogEventType.INSULIN && it !== dose && it.timestampMillis in (t - hour)..(t + 4 * hour) }
+            if (ate || other || !quiet(t, dose)) return@mapNotNull null
+            val start = near(t, 15) ?: return@mapNotNull null
+            val after = near(t + 4 * hour, 20) ?: return@mapNotNull null
+            if (start.glucoseMgDl !in 70..400) return@mapNotNull null
+            Point(null, 0.0, dose.value ?: 0.0, (after.glucoseMgDl - start.glucoseMgDl).toDouble())
+        }
+        val slots = meals.groupBy { it.slot!! }.filter { it.value.size >= MIN_PER_SLOT }.keys.sortedBy { it.ordinal }
+        val points = meals.filter { it.slot in slots } + corrections
+        if (points.size < MIN_POINTS || points.none { it.insulin > 0 } || slots.isEmpty()) return null
+        // One column per meal time (its carbs, else 0) and one for −insulin; solve the normal equations.
+        val k = slots.size + 1
+        fun row(p: Point) = DoubleArray(k) { j -> if (j < slots.size) (if (p.slot == slots[j]) p.carbs else 0.0) else -p.insulin }
+        val ata = Array(k) { DoubleArray(k) }
+        val aty = DoubleArray(k)
+        points.forEach { p ->
+            val x = row(p)
+            for (i in 0 until k) {
+                aty[i] += x[i] * p.change
+                for (j in 0 until k) ata[i][j] += x[i] * x[j]
+            }
+        }
+        val beta = solve(ata, aty) ?: return null
+        val b = beta.last()
+        if (b !in 10.0..300.0) return null
+        val ratios = slots.mapIndexedNotNull { i, s -> beta[i].takeIf { it > 0 }?.let { s to half(b / it) } }.filter { it.second in 3.0..60.0 }.toMap()
+        return Fit(Math.round(b / 5) * 5.0, ratios, points.count { it.slot != null }, points.count { it.slot == null })
+    }
+
+    /** Gaussian elimination with partial pivoting; null when the data can't tell the numbers apart. */
+    private fun solve(a: Array<DoubleArray>, y: DoubleArray): DoubleArray? {
+        val n = y.size
+        val m = Array(n) { i -> a[i].copyOf() + y[i] }
+        for (c in 0 until n) {
+            val p = (c until n).maxBy { kotlin.math.abs(m[it][c]) }
+            if (kotlin.math.abs(m[p][c]) < 1e-9) return null
+            val tmp = m[c]; m[c] = m[p]; m[p] = tmp
+            for (rIdx in 0 until n) if (rIdx != c) {
+                val f = m[rIdx][c] / m[c][c]
+                for (j in c..n) m[rIdx][j] -= f * m[c][j]
+            }
+        }
+        return DoubleArray(n) { m[it][n] / m[it][it] }
+    }
 
     fun review(readings: List<GlucoseReading>, events: List<EventEntity>, correctionFactor: Double?, zone: ZoneId, action: InsulinAction): List<Meal> {
         val sorted = events.sortedBy { it.timestampMillis }
@@ -86,7 +168,7 @@ object RatioLearner {
     fun report(readings: List<GlucoseReading>, events: List<EventEntity>, correctionFactor: Double?, zone: ZoneId, action: InsulinAction): Report {
         val factor = correctionFactor ?: InsightEngine.formulas(events, zone)?.mgDlPerUnit1800
         val meals = review(readings, events, factor, zone, action)
-        return Report(meals, factor, correctionFactor == null && factor != null, factor?.let { lessons(meals, it) }.orEmpty())
+        return Report(meals, factor, correctionFactor == null && factor != null, factor?.let { lessons(meals, it) }.orEmpty(), fit(readings, events, zone, action))
     }
 
     private fun lessons(meals: List<Meal>, factor: Double): List<Learned> =
