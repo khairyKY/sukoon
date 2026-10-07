@@ -1,5 +1,7 @@
 package com.sukoon.app.ui.graph
 
+import com.sukoon.app.ui.theme.SageDeep
+import com.sukoon.app.domain.metrics.TargetRange
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -97,10 +99,10 @@ import kotlinx.coroutines.withContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.res.pluralStringResource
 
-// Fixed bottom of the y-axis; the top adapts to the data (see yMaxFor). Target band is 70–180.
+// Fixed bottom of the y-axis; the top adapts to the data (see yMaxFor). The band is your range (70 to TargetRange.high).
 private const val Y_MIN = 40
 private const val LOW = 70
-private const val HIGH = 180
+private val HIGH get() = TargetRange.high
 private val CHART_HEIGHT = 256.dp
 private val READINGS_HEIGHT = 420.dp // the readings box; it scrolls inside, the page around it
 private const val BUCKET_MS = 15 * 60_000L // 7/14-day charts draw 15-minute means
@@ -384,6 +386,7 @@ internal fun RangeStats(summary: RangeSummary, title: String, showGmi: Boolean) 
         Triple(String.format(Locale.getDefault(), "%d–%d", 181, 250), summary.high, StateHigh),
         Triple(String.format(Locale.getDefault(), ">%d", 250), summary.veryHigh, PillHighText),
     )
+    val yours = TargetRange.high.takeIf { it < TargetRange.DEFAULT_HIGH }
     Column(
         Modifier
             .fillMaxWidth()
@@ -398,6 +401,8 @@ internal fun RangeStats(summary: RangeSummary, title: String, showGmi: Boolean) 
             Spacer(Modifier.width(8.dp))
             Text(stringResource(R.string.graph_in_range), fontSize = 14.sp, color = CaptionMuted, modifier = Modifier.padding(bottom = 4.dp))
         }
+        // A tighter range of your own sits beside the international 70–180, which the bands keep.
+        yours?.let { Text(stringResource(R.string.graph_in_your_range, it, percent(summary.inYourRange)), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = SageDeep) }
         Row(
             Modifier
                 .fillMaxWidth()

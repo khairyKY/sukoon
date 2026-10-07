@@ -31,11 +31,17 @@ Picked first by the sensor's life, then by the newest reading. One state at a ti
 | **Signal lost** | Newest reading older than 10 min | The last value greyed, how long ago, help to reconnect |
 | **Urgent** | Under **55** | Red banner, big number, "Do this now: 15 g fast carbs", *I've treated it* / *Alert emergency contact* |
 | **Low** | 55 to 69 | Big number, "You're going low", *I've treated it* / *Snooze 15 min* |
-| **In range** | 70 to 180 | Number, last 3 hours as bars (one per 15 min, a low or high in it shows), your chosen stats, the message |
-| **High** | Over 180 | Same layout as in range, amber |
+| **In range** | 70 to the top of your range (180 unless you set it lower, You → Alarms → Your range) | Number, last 3 hours as bars (one per 15 min, a low or high in it shows), your chosen stats, the message |
+| **High** | Over the top of your range | Same layout as in range, amber |
 
 Urgent on Home starts exactly where the urgent-low alarm does (under 55). Time-in-range figures
 still use the international bands (under 54 = very low).
+
+**Your range** is 70 to a top you choose, 120 to 180 (70–140 is "time in tight range"). Only the top
+moves: under 70 is a low everywhere. Home, its messages and "in range" stat, the graph's band and line
+colours, widgets and the status-bar number use it. Insights and the doctor report keep the
+international 70–180 and add a line for your range. Changing it moves the high alarm too if the alarm
+sat at the old top; the high alarm can be set from 120.
 
 ---
 
@@ -85,7 +91,7 @@ a high 10 below its line.
 | **Urgent low** | Under 55 | Always on | Nothing: can't be turned off or moved | Every **5 min**; snooze capped at 5 | Alarm stream, looping 1 min, alarm volume lifted to at least 80% |
 | **Low** | Under your low line | 70 | Line 60 to 110, on/off | After its snooze (15 min) | Alarm stream, 30 s, volume lifted to at least 50% |
 | **Going low** | Heading under your low line within 20 min | On | On/off | Once per episode | Alarm stream, 8 s, volume lifted to at least 50% |
-| **High** | Over your high line | 180 | Line 150 to 400, on/off, quiet hours | After its snooze (60 min) | Notification stream, 8 s |
+| **High** | Over your high line | 180 | Line 120 to 400, on/off, quiet hours | After its snooze (60 min) | Notification stream, 8 s |
 | **No readings** | No reading for N min | 20 min | 10 to 120, on/off | Every 30 min | Notification stream, 8 s |
 
 - Sounds come from a pack (You → Alarms → Sounds): Astral by default, Orbit, Glass, Clear or Bells, one sound per alarm and one for the long-acting reminder. An alarm given its own phone sound or file keeps it.
@@ -227,6 +233,36 @@ yours, or the 1800 rule's estimate (says which). With 5 or more clean meals at a
 Learning screen and that meal's tile show the median and the middle half; *Use* moves the ratio toward
 it by at most 20% at a time. Nothing changes until you press it. The screen lists every clean meal,
 what was left out and why, and exports it all as CSV. *How to make a meal count* is the checklist.
+
+**From everything you've logged** (top of the Learning screen, and a "Your data says" strip on the
+correction tile): least squares over every usable meal and every correction taken on its own in the
+30 days, change at 4 h ≈ a(meal time) × carbs − b × insulin. b is how far 1 unit lowers you, b ÷ a
+each meal time's ratio. It needs no numbers to start from, and a meal without insulin still counts.
+A point counts when nothing else was eaten and no other insulin taken (an hour before to 4 h after),
+none was still working, no workout, not very rich, starting 70–300 with readings then and 4 h later.
+It shows once there are 8 points with 3 at one meal time and the answer is plausible (1 u lowers
+10–300, ratios 1:3 to 1:60). *Use* moves each number at most 20% at a time.
+
+**Learned, on Home**: with suggestions on, each time Home opens it works out the learning, and if a
+number differs from yours by 10% or more (or you have none) it shows one notice: a meal time's
+clean-meal lesson first, then what everything logged says (a ratio, then the factor), e.g. "Lunch:
+your meals suggest 1 : 11". *Take a look* opens You → Insulin → Learning; *Not now* hides that
+suggestion until a different one appears. It never changes a number itself.
+
+**Correction on Home**: with suggestions on and a correction factor set, Home shows "Correction · beta"
+when the reading is fresh and above your range, nothing with carbs was logged in the last 2 hours,
+and under 0.5 u is still working (otherwise Home's message already says to give it time). It shows
+(glucose − target) ÷ factor rounded down, only if that's at least one pen step. *Log it* opens the
+insulin entry, where the same suggestion has *Use*.
+
+**Starting ratios** (*Suggest starting ratios*, in the dose card and onboarding), for every age: from
+the logbook's daily total if there are 3 complete days (500 and 1800 rules), else from weight and
+age (0.5 u/kg a day for adults, 1.0 for 12–17, 0.7 under 12), else for adults the common 1 u per 15 g
+and 1 u per 50 mg/dL. A child without a weight gets none. *Fill the empty boxes* or *Use for all*.
+
+**Parent lock**: a 4–8 digit PIN (stored as a salted hash). While it's on, changing your range, any
+alarm setting, the dose settings or the profile asks for it, once per visit to You. Under 18, dose
+suggestions only switch on once a parent has set one. Removing it needs the PIN.
 
 **Pens**: whole units by default (You → Insulin → Your pens). The insulin keypad takes a decimal point
 only for half-unit pens, and suggestions round down to the pen.

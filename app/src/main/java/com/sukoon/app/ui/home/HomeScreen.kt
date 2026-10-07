@@ -1,5 +1,9 @@
 package com.sukoon.app.ui.home
 
+import com.sukoon.app.ui.theme.SageDeep
+import androidx.compose.material3.TextButton
+import com.sukoon.app.ui.logbook.formatAmountLocalized
+import com.sukoon.app.insulin.DoseAdvice
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -124,8 +128,14 @@ fun HomeScreen(
     onChooseStats: () -> Unit = {},
     /** Pull down: bring in MyFitnessPal's latest; returns what to say. */
     onSync: (suspend () -> String)? = null,
+    /** Beta: a correction when you're above your range and not eating ([com.sukoon.app.insulin.Dose.correction]). */
+    correction: DoseAdvice.Suggestion? = null,
+    /** Beta: a learned number that differs from yours ("Lunch: your meals suggest 1 : 11"). */
+    nudge: String? = null,
+    onNudge: () -> Unit = {},
+    onNudgeDismiss: () -> Unit = {},
 ) {
-    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats)) {
+    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss)) {
         PullToSync(onSync, modifier) {
             HomeContent(state, brief, Modifier.fillMaxSize(), onTreated, onSnooze, onAlertEmergencyContact, onTroubleshoot, onPairSensor, onEnterCodeManually)
         }
@@ -140,6 +150,10 @@ private class Shortcuts(
     val stats: Map<HomeStat, Double> = emptyMap(),
     val chosenStats: List<HomeStat> = emptyList(),
     val onChooseStats: () -> Unit = {},
+    val correction: DoseAdvice.Suggestion? = null,
+    val nudge: String? = null,
+    val onNudge: () -> Unit = {},
+    val onNudgeDismiss: () -> Unit = {},
 )
 private val LocalShortcuts = staticCompositionLocalOf { Shortcuts({}, {}) }
 
@@ -663,9 +677,69 @@ private fun StatTile(stat: HomeStat, value: Double?, modifier: Modifier) {
 private fun BriefCards(brief: Brief?) {
     if (brief == null || brief is Brief.Low || brief is Brief.Treated) return // the low screens say it themselves
     val (title, body) = briefText(brief)
+    val shortcuts = LocalShortcuts.current
     Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         MessageCard(title, body)
+        shortcuts.correction?.let { CorrectionCard(it, shortcuts.onInsulin) }
+        shortcuts.nudge?.let { NudgeCard(it, shortcuts.onNudge, shortcuts.onNudgeDismiss) }
         NextStep(brief.step)
+    }
+}
+
+/** Beta: a learned number differs from yours. It changes nothing: Take a look opens Learning, Not now hides this one. */
+@Composable
+private fun NudgeCard(text: String, onLook: () -> Unit, onDismiss: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(SageMist)
+            .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 4.dp),
+    ) {
+        Text(stringResource(R.string.nudge_eyebrow).uppercase(), fontWeight = FontWeight.SemiBold, fontSize = 11.sp, letterSpacing = 1.sp, color = SageDeep)
+        Text(text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 2.dp, end = 8.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.nudge_not_now), color = SageDeep) }
+            TextButton(onClick = onLook) { Text(stringResource(R.string.nudge_look), color = SageDeep, fontWeight = FontWeight.SemiBold) }
+        }
+    }
+}
+
+/** Beta: above your range and not eating. The maths, and "Log it" opens the insulin entry with it suggested. */
+@Composable
+private fun CorrectionCard(c: DoseAdvice.Suggestion, onLog: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.5.dp, Sage, RoundedCornerShape(16.dp))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(stringResource(R.string.home_correction_eyebrow).uppercase(), fontWeight = FontWeight.SemiBold, fontSize = 11.sp, letterSpacing = 1.sp, color = Sage)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                formatAmountLocalized(c.units) + stringResource(R.string.logbook_unit_units),
+                fontFamily = HeadlineSerifFontFamily,
+                fontWeight = FontWeight.Light,
+                fontSize = 32.sp,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                stringResource(R.string.home_correction_log),
+                modifier = Modifier.clip(RoundedCornerShape(50)).background(Sage).clickable(onClick = onLog).padding(horizontal = 18.dp, vertical = 12.dp),
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 15.sp,
+            )
+        }
+        Text(
+            stringResource(R.string.home_correction_body, c.glucose ?: 0, c.target, String.format(Locale.getDefault(), "%.0f", c.factor ?: 0.0)),
+            fontSize = 13.sp,
+            color = CaptionMuted,
+        )
     }
 }
 

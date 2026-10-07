@@ -68,6 +68,49 @@ class RatioLearnerTest {
         assertTrue(csv[1].contains(",lunch,60,5,120,50,no,ate_again,,50"))
     }
 
+    /** A point on its own day at [hour]:00: [carbs] with [units] (or a correction alone), glucose [start] → start + [change] by 4 h. */
+    private fun point(day: Long, hour: Long, carbs: Double, units: Double, change: Int, start: Int = 150): Pair<List<EventEntity>, List<GlucoseReading>> {
+        val t = day0.plus(Duration.ofDays(day)).plus(Duration.ofHours(hour))
+        val events = listOfNotNull(
+            if (carbs > 0) EventEntity(timestampMillis = t.toEpochMilli(), type = "CARB", value = carbs) else null,
+            EventEntity(timestampMillis = t.minus(Duration.ofMinutes(if (carbs > 0) 10 else 0)).toEpochMilli(), type = "INSULIN", value = units),
+        )
+        val readings = (0..16).map { i -> GlucoseReading(t.plus(Duration.ofMinutes(15L * i)), start + change * i / 16, TrendDirection.STEADY, SourceKind.LIBRE_BLE) }
+        return events to readings
+    }
+
+    @Test
+    fun `the fit over every meal and correction finds the factor and each meal's ratio`() {
+        // Truth: 1 u lowers 50; lunch 1 : 10 (a = 5), dinner 1 : 12.5 (a = 4). Change = a × carbs − 50 × insulin.
+        val points = listOf(
+            point(0, 13, 60.0, 5.0, 50), point(1, 13, 40.0, 4.0, 0), point(2, 13, 80.0, 6.0, 100),
+            point(3, 19, 50.0, 3.0, 50), point(4, 19, 75.0, 6.0, 0), point(5, 19, 60.0, 5.0, -10),
+            point(6, 16, 0.0, 2.0, -100, start = 250), point(7, 16, 0.0, 3.0, -150, start = 260),
+        )
+        val fit = RatioLearner.fit(points.flatMap { it.second }, points.flatMap { it.first }, zone, InsulinAction())!!
+        assertEquals(50.0, fit.factor, 1e-9)
+        assertEquals(10.0, fit.ratios.getValue(MealSlot.LUNCH), 1e-9)
+        assertEquals(12.5, fit.ratios.getValue(MealSlot.DINNER), 1e-9)
+        assertEquals(6, fit.meals)
+        assertEquals(2, fit.corrections)
+        assertEquals(null, RatioLearner.fit(points.take(5).flatMap { it.second }, points.take(5).flatMap { it.first }, zone, InsulinAction())) // too few
+    }
+
+    @Test
+    fun `home nudges about a lesson first, then the fit, only when it differs by 10 percent or more`() {
+        val lesson = RatioLearner.Learned(MealSlot.LUNCH, 11.0, 10.0, 12.0, emptyList(), 50.0)
+        val fit = RatioLearner.Fit(45.0, mapOf(MealSlot.DINNER to 10.0), 9, 2)
+        val report = RatioLearner.Report(emptyList(), 50.0, false, listOf(lesson), fit)
+        val mine = DoseSettings(enabled = true, carbRatio = MealSlot.entries.associateWith { 13.0 }, correctionFactor = 50.0)
+        assertEquals(RatioLearner.Nudge(MealSlot.LUNCH, 11.0), RatioLearner.nudge(report, mine))
+        val lunchDone = mine.copy(carbRatio = mine.carbRatio + (MealSlot.LUNCH to 11.0))
+        assertEquals(RatioLearner.Nudge(MealSlot.DINNER, 10.0), RatioLearner.nudge(report, lunchDone))
+        val ratiosDone = lunchDone.copy(carbRatio = lunchDone.carbRatio + (MealSlot.DINNER to 10.5))
+        assertEquals(RatioLearner.Nudge(null, 45.0), RatioLearner.nudge(report, ratiosDone)) // 45 vs 50: exactly 10%
+        assertEquals(null, RatioLearner.nudge(report, ratiosDone.copy(correctionFactor = 47.0)))
+        assertEquals("LUNCH:11.0", RatioLearner.Nudge(MealSlot.LUNCH, 11.0).key)
+    }
+
     @Test
     fun `a proposal moves 20 percent at most`() {
         assertEquals(10.0, RatioLearner.step(null, 10.0), 1e-9)

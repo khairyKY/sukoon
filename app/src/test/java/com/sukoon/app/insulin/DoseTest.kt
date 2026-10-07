@@ -50,4 +50,35 @@ class DoseTest {
         assertEquals(8.0, a.units, 1e-9)
         assertTrue(a.capped)
     }
+
+    @Test
+    fun `starting ratios come from the logbook, else weight and age, else the common start for adults`() {
+        val logbook = com.sukoon.app.insights.Insight.Formulas(completeDays = 4, totalDailyDose = 40.0, gramsPerUnit500 = 12.5, mgDlPerUnit1800 = 45.0)
+        assertEquals(StartSource.LOGBOOK, StartingPoints.suggest(logbook, Profile(weightKg = 80.0))!!.source)
+        val byWeight = StartingPoints.suggest(null, Profile(weightKg = 80.0, ageYears = 30))!! // 40 u a day
+        assertEquals(12.5, byWeight.ratio, 1e-9)
+        assertEquals(45.0, byWeight.factor, 1e-9)
+        assertEquals(StartSource.COMMON, StartingPoints.suggest(null, Profile())!!.source)
+        assertEquals(StartSource.LOGBOOK, StartingPoints.suggest(logbook, Profile(ageYears = 15))!!.source)
+        val teen = StartingPoints.suggest(null, Profile(weightKg = 50.0, ageYears = 14))!! // 1.0 u/kg: 50 u a day
+        assertEquals(10.0, teen.ratio, 1e-9)
+        assertEquals(35.0, teen.factor, 1e-9) // 1800 / 50 = 36
+        assertNull(StartingPoints.suggest(null, Profile(ageYears = 9))) // a child needs a weight
+    }
+
+    @Test
+    fun `home suggests a correction only when high, not eating and little insulin working`() {
+        val now = java.time.Instant.parse("2026-10-08T15:00:00Z")
+        val s = settings.copy(step = 1.0)
+        fun corr(g: Int, onBoard: Double = 0.0, ateAgo: Long? = null, readingAgo: Long = 2, top: Int = 180) =
+            Dose.correction(s, g, TrendDirection.STEADY, now.minusSeconds(readingAgo * 60), now, top, onBoard, ateAgo?.let { now.minusSeconds(it * 60) }, MealSlot.LUNCH)
+        assertEquals(2.0, corr(220)!!.units, 1e-9) // (220 - 110) / 50 = 2.2, rounded down
+        assertNull(corr(170)) // in range
+        assertEquals(1.0, corr(170, top = 140)!!.units, 1e-9) // above a tighter range: 1.2
+        assertNull(corr(220, ateAgo = 60)) // ate an hour ago
+        assertNull(corr(220, onBoard = 1.0)) // insulin still working
+        assertNull(corr(220, readingAgo = 30)) // stale reading
+        assertNull(corr(150, top = 140)) // 0.8 u: under one pen step
+        assertNull(Dose.correction(s.copy(enabled = false), 220, null, now, now, 180, 0.0, null, MealSlot.LUNCH))
+    }
 }

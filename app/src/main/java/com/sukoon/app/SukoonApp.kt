@@ -1,5 +1,6 @@
 package com.sukoon.app
 
+import com.sukoon.app.domain.metrics.TargetRange
 import android.app.Application
 import com.sukoon.app.di.AppContainer
 import com.sukoon.app.data.backup.Backup
@@ -17,5 +18,6 @@ class SukoonApp : Application() {
         super.onCreate()
         Backup.applyStaged(this) // a restore waiting from the last run: in place before anything opens it
         container = AppContainer(this)
+        TargetRange.high = container.settings.targetHigh
     }
 }

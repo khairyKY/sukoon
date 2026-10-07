@@ -97,7 +97,7 @@ import com.sukoon.app.alarms.SoundPack
 import androidx.compose.ui.res.pluralStringResource
 
 private val LOW_LEVELS = listOf(60, 65, 70, 75, 80, 90, 100)
-private val HIGH_LEVELS = listOf(180, 200, 220, 250, 280, 300, 350)
+private val HIGH_LEVELS = listOf(140, 160, 180, 200, 250, 300)
 private val SIGNAL_MINUTES = listOf(15, 20, 30, 60)
 private val LOW_SNOOZES = listOf(10, 15, 30)
 private val HIGH_SNOOZES = listOf(30, 60, 120)
@@ -236,7 +236,7 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
             onToggle = { onChange(settings.copy(highEnabled = it)) },
         ) {
             Label(R.string.alarms_line_high)
-            NumberChips(HIGH_LEVELS, settings.highMgDl, 150..400, { stringResource(R.string.alarms_above, it) }, enabled = settings.highEnabled) {
+            NumberChips(HIGH_LEVELS, settings.highMgDl, 120..400, { stringResource(R.string.alarms_above, it) }, enabled = settings.highEnabled) {
                 onChange(settings.copy(highMgDl = it))
             }
             Label(R.string.alarms_high_repeat)

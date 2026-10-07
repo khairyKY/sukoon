@@ -1,5 +1,6 @@
 package com.sukoon.app.platform
 
+import com.sukoon.app.domain.metrics.TargetRange
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -134,7 +135,7 @@ class SensorService : Service() {
 
         private fun rangeColor(mgDl: Int) = when {
             mgDl < 70 -> 0xFFC9564B.toInt()
-            mgDl > 180 -> 0xFFC88A3E.toInt()
+            mgDl > TargetRange.high -> 0xFFC88A3E.toInt()
             else -> 0xFF3E7A63.toInt()
         }
 

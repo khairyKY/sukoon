@@ -95,11 +95,55 @@ internal fun LearningScreen(report: RatioLearner.Report?, settings: DoseSettings
             Text("›", fontSize = 18.sp, color = SageDeep)
         }
         if (report == null) return@FullScreen
+        FitCard(report.fit, settings, onChange)
         MealSlot.entries.forEach { s -> SlotCard(s, report, settings, onChange) }
         LeftOut(report.meals.filter { it.verdict != Verdict.CLEAN })
         ExportButton(report)
     }
     if (howTo) HowToScreen(insulinHours) { howTo = false }
+}
+
+/** "From everything you've logged": the fit over every usable meal and correction, each number with its own Use. */
+@Composable
+private fun FitCard(fit: RatioLearner.Fit?, settings: DoseSettings, onChange: (DoseSettings) -> Unit) {
+    Column(Card(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(stringResource(R.string.learn_fit_title), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+        if (fit == null) {
+            Text(stringResource(R.string.learn_fit_none), fontSize = 12.5.sp, color = CaptionMuted)
+            return@Column
+        }
+        Text(stringResource(R.string.learn_fit_body, fit.meals, fit.corrections), fontSize = 12.5.sp, color = CaptionMuted)
+        FitRow(stringResource(R.string.learn_fit_factor, formatAmountLocalized(fit.factor)), settings.correctionFactor, fit.factor) {
+            onChange(settings.copy(correctionFactor = it))
+        }
+        fit.ratios.forEach { (s, ratio) ->
+            FitRow(slot(s) + " · 1 : " + formatAmountLocalized(ratio), settings.carbRatio[s], ratio) { onChange(settings.copy(carbRatio = settings.carbRatio + (s to it))) }
+        }
+        Text(stringResource(R.string.learn_fit_note), fontSize = 12.sp, color = CaptionMuted)
+    }
+}
+
+/** One fitted number, what you use now, and Use: one step of at most 20% toward it. */
+@Composable
+private fun FitRow(label: String, current: Double?, fitted: Double, onUse: (Double) -> Unit) {
+    val next = RatioLearner.step(current, fitted)
+    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(SageMist).padding(start = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            label + (current?.let { " · " + stringResource(R.string.learn_you_use_value, formatAmountLocalized(it)) } ?: ""),
+            fontSize = 13.sp,
+            color = SageDeep,
+            modifier = Modifier.weight(1f).padding(vertical = 9.dp),
+        )
+        if (current == null || next != current) {
+            Text(
+                stringResource(R.string.learn_use_value, formatAmountLocalized(next)),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = SageDeep,
+                modifier = Modifier.clickable { onUse(next) }.padding(horizontal = 10.dp, vertical = 10.dp),
+            )
+        }
+    }
 }
 
 @Composable

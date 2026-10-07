@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.home
 
+import com.sukoon.app.domain.metrics.TargetRange
 import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.data.source.SourceStatus
 import com.sukoon.app.domain.metrics.GlucoseMetrics
@@ -66,7 +67,7 @@ object HomeUiStateMapper {
     private fun connected(reading: GlucoseReading, recent: List<GlucoseReading>): HomeUiState =
         // Urgent exactly when the urgent-low alarm sounds (under 55), not at the stats' 54 line.
         if (reading.glucoseMgDl < AlarmSettings.URGENT_LOW_MG_DL) HomeUiState.Urgent(reading.glucoseMgDl, reading.trend)
-        else when (GlucoseMetrics.bracketFor(reading.glucoseMgDl)) {
+        else when (GlucoseMetrics.bracketFor(reading.glucoseMgDl, TargetRange.high)) {
             RangeBracket.VERY_LOW, RangeBracket.LOW -> HomeUiState.Low(reading.glucoseMgDl, reading.trend)
             RangeBracket.IN_RANGE -> HomeUiState.InRange(reading.glucoseMgDl, reading.trend, recent)
             RangeBracket.HIGH, RangeBracket.VERY_HIGH -> HomeUiState.High(reading.glucoseMgDl, reading.trend, recent)

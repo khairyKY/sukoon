@@ -24,18 +24,19 @@ object GlucoseMetrics {
     // --- Time in Range brackets ---
     enum class RangeBracket { VERY_LOW, LOW, IN_RANGE, HIGH, VERY_HIGH }
 
-    fun bracketFor(mgDl: Int): RangeBracket = when {
+    /** [high]: the top of the range; the international 180 unless a caller passes yours ([TargetRange.high]). */
+    fun bracketFor(mgDl: Int, high: Int = 180): RangeBracket = when {
         mgDl < 54 -> RangeBracket.VERY_LOW
         mgDl < 70 -> RangeBracket.LOW
-        mgDl <= 180 -> RangeBracket.IN_RANGE
+        mgDl <= high -> RangeBracket.IN_RANGE
         mgDl <= 250 -> RangeBracket.HIGH
         else -> RangeBracket.VERY_HIGH
     }
 
     /** Percentage of readings in each bracket. Empty input returns all-zero percentages. */
-    fun timeInRange(readings: List<GlucoseSample>): Map<RangeBracket, Double> {
+    fun timeInRange(readings: List<GlucoseSample>, high: Int = 180): Map<RangeBracket, Double> {
         if (readings.isEmpty()) return RangeBracket.entries.associateWith { 0.0 }
-        val counts = readings.groupingBy { bracketFor(it.glucoseMgDl) }.eachCount()
+        val counts = readings.groupingBy { bracketFor(it.glucoseMgDl, high) }.eachCount()
         return RangeBracket.entries.associateWith { bracket ->
             (counts[bracket] ?: 0) * 100.0 / readings.size
         }

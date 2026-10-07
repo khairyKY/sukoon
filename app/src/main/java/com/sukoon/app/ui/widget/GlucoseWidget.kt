@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.widget
 
+import com.sukoon.app.domain.metrics.TargetRange
 import android.content.Context
 import android.content.res.Configuration
 import androidx.compose.runtime.Composable
@@ -538,7 +539,7 @@ private fun FollowingStyle(person: PersonReading?, options: WidgetOptions, palet
 private fun rangeColor(mgDl: Int?, stale: Boolean, palette: Palette): ColorProvider = when {
     stale || mgDl == null -> palette.muted
     mgDl < 70 -> ColorProvider(StateLow)
-    mgDl > 180 -> ColorProvider(StateHigh)
+    mgDl > TargetRange.high -> ColorProvider(StateHigh)
     else -> ColorProvider(Sage)
 }
 

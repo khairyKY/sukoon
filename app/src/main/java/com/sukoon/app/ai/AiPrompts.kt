@@ -1,5 +1,7 @@
 package com.sukoon.app.ai
 
+import com.sukoon.app.insulin.Profile
+import com.sukoon.app.domain.metrics.TargetRange
 import com.sukoon.app.data.db.EventEntity
 import com.sukoon.app.data.db.LogEventType
 import com.sukoon.app.data.db.logType
@@ -78,8 +80,9 @@ object AiPrompts {
         zone: ZoneId,
         insulinAction: InsulinAction = InsulinAction(),
         dose: DoseSettings = DoseSettings(),
+        profile: Profile = Profile(),
     ): String =
-        listOf(askRules(dose.enabled), PERSONAL_CONTEXT, "DATA\n" + dataBrief(readings, events, now, zone, insulinAction), doseLine(dose))
+        listOf(askRules(dose.enabled), PERSONAL_CONTEXT, aboutLine(profile), "DATA\n" + dataBrief(readings, events, now, zone, insulinAction), doseLine(dose))
             .filter { it.isNotBlank() }
             .joinToString("\n\n")
 
@@ -141,7 +144,7 @@ object AiPrompts {
         )
 
         // The ratio rules (500/1800) and per-meal carbs-per-unit stay out on purpose: they invite dose maths.
-        val insights = InsightEngine.analyze(readings, events, now, zone).filterNot { it is Insight.Formulas }
+        val insights = InsightEngine.analyze(readings, events, now, zone, TargetRange.high).filterNot { it is Insight.Formulas }
         if (insights.isNotEmpty()) {
             appendLine("INSIGHTS (14-day rules, with sources):")
             insights.forEach { appendLine("- " + insightLine(it)) }
@@ -177,7 +180,8 @@ object AiPrompts {
             is Insight.NotEnoughData -> "Not enough data for patterns yet (${insight.daysWithData} days, ${insight.coveragePercent}% coverage)."
             is Insight.Targets -> "Targets over ${insight.days} days (${insight.coveragePercent}% coverage): in range ${insight.inRange}% (goal >70), " +
                 "below 70 ${insight.below70}% (<4), below 54 ${insight.below54}% (<1), above 180 ${insight.above180}% (<25), " +
-                "above 250 ${insight.above250}% (<5); mean ${insight.meanMgDl}, GMI ${insight.gmiPercent}% [Battelino et al. 2019]."
+                "above 250 ${insight.above250}% (<5); mean ${insight.meanMgDl}, GMI ${insight.gmiPercent}% [Battelino et al. 2019]." +
+                (insight.inYourRange?.let { " Their own tighter range 70–${insight.yourHigh}: $it%." } ?: "")
             is Insight.Variability -> "Variability: CV ${insight.cvPercent}% (stable at 36 or less) [Danne et al. 2017]."
             is Insight.RecurringLows -> "Recurring lows starting ${hour(insight.fromHour)}–${hour(insight.toHour)} on ${insight.days} days " +
                 "(${insight.episodes} of ${insight.totalEpisodes} lows)."
@@ -218,6 +222,17 @@ object AiPrompts {
             InjectionRegion.ARM -> "upper arm"
             InjectionRegion.BUTTOCK -> "buttock"
         }
+
+    /** "ABOUT THEM: 30 years, male, 75 kg, 178 cm": what they entered, nothing guessed. */
+    private fun aboutLine(p: Profile): String {
+        val parts = listOfNotNull(
+            p.ageYears?.let { "$it years" },
+            p.sex?.name?.lowercase(),
+            p.weightKg?.let { "${if (it % 1.0 == 0.0) it.toLong() else it} kg" },
+            p.heightCm?.let { "$it cm" },
+        )
+        return if (parts.isEmpty()) "" else "ABOUT THEM: " + parts.joinToString(", ") + (if ((p.ageYears ?: 99) < 18) " (a child: a parent manages their settings)" else "")
+    }
 
     /** "DOSE SETTINGS: …" while beta is on; empty numbers say so, so the model doesn't invent them. */
     private fun doseLine(dose: DoseSettings): String {

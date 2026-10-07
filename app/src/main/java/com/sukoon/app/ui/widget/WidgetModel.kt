@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.widget
 
+import com.sukoon.app.domain.metrics.TargetRange
 import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.data.source.TrendDirection
 import com.sukoon.app.domain.metrics.GlucoseMetrics
@@ -104,11 +105,11 @@ data class WidgetModel(
             return WidgetModel(
                 mgDl = latest.glucoseMgDl,
                 trend = latest.trend,
-                bracket = GlucoseMetrics.bracketFor(latest.glucoseMgDl),
+                bracket = GlucoseMetrics.bracketFor(latest.glucoseMgDl, TargetRange.high),
                 stale = age > HomeUiStateMapper.STALE_AFTER,
                 minutesAgo = age.toMinutes().coerceAtLeast(0),
                 delta = fiveMinutesBefore?.let { latest.glucoseMgDl - it.glucoseMgDl },
-                tirTodayPercent = if (today.isEmpty()) null else GlucoseMetrics.timeInRange(today).getValue(RangeBracket.IN_RANGE).roundToInt(),
+                tirTodayPercent = if (today.isEmpty()) null else GlucoseMetrics.timeInRange(today, TargetRange.high).getValue(RangeBracket.IN_RANGE).roundToInt(),
                 graph = readings
                     .filter { graphHours > 0 && it.timestamp >= now.minus(Duration.ofHours(graphHours.toLong())) }
                     .map { GlucoseSample(it.timestamp, it.glucoseMgDl) },

@@ -1,5 +1,15 @@
 package com.sukoon.app.ui.onboarding
 
+import com.sukoon.app.platform.ParentLock
+import com.sukoon.app.ui.settings.PinDialog
+import com.sukoon.app.ui.settings.SuggestRatios
+import com.sukoon.app.ui.settings.ProfileFields
+import com.sukoon.app.ui.settings.RangeCard
+import com.sukoon.app.ui.logbook.formatAmountLocalized
+import com.sukoon.app.insights.MealSlot
+import com.sukoon.app.insulin.DoseSettings
+import com.sukoon.app.ui.components.NumberChips
+import androidx.compose.runtime.mutableIntStateOf
 import android.Manifest
 import android.app.LocaleManager
 import android.content.ClipboardManager
@@ -95,14 +105,14 @@ import java.util.Locale
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.collectAsState
 
-private enum class Step { WELCOME, ROLE, ACCOUNT, SENSOR, PERMISSIONS, ALARMS, EMERGENCY, EXTRAS, CODE, FOLLOW_ALERTS, READY }
+private enum class Step { WELCOME, ROLE, ACCOUNT, SENSOR, PERMISSIONS, ALARMS, EMERGENCY, EXTRAS, DOSE, CODE, FOLLOW_ALERTS, READY }
 
 /** Each role's steps: a wearer sets up the sensor and its safety net, a follower just finds the person. */
 private fun path(role: UserRole): List<Step> = buildList {
     add(Step.WELCOME)
     add(Step.ROLE)
     add(Step.ACCOUNT)
-    if (role.wears) addAll(listOf(Step.SENSOR, Step.PERMISSIONS, Step.ALARMS, Step.EMERGENCY, Step.EXTRAS))
+    if (role.wears) addAll(listOf(Step.SENSOR, Step.PERMISSIONS, Step.ALARMS, Step.EMERGENCY, Step.EXTRAS, Step.DOSE))
     if (role.follows) addAll(listOf(Step.CODE, Step.FOLLOW_ALERTS))
     if (role.wears) add(Step.READY)
 }
@@ -159,6 +169,7 @@ fun Onboarding(container: AppContainer, onDone: (UserRole) -> Unit) {
             Step.ALARMS -> AlarmsStep(container, progress, onBack = ::back, onDone = ::next)
             Step.EMERGENCY -> EmergencyStep(container, progress, onBack = ::back, onDone = ::next)
             Step.EXTRAS -> ExtrasStep(container, progress, onBack = ::back, onDone = ::next)
+            Step.DOSE -> DoseStep(container, progress, onBack = ::back, onDone = ::next)
             Step.CODE -> CodeStep(container, progress, onBack = ::back, onFollowed = { followed = it; next() })
             Step.FOLLOW_ALERTS -> FollowAlertsStep(container, followed, progress, onDone = ::next)
             Step.READY -> ReadyStep(container, onDone = ::finish)
@@ -453,22 +464,25 @@ private fun AlarmsStep(container: AppContainer, progress: Pair<Int, Int>, onBack
         primary = stringResource(R.string.ob_looks_good),
         onPrimary = onDone,
     ) {
-        Card {
-            Eyebrow(stringResource(R.string.ob_target))
-            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(String.format(Locale.getDefault(), "%d", 70), fontFamily = HeadlineSerifFontFamily, fontWeight = FontWeight.Light, fontSize = 38.sp, color = MaterialTheme.colorScheme.onBackground)
-                Text(stringResource(R.string.ob_to), fontSize = 14.sp, color = CaptionMuted, modifier = Modifier.padding(bottom = 8.dp))
-                Text(String.format(Locale.getDefault(), "%d", 180), fontFamily = HeadlineSerifFontFamily, fontWeight = FontWeight.Light, fontSize = 38.sp, color = MaterialTheme.colorScheme.onBackground)
-                Text(stringResource(R.string.home_unit_mgdl), fontSize = 13.sp, color = CaptionMuted, modifier = Modifier.padding(bottom = 8.dp))
-            }
-            Text(stringResource(R.string.ob_target_body), fontSize = 13.sp, color = CaptionMuted)
+        var high by remember { mutableIntStateOf(container.settings.targetHigh) }
+        RangeCard(high) { top ->
+            // The high alarm follows the top of the range while it sits there.
+            if (s.highMgDl == high) update(s.copy(highMgDl = top))
+            container.settings.targetHigh = top
+            high = container.settings.targetHigh
         }
         Card {
             AlarmRow(StateLow, stringResource(R.string.alarm_urgent_title), stringResource(R.string.ob_urgent_always), checked = null) {}
-            AlarmRow(StateLow, stringResource(R.string.alarm_low_title), stringResource(R.string.ob_below, s.lowMgDl), s.lowEnabled) { update(s.copy(lowEnabled = it)) }
+            AlarmRow(StateLow, stringResource(R.string.alarm_low_title), stringResource(R.string.ob_below, s.lowMgDl), s.lowEnabled, values = {
+                NumberChips(listOf(65, 70, 75, 80), s.lowMgDl, 60..110, { stringResource(R.string.alarms_below, it) }) { update(s.copy(lowMgDl = it)) }
+            }) { update(s.copy(lowEnabled = it)) }
             AlarmRow(StateLow.copy(alpha = 0.5f), stringResource(R.string.alarm_going_low_title), stringResource(R.string.ob_going_low_when), s.goingLowEnabled) { update(s.copy(goingLowEnabled = it)) }
-            AlarmRow(StateHigh, stringResource(R.string.alarm_high_title), stringResource(R.string.ob_above, s.highMgDl), s.highEnabled) { update(s.copy(highEnabled = it)) }
-            AlarmRow(CaptionMuted, stringResource(R.string.alarm_signal_title), stringResource(R.string.ob_after_min, s.signalLossMinutes), s.signalLossEnabled) { update(s.copy(signalLossEnabled = it)) }
+            AlarmRow(StateHigh, stringResource(R.string.alarm_high_title), stringResource(R.string.ob_above, s.highMgDl), s.highEnabled, values = {
+                NumberChips(listOf(140, 180, 250), s.highMgDl, 120..400, { stringResource(R.string.alarms_above, it) }) { update(s.copy(highMgDl = it)) }
+            }) { update(s.copy(highEnabled = it)) }
+            AlarmRow(CaptionMuted, stringResource(R.string.alarm_signal_title), stringResource(R.string.ob_after_min, s.signalLossMinutes), s.signalLossEnabled, values = {
+                NumberChips(listOf(15, 20, 30), s.signalLossMinutes, 10..120, { stringResource(R.string.ob_after_min, it) }) { update(s.copy(signalLossMinutes = it)) }
+            }) { update(s.copy(signalLossEnabled = it)) }
             AlarmRow(null, stringResource(R.string.ob_quiet_title), stringResource(R.string.ob_quiet_body), quiet) {
                 update(if (it) s.copy(quietHighsFrom = 23, quietHighsTo = 7) else s.copy(quietHighsFrom = -1, quietHighsTo = -1))
             }
@@ -476,13 +490,23 @@ private fun AlarmsStep(container: AppContainer, progress: Pair<Int, Int>, onBack
     }
 }
 
+/** An alarm's switch; with [values], tapping the row opens its line (a low, a high, minutes) to change now. */
 @Composable
-private fun AlarmRow(dot: Color?, title: String, body: String, checked: Boolean?, onChange: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth().heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+private fun AlarmRow(dot: Color?, title: String, body: String, checked: Boolean?, values: (@Composable () -> Unit)? = null, onChange: (Boolean) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 56.dp).then(if (values != null && checked == true) Modifier.clickable { open = !open } else Modifier),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
         Box(Modifier.size(10.dp).clip(CircleShape).background(dot ?: Color.Transparent))
         Column(Modifier.weight(1f)) {
             Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-            Text(body, fontSize = 13.sp, color = CaptionMuted)
+            Text(
+                if (values != null && checked == true) body + " · " + stringResource(if (open) R.string.ob_alarm_done else R.string.apps_change) else body,
+                fontSize = 13.sp,
+                color = CaptionMuted,
+            )
         }
         if (checked == null) {
             Icon(painterResource(R.drawable.ic_lock), contentDescription = stringResource(R.string.ob_urgent_always), tint = CaptionMuted, modifier = Modifier.size(18.dp))
@@ -490,6 +514,7 @@ private fun AlarmRow(dot: Color?, title: String, body: String, checked: Boolean?
             Switch(checked = checked, onCheckedChange = onChange, colors = SwitchDefaults.colors(checkedTrackColor = Sage))
         }
     }
+    if (open && checked == true && values != null) Column(Modifier.padding(start = 22.dp, bottom = 10.dp)) { values() }
 }
 
 @Composable
@@ -537,6 +562,66 @@ private fun Timeline(dot: Color, text: String, last: Boolean) {
 }
 
 /** The two extras: which rapid insulin (so "still working" matches it) and meals from MyFitnessPal. */
+/** Beta dose suggestions (design "You · Dose suggestions"): about you, starting ratios, the switch. Skippable. */
+@Composable
+private fun DoseStep(container: AppContainer, progress: Pair<Int, Int>, onBack: () -> Unit, onDone: () -> Unit) {
+    var profile by remember { mutableStateOf(container.settings.profile) }
+    var dose by remember { mutableStateOf(container.settings.doseSettings) }
+    var settingPin by remember { mutableStateOf(false) }
+    val mgdl = stringResource(R.string.home_unit_mgdl)
+    fun saveDose(changed: DoseSettings) {
+        container.settings.doseSettings = changed
+        dose = changed
+    }
+    Page(
+        progress = progress,
+        onBack = onBack,
+        trailing = stringResource(R.string.ob_skip) to onDone,
+        title = stringResource(R.string.ob_dose_title),
+        body = stringResource(R.string.ob_dose_body),
+        primary = stringResource(R.string.ob_finish),
+        onPrimary = onDone,
+    ) {
+        ProfileFields(profile) { changed ->
+            container.settings.profile = changed
+            profile = changed
+        }
+        Card {
+            Text(stringResource(R.string.dose_ratio_label), fontSize = 16.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+            Text(
+                if (dose.carbRatio.isEmpty() && dose.correctionFactor == null) stringResource(R.string.ob_dose_unknown)
+                else MealSlot.entries.joinToString(" · ") { s -> dose.carbRatio[s]?.let { "1 : " + formatAmountLocalized(it) } ?: "—" } +
+                    (dose.correctionFactor?.let { "  ·  " + formatAmountLocalized(it) + " " + mgdl } ?: ""),
+                fontSize = 13.5.sp,
+                color = CaptionMuted,
+            )
+            SuggestRatios(dose, profile, null, ::saveDose)
+        }
+        Card {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.dose_switch), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                    Text(stringResource(R.string.dose_warning), fontSize = 12.5.sp, color = PillHighText)
+                }
+                Switch(
+                    checked = dose.enabled,
+                    onCheckedChange = { on ->
+                        // A child's suggestions only go on behind a parent lock.
+                        if (on && (profile.ageYears ?: 99) < 18 && container.settings.parentPin == null) settingPin = true else saveDose(dose.copy(enabled = on))
+                    },
+                    colors = SwitchDefaults.colors(checkedTrackColor = Sage),
+                )
+            }
+            if ((profile.ageYears ?: 99) < 18) Text(stringResource(R.string.dose_off_child), fontSize = 12.5.sp, color = CaptionMuted)
+        }
+    }
+    if (settingPin) PinDialog(setting = true, stored = null, onDone = { pin ->
+        container.settings.parentPin = ParentLock.encode(pin)
+        saveDose(dose.copy(enabled = true))
+        settingPin = false
+    }, onDismiss = { settingPin = false })
+}
+
 @Composable
 private fun ExtrasStep(container: AppContainer, progress: Pair<Int, Int>, onBack: () -> Unit, onDone: () -> Unit) {
     var action by remember { mutableStateOf(container.settings.insulinAction) }

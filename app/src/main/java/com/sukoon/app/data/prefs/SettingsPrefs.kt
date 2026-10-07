@@ -1,5 +1,6 @@
 package com.sukoon.app.data.prefs
 
+import com.sukoon.app.domain.metrics.TargetRange
 import android.content.Context
 import com.sukoon.app.alarms.AlarmSettings
 import com.sukoon.app.data.source.SourceKind
@@ -9,6 +10,8 @@ import com.sukoon.app.alarms.SoundPack
 import com.sukoon.app.emergency.EmergencySettings
 import com.sukoon.app.insulin.InsulinAction
 import com.sukoon.app.insulin.DoseSettings
+import com.sukoon.app.insulin.Profile
+import com.sukoon.app.insulin.Sex
 import com.sukoon.app.insights.MealSlot
 import com.sukoon.app.ui.home.HomeStat
 import com.sukoon.app.ui.home.DEFAULT_HOME_STATS
@@ -109,6 +112,40 @@ class SettingsPrefs(context: Context) {
         get() = BasalReminderSettings(prefs.getBoolean(KEY_BASAL_REMINDER, false), prefs.getInt(KEY_BASAL_MINUTE, 22 * 60).coerceIn(0, 1439))
         set(value) = prefs.edit().putBoolean(KEY_BASAL_REMINDER, value.enabled).putInt(KEY_BASAL_MINUTE, value.minuteOfDay).apply()
 
+    /** The top of your target range (70 to this); also sets [TargetRange.high], which the everyday screens read. */
+    var targetHigh: Int
+        get() = prefs.getInt(KEY_TARGET_HIGH, TargetRange.DEFAULT_HIGH).coerceIn(TargetRange.HIGH_RANGE)
+        set(value) {
+            val high = value.coerceIn(TargetRange.HIGH_RANGE)
+            prefs.edit().putInt(KEY_TARGET_HIGH, high).apply()
+            TargetRange.high = high
+        }
+
+    /** The parent lock's PIN as "salt:hash" ([com.sukoon.app.platform.ParentLock]); null = no lock. */
+    var parentPin: String?
+        get() = prefs.getString(KEY_PARENT_PIN, null)
+        set(value) = prefs.edit().apply { if (value == null) remove(KEY_PARENT_PIN) else putString(KEY_PARENT_PIN, value) }.apply()
+
+    /** The learning suggestion Home was told "Not now" about ([com.sukoon.app.insulin.RatioLearner.Nudge.key]). */
+    var nudgeDismissed: String?
+        get() = prefs.getString(KEY_NUDGE_DISMISSED, null)
+        set(value) = prefs.edit().putString(KEY_NUDGE_DISMISSED, value).apply()
+
+    /** About you, for the dose setup: each part optional, stored as absent when empty. */
+    var profile: Profile
+        get() = Profile(
+            weightKg = if (prefs.contains(KEY_WEIGHT)) prefs.getFloat(KEY_WEIGHT, 0f).toDouble() else null,
+            heightCm = prefs.getInt(KEY_HEIGHT, 0).takeIf { it > 0 },
+            ageYears = prefs.getInt(KEY_AGE, 0).takeIf { it > 0 },
+            sex = Sex.entries.firstOrNull { it.name == prefs.getString(KEY_SEX, null) },
+        )
+        set(value) = prefs.edit().apply {
+            if (value.weightKg == null) remove(KEY_WEIGHT) else putFloat(KEY_WEIGHT, value.weightKg.toFloat())
+            putInt(KEY_HEIGHT, value.heightCm ?: 0)
+            putInt(KEY_AGE, value.ageYears ?: 0)
+            if (value.sex == null) remove(KEY_SEX) else putString(KEY_SEX, value.sex.name)
+        }.apply()
+
     /** You → Insulin: beta dose suggestions. An empty number is stored as absent. */
     var doseSettings: DoseSettings
         get() {
@@ -197,6 +234,13 @@ class SettingsPrefs(context: Context) {
         private const val KEY_SOUND_NAME = "alarm_sound_name_"
         private const val KEY_EMERGENCY_CONTACTS = "emergency_contacts"
         private const val KEY_INSULIN_PEAK = "insulin_peak_minutes"
+        private const val KEY_TARGET_HIGH = "target_high"
+        private const val KEY_PARENT_PIN = "parent_pin"
+        private const val KEY_NUDGE_DISMISSED = "nudge_dismissed"
+        private const val KEY_WEIGHT = "profile_weight_kg"
+        private const val KEY_HEIGHT = "profile_height_cm"
+        private const val KEY_AGE = "profile_age"
+        private const val KEY_SEX = "profile_sex"
         private const val KEY_DOSE_ON = "dose_beta"
         private const val KEY_DOSE_RATIO = "dose_ratio_" // + MealSlot name
         private const val KEY_DOSE_FACTOR = "dose_factor"
