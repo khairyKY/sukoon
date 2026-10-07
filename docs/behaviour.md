@@ -206,13 +206,29 @@ Shown on new rapid entries (a meal, insulin for an imported meal, or insulin alo
 offers the textbook starting points (500 and 1800 rules) to fill empty boxes. While it's on, the AI
 assistant may work out doses with the same maths and settings.
 
-**Learning the ratios** from the last 30 days. A meal counts when it's *clean*: at least 10 g, logged with
-its rapid insulin (an hour before to 30 min after), starting between 70 and 250, nothing else eaten
-from an hour before to 4 h after, no extra insulin in those 4 h, and under 0.5 u still working from
-before. Its ratio is carbs ÷ (insulin + glucose change at 4 h ÷ correction factor); the factor is
-yours, or the 1800 rule's estimate. With 5 or more clean meals at a meal time, that meal's tile shows
-"Meals say 1 : 11 · Why?". *Why?* lists those meals (date, carbs, insulin, change at 4 h, the ratio
-each points to) and the middle half; *Use* moves the ratio toward the median by at most 20% at a time. Nothing changes until you press it.
+**Learning the ratios** from the last 30 days, whether suggestions are on or off (You → Insulin →
+*Learning from your meals*). Every meal gets a verdict; a meal counts (is *clean*) when:
+
+| Check | Left out as |
+|---|---|
+| 10 g or more | Under 10 g of carbs |
+| Rapid insulin logged from an hour before to 30 min after | No insulin logged with it |
+| Readings at the start and 4 h later | Readings missing |
+| Started between 70 and 250 | Started out of range |
+| Nothing else eaten from an hour before to 4 h after | Something else eaten |
+| No more insulin in those 4 h | More insulin within 4 h |
+| Under 0.5 u still working from before | Insulin still working |
+| No workout from 2 h before to 4 h after | A workout around it |
+| Under 35 g of fat and of protein | Very rich |
+
+A clean meal's ratio is carbs ÷ (insulin + glucose change at 4 h ÷ correction factor); the factor is
+yours, or the 1800 rule's estimate (says which). With 5 or more clean meals at a meal time the
+Learning screen and that meal's tile show the median and the middle half; *Use* moves the ratio toward
+it by at most 20% at a time. Nothing changes until you press it. The screen lists every clean meal,
+what was left out and why, and exports it all as CSV. *How to make a meal count* is the checklist.
+
+**Pens**: whole units by default (You → Insulin → Your pens). The insulin keypad takes a decimal point
+only for half-unit pens, and suggestions round down to the pen.
 
 ## 10. Known limits
 

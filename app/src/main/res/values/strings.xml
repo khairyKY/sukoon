@@ -1261,32 +1261,18 @@
     <!-- Dose suggestions (beta) -->
     <string name="dose_off_body">Suggests a rapid dose from the carbs, your glucose and the insulin still working, with the maths shown. Off until you turn it on.</string>
     <string name="dose_max_label">Most in one dose</string>
-    <string name="dose_step_label">Pen step</string>
     <string name="dose_start_points">From your logbook (%1$d complete days, %2$s u a day): about 1 u per %3$s g, and 1 u lowers about %4$s mg/dL. Textbook starting points: check them with your doctor.</string>
     <string name="dose_use_start">Use these</string>
     <string name="dose_suggested">Suggested · beta</string>
     <string name="dose_use">Use</string>
-    <string name="dose_learning_needs">Learning from your meals: it needs 5 clean meals at a meal time (logged with their insulin, nothing else eaten for 4 h) and a correction factor, or 3 complete days.</string>
     <string name="dose_switch">Suggest my rapid dose</string>
     <string name="dose_beta">BETA</string>
     <string name="dose_warning">For testing on yourself. Check every suggestion.</string>
     <string name="dose_ratio_label">1 unit covers</string>
     <string name="dose_factor_label">1 unit lowers</string>
     <string name="dose_target_label">Aim for</string>
-    <string name="dose_more">At most %1$s · pen %2$s</string>
     <string name="dose_empty_hint">Tap a box to change it. An empty one is left out of the maths. Not sure? Leave them empty: your meals fill them in over time.</string>
     <string name="dose_meals_say">Meals say 1 : %1$s · Why?</string>
-    <string name="dose_why_eyebrow">%1$s · learned</string>
-    <string name="dose_why_title">Your meals say 1 : %1$s</string>
-    <plurals name="dose_why_body">
-        <item quantity="one">%1$d clean meal in 30 days, landing between 1 : %2$s and 1 : %3$s.</item>
-        <item quantity="other">%1$d clean meals in 30 days. Most of them land between 1 : %2$s and 1 : %3$s.</item>
-    </plurals>
-    <string name="dose_why_current">You use 1 : %1$s.</string>
-    <string name="dose_why_row">%1$s g · %2$s u · %3$s at 4 h</string>
-    <string name="dose_why_rule">A meal counts when nothing else was eaten for 4 h, no insulin was added, and none was still working from before. Each tells what it needed: carbs ÷ (insulin + change ÷ %1$s).</string>
-    <string name="dose_why_use">Use 1 : %1$s for %2$s</string>
-    <string name="dose_why_step" formatted="false">One step at a time: at most 20% per change.</string>
     <string name="dose_low_title">Treat the low first</string>
     <string name="dose_low_body">You\'re at %1$d. Have 15 g of fast carbs and check again in 15 minutes. No insulin is suggested while you\'re low or dropping under 100.</string>
     <string name="dose_r_meal">Meal</string>
@@ -1299,4 +1285,74 @@
     <string name="dose_r_round_how">to your pen</string>
     <string name="dose_r_capped">At most</string>
     <string name="dose_r_capped_how">your maximum</string>
+    <string name="dose_more">At most %1$s in one dose</string>
+    <string name="insulin_pen">Your pens</string>
+    <string name="insulin_pen_whole">Whole units</string>
+    <string name="insulin_pen_half">Half units</string>
+    <string name="learn_title">Learning</string>
+    <string name="learn_title_long">Learning from your meals</string>
+    <string name="learn_loading">Reading your meals…</string>
+    <string name="learn_no_factor">From your meals in the last 30 days. To turn a meal into a ratio, Sukoon needs how far 1 unit lowers you: set it, or log 3 days with rapid and long-acting.</string>
+    <string name="learn_factor">From your meals in the last 30 days, with 1 u lowering %1$s mg/dL (yours).</string>
+    <string name="learn_factor_estimated">From your meals in the last 30 days, with 1 u lowering about %1$s mg/dL (estimated from your logbook).</string>
+    <plurals name="learn_clean">
+        <item quantity="one">%1$d clean</item>
+        <item quantity="other">%1$d clean</item>
+    </plurals>
+    <string name="learn_says">Says 1 : %1$s (%2$s–%3$s)</string>
+    <string name="learn_you_use">you use 1 : %1$s</string>
+    <string name="learn_use">Use 1 : %1$s</string>
+    <plurals name="learn_more_needed">
+        <item quantity="one">%1$d more clean meal to learn from.</item>
+        <item quantity="other">%1$d more clean meals to learn from.</item>
+    </plurals>
+    <plurals name="learn_all_meals">
+        <item quantity="one">All %1$d meal</item>
+        <item quantity="other">All %1$d meals</item>
+    </plurals>
+    <string name="learn_fewer">Show fewer</string>
+    <string name="learn_meal_row">%1$s g · %2$s u</string>
+    <string name="learn_change_4h">%1$s at 4 h</string>
+    <string name="learn_left_out">Left out</string>
+    <plurals name="learn_meals">
+        <item quantity="one">%1$d meal</item>
+        <item quantity="other">%1$d meals</item>
+    </plurals>
+    <plurals name="learn_row_summary">
+        <item quantity="one">%1$d clean meal in 30 days</item>
+        <item quantity="other">%1$d clean meals in 30 days</item>
+    </plurals>
+    <string name="learn_v_clean">Counts</string>
+    <string name="learn_v_too_small">Under 10 g of carbs</string>
+    <string name="learn_v_no_insulin">No insulin logged with it</string>
+    <string name="learn_v_no_readings">Readings missing at the start or 4 h later</string>
+    <string name="learn_v_out_of_range">Started under 70 or over 250</string>
+    <string name="learn_v_ate_again">Something else eaten within 4 h</string>
+    <string name="learn_v_more_insulin">More insulin within 4 h</string>
+    <string name="learn_v_still_working">Insulin still working from before</string>
+    <string name="learn_v_active">A workout around it</string>
+    <string name="learn_v_rich">Very rich (35 g+ of fat or protein)</string>
+    <string name="learn_v_odd">The numbers don\'t add up: check the log</string>
+    <string name="learn_export">Export as CSV</string>
+    <string name="learn_how_title">How to make a meal count</string>
+    <string name="learn_how_intro">Sukoon learns from your everyday meals. No tests: eat and dose as you normally do, and log both. A meal counts when:</string>
+    <string name="learn_how_1">You start between 70 and 250</string>
+    <string name="learn_how_1_body">Not right after a low or a big high.</string>
+    <string name="learn_how_2">Its carbs are logged</string>
+    <string name="learn_how_2_body">At least 10 g. Weigh it, read the label, or log it in MyFitnessPal.</string>
+    <string name="learn_how_3">Its rapid insulin is logged</string>
+    <string name="learn_how_3_body">From an hour before eating to 30 minutes after.</string>
+    <string name="learn_how_4">Nothing else for 4 hours</string>
+    <string name="learn_how_4_body">No snack, sweet drink or extra insulin. Water and unsweetened tea or coffee are fine.</string>
+    <string name="learn_how_5">No insulin still working</string>
+    <plurals name="learn_how_5_body">
+        <item quantity="one">Your last rapid dose was an hour or more before.</item>
+        <item quantity="other">Your last rapid dose was %1$d hours or more before.</item>
+    </plurals>
+    <string name="learn_how_6">No workout around it</string>
+    <string name="learn_how_6_body">From 2 hours before to 4 hours after.</string>
+    <string name="learn_how_7">The sensor reads throughout</string>
+    <string name="learn_how_7_body">A reading at the start and 4 hours later.</string>
+    <string name="learn_how_after" formatted="false">Very rich meals (35 g of fat or protein or more) rise late, so they\'re left out. 5 clean meals at a meal time make a lesson; Use moves your ratio at most 20% at a time.</string>
+    <string name="learn_how_never">Never skip insulin or change a dose to make a meal count.</string>
 </resources>

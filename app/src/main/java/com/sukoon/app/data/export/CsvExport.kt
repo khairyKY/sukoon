@@ -10,12 +10,13 @@ import java.time.format.DateTimeFormatter
 
 /**
  * Readings + logbook as one CSV, in Kai's own column layout (docs/data/glucose-log.csv):
- * `timestamp,type,carbs_g,insulin_units,insulin_type,glucose_mgdl,notes`, oldest first. Times are
- * ISO-8601 with the UTC offset so spreadsheets and scripts both read them unambiguously.
+ * `timestamp,type,carbs_g,insulin_units,insulin_type,glucose_mgdl,notes`, oldest first, then what a
+ * row may also carry (injection site, the app it came from, a meal's nutrients). Times are ISO-8601
+ * with the UTC offset so spreadsheets and scripts both read them unambiguously.
  */
 object CsvExport {
 
-    const val HEADER = "timestamp,type,carbs_g,insulin_units,insulin_type,glucose_mgdl,notes"
+    const val HEADER = "timestamp,type,carbs_g,insulin_units,insulin_type,glucose_mgdl,notes,injection_site,source_app,fiber_g,protein_g,fat_g,kcal"
 
     fun build(readings: List<GlucoseReading>, events: List<EventEntity>, zone: ZoneId): String {
         val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(zone)
@@ -27,20 +28,21 @@ object CsvExport {
             val ts = time.format(at)
             val amount = e.value?.let(::number).orEmpty()
             val glucose = nearest(sorted, e.timestampMillis)?.glucoseMgDl?.toString().orEmpty()
+            val extra = listOf(e.site?.lowercase().orEmpty(), e.source.orEmpty()) + listOf(e.fiber, e.protein, e.fat, e.kcal).map { it?.let(::number).orEmpty() }
             at to when (e.logType) {
-                LogEventType.CARB -> row(ts, "meal", carbs = amount, glucose = glucose, notes = e.note)
-                LogEventType.INSULIN -> row(ts, "insulin", insulin = amount, insulinType = "rapid", glucose = glucose, notes = e.note)
-                LogEventType.BASAL -> row(ts, "insulin", insulin = amount, insulinType = "basal", glucose = glucose, notes = e.note)
-                LogEventType.FINGERSTICK -> row(ts, "fingerstick", glucose = amount, notes = e.note)
-                LogEventType.ACTIVITY -> row(ts, "activity", glucose = glucose, notes = listOfNotNull(e.value?.let { "${number(it)} min" }, e.note).joinToString(" · "))
-                LogEventType.NOTE -> row(ts, "note", glucose = glucose, notes = e.note)
+                LogEventType.CARB -> row(ts, "meal", carbs = amount, glucose = glucose, notes = e.note, extra = extra)
+                LogEventType.INSULIN -> row(ts, "insulin", insulin = amount, insulinType = "rapid", glucose = glucose, notes = e.note, extra = extra)
+                LogEventType.BASAL -> row(ts, "insulin", insulin = amount, insulinType = "basal", glucose = glucose, notes = e.note, extra = extra)
+                LogEventType.FINGERSTICK -> row(ts, "fingerstick", glucose = amount, notes = e.note, extra = extra)
+                LogEventType.ACTIVITY -> row(ts, "activity", glucose = glucose, notes = listOfNotNull(e.value?.let { "${number(it)} min" }, e.note).joinToString(" · "), extra = extra)
+                LogEventType.NOTE -> row(ts, "note", glucose = glucose, notes = e.note, extra = extra)
             }
         }
         return (listOf(HEADER) + rows.sortedBy { it.first }.map { it.second }).joinToString("\n", postfix = "\n")
     }
 
-    private fun row(ts: String, type: String, carbs: String = "", insulin: String = "", insulinType: String = "", glucose: String = "", notes: String? = null) =
-        listOf(ts, type, carbs, insulin, insulinType, glucose, escape(notes.orEmpty())).joinToString(",")
+    private fun row(ts: String, type: String, carbs: String = "", insulin: String = "", insulinType: String = "", glucose: String = "", notes: String? = null, extra: List<String> = List(6) { "" }) =
+        (listOf(ts, type, carbs, insulin, insulinType, glucose, escape(notes.orEmpty())) + extra.map(::escape)).joinToString(",")
 
     /** The reading within 5 minutes of [atMillis] in time-sorted [readings] (binary search: exports can span months). */
     private fun nearest(readings: List<GlucoseReading>, atMillis: Long): GlucoseReading? {

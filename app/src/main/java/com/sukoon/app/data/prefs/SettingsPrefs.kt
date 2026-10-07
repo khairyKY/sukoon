@@ -116,7 +116,7 @@ class SettingsPrefs(context: Context) {
                 correctionFactor = number(KEY_DOSE_FACTOR),
                 target = prefs.getInt(KEY_DOSE_TARGET, 110).coerceIn(80, 180),
                 maxDose = number(KEY_DOSE_MAX) ?: 10.0,
-                step = number(KEY_DOSE_STEP) ?: 0.5,
+                step = number(KEY_DOSE_STEP) ?: 1.0,
             )
         }
         set(value) = prefs.edit().apply {

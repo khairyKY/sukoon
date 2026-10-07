@@ -53,6 +53,22 @@ class RatioLearnerTest {
     }
 
     @Test
+    fun `every meal gets a verdict, and the export says which counted`() {
+        val (lunchEvents, readings) = lunch(0, 5.0, 50)
+        val snack = EventEntity(timestampMillis = lunchEvents.first().timestampMillis + Duration.ofHours(2).toMillis(), type = "CARB", value = 20.0)
+        val noInsulin = EventEntity(timestampMillis = day0.plus(Duration.ofDays(1)).plus(Duration.ofHours(8)).toEpochMilli(), type = "CARB", value = 30.0)
+        val report = RatioLearner.report(readings, lunchEvents + snack + noInsulin, 50.0, zone, InsulinAction())
+        assertEquals(
+            listOf(RatioLearner.Verdict.NO_INSULIN, RatioLearner.Verdict.NO_INSULIN, RatioLearner.Verdict.ATE_AGAIN), // newest first
+            report.meals.map { it.verdict },
+        )
+        assertTrue(!report.factorEstimated)
+        val csv = RatioLearner.csv(report, zone).lines()
+        assertTrue(csv.first().startsWith("timestamp,meal,carbs_g"))
+        assertTrue(csv[1].contains(",lunch,60,5,120,50,no,ate_again,,50"))
+    }
+
+    @Test
     fun `a proposal moves 20 percent at most`() {
         assertEquals(10.0, RatioLearner.step(null, 10.0), 1e-9)
         assertEquals(12.0, RatioLearner.step(15.0, 10.0), 1e-9)

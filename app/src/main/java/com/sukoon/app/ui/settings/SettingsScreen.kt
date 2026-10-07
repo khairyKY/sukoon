@@ -170,8 +170,8 @@ fun SettingsScreen(
     onDoseSettings: (DoseSettings) -> Unit = {},
     /** Textbook starting points from the logbook's daily totals, when there are enough days. */
     doseStartingPoints: suspend () -> Insight.Formulas? = { null },
-    /** Ratios learned from clean logged meals, given the correction factor (null: estimate it). */
-    learnRatios: suspend (Double?) -> List<RatioLearner.Learned> = { emptyList() },
+    /** Every meal's verdict and the ratios learned from the clean ones, given the correction factor (null: estimate it). */
+    learningReport: suspend (Double?) -> RatioLearner.Report = { RatioLearner.Report(emptyList(), null, false, emptyList()) },
 ) {
     val context = LocalContext.current
     var page by rememberSaveable { mutableStateOf<YouPage?>(null) }
@@ -309,9 +309,9 @@ fun SettingsScreen(
                         SectionLabel(stringResource(R.string.sites_title))
                         InjectionSitesCard(injectionSites)
                         Gap()
-                        InsulinSection(insulinAction, onInsulinAction)
+                        InsulinSection(insulinAction, onInsulinAction, doseSettings.step) { onDoseSettings(doseSettings.copy(step = it)) }
                         Gap()
-                        DoseCard(doseSettings, onDoseSettings, doseStartingPoints, learnRatios)
+                        DoseCard(doseSettings, onDoseSettings, doseStartingPoints, learningReport, insulinAction.durationMinutes / 60)
                     }
                     YouPage.APPS -> {
                         HealthConnectSection(healthConnect)

@@ -18,12 +18,13 @@ import androidx.compose.ui.unit.sp
 import com.sukoon.app.R
 import com.sukoon.app.insulin.InsulinAction
 import com.sukoon.app.ui.components.NumberChips
+import com.sukoon.app.ui.components.ChoiceChips
 import com.sukoon.app.ui.theme.CaptionMuted
 import androidx.compose.ui.res.pluralStringResource
 
 /** You → Insulin: how the rapid insulin works, for "active insulin" on Home and in the Logbook. */
 @Composable
-fun InsulinSection(action: InsulinAction, onChange: (InsulinAction) -> Unit) {
+fun InsulinSection(action: InsulinAction, onChange: (InsulinAction) -> Unit, penStep: Double, onPenStep: (Double) -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
@@ -42,6 +43,8 @@ fun InsulinSection(action: InsulinAction, onChange: (InsulinAction) -> Unit) {
             onChange(action.copy(peakMinutes = it).sanitized())
         }
         Text(stringResource(R.string.insulin_peak_hint), fontSize = 12.sp, color = CaptionMuted)
+        Label(stringResource(R.string.insulin_pen))
+        ChoiceChips(listOf(1.0, 0.5), penStep, { stringResource(if (it == 1.0) R.string.insulin_pen_whole else R.string.insulin_pen_half) }, onPick = onPenStep)
     }
 }
 

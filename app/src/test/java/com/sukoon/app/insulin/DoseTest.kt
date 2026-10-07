@@ -9,7 +9,7 @@ import org.junit.Test
 
 class DoseTest {
 
-    private val settings = DoseSettings(enabled = true, carbRatio = mapOf(MealSlot.LUNCH to 12.0), correctionFactor = 50.0, target = 110)
+    private val settings = DoseSettings(enabled = true, carbRatio = mapOf(MealSlot.LUNCH to 12.0), correctionFactor = 50.0, target = 110, step = 0.5)
 
     private fun advise(carbs: Double?, glucose: Int?, trend: TrendDirection? = TrendDirection.STEADY, onBoard: Double = 0.0, s: DoseSettings = settings) =
         Dose.advise(s, MealSlot.LUNCH, carbs, glucose, trend, onBoard)
@@ -19,6 +19,7 @@ class DoseTest {
         val a = advise(45.0, 160) as DoseAdvice.Suggestion // 3.75 + 1.0 = 4.75
         assertEquals(4.5, a.units, 1e-9)
         assertEquals(1.0, a.correctionUnits!!, 1e-9)
+        assertEquals(4.0, (advise(45.0, 160, s = settings.copy(step = 1.0)) as DoseAdvice.Suggestion).units, 1e-9) // whole-unit pen
     }
 
     @Test

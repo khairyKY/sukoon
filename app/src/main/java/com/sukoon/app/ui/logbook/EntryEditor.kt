@@ -468,9 +468,11 @@ private fun EditorContent(
 
         if (active != null && type != LogEventType.NOTE) {
             val field = active!!
+            // Insulin takes a decimal point only for a half-unit pen (You → Insulin).
+            val decimals = if (field == AmountField.RAPID || field == AmountField.LONG) doseSettings.step < 1 else field.decimals
             AmountPad(
-                decimals = field.decimals,
-                onKey = { key -> values[field] = Keypad.press(values[field].orEmpty(), key, field.decimals, field.maxWhole) },
+                decimals = decimals,
+                onKey = { key -> values[field] = Keypad.press(values[field].orEmpty(), key, decimals, field.maxWhole) },
                 onClear = { values[field] = "" },
                 modifier = Modifier.padding(top = 10.dp),
             )

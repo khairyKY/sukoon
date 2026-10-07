@@ -400,12 +400,16 @@ fun MainScaffold() {
                     doseStartingPoints = {
                         InsightEngine.formulas(container.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofDays(14).toMillis()).first(), ZoneId.systemDefault())
                     },
-                    learnRatios = { factor ->
+                    learningReport = { factor ->
                         withContext(Dispatchers.Default) {
                             val since = System.currentTimeMillis() - Duration.ofDays(30).toMillis()
-                            val events = container.logbookRepository.eventsSince(since).first()
-                            val cf = factor ?: InsightEngine.formulas(events, ZoneId.systemDefault())?.mgDlPerUnit1800
-                            if (cf == null) emptyList() else RatioLearner.learn(container.glucoseRepository.readingsSince(since).first(), events, cf, ZoneId.systemDefault(), container.settings.insulinAction)
+                            RatioLearner.report(
+                                container.glucoseRepository.readingsSince(since).first(),
+                                container.logbookRepository.eventsSince(since).first(),
+                                factor,
+                                ZoneId.systemDefault(),
+                                container.settings.insulinAction,
+                            )
                         }
                     },
                     injectionSites = {

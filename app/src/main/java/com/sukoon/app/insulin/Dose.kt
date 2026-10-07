@@ -16,8 +16,8 @@ data class DoseSettings(
     val correctionFactor: Double? = null,
     val target: Int = 110,
     val maxDose: Double = 10.0,
-    /** The pen's smallest step. */
-    val step: Double = 0.5,
+    /** The pen's smallest step: whole units unless it's a half-unit pen. Not beta: the insulin keypad follows it too. */
+    val step: Double = 1.0,
 )
 
 sealed interface DoseAdvice {
