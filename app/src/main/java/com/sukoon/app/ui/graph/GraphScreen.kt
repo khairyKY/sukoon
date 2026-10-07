@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -39,9 +38,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sukoon.app.R
+import com.sukoon.app.data.db.EventEntity
+import com.sukoon.app.data.db.logType
 import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.data.source.SourceKind
 import com.sukoon.app.data.source.TrendDirection
+import com.sukoon.app.ui.logbook.colorForLogEventType
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
 import com.sukoon.app.ui.theme.Sage
@@ -96,7 +98,7 @@ fun GraphScreen(
                     modifier = Modifier.align(Alignment.Center),
                 )
             } else {
-                GlucoseChart(state.readings, state.range)
+                GlucoseChart(state.readings, state.range, state.events)
             }
         }
 
@@ -107,7 +109,7 @@ fun GraphScreen(
 }
 
 @Composable
-private fun GlucoseChart(readings: List<GlucoseReading>, range: GraphRange) {
+private fun GlucoseChart(readings: List<GlucoseReading>, range: GraphRange, events: List<EventEntity> = emptyList()) {
     val onBg = MaterialTheme.colorScheme.onBackground
     val bandColor = Sage.copy(alpha = 0.12f)
     val gridColor = onBg.copy(alpha = 0.15f)
@@ -185,6 +187,17 @@ private fun GlucoseChart(readings: List<GlucoseReading>, range: GraphRange) {
                     }
                 }
                 drawPath(path, color = lineColor, style = Stroke(width = 3f))
+            }
+
+            // Logged-event pins (A4) — small dots near the top, colored by type.
+            events.forEach { event ->
+                if (event.timestampMillis in tStart..tEnd) {
+                    drawCircle(
+                        color = colorForLogEventType(event.logType),
+                        radius = 5f,
+                        center = Offset(xFor(event.timestampMillis), 14f),
+                    )
+                }
             }
 
             // Selected-point highlight.

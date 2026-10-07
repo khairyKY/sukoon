@@ -2,15 +2,19 @@ package com.sukoon.app.ui.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -20,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.border
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -37,10 +40,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.sukoon.app.R
-import com.sukoon.app.ui.graph.GraphScreen
 import com.sukoon.app.ui.graph.GraphViewModel
 import com.sukoon.app.ui.home.HomeScreen
 import com.sukoon.app.ui.home.HomeViewModel
+import com.sukoon.app.ui.logbook.LogbookViewModel
 import com.sukoon.app.ui.theme.Sage
 
 /**
@@ -75,12 +78,22 @@ fun MainScaffold() {
                 HomeScreen(state = homeState)
             }
             composable(SukoonTab.TRENDS.route) {
-                // Trends currently shows the full graph (A3). When Insights (A9) + Logbook (A4)
-                // land, this becomes a hub and the graph moves to a sub-destination.
-                val repository = (LocalContext.current.applicationContext as SukoonApp).container.glucoseRepository
-                val graphViewModel: GraphViewModel = viewModel(factory = GraphViewModel.factory(repository))
+                // Hub over Graph (A3) + Logbook (A4); Insights (A9) slots in as a third sub-tab later.
+                val container = (LocalContext.current.applicationContext as SukoonApp).container
+                val graphViewModel: GraphViewModel = viewModel(
+                    factory = GraphViewModel.factory(container.glucoseRepository, container.logbookRepository),
+                )
                 val graphState by graphViewModel.uiState.collectAsStateWithLifecycle()
-                GraphScreen(state = graphState, onSelectRange = graphViewModel::selectRange)
+                val logbookViewModel: LogbookViewModel = viewModel(factory = LogbookViewModel.factory(container.logbookRepository))
+                val logbookState by logbookViewModel.uiState.collectAsStateWithLifecycle()
+                TrendsHub(
+                    graphState = graphState,
+                    onSelectRange = graphViewModel::selectRange,
+                    logbookState = logbookState,
+                    onQuickLog = logbookViewModel::log,
+                    onUpdateEvent = logbookViewModel::updateEvent,
+                    onDeleteEvent = logbookViewModel::deleteEvent,
+                )
             }
             composable(SukoonTab.YOU.route) { PlaceholderScreen(R.string.home_nav_you) }
         }
@@ -92,7 +105,11 @@ private fun SukoonBottomBar(navController: NavHostController) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
-    Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
+    Column(
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.surface)
+            .windowInsetsPadding(WindowInsets.navigationBars),
+    ) {
         HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f))
         Row(
             modifier = Modifier

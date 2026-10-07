@@ -28,6 +28,27 @@
     <string name="home_unit_mgdl">ملغم/دل</string>
     <string name="home_updated_now">اتحدّث دلوقتي</string>
 
+    <!-- Logbook (A4) -->
+    <string name="logbook_title">السجل</string>
+    <string name="logbook_today">النهاردة</string>
+    <string name="logbook_empty_title">لسه مفيش حاجة اتسجلت</string>
+    <string name="logbook_empty_body">سجّل أكلة، إنسولين، أو نشاط وهيظهر هنا — جنب قراياتك.</string>
+    <string name="logbook_empty_cta">سجّل أول حاجة</string>
+    <string name="logbook_add_entry">ضيف قيد</string>
+    <string name="logbook_sheet_title_new">ضيف ليومك</string>
+    <string name="logbook_sheet_title_edit">عدّل القيد</string>
+    <string name="logbook_type_carb">أكلة</string>
+    <string name="logbook_type_insulin">إنسولين</string>
+    <string name="logbook_type_activity">نشاط</string>
+    <string name="logbook_type_note">ملاحظة</string>
+    <string name="logbook_custom_label">قيمة تانية</string>
+    <string name="logbook_note_hint">عايز تكتب إيه؟</string>
+    <string name="logbook_save">احفظ في السجل</string>
+    <string name="logbook_delete">امسح</string>
+    <string name="logbook_unit_grams">جم</string>
+    <string name="logbook_unit_units">و</string>
+    <string name="logbook_unit_minutes">د</string>
+
     <!-- Home — trend words -->
     <string name="home_trend_steady">ثابت</string>
     <string name="home_trend_rising">طالع</string>
