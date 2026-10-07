@@ -20,7 +20,8 @@ class LogbookRepository(private val eventDao: EventDao) {
     suspend fun log(type: LogEventType, value: Double? = null, note: String? = null, at: Instant = Instant.now()): Long =
         eventDao.insert(EventEntity(timestampMillis = at.toEpochMilli(), type = type.name, value = value, note = note))
 
-    suspend fun update(event: EventEntity) = eventDao.update(event)
+    /** Rows changed: 0 when the entry was deleted meanwhile. */
+    suspend fun update(event: EventEntity): Int = eventDao.update(event)
 
     suspend fun delete(event: EventEntity) = eventDao.delete(event)
 

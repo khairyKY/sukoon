@@ -1081,4 +1081,8 @@
     <string name="widget_info_long_hint">Taken today, or a Took it button</string>
     <string name="widgets_body_maker">Your glucose on the home screen. Make as many as you like: pick a style, a size and what each one shows.</string>
     <string name="widgets_make">+ Make a widget</string>
+    <string name="hc_resync">Resync</string>
+    <string name="hc_resyncing">Resyncing…</string>
+    <string name="hc_resync_done">Resynced: %1$d MyFitnessPal meals in the last 7 days (%2$d new, %3$d updated).</string>
+    <string name="hc_resync_none">Health Connect has no MyFitnessPal meals from the last 7 days. In MyFitnessPal: Settings → Sharing &amp; Privacy → Health Connect, and turn on Nutrition.</string>
 </resources>

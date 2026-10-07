@@ -42,9 +42,11 @@ private fun TextStyle.ui() = copy(fontFamily = UiFontFamily)
 
 // Every Material style in Hanken Grotesk, so buttons, fields and menus match the rest of the app.
 val Typography = Typography(
-    displayLarge = base.displayLarge.copy(fontFamily = HeadlineSerifFontFamily, fontWeight = FontWeight.Light, fontSize = 96.sp),
-    displayMedium = base.displayMedium.copy(fontFamily = HeadlineSerifFontFamily),
-    displaySmall = base.displaySmall.copy(fontFamily = HeadlineSerifFontFamily),
+    // Material draws the time picker's hours and minutes in displayLarge: Material's size, the UI face.
+    // (The hero number sets its own serif and size.)
+    displayLarge = base.displayLarge.ui(),
+    displayMedium = base.displayMedium.ui(),
+    displaySmall = base.displaySmall.ui(),
     headlineLarge = base.headlineLarge.ui(),
     headlineMedium = base.headlineMedium.copy(fontFamily = UiFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 24.sp),
     headlineSmall = base.headlineSmall.ui(),

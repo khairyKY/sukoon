@@ -41,6 +41,8 @@ import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.Sage
 import com.sukoon.app.ui.theme.SageDeep
 import java.util.Locale
+import androidx.compose.ui.window.Dialog
+import androidx.compose.material3.Surface
 
 /** "22:30" for a minute of the day. */
 fun minuteLabel(minuteOfDay: Int): String = String.format(Locale.getDefault(), "%02d:%02d", minuteOfDay / 60, minuteOfDay % 60)
@@ -96,17 +98,27 @@ fun BasalReminderCard(settings: BasalReminderSettings, onChange: (BasalReminderS
     if (picking) {
         val start = if (settings.enabled) settings.minuteOfDay else usual?.let { (it + 30) % 1440 } ?: (22 * 60)
         val state = rememberTimePickerState(start / 60, start % 60, is24Hour = DateFormat.is24HourFormat(LocalContext.current))
-        AlertDialog(
-            onDismissRequest = { picking = false },
-            title = { Text(stringResource(R.string.reminder_basal_pick)) },
-            text = { TimePicker(state) },
-            confirmButton = {
-                TextButton(onClick = {
-                    picking = false
-                    onChange(BasalReminderSettings(enabled = true, minuteOfDay = state.hour * 60 + state.minute))
-                }) { Text(stringResource(R.string.reminder_basal_set)) }
-            },
-            dismissButton = { TextButton(onClick = { picking = false }) { Text(stringResource(R.string.sensor_cancel)) } },
-        )
+        // Its own dialog, sized to the clock: an alert dialog's padding squeezes the dial on narrow phones.
+        Dialog(onDismissRequest = { picking = false }) {
+            Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surface) {
+                Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        stringResource(R.string.reminder_basal_pick),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
+                    )
+                    TimePicker(state)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = { picking = false }) { Text(stringResource(R.string.sensor_cancel)) }
+                        TextButton(onClick = {
+                            picking = false
+                            onChange(BasalReminderSettings(enabled = true, minuteOfDay = state.hour * 60 + state.minute))
+                        }) { Text(stringResource(R.string.reminder_basal_set)) }
+                    }
+                }
+            }
+        }
     }
 }

@@ -43,6 +43,7 @@ import androidx.health.connect.client.request.AggregateRequest
 import java.time.LocalDate
 import kotlin.reflect.KClass
 import com.sukoon.app.data.db.logType
+import androidx.health.connect.client.records.metadata.DataOrigin
 
 /**
  * Health Connect, both ways. In: meals other apps log there (MyFitnessPal writes each meal's
@@ -104,6 +105,25 @@ class HealthConnectSync(
     }
 
     suspend fun granted(): Set<String> = if (available) client.permissionController.getGrantedPermissions() else emptySet()
+
+    /** What a resync found: MyFitnessPal's meals in Health Connect over the last 7 days, and what changed. */
+    data class Resync(val mfpMeals: Int, val result: Result)
+
+    /**
+     * You → Apps & data → Resync: read the last 7 days again from scratch (onto the same entries),
+     * and count MyFitnessPal's meals there, so "nothing came in" can say whose side it's on.
+     */
+    suspend fun resync(): Resync {
+        mutex.withLock { prefs.edit().remove(KEY_TOKEN).apply() }
+        val mfp = if (canReadMeals()) {
+            client.readRecords(
+                ReadRecordsRequest(NutritionRecord::class, TimeRangeFilter.after(Instant.now().minus(Duration.ofDays(7))), dataOriginFilter = setOf(DataOrigin(MFP))),
+            ).records.size
+        } else {
+            0
+        }
+        return Resync(mfp, sync())
+    }
 
     /** Whether meals can come in at all: Health Connect is here and Sukoon may read nutrition. */
     suspend fun canReadMeals(): Boolean = available && readMeals in granted()
@@ -212,22 +232,23 @@ class HealthConnectSync(
         return added to updated
     }
 
-    /** true = new logbook entry, false = updated, null = skipped (ours, or no carbs). */
+    /** true = new logbook entry, false = updated, null = skipped (ours, or nothing in it). */
     private suspend fun upsertMeal(record: NutritionRecord, ids: MutableMap<String, Long>): Boolean? {
         if (record.metadata.dataOrigin.packageName == context.packageName) return null
         val existing = ids[record.metadata.id]
-        val carbs = record.totalCarbohydrate?.inGrams?.takeIf { it > 0 }
-        if (carbs == null) {
+        fun round1(x: Double?) = x?.takeIf { it > 0 }?.let { (it * 10).roundToInt() / 10.0 }
+        val carbs = round1(record.totalCarbohydrate?.inGrams)
+        // A meal with no carbs (eggs and coffee) still counts: its calories, protein and fat.
+        if (carbs == null && listOf(record.energy?.inKilocalories, record.protein?.inGrams, record.totalFat?.inGrams).all { (it ?: 0.0) <= 0 }) {
             // A meal emptied out: drop the entry it made.
             existing?.let { logbook.deleteById(it); ids.remove(record.metadata.id) }
             return null
         }
-        fun round1(x: Double?) = x?.takeIf { it > 0 }?.let { (it * 10).roundToInt() / 10.0 }
         val event = EventEntity(
             id = existing ?: 0,
             timestampMillis = record.startTime.toEpochMilli(),
             type = LogEventType.CARB.name,
-            value = round1(carbs),
+            value = carbs ?: 0.0,
             note = record.name?.takeIf { it.isNotBlank() }, // the foods, as the other app names them
             source = record.metadata.dataOrigin.packageName,
             mealType = record.mealType.takeIf { it != MealType.MEAL_TYPE_UNKNOWN },
@@ -237,11 +258,11 @@ class HealthConnectSync(
             fat = round1(record.totalFat?.inGrams),
             kcal = round1(record.energy?.inKilocalories),
         )
-        return if (existing != null) {
-            logbook.update(event)
+        // An entry deleted in the logbook meanwhile comes back as new rather than silently not at all.
+        return if (existing != null && logbook.update(event) > 0) {
             false
         } else {
-            ids[record.metadata.id] = logbook.insert(event)
+            ids[record.metadata.id] = logbook.insert(event.copy(id = 0))
             true
         }
     }
@@ -264,11 +285,10 @@ class HealthConnectSync(
             note = record.title?.takeIf { it.isNotBlank() } ?: workoutName(record.exerciseType),
             source = record.metadata.dataOrigin.packageName,
         )
-        return if (existing != null) {
-            logbook.update(event)
+        return if (existing != null && logbook.update(event) > 0) {
             false
         } else {
-            ids[record.metadata.id] = logbook.insert(event)
+            ids[record.metadata.id] = logbook.insert(event.copy(id = 0))
             true
         }
     }

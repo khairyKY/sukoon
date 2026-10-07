@@ -61,9 +61,22 @@ import com.sukoon.app.ui.theme.StateLow
 import java.time.Duration
 import java.time.Instant
 import java.util.Locale
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.AdaptiveIconDrawable
+import android.graphics.drawable.Drawable
+import android.os.Build
+import androidx.compose.ui.graphics.ColorFilter
 
 /** An imported entry's app as this phone has it: its name and its own icon (no copy ships in Sukoon). */
-internal class SourceApp(val packageName: String, val label: String, val icon: ImageBitmap?, val installed: Boolean = icon != null)
+internal class SourceApp(
+    val packageName: String,
+    val label: String,
+    val icon: ImageBitmap?,
+    val installed: Boolean = icon != null,
+    /** Just the logo (the icon's monochrome or foreground layer), drawn in the theme's ink instead of the app's colours. */
+    val glyph: ImageBitmap? = null,
+)
 
 private val sourceApps = mutableMapOf<String, SourceApp>()
 private val KNOWN_APPS = mapOf(
@@ -81,12 +94,36 @@ internal fun rememberSourceApp(packageName: String): SourceApp {
             packageName = packageName,
             label = info?.let { pm.getApplicationLabel(it).toString() } ?: KNOWN_APPS[packageName] ?: packageName,
             icon = info?.let { runCatching { pm.getApplicationIcon(it).toBitmap(96, 96).asImageBitmap() }.getOrNull() },
+            installed = info != null,
+            glyph = info?.let { runCatching { glyphOf(pm.getApplicationIcon(it)) }.getOrNull() },
         )
     }
 }
 
+/**
+ * The logo alone from an adaptive icon: its themed-icon (monochrome) layer, else its foreground, cut
+ * to the visible middle. Null when there's no such layer, or the "logo" fills the square (it isn't one).
+ */
+private fun glyphOf(icon: Drawable): ImageBitmap? {
+    if (icon !is AdaptiveIconDrawable) return null
+    val layer = (if (Build.VERSION.SDK_INT >= 33) icon.monochrome else null) ?: icon.foreground ?: return null
+    val px = 96
+    val bitmap = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888)
+    // Layers are 108 dp with the visible icon the middle 72: draw them a quarter larger on each side.
+    layer.setBounds(-px / 4, -px / 4, px + px / 4, px + px / 4)
+    layer.draw(Canvas(bitmap))
+    val pixels = IntArray(px * px).also { bitmap.getPixels(it, 0, px, 0, 0, px, px) }
+    val solid = pixels.count { (it ushr 24) > 200 }
+    return if (solid == 0 || solid > pixels.size * 0.8) null else bitmap.asImageBitmap()
+}
+
 @Composable
 internal fun AppIcon(app: SourceApp, size: Dp) {
+    val glyph = app.glyph
+    if (glyph != null) {
+        Image(glyph, contentDescription = app.label, modifier = Modifier.size(size), colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground))
+        return
+    }
     val icon = app.icon
     if (icon != null) {
         Image(icon, contentDescription = app.label, modifier = Modifier.size(size).clip(RoundedCornerShape(size / 4)))

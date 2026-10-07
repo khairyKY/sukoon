@@ -1089,4 +1089,8 @@
     <string name="widget_info_long_hint">اتاخد النهارده، أو زرار أخدتها</string>
     <string name="widgets_body_maker">سكرك على الشاشة الرئيسية. اعمل اللي إنت عايزه: اختار الشكل والمقاس وكل واحد يعرض إيه.</string>
     <string name="widgets_make">+ اعمل ويدجت</string>
+    <string name="hc_resync">زامن من الأول</string>
+    <string name="hc_resyncing">بيزامن…</string>
+    <string name="hc_resync_done">اتزامن: %1$d وجبة من MyFitnessPal في آخر ٧ أيام (%2$d جديد، %3$d اتحدّث).</string>
+    <string name="hc_resync_none">Health Connect مفيهوش وجبات من MyFitnessPal في آخر ٧ أيام. في MyFitnessPal: الإعدادات ← المشاركة والخصوصية ← Health Connect، وشغّل التغذية.</string>
 </resources>

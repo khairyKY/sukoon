@@ -45,8 +45,9 @@ interface EventDao {
     @Insert
     suspend fun insert(event: EventEntity): Long
 
+    /** Rows changed: 0 when the entry was deleted meanwhile. */
     @Update
-    suspend fun update(event: EventEntity)
+    suspend fun update(event: EventEntity): Int
 
     @Delete
     suspend fun delete(event: EventEntity)

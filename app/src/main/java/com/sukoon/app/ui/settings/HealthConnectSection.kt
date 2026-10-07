@@ -74,6 +74,7 @@ fun HealthConnectSection(sync: HealthConnectSync) {
     var shareGlucose by remember { mutableStateOf(sync.shareGlucose) }
     var busy by remember { mutableStateOf(false) }
     var lastMeal by remember { mutableStateOf<Instant?>(null) }
+    var resyncing by remember { mutableStateOf(false) }
     LaunchedEffect(checks) {
         granted = runCatching { sync.granted() }.getOrDefault(emptySet())
         lastMeal = runCatching { sync.lastMfpMeal() }.getOrNull()
@@ -146,10 +147,26 @@ fun HealthConnectSection(sync: HealthConnectSync) {
                     sync.importActivity = it
                     if (it && sync.readActivity !in granted) request.launch(sync.wantedPermissions())
                 }
-                OutlineButton(stringResource(R.string.hc_open_mfp)) {
-                    val open = context.packageManager.getLaunchIntentForPackage(HealthConnectSync.MFP)
-                        ?: Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${HealthConnectSync.MFP}"))
-                    runCatching { context.startActivity(open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlineButton(stringResource(if (resyncing) R.string.hc_resyncing else R.string.hc_resync), Modifier.weight(1f)) {
+                        if (resyncing) return@OutlineButton
+                        resyncing = true
+                        scope.launch {
+                            val message = runCatching {
+                                val r = sync.resync()
+                                if (r.mfpMeals == 0) context.getString(R.string.hc_resync_none)
+                                else context.getString(R.string.hc_resync_done, r.mfpMeals, r.result.mealsAdded, r.result.mealsUpdated)
+                            }.getOrElse { context.getString(R.string.sync_failed, it.message ?: it.javaClass.simpleName) }
+                            resyncing = false
+                            checks++ // re-read "last meal"
+                            context.toast(message, long = true)
+                        }
+                    }
+                    OutlineButton(stringResource(R.string.hc_open_mfp), Modifier.weight(1f)) {
+                        val open = context.packageManager.getLaunchIntentForPackage(HealthConnectSync.MFP)
+                            ?: Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${HealthConnectSync.MFP}"))
+                        runCatching { context.startActivity(open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                    }
                 }
                 if (!connected) Text(stringResource(R.string.hc_mfp_hint), fontSize = 12.sp, color = CaptionMuted)
             }
@@ -208,10 +225,9 @@ private fun AppCard(content: @Composable ColumnScope.() -> Unit) = Column(
 private fun Line() = HorizontalDivider(color = outline().copy(alpha = 0.08f))
 
 @Composable
-private fun OutlineButton(label: String, onClick: () -> Unit) {
+private fun OutlineButton(label: String, modifier: Modifier = Modifier.fillMaxWidth(), onClick: () -> Unit) {
     Box(
-        Modifier
-            .fillMaxWidth()
+        modifier
             .heightIn(min = 46.dp)
             .clip(RoundedCornerShape(12.dp))
             .border(1.dp, outline(), RoundedCornerShape(12.dp))
