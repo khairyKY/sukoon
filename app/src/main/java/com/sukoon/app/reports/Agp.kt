@@ -70,8 +70,8 @@ object Agp {
     /** Linear-interpolated percentile of [sorted] (q in 0..1). */
     internal fun percentile(sorted: List<Int>, q: Double): Int {
         val position = (sorted.size - 1) * q
-        val low = sorted[floorposition.toInt()]
-        val high = sorted[ceilposition.toInt()]
+        val low = sorted[floor(position).toInt()]
+        val high = sorted[ceil(position).toInt()]
         return (low + (high - low) * (position - floor(position))).roundToInt()
     }
 }

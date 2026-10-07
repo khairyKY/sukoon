@@ -304,7 +304,7 @@ data class FactoryCalibration(val i1: Int, val i2: Int, val i3: Double, val i4: 
         val temperature = 1 / d - 273.15
         val g = 65.0 * (rawValue - i3) / (i4 - i3) * 1.045.pow(32.5 - temperature)
         val mgDl = (g - CALIBRATION_T1[i2 - 1]) / CALIBRATION_T2[i2 - 1]
-        return if (mgDl.isFinite()) Math.roundmgDl.toInt() else null
+        return if (mgDl.isFinite()) Math.round(mgDl).toInt() else null
     }
 
     companion object {
