@@ -19,6 +19,7 @@ import com.sukoon.app.R
 import com.sukoon.app.insulin.InsulinAction
 import com.sukoon.app.ui.components.NumberChips
 import com.sukoon.app.ui.theme.CaptionMuted
+import androidx.compose.ui.res.pluralStringResource
 
 /** You → Insulin: how the rapid insulin works, for "active insulin" on Home and in the Logbook. */
 @Composable
@@ -33,11 +34,11 @@ fun InsulinSection(action: InsulinAction, onChange: (InsulinAction) -> Unit) {
     ) {
         Text(stringResource(R.string.insulin_body), fontSize = 12.5.sp, color = CaptionMuted)
         Label(stringResource(R.string.insulin_duration))
-        NumberChips(listOf(3, 4, 5, 6), action.durationMinutes / 60, 3..8, { stringResource(R.string.life_in_hours, it) }) {
+        NumberChips(listOf(3, 4, 5, 6), action.durationMinutes / 60, 3..8, { pluralStringResource(R.plurals.life_in_hours, it.toInt(), it) }) {
             onChange(action.copy(durationMinutes = it * 60).sanitized())
         }
         Label(stringResource(R.string.insulin_peak))
-        NumberChips(listOf(55, 65, 75), action.peakMinutes, InsulinAction.PEAK_RANGE, { stringResource(R.string.life_in_minutes, it) }) {
+        NumberChips(listOf(55, 65, 75), action.peakMinutes, InsulinAction.PEAK_RANGE, { pluralStringResource(R.plurals.life_in_minutes, it.toInt(), it) }) {
             onChange(action.copy(peakMinutes = it).sanitized())
         }
         Text(stringResource(R.string.insulin_peak_hint), fontSize = 12.sp, color = CaptionMuted)

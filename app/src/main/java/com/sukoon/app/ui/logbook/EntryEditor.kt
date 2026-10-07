@@ -98,6 +98,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.sukoon.app.health.HealthConnectSync
+import androidx.compose.ui.res.pluralStringResource
 
 /** What one amount box takes: decimals or whole numbers, how many digits, and its one-tap amounts. */
 internal enum class AmountField(val decimals: Boolean, val maxWhole: Int, val quick: List<Int>) {
@@ -622,7 +623,7 @@ private fun WhenButton(minutesAgo: Int, pickedAt: Instant, onAgo: (Int) -> Unit,
             Text(
                 when {
                     minutesAgo == 0 -> stringResource(R.string.logbook_when_now)
-                    minutesAgo > 0 -> stringResource(R.string.logbook_when_ago, minutesAgo)
+                    minutesAgo > 0 -> pluralStringResource(R.plurals.logbook_when_ago, minutesAgo.toInt(), minutesAgo)
                     else -> hmFormatter.format(pickedAt)
                 },
                 fontSize = 14.sp,
@@ -633,7 +634,7 @@ private fun WhenButton(minutesAgo: Int, pickedAt: Instant, onAgo: (Int) -> Unit,
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             listOf(0, 15, 30, 60).forEach { ago ->
                 DropdownMenuItem(
-                    text = { Text(if (ago == 0) stringResource(R.string.logbook_when_now) else stringResource(R.string.logbook_when_ago, ago)) },
+                    text = { Text(if (ago == 0) stringResource(R.string.logbook_when_now) else pluralStringResource(R.plurals.logbook_when_ago, ago.toInt(), ago)) },
                     onClick = { onAgo(ago); open = false },
                 )
             }

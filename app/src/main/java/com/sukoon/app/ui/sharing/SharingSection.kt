@@ -66,6 +66,7 @@ import java.util.Locale
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.sukoon.app.sharing.FollowerWatch
+import androidx.compose.ui.res.pluralStringResource
 
 /** You → Sharing: an account, sharing your readings with people you invite, and following others. */
 @Composable
@@ -376,7 +377,7 @@ private fun CodeDialog(onRedeem: (String) -> Unit, onDismiss: () -> Unit) {
 internal fun latestLine(r: GlucoseReading?): String {
     if (r == null) return stringResource(R.string.sharing_no_readings)
     val minutes = Duration.between(r.timestamp, Instant.now()).toMinutes().coerceAtLeast(0)
-    val age = if (minutes < 1) stringResource(R.string.graph_just_now) else stringResource(R.string.graph_min_ago, minutes.toInt())
+    val age = if (minutes < 1) stringResource(R.string.graph_just_now) else pluralStringResource(R.plurals.graph_min_ago, minutes.toInt(), minutes.toInt())
     return "${String.format(Locale.getDefault(), "%d", r.glucoseMgDl)} ${r.trend.arrow} · $age"
 }
 

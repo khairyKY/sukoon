@@ -101,6 +101,7 @@ import androidx.compose.runtime.produceState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sukoon.app.ui.sharing.DexcomSection
 import com.sukoon.app.platform.Updates
+import androidx.compose.ui.res.pluralStringResource
 
 /** The You tab's sections (design "You, divided"): each opens its own page from the hub. */
 private enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
@@ -419,7 +420,7 @@ private fun NeedsYou(count: Int, first: String, onClick: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(
-            if (count == 1) stringResource(R.string.you_needs_one, first.lowercase(Locale.getDefault())) else stringResource(R.string.you_needs_many, count),
+            if (count == 1) stringResource(R.string.you_needs_one, first.lowercase(Locale.getDefault())) else pluralStringResource(R.plurals.you_needs_many, count.toInt(), count),
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             color = PillHighText,

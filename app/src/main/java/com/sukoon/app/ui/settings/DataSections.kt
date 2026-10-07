@@ -53,6 +53,7 @@ import android.content.Context
 import com.sukoon.app.data.export.ConnectionTest
 import com.sukoon.app.ui.components.toast
 import com.sukoon.app.data.backup.Backup
+import androidx.compose.ui.res.pluralStringResource
 
 /** You → Nightscout: Sukoon uploads readings + logbook (the job DiaBox used to do). Every save checks the connection and says how it went. */
 @Composable
@@ -160,7 +161,7 @@ fun ExportSection(buildCsv: suspend (days: Int) -> Pair<String, Int>) {
     }
     SectionCard {
         Text(stringResource(R.string.export_body), fontSize = 12.5.sp, color = CaptionMuted)
-        NumberChips(listOf(1, 7, 30, 90, 0), days, 0..3650, { if (it == 0) stringResource(R.string.export_all) else stringResource(R.string.export_days, it) }) { days = it }
+        NumberChips(listOf(1, 7, 30, 90, 0), days, 0..3650, { if (it == 0) stringResource(R.string.export_all) else pluralStringResource(R.plurals.export_days, it.toInt(), it) }) { days = it }
         Pill(stringResource(R.string.export_csv)) { save.launch("sukoon-${LocalDate.now()}.csv") }
         result?.let { Text(it, fontSize = 12.sp, color = Sage) }
     }

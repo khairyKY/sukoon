@@ -50,6 +50,7 @@ import com.sukoon.app.ui.components.toast
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.Sage
 import com.sukoon.app.ui.theme.StateLow
+import androidx.compose.ui.res.pluralStringResource
 
 /** You → Emergency contacts: who gets texted (the first one also called) when an urgent low goes unanswered. */
 @Composable
@@ -134,7 +135,7 @@ fun EmergencySection(settings: EmergencySettings, alerts: EmergencyAlerts, onCha
 
         if (settings.contacts.isNotEmpty()) {
             Text(stringResource(R.string.emergency_after).uppercase(), fontSize = 10.sp, letterSpacing = 1.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted)
-            NumberChips(EmergencySettings.AFTER_CHOICES, settings.afterMinutes, EmergencySettings.AFTER_RANGE, { stringResource(R.string.alarms_minutes, it) }) {
+            NumberChips(EmergencySettings.AFTER_CHOICES, settings.afterMinutes, EmergencySettings.AFTER_RANGE, { pluralStringResource(R.plurals.alarms_minutes, it.toInt(), it) }) {
                 onChange(settings.copy(afterMinutes = it))
             }
             Row(verticalAlignment = Alignment.CenterVertically) {

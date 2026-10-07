@@ -95,6 +95,7 @@ import androidx.compose.runtime.produceState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.res.pluralStringResource
 
 // Fixed bottom of the y-axis; the top adapts to the data (see yMaxFor). Target band is 70–180.
 private const val Y_MIN = 40
@@ -204,7 +205,7 @@ private fun Header(latest: GlucoseReading?, title: String?) {
             listOf(
                 stringResource(R.string.home_unit_mgdl),
                 trendLabel(latest.trend),
-                if (minutes < 1) stringResource(R.string.graph_just_now) else stringResource(R.string.graph_min_ago, minutes.toInt()),
+                if (minutes < 1) stringResource(R.string.graph_just_now) else pluralStringResource(R.plurals.graph_min_ago, minutes.toInt(), minutes.toInt()),
             ).joinToString(" · "),
             fontSize = 12.sp,
             color = CaptionMuted,

@@ -92,6 +92,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import com.sukoon.app.ui.components.ExpandedPanel
 import com.sukoon.app.alarms.SukoonSounds
+import androidx.compose.ui.res.pluralStringResource
 
 private val LOW_LEVELS = listOf(60, 65, 70, 75, 80, 90, 100)
 private val HIGH_LEVELS = listOf(180, 200, 220, 250, 280, 300, 350)
@@ -212,7 +213,7 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
                 onChange(settings.copy(lowMgDl = it))
             }
             Label(R.string.alarms_low_repeat)
-            NumberChips(LOW_SNOOZES, settings.lowSnoozeMinutes, 5..60, { stringResource(R.string.alarms_minutes, it) }, enabled = settings.lowEnabled) {
+            NumberChips(LOW_SNOOZES, settings.lowSnoozeMinutes, 5..60, { pluralStringResource(R.plurals.alarms_minutes, it.toInt(), it) }, enabled = settings.lowEnabled) {
                 onChange(settings.copy(lowSnoozeMinutes = it))
             }
             Sound(AlarmType.LOW, settings.lowEnabled)
@@ -241,7 +242,7 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
                 onChange(settings.copy(highMgDl = it))
             }
             Label(R.string.alarms_high_repeat)
-            NumberChips(HIGH_SNOOZES, settings.highSnoozeMinutes, 15..240, { stringResource(R.string.alarms_minutes, it) }, enabled = settings.highEnabled) {
+            NumberChips(HIGH_SNOOZES, settings.highSnoozeMinutes, 15..240, { pluralStringResource(R.plurals.alarms_minutes, it.toInt(), it) }, enabled = settings.highEnabled) {
                 onChange(settings.copy(highSnoozeMinutes = it))
             }
             Sound(AlarmType.HIGH, settings.highEnabled)
@@ -256,7 +257,7 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
             last = true,
         ) {
             Label(R.string.alarms_signal_after)
-            NumberChips(SIGNAL_MINUTES, settings.signalLossMinutes, 10..120, { stringResource(R.string.alarms_after_minutes, it) }, enabled = settings.signalLossEnabled) {
+            NumberChips(SIGNAL_MINUTES, settings.signalLossMinutes, 10..120, { pluralStringResource(R.plurals.alarms_after_minutes, it.toInt(), it) }, enabled = settings.signalLossEnabled) {
                 onChange(settings.copy(signalLossMinutes = it))
             }
             Sound(AlarmType.SIGNAL_LOSS, settings.signalLossEnabled)
@@ -298,7 +299,7 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
 /** "15 min", "1 h", "2 h": how long an alarm stays quiet after its snooze. */
 @Composable
 private fun snoozeLabel(minutes: Int) =
-    if (minutes >= 60 && minutes % 60 == 0) stringResource(R.string.alarms_hours, minutes / 60) else stringResource(R.string.alarms_minutes, minutes)
+    if (minutes >= 60 && minutes % 60 == 0) stringResource(R.string.alarms_hours, minutes / 60) else pluralStringResource(R.plurals.alarms_minutes, minutes.toInt(), minutes)
 
 @Composable
 private fun ListCard(content: @Composable ColumnScope.() -> Unit) = Column(
@@ -464,7 +465,7 @@ private fun displayName(context: Context, uri: Uri): String =
 fun ReadingsSection(intervalMinutes: Int, onChange: (Int) -> Unit) {
     Card {
         Label(R.string.readings_save_every)
-        NumberChips(SettingsPrefs.SAVE_INTERVALS, intervalMinutes, SettingsPrefs.SAVE_INTERVAL_RANGE, { stringResource(R.string.alarms_minutes, it) }) { onChange(it) }
+        NumberChips(SettingsPrefs.SAVE_INTERVALS, intervalMinutes, SettingsPrefs.SAVE_INTERVAL_RANGE, { pluralStringResource(R.plurals.alarms_minutes, it.toInt(), it) }) { onChange(it) }
         Text(stringResource(R.string.readings_body), fontSize = 12.sp, color = CaptionMuted)
     }
 }

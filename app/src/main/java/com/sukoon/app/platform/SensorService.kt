@@ -96,12 +96,12 @@ class SensorService : Service() {
                     .setContentText(context.getString(R.string.service_body))
                 minutes > HomeUiStateMapper.STALE_AFTER.toMinutes() -> builder
                     .setSmallIcon(R.drawable.ic_stat_sukoon)
-                    .setContentTitle(context.getString(R.string.service_stale_title, minutes.toInt()))
+                    .setContentTitle(context.resources.getQuantityString(R.plurals.service_stale_title, minutes.toInt(), minutes.toInt()))
                     .setContentText(context.getString(R.string.service_stale_body, reading.glucoseMgDl, TIME.format(reading.timestamp)))
                 else -> builder
                     .setSmallIcon(numberIcon(reading.glucoseMgDl))
                     .setContentTitle("${String.format(Locale.getDefault(), "%d", reading.glucoseMgDl)} ${reading.trend.arrow} ${context.getString(R.string.home_unit_mgdl)}")
-                    .setContentText("${trendWord(context, reading.trend)} · ${if (minutes < 1) context.getString(R.string.graph_just_now) else context.getString(R.string.graph_min_ago, minutes.toInt())}")
+                    .setContentText("${trendWord(context, reading.trend)} · ${if (minutes < 1) context.getString(R.string.graph_just_now) else context.resources.getQuantityString(R.plurals.graph_min_ago, minutes.toInt(), minutes.toInt())}")
                     .setColor(rangeColor(reading.glucoseMgDl))
             }
             return builder.build()
