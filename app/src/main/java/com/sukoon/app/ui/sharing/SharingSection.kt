@@ -262,7 +262,7 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
                     Text(person.name.ifBlank { "…" }, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
                     Text(latestLine(person.latest), fontSize = 12.sp, color = latestColor(person.latest))
                 }
-                TextButton(onClick = {
+                if (!person.viaLibreLinkUp) TextButton(onClick = {
                     act {
                         sharing.stopFollowing(person.id)
                         watch.refreshNow()
@@ -313,7 +313,7 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
 
 /** Someone you follow, full screen: their current value and trend, chart, time in range and readings, refreshed every minute. */
 @Composable
-private fun FollowViewer(sharing: Sharing, person: Followed, onClose: () -> Unit) {
+internal fun FollowViewer(sharing: Sharing, person: Followed, onClose: () -> Unit) {
     val context = LocalContext.current
     var range by remember { mutableStateOf(GraphRange.H6) }
     var readings by remember { mutableStateOf<List<GlucoseReading>>(emptyList()) }
@@ -364,7 +364,7 @@ private fun CodeDialog(onRedeem: (String) -> Unit, onDismiss: () -> Unit) {
 }
 
 @Composable
-private fun latestLine(r: GlucoseReading?): String {
+internal fun latestLine(r: GlucoseReading?): String {
     if (r == null) return stringResource(R.string.sharing_no_readings)
     val minutes = Duration.between(r.timestamp, Instant.now()).toMinutes().coerceAtLeast(0)
     val age = if (minutes < 1) stringResource(R.string.graph_just_now) else stringResource(R.string.graph_min_ago, minutes.toInt())
@@ -372,7 +372,7 @@ private fun latestLine(r: GlucoseReading?): String {
 }
 
 @Composable
-private fun latestColor(r: GlucoseReading?): Color = when {
+internal fun latestColor(r: GlucoseReading?): Color = when {
     r == null || Duration.between(r.timestamp, Instant.now()).toMinutes() > 10 -> CaptionMuted
     r.glucoseMgDl < 70 -> StateLow
     r.glucoseMgDl > 180 -> StateHigh

@@ -1108,4 +1108,18 @@
     <string name="backup_restore_go">استرجع</string>
     <string name="backup_not_one">الملف ده مش نسخة من سكون.</string>
     <string name="backup_restarting">اتسترجع. سكون بيقفل: افتحه تاني.</string>
+    <string name="llu_title">LibreLinkUp</string>
+    <string name="llu_body">تابع أي حد بيشارك من تطبيق Libre بتاع Abbott (Libre 2 و3 وPlus، أندرويد أو آيفون). ادخل بحساب LibreLinkUp بتاعك.</string>
+    <string name="llu_connect">وصّل</string>
+    <string name="llu_connecting">بيوصّل…</string>
+    <string name="llu_connected">LibreLinkUp اتوصل: بتتابع %1$d.</string>
+    <string name="llu_wrong_login">LibreLinkUp مقبلش الإيميل والباسورد دول.</string>
+    <string name="llu_accept_terms">افتح تطبيق LibreLinkUp مرة واقبل الشروط، وبعدين وصّل تاني.</string>
+    <string name="llu_unreachable">مقدرتش أوصل لـ LibreLinkUp. اتأكد من النت وجرّب تاني.</string>
+    <string name="llu_failed">LibreLinkUp رفض الاتصال. جرّب بعدين.</string>
+    <string name="llu_nobody">مفيش حد بيشارك مع الحساب ده لسه. في تطبيق Libre بتاعهم: التطبيقات المتصلة ← LibreLinkUp ← ضيف إيميلك.</string>
+    <string name="settings_source_llu">LibreLinkUp · %1$s</string>
+    <string name="settings_source_llu_body">الحساس بتاعهم عن طريق تطبيق Abbott، متأخر حوالي دقيقة؛ محتاج نت.</string>
+    <string name="toast_source_llu">القرايات دلوقتي جاية من %1$s على LibreLinkUp.</string>
+    <string name="llu_password">الباسورد</string>
 </resources>

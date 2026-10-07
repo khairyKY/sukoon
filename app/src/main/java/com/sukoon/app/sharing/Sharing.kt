@@ -23,14 +23,24 @@ import org.json.JSONObject
 
 data class Person(val id: String, val name: String)
 
-data class Followed(val id: String, val name: String, val latest: GlucoseReading?)
+/** Where a followed person's readings come from. */
+enum class FollowVia { SUKOON, LIBRE_LINK_UP }
+
+data class Followed(val id: String, val name: String, val latest: GlucoseReading?, val via: FollowVia = FollowVia.SUKOON)
 
 /**
  * Followers (A6) on Supabase. Sharing: this phone uploads its real-sensor readings, and anyone who
  * redeems one of its invite codes can read them. Following: reading someone else's. Read-only both
  * ways; either side can end a follow at any time. Demo readings never leave the phone.
  */
-class Sharing(context: Context, val supabase: Supabase, private val glucose: GlucoseRepository, private val scope: CoroutineScope) {
+class Sharing(
+    context: Context,
+    val supabase: Supabase,
+    private val glucose: GlucoseRepository,
+    private val scope: CoroutineScope,
+    /** People followed through LibreLinkUp join the Sukoon follows everywhere (Home, widget, alarms). */
+    val libreLinkUp: LibreLinkUp,
+) {
 
     private val prefs = context.getSharedPreferences("sukoon_prefs", Context.MODE_PRIVATE)
     private val random = SecureRandom()
@@ -86,10 +96,14 @@ class Sharing(context: Context, val supabase: Supabase, private val glucose: Glu
         return ids.map { Person(it, names[it].orEmpty()) }
     }
 
+    /** Everyone this phone follows: through Sukoon (when signed in) and through LibreLinkUp (when signed in). */
     suspend fun following(): List<Followed> {
-        val ids = column(supabase.get("follows?follower=eq.$me&select=owner"), "owner")
-        val names = names(ids)
-        return ids.map { Followed(it, names[it].orEmpty(), latestOf(it)) }
+        val mine = if (supabase.session.value == null) emptyList() else {
+            val ids = column(supabase.get("follows?follower=eq.$me&select=owner"), "owner")
+            val names = names(ids)
+            ids.map { Followed(it, names[it].orEmpty(), latestOf(it)) }
+        }
+        return mine + runCatching { libreLinkUp.followed() }.getOrDefault(emptyList())
     }
 
     suspend fun latestOf(userId: String): GlucoseReading? =
@@ -97,6 +111,7 @@ class Sharing(context: Context, val supabase: Supabase, private val glucose: Glu
 
     /** Oldest first. The server returns at most 1000 rows per request, so this pages through. */
     suspend fun readingsOf(userId: String, sinceMillis: Long): List<GlucoseReading> {
+        if (LibreLinkUp.owns(userId)) return libreLinkUp.readingsOf(userId, sinceMillis)
         val since = URLEncoder.encode(Instant.ofEpochMilli(sinceMillis).toString(), "UTF-8")
         val out = mutableListOf<GlucoseReading>()
         while (true) {

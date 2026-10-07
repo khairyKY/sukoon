@@ -12,6 +12,7 @@ Numbers are mg/dL. "Fresh" means the newest reading is at most **10 minutes** ol
 | Source | What it is | Alarms? |
 |---|---|---|
 | **Sensor** (Libre 2 Plus over Bluetooth) | Real readings, one a minute | **Yes**: the only source that ever sounds an alarm |
+| **LibreLinkUp** (a connection, You → Sensor) | Someone's Libre through Abbott's app (Libre 3 included), polled every minute, about a minute behind; needs the internet | **Yes** |
 | **Demo** | Made-up readings to try the app | **Never**. Demo data must not wake anyone or text their family |
 
 You → Alarms says "Alarms are off right now" in red whenever the sensor isn't the source.
@@ -144,7 +145,9 @@ Any answer to the alarm, even swiping it away, restarts the clock.
 ## 6. Following someone
 
 The same alarm rules run on the person you follow, checked every minute over the internet, with
-your own alarm settings. Their Home uses the same lines as yours: **very low** under 55 ("Call now"),
+your own alarm settings. People come from Sukoon invite codes and from LibreLinkUp (You → People →
+LibreLinkUp: anyone sharing from Abbott's Libre app with that account); LibreLinkUp people are
+managed in Abbott's app, so there's no "stop following" for them here. Their Home uses the same lines as yours: **very low** under 55 ("Call now"),
 **low** under 70, **heading low** when under 70 within 20 minutes, **high** over 180 (calm until 250),
 **steady** otherwise, and **no readings** after 10 minutes. Their alarms show their name. Answers only snooze them on your phone.
 Emergency texts are never sent from a follower's phone.

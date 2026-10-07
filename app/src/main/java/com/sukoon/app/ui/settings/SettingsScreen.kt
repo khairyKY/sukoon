@@ -95,6 +95,10 @@ import androidx.compose.material3.HorizontalDivider
 import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.reminders.BasalReminderSettings
 import com.sukoon.app.ui.components.ExpandedPanel
+import com.sukoon.app.ui.sharing.LibreLinkUpSection
+import com.sukoon.app.sharing.LibreLinkUp
+import androidx.compose.runtime.produceState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /** The You tab's sections (design "You, divided"): each opens its own page from the hub. */
 private enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
@@ -219,6 +223,20 @@ fun SettingsScreen(
                                 context.toast(context.getString(R.string.toast_source_sensor))
                             }
                         }
+                        // LibreLinkUp connections as this phone's glucose (a Libre 3 on Abbott's app, say).
+                        val llu = sharing.libreLinkUp
+                        val lluAccount by llu.account.collectAsStateWithLifecycle()
+                        val connections by produceState<List<LibreLinkUp.Connection>>(emptyList(), lluAccount) {
+                            value = if (lluAccount == null) emptyList() else runCatching { llu.connections() }.getOrDefault(emptyList())
+                        }
+                        connections.forEach { c ->
+                            val chosen = sourceKind == SourceKind.LIBRE_LINK_UP && llu.ownPatientId == c.patientId
+                            SourceRow(stringResource(R.string.settings_source_llu, c.name.ifBlank { "…" }), stringResource(R.string.settings_source_llu_body), chosen) {
+                                llu.ownPatientId = c.patientId
+                                onSelectSource(SourceKind.LIBRE_LINK_UP)
+                                context.toast(context.getString(R.string.toast_source_llu, c.name))
+                            }
+                        }
                         SourceOption(SourceKind.SIMULATED, sourceKind, R.string.settings_source_demo, R.string.settings_source_demo_body) {
                             onSelectSource(SourceKind.SIMULATED)
                             context.toast(context.getString(R.string.toast_source_demo))
@@ -232,10 +250,10 @@ fun SettingsScreen(
                     }
                     YouPage.ALARMS -> {
                         // Whether alarms can reach you goes first while something stops them, else after the alarms (design "You · Alarms").
-                        val blocked = sourceKind != SourceKind.LIBRE_BLE || missing.any { it in ALARM_SETUP }
+                        val blocked = !sourceKind.real || missing.any { it in ALARM_SETUP }
                         if (blocked) {
                             SectionLabel(stringResource(R.string.alarms_reach_title))
-                            AlarmReach(sensorIsSource = sourceKind == SourceKind.LIBRE_BLE)
+                            AlarmReach(sensorIsSource = sourceKind.real)
                             Gap()
                         }
                         AlarmSettingsSection(alarmSettings, onAlarmSettings, onTestAlarm, onPreviewAlarm)
@@ -254,6 +272,9 @@ fun SettingsScreen(
                         Gap()
                         SectionLabel(stringResource(R.string.sharing_title))
                         SharingSection(sharing, followerWatch)
+                        Gap()
+                        SectionLabel(stringResource(R.string.llu_title))
+                        LibreLinkUpSection(sharing.libreLinkUp, sharing, followerWatch)
                     }
                     YouPage.INSULIN -> {
                         SectionLabel(stringResource(R.string.reminder_basal_section))
@@ -620,8 +641,12 @@ private fun SectionLabel(text: String) {
 }
 
 @Composable
-private fun SourceOption(kind: SourceKind, selected: SourceKind, titleRes: Int, bodyRes: Int, onSelect: () -> Unit) {
-    val isSelected = kind == selected
+private fun SourceOption(kind: SourceKind, selected: SourceKind, titleRes: Int, bodyRes: Int, onSelect: () -> Unit) =
+    SourceRow(stringResource(titleRes), stringResource(bodyRes), kind == selected, onSelect)
+
+/** One choice of where readings come from: a radio, its name and a line on what it means. */
+@Composable
+private fun SourceRow(title: String, body: String, isSelected: Boolean, onSelect: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -642,8 +667,8 @@ private fun SourceOption(kind: SourceKind, selected: SourceKind, titleRes: Int, 
         }
         Spacer(Modifier.width(14.dp))
         Column {
-            Text(stringResource(titleRes), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-            Text(stringResource(bodyRes), fontSize = 12.sp, color = CaptionMuted)
+            Text(title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+            Text(body, fontSize = 12.sp, color = CaptionMuted)
         }
     }
 }

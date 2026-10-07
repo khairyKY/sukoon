@@ -57,6 +57,8 @@ import com.sukoon.app.alarms.AlarmLog
 import com.sukoon.app.alarms.SignalWatchdog
 import com.sukoon.app.reminders.BasalReminder
 import com.sukoon.app.data.db.LogEventType
+import com.sukoon.app.sharing.LibreLinkUp
+import com.sukoon.app.sharing.LibreLinkUpSource
 
 /**
  * Manual dependency container (ponytail: no Hilt/Koin for a graph this small). Owns the
@@ -83,6 +85,9 @@ class AppContainer(private val context: Context) {
 
     private val _sourceKind = MutableStateFlow(settings.sourceKind)
     val sourceKind: StateFlow<SourceKind> = _sourceKind.asStateFlow()
+
+    /** Abbott's follow service: people sharing from Abbott's Libre app (Libre 3 too). */
+    val libreLinkUp = LibreLinkUp(context)
 
     private val source = MutableStateFlow(sourceFor(_sourceKind.value))
 
@@ -119,7 +124,7 @@ class AppContainer(private val context: Context) {
 
     val supabase = Supabase(context, BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_KEY)
 
-    val sharing = Sharing(context, supabase, glucoseRepository, appScope)
+    val sharing = Sharing(context, supabase, glucoseRepository, appScope, libreLinkUp)
 
     /** What the alarms did (You → Alarms). */
     val alarmLog = AlarmLog(context)
@@ -133,7 +138,7 @@ class AppContainer(private val context: Context) {
         log = alarmLog,
         emergency = emergency,
         scope = appScope,
-        enabled = { _sourceKind.value == SourceKind.LIBRE_BLE },
+        enabled = { _sourceKind.value.real },
         watchdog = { SignalWatchdog.arm(context, it) },
     )
 
@@ -163,7 +168,7 @@ class AppContainer(private val context: Context) {
                 if (BasalReminder.taken(events, Instant.now())) BasalReminder.dismiss(context)
             }
         }
-        if (_sourceKind.value == SourceKind.LIBRE_BLE) SensorService.start(context)
+        if (_sourceKind.value.real) SensorService.start(context)
         refreshWidgets()
         alarms.start()
         nightscout.start()
@@ -174,7 +179,7 @@ class AppContainer(private val context: Context) {
         // The sensor's ongoing notification shows the newest reading; re-drawn each minute for its age.
         appScope.launch {
             combine(glucoseRepository.latestReading, ticks(60_000)) { reading, _ -> reading }.collect { reading ->
-                if (_sourceKind.value == SourceKind.LIBRE_BLE) SensorService.show(context, reading, Instant.now())
+                if (_sourceKind.value.real) SensorService.show(context, reading, Instant.now())
             }
         }
         appScope.launch {
@@ -224,7 +229,7 @@ class AppContainer(private val context: Context) {
         settings.sourceKind = kind
         _sourceKind.value = kind
         source.value = sourceFor(kind) // a fresh instance even for the same kind: re-pairing restarts the connection
-        if (kind == SourceKind.LIBRE_BLE) SensorService.start(context) else SensorService.stop(context)
+        if (kind.real) SensorService.start(context) else SensorService.stop(context)
     }
 
     /**
@@ -254,5 +259,8 @@ class AppContainer(private val context: Context) {
     private fun sourceFor(kind: SourceKind): GlucoseSource = when (kind) {
         SourceKind.LIBRE_BLE -> LibreBleSource(context, pairingStore)
         SourceKind.SIMULATED -> SimulatedSource(scope = appScope)
+        // ponytail: shares the connected-device foreground service that keeps the process alive; a
+        // data-sync service of its own if a phone ever refuses it without Bluetooth permission.
+        SourceKind.LIBRE_LINK_UP -> LibreLinkUpSource(libreLinkUp, { libreLinkUp.ownPatientId }, appScope)
     }
 }

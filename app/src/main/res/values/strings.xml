@@ -1100,4 +1100,18 @@
     <string name="backup_restore_go">Restore</string>
     <string name="backup_not_one">That file isn\'t a Sukoon backup.</string>
     <string name="backup_restarting">Restored. Sukoon is closing: open it again.</string>
+    <string name="llu_title">LibreLinkUp</string>
+    <string name="llu_body">Follow anyone who shares from Abbott\'s Libre app (Libre 2, 3 and Plus, Android or iPhone). Sign in with your LibreLinkUp account.</string>
+    <string name="llu_connect">Connect</string>
+    <string name="llu_connecting">Connecting…</string>
+    <string name="llu_connected">LibreLinkUp connected: following %1$d.</string>
+    <string name="llu_wrong_login">LibreLinkUp didn\'t accept that email and password.</string>
+    <string name="llu_accept_terms">Open the LibreLinkUp app once and accept its terms, then connect again.</string>
+    <string name="llu_unreachable">Couldn\'t reach LibreLinkUp. Check the internet and try again.</string>
+    <string name="llu_failed">LibreLinkUp refused the connection. Try again later.</string>
+    <string name="llu_nobody">Nobody shares with this account yet. In their Libre app: Connected apps → LibreLinkUp → add your email.</string>
+    <string name="settings_source_llu">LibreLinkUp · %1$s</string>
+    <string name="settings_source_llu_body">Their sensor through Abbott\'s app, about a minute behind; needs the internet.</string>
+    <string name="toast_source_llu">Readings now come from %1$s on LibreLinkUp.</string>
+    <string name="llu_password">Password</string>
 </resources>
