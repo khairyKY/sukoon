@@ -106,7 +106,8 @@ I have type 1 diabetes and I live in Egypt, on EU-bought Libre 2 sensors. The of
 ### Now: the number, and what to do about it
 
 - ✅ **Home in one glance.** A large serif reading, the trend arrow, how old it is, the last 3 hours as one bar per 15 minutes (a low or a high inside one shows instead of being averaged away), insulin still active, and up to four stats you pick (carbs, calories, active insulin, time in range, steps, water…).
-- ✅ **One message, one next step.** Sixteen rules, most urgent first: *heading low, have carbs ready*; *insulin still working, don't stack another dose*; *rebound after a low, let it settle*; *quiet night*. It never suggests an insulin dose. The full list is in [`docs/behaviour.md`](docs/behaviour.md).
+- ✅ **One message, one next step.** Sixteen rules, most urgent first: *heading low, have carbs ready*; *insulin still working, don't stack another dose*; *rebound after a low, let it settle*; *quiet night*. The message never suggests an insulin dose (dose suggestions are a separate beta, below). The full list is in [`docs/behaviour.md`](docs/behaviour.md).
+- ✅ **Your own range.** 70 to a top you choose, 120–180 (70–140 is *time in tight range*). Home, the graph, widgets and the status bar use it; Insights and the doctor report keep the international 70–180 and show yours beside it.
 - ✅ **Lows walk you through the 15-15 rule.** *I've treated it* stops the alarm, counts down 15 minutes, then asks you to check, and says *Still low, have another 15 g* if you are.
 - ✅ **Every state has its own screen:** no sensor, warming up, in range, high, low, urgent, signal lost (the last value greyed with how long ago), and sensor ended.
 - ✅ **Glucose in the status bar.** The number itself is the notification icon, with the arrow and age in the shade.
@@ -118,12 +119,17 @@ I have type 1 diabetes and I live in Egypt, on EU-bought Libre 2 sensors. The of
 - ✅ **Insulin on board** on the exponential curve OpenAPS and Loop use (peak 75 minutes, 5 hours by default), shown on Home and before you log another dose.
 - ✅ **Finger-pricks beside the sensor.** Each check shows the sensor reading at that minute and whether the two agree, and sits on the graph as a ring.
 - ✅ **Long-acting reminder.** A daily nudge at your time unless the dose was already logged, with *Took it* right on the notification.
+- 🌱 **Injection sites.** *Where?* on rapid and long-acting entries: two figures, front and back, one tap for the spot and the side. The spot rested longest is suggested, the last 30 days show as a body map, and an insight says when one spot takes most of your doses.
+- 🌱 **Dose suggestions (beta, off by default).** Carb counting with a ratio per meal (breakfast, lunch, dinner, late), how far 1 unit lowers you, and a target; any box can stay empty. A new rapid entry shows the suggested dose with its maths line by line, rounded down to your pen (whole units by default) and capped at your maximum. Nothing is suggested when you're low or dropping. *Use* fills the amount; only Save logs it. Above your range and not eating, Home shows a correction the same way.
+- 🌱 **Starting ratios for when you don't know yours.** From your logged daily insulin (the 500 and 1800 rules), else your weight and age (0.5 u/kg a day for adults, 1.0 for 12–17, 0.7 under 12: the cautious end of the ADA and ISPAD ranges), else the common adult start.
+- 🌱 **Learning from your meals.** Every meal of the last 30 days gets a verdict. Clean ones (logged with their insulin, nothing else eaten for 4 hours, none still working, no workout) say what ratio they needed; a least-squares fit over every usable meal and correction finds how far 1 unit lowers you and each meal's ratio, with no numbers to start from. Each suggestion shows its meals, moves your number at most 20% per *Use*, and Home says when one is ready. Never changed by itself. The whole review exports as CSV.
+- 🌱 **Parent lock.** A PIN (kept as a salted hash) that guards the alarms, your range, dose settings and profile. Under 18, dose suggestions only switch on behind one.
 - ✅ **MyFitnessPal through Health Connect.** Meals arrive with every nutrient (edits and deletions follow), plus workouts, steps and water. Pull down on Home to sync. Readings go back out to Health Connect as blood glucose.
 
 ### Trends: understand the week
 
 - ✅ **The graph:** 3 hours to 14 days, the line coloured by range with gaps left as gaps, time in range in five bands, average and GMI, and every reading listed underneath.
-- ✅ **Insights**, each with its source: time in range against the international consensus targets, variability (CV), recurring lows and highs, the dawn rise, what each meal did, pre-bolus timing, insulin stacking, this week against last, lows after workouts, highs after treating a low.
+- ✅ **Insights**, each with its source: time in range against the international consensus targets, variability (CV), recurring lows and highs, the dawn rise, what each meal did, pre-bolus timing, insulin stacking, this week against last, lows after workouts, highs after treating a low, one injection spot taking most doses. With a tighter range of your own, its share sits beside the international one.
 - ✅ **Report for your doctor:** an Ambulatory Glucose Profile (5–95, 25–75 and median by time of day) over 7, 14 or 30 days with GMI and CV, exported as a one-page A4 PDF.
 - ✅ **Ask.** A chat about your own data, and carb estimates from a meal photo or a description, through Google's Gemini with **your own free API key**. It sees summaries, not raw readings, and an estimate only ever pre-fills a field you confirm.
 
@@ -137,7 +143,7 @@ I have type 1 diabetes and I live in Egypt, on EU-bought Libre 2 sensors. The of
 
 ### Everything else
 
-- ✅ **English and Egyptian Arabic**, right to left, with the language picked inside the app (1,046 strings in each, checked for parity).
+- ✅ **English and Egyptian Arabic**, right to left, with the language picked inside the app (1,266 strings in each, checked for parity).
 - ✅ **Light, dark or like the phone**, with motion from the design spec that turns off when the phone's *Remove animations* is on.
 - ✅ **A built-in guide** (You → Guide) and a getting-started card on Home.
 - ✅ **Starts after a reboot or update**, and a watchdog wakes it if the phone kills it.
@@ -146,15 +152,15 @@ I have type 1 diabetes and I live in Egypt, on EU-bought Libre 2 sensors. The of
 
 ## 🔔 Alarms that reach you
 
-A CGM app is only as good as the alarm that wakes you at 3 a.m. Every alarm here gets a notification, a full-screen alert over the lock screen, and its own sound. Sukoon ships six of its own (bell and wood tones with soft attacks, made by [`tools/make_sounds.py`](tools/make_sounds.py)); any alarm can use any of them, a phone sound, or your own file, and a broken file falls back rather than going silent.
+A CGM app is only as good as the alarm that wakes you at 3 a.m. Every alarm here gets a notification, a full-screen alert over the lock screen, and its own sound. Sukoon's sounds come in five packs, all synthesized for it ([`tools/make_sound_packs.py`](tools/make_sound_packs.py)): **Astral** (space, calm; the default), **Orbit** (space, modern), **Glass**, **Clear** (the rhythm of hospital monitors) and **Bells**. Pick one in You → Alarms → Sounds; any alarm can still use a phone sound or your own file, and a broken file falls back rather than going silent.
 
 | Alarm | Fires | Default | Can you change it? | Sound | Repeats |
 | :-- | :-- | :-- | :-- | :-- | :-- |
-| **Urgent low** | under 55 | always on | No. It can't be turned off or moved | *Rise*, looping a minute | every 5 min, snooze capped at 5. Lifts alarm volume to 80% |
-| **Low** | under your line | 70 | line 60–110, on/off | *Ripple*, 30 s | after its 15-min snooze. Lifts volume to 50% |
-| **Going low** | heading under your line within 20 min | on | on/off | *Drift* | once per episode |
-| **High** | over your line | 180 | line 150–400, on/off, quiet hours | *Warm* | after its 60-min snooze |
-| **No readings** | no reading for N min | 20 min | 10–120, on/off | *Knock* | every 30 min |
+| **Urgent low** | under 55 | always on | No. It can't be turned off or moved | the pack's urgent sound, looping a minute | every 5 min, snooze capped at 5. Lifts alarm volume to 80% |
+| **Low** | under your line | 70 | line 60–110, on/off | the pack's low sound, 30 s | after its 15-min snooze. Lifts volume to 50% |
+| **Going low** | heading under your line within 20 min | on | on/off | the pack's, 8 s | once per episode |
+| **High** | over your line | 180 (follows your range) | line 120–400, on/off, quiet hours | the pack's, 8 s | after its 60-min snooze |
+| **No readings** | no reading for N min | 20 min | 10–120, on/off | the pack's, 8 s | every 30 min |
 
 Alarms only ever come from real readings: the sensor, or a LibreLinkUp or Dexcom connection used as this phone's glucose. Demo data never sounds one.
 
@@ -296,12 +302,12 @@ Nothing, unless you turn it on. There are no analytics, no ads and no tracking o
 
 | Data | Goes to | Only when |
 | :-- | :-- | :-- |
-| Readings, logbook, photos | Your phone (Room database, app-private) | always |
+| Readings, logbook, photos, your profile and dose settings | Your phone (app-private) | always |
 | Readings out, meals in | Health Connect, on the phone | you grant Health Connect access |
 | Your live readings | Your Supabase account, readable only by people you approved (row-level security) | you sign in and invite a follower |
 | Your LibreLinkUp or Dexcom login | Abbott's or Dexcom's servers, to fetch the readings you're allowed to see | you sign in to follow someone there, or use it as your glucose |
 | Readings and treatments | Your own Nightscout site | you add its address and token |
-| Summaries of your data, a meal photo | Google Gemini, with your own API key | you add a key and ask a question |
+| Summaries of your data, your profile and dose settings, a meal photo | Google Gemini, with your own API key | you add a key and ask a question |
 | Glucose, how long, location | Your emergency contacts by SMS and phone call | an urgent low goes unanswered |
 
 **Cost:** Supabase, Gemini's free tier and Nightscout on your own machine are all $0. The app itself has no subscription, no account requirement and no server of its own.
@@ -381,6 +387,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for branch and commit conventions. Sens
 | :-- | :-- |
 | Direct Libre 2 / 2 Plus EU, alarms with Sukoon's own sounds, emergency escalation, logbook, insulin on board, calibration, insights, AGP report, widgets, Health Connect, Nightscout, CSV, backup, English + Arabic | ✅ built |
 | Followers on Supabase, the follow page for iPhone and any browser, LibreLinkUp and Dexcom Share | 🌱 built, being set up for daily use |
+| Dose suggestions and learning your ratios (beta), injection sites, your own range, parent lock, sound packs | 🌱 built, being tested daily |
 | Libre 1 and 2 through a Bubble transmitter | 🗓 possible: portable from GlucoseDirect, needs a transmitter to test |
 | Libre 3 / 3 Plus over Bluetooth | ✖ the open implementations depend on Abbott code under GPL, so it can't be ported. A Libre 3 works today through LibreLinkUp. |
 

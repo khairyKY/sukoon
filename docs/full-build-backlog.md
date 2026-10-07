@@ -74,6 +74,17 @@ Designs: the "Sukoon — onboarding, logbook & settings redesign" canvas (claude
 - ✅ Injection sites (design "Round 4 · Where the insulin went"): "Where?" on rapid and long-acting entries with a two-figure body map (spot and side in one tap), the spot rested longest suggested, sites in the logbook rows, You → Insulin & logbook heat map for 30 days, a rotation insight, sites in the AI brief, a Guide topic (Room v4).
 - ⏸ Bubble (Libre 1 transmitter): no hardware to test with.
 
+## Dose suggestions, your range, sounds (Kai, 2026-10-07 → 08)
+Research and rules: docs/research/dosing-sources.md; behaviour: docs/behaviour.md §8–9.
+- ✅ v0.7.0 (first release-key build) and v0.7.1 (sound packs: Astral default, Orbit, Glass, Clear, Bells; You → Alarms → Sounds).
+- ✅ Dose suggestions (beta): carb counting with a ratio per meal, correction factor, target, maximum, pen step (whole units by default); the maths on every new rapid entry; nothing when low or dropping; the AI may work out doses while it's on.
+- ✅ Learning: every meal gets a verdict, clean meals teach a ratio per meal time, a least-squares fit over every usable meal and correction teaches the factor and ratios with nothing to start from; Use moves 20% at a time; a Home notice when a number is ready; CSV export; "How to make a meal count".
+- ✅ Starting ratios for every age (logbook, else weight and age, else the common adult start), About you (weight, height, age, sex), parent lock (PIN) guarding alarms, range, doses and profile.
+- ✅ Your range (70 to 120–180) on the everyday screens; onboarding sets it, each alarm's line, and the dose setup.
+- ✅ Correction on Home when above your range and not eating.
+- ✅ Main CSV adds injection site, source app and nutrients; Gemini moves to the next model when one hangs.
+- 🗓 Egyptian food portions from «افهم سكر» once Kai has a copy to read from; guided tests (basal, ratio, correction).
+
 Rules: no APK builds or installs unless Kai asks (compile + unit tests only); no AI attribution in commits or PRs.
 
 iPhone (Kai's father, own sensor): not possible without Apple's paid developer account — free personal teams can't use NFC to pair a Libre. Options: an Android phone with NFC (runs Sukoon fully), or the $99/yr account + a Mac + an iOS port. Kai declined the license (2026-10-03).
