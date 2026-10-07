@@ -8,7 +8,7 @@ import numpy as np
 from scipy.io import wavfile
 
 RATE = 32000
-OUT = r'D:\Coding\sukoon\app\src\main\res\raw'
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'app', 'src', 'main', 'res', 'raw')
 os.makedirs(OUT, exist_ok=True)
 
 
