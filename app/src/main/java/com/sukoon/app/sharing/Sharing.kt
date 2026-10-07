@@ -150,6 +150,9 @@ class Sharing(
         private const val PAGE = 1000
         private const val CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // no 0/O, 1/I
 
+        /** The follower page (web/, on GitHub Pages): follow from any browser, iPhone included. */
+        const val FOLLOW_PAGE = "https://khairyky.github.io/sukoon/"
+
         /** "ABCD-EFGH": easier to read out or type. */
         fun formatCode(code: String) = code.chunked(4).joinToString("-")
 

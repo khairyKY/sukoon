@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sukoon · Follow</title>
+<meta name="description" content="Follow someone's glucose from their Sukoon app.">
+<meta name="theme-color" content="#F4F1EA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1E2B26" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sukoon">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<style>
+:root {
+  --bg: #F4F1EA; --surface: #FFFFFF; --ink: #1E2B26; --muted: #5E6B64; --line: #E4DFD4; --chip: #EBE6DC;
+  --sage: #3E7A63; --deep: #2E5C4A; --mist: #CFE0D6; --high: #8A5A1E; --highbg: #F1E2CC; --low: #A23F35; --lowbg: #F0DAD5;
+  --serif: 'Newsreader', Georgia, serif; --sans: 'Hanken Grotesk', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1E2B26; --surface: #10201B; --ink: #E4DFD4; --muted: #A6B1AA; --line: rgba(228,223,212,.14); --chip: rgba(228,223,212,.10);
+    --sage: #82BBA0; --deep: #A8D3BE; --mist: rgba(130,187,160,.18); --high: #E5B877; --highbg: #3A3122; --low: #F0A097; --lowbg: #3D2623;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-text-size-adjust: 100%; }
+body { min-height: 100vh; padding: max(14px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom)); }
+main { max-width: 440px; margin: 0 auto; }
+h1 { font-family: var(--serif); font-weight: 400; font-size: 30px; margin: 8px 0 4px; }
+p { line-height: 1.45; }
+.muted { color: var(--muted); font-size: 14px; }
+.small { font-size: 13px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px; margin-top: 14px; }
+label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin: 12px 0 6px; }
+input { width: 100%; min-height: 48px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: 500 16px var(--sans); padding: 0 14px; }
+input:focus { outline: 2px solid var(--sage); border-color: transparent; }
+button { font: 600 16px var(--sans); cursor: pointer; }
+.primary { width: 100%; min-height: 52px; margin-top: 16px; border: none; border-radius: 14px; background: var(--sage); color: #fff; }
+.primary:disabled { opacity: .5; }
+.link { background: none; border: none; color: var(--deep); padding: 12px 4px; min-height: 44px; font-size: 15px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.error { color: var(--low); font-size: 14px; margin-top: 10px; min-height: 1em; }
+.top { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+.who { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px 0 4px; border-radius: 22px; background: var(--chip); border: none; color: var(--ink); font: 600 16px var(--sans); }
+.avatar { width: 34px; height: 34px; border-radius: 17px; background: var(--mist); color: var(--deep); display: flex; align-items: center; justify-content: center; font: 400 17px var(--serif); }
+.live { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; letter-spacing: .12em; color: var(--muted); }
+.dot { width: 7px; height: 7px; border-radius: 4px; background: var(--sage); }
+.pulse { animation: pulse 2.4s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
+.hero { margin-top: 22px; display: flex; flex-direction: column; align-items: center; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--mist); color: var(--deep); }
+.pill.high { background: var(--highbg); color: var(--high); }
+.pill.low { background: var(--lowbg); color: var(--low); }
+.pill.gone { background: var(--chip); color: var(--muted); }
+.number { display: flex; align-items: flex-start; gap: 8px; margin-top: 6px; }
+.value { font: 300 104px/1 var(--serif); letter-spacing: -2px; }
+.arrow { font: 400 36px var(--serif); margin-top: 16px; }
+.value.high, .arrow.high { color: var(--high); } .value.low, .arrow.low { color: var(--low); } .value.gone { color: var(--muted); }
+.meta { font-size: 13px; color: var(--muted); }
+.chart { margin-top: 18px; }
+.chart svg { width: 100%; height: 132px; display: block; }
+.caption { font-size: 12px; color: var(--muted); text-align: center; margin-top: 4px; }
+.words { margin-top: 18px; }
+.words h2 { font: 400 26px/1.25 var(--serif); margin: 0; }
+.words p { margin: 6px 0 0; color: var(--muted); }
+.banner { border-radius: 16px; padding: 14px 16px; margin-top: 16px; background: var(--lowbg); color: var(--low); font-weight: 600; display: none; }
+.banner.on { display: block; }
+.people { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.people button { min-height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 14px; }
+.people button[aria-pressed="true"] { background: var(--deep); color: #fff; border-color: transparent; }
+.foot { margin-top: 24px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; }
+.hidden { display: none !important; }
+.mark { width: 56px; height: 56px; }
+[dir="rtl"] .arrow { transform: scaleX(-1); }
+</style>
+</head>
+<body>
+<main>
+
+  <!-- Signed out: sign in or create an account -->
+  <section id="auth" class="hidden">
+    <svg class="mark" viewBox="0 0 108 108" aria-hidden="true"><rect width="108" height="108" rx="30" fill="#1E2B26"/><circle cx="54" cy="54" r="19.13" fill="#EAF0EC"/><circle cx="63.56" cy="46.35" r="19.13" fill="#1E2B26"/><circle cx="60.69" cy="55.91" r="4.78" fill="none" stroke="#82BBA0" stroke-width="2.3"/></svg>
+    <h1 data-t="authTitle"></h1>
+    <p class="muted" data-t="authBody"></p>
+    <form id="authForm" class="card" autocomplete="on">
+      <div id="nameRow" class="hidden"><label for="name" data-t="yourName"></label><input id="name" autocomplete="name"></div>
+      <label for="email" data-t="email"></label><input id="email" type="email" autocomplete="email" required>
+      <label for="password" data-t="password"></label><input id="password" type="password" autocomplete="current-password" minlength="6" required>
+      <button class="primary" id="authGo" type="submit"></button>
+      <div class="error" id="authError" role="alert"></div>
+    </form>
+    <button class="link" id="authSwitch" type="button"></button>
+  </section>
+
+  <!-- Signed in, following nobody: the invite code -->
+  <section id="code" class="hidden">
+    <h1 data-t="codeTitle"></h1>
+    <p class="muted" data-t="codeBody"></p>
+    <form id="codeForm" class="card">
+      <label for="codeInput" data-t="code"></label>
+      <input id="codeInput" autocomplete="off" autocapitalize="characters" placeholder="ABCD-EFGH" required>
+      <button class="primary" type="submit" data-t="follow"></button>
+      <div class="error" id="codeError" role="alert"></div>
+    </form>
+    <div class="foot"><button class="link" id="codeBack" type="button" data-t="back"></button><button class="link" data-act="signout" type="button" data-t="signOut"></button></div>
+  </section>
+
+  <!-- Following someone -->
+  <section id="home" class="hidden">
+    <div class="top">
+      <button class="who" id="who" type="button"><span class="avatar" id="avatar"></span><span id="whoName"></span></button>
+      <span class="live"><span class="dot pulse" id="liveDot"></span><span data-t="live"></span></span>
+    </div>
+    <div class="people hidden" id="people"></div>
+    <div class="banner" id="banner" role="alert"></div>
+    <div class="hero">
+      <span class="pill" id="pill"></span>
+      <div class="number"><span class="value" id="value">–</span><span class="arrow" id="arrow"></span></div>
+      <span class="meta" id="meta"></span>
+    </div>
+    <div class="chart" id="chart"></div>
+    <div class="caption" data-t="chartCaption"></div>
+    <div class="words"><h2 id="title"></h2><p id="detail"></p></div>
+    <div class="card small hidden" id="soundCard">
+      <div class="row"><span data-t="soundBody"></span><button class="link" id="soundOn" type="button" data-t="soundOn"></button></div>
+    </div>
+    <div class="foot">
+      <button class="link" id="addPerson" type="button" data-t="addPerson"></button>
+      <button class="link" id="lang" type="button"></button>
+      <button class="link" data-act="signout" type="button" data-t="signOut"></button>
+    </div>
+    <p class="muted small" data-t="footNote"></p>
+  </section>
+
+</main>
+<script>
+'use strict';
+// ------------------------------------------------------------------ words (English, Egyptian Arabic)
+const T = {
+  en: {
+    authTitle: 'Follow with Sukoon', authBody: "See someone's glucose live, from their Sukoon app. Add this page to your home screen to use it like an app.",
+    yourName: 'Your name', email: 'Email', password: 'Password', signIn: 'Sign in', create: 'Create account',
+    toCreate: 'New here? Create an account', toSignIn: 'Have an account? Sign in',
+    codeTitle: 'Enter their code', codeBody: 'In their Sukoon app: You → People → Invite. The code works once, for 24 hours.',
+    code: 'Invite code', follow: 'Follow', back: 'Back', signOut: 'Sign out', live: 'LIVE',
+    chartCaption: 'Last 3 hours · the band is the 70–180 target', addPerson: 'Follow someone else',
+    soundBody: 'Sound an alarm here when they go low.', soundOn: 'Turn on',
+    footNote: "Alarms sound only while this page is open. Keep their Sukoon's emergency contacts set for when it isn't.",
+    inRange: 'In range', high: 'High', low: 'Low', veryLow: 'Very low', noSignal: 'No readings',
+    mgdl: 'mg/dL', now: 'just now', minAgo: n => `${n} min ago`,
+    steady: n => `${n} is steady.`, isHigh: n => `${n} is high.`, isLow: n => `${n} is low.`, isVeryLow: n => `${n} is very low.`,
+    headingLow: n => `${n} is heading low.`, quiet: n => `No readings from ${n}.`,
+    lastSeen: (v, m) => `Last reading ${v}, ${m} min ago.`, callNow: 'Call them now.', couldBe: m => `Could be under 70 in about ${m} min.`,
+    trend: { '-2': 'falling fast', '-1': 'falling', '0': 'steady', '1': 'rising', '2': 'rising fast' },
+    wrongLogin: "That email and password don't match.", confirmEmail: 'Check your email to confirm the account, then sign in.',
+    badCode: 'That code is wrong, used or expired.', offline: "Can't reach Sukoon. Check the internet.", lang: 'العربية',
+  },
+  ar: {
+    authTitle: 'تابع مع سكون', authBody: 'شوف سكر حد بشكل مباشر من تطبيق سكون بتاعه. حط الصفحة دي على الشاشة الرئيسية علشان تستخدمها زي التطبيق.',
+    yourName: 'اسمك', email: 'الإيميل', password: 'الباسورد', signIn: 'ادخل', create: 'اعمل حساب',
+    toCreate: 'جديد؟ اعمل حساب', toSignIn: 'عندك حساب؟ ادخل',
+    codeTitle: 'اكتب الكود بتاعهم', codeBody: 'في تطبيق سكون بتاعهم: حسابي ← الناس ← دعوة. الكود بيشتغل مرة واحدة، لمدة ٢٤ ساعة.',
+    code: 'كود الدعوة', follow: 'تابع', back: 'رجوع', signOut: 'اخرج', live: 'مباشر',
+    chartCaption: 'آخر ٣ ساعات · الشريط هو المعدل ٧٠–١٨٠', addPerson: 'تابع حد تاني',
+    soundBody: 'يرن هنا لما السكر يوطى.', soundOn: 'شغّل',
+    footNote: 'المنبّه بيرن بس والصفحة مفتوحة. خلّي جهات الطوارئ في سكون بتاعهم متظبطة للباقي.',
+    inRange: 'في المعدل', high: 'عالي', low: 'واطي', veryLow: 'واطي جدًا', noSignal: 'مفيش قرايات',
+    mgdl: 'مجم/دل', now: 'دلوقتي', minAgo: n => `من ${n} دقيقة`,
+    steady: n => `سكر ${n} مستقر.`, isHigh: n => `سكر ${n} عالي.`, isLow: n => `سكر ${n} واطي.`, isVeryLow: n => `سكر ${n} واطي جدًا.`,
+    headingLow: n => `سكر ${n} نازل ناحية الهبوط.`, quiet: n => `مفيش قرايات من ${n}.`,
+    lastSeen: (v, m) => `آخر قراية ${v}، من ${m} دقيقة.`, callNow: 'اتصل دلوقتي.', couldBe: m => `ممكن يبقى تحت ٧٠ في حوالي ${m} دقيقة.`,
+    trend: { '-2': 'نازل بسرعة', '-1': 'نازل', '0': 'ثابت', '1': 'طالع', '2': 'طالع بسرعة' },
+    wrongLogin: 'الإيميل والباسورد مش متطابقين.', confirmEmail: 'افتح إيميلك وأكّد الحساب، وبعدين ادخل.',
+    badCode: 'الكود غلط أو اتستخدم أو انتهى.', offline: 'مش قادر أوصل لسكون. اتأكد من النت.', lang: 'English',
+  },
+};
+let lang = localStorage.getItem('lang') || ((navigator.language || 'en').startsWith('ar') ? 'ar' : 'en');
+const t = (k) => T[lang][k];
+
+function applyLanguage() {
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-t]').forEach((el) => { el.textContent = t(el.dataset.t); });
+  $('lang').textContent = t('lang');
+  setAuthMode(authMode);
+  if (current) render();
+}
+
+// ------------------------------------------------------------------ Supabase over HTTPS (Auth, PostgREST, RPC)
+const $ = (id) => document.getElementById(id);
+const DEMO = new URLSearchParams(location.search).has('demo');
+let session = JSON.parse(localStorage.getItem('session') || 'null');
+
+async function call(path, { method = 'GET', body, auth = true } = {}) {
+  if (auth) await fresh();
+  const res = await fetch(SUKOON.url + path, {
+    method,
+    headers: { apikey: SUKOON.key, 'Content-Type': 'application/json', ...(auth && session ? { Authorization: 'Bearer ' + session.access_token } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const text = await res.text();
+  const json = text ? JSON.parse(text) : null;
+  if (!res.ok) { const e = new Error((json && (json.msg || json.message || json.error_description)) || res.statusText); e.status = res.status; throw e; }
+  return json;
+}
+function keep(json) {
+  session = { access_token: json.access_token, refresh_token: json.refresh_token, expires_at: Date.now() + json.expires_in * 1000, user: json.user.id };
+  localStorage.setItem('session', JSON.stringify(session));
+}
+async function fresh() {
+  if (!session || session.expires_at - 60000 > Date.now()) return;
+  try { keep(await call('/auth/v1/token?grant_type=refresh_token', { method: 'POST', body: { refresh_token: session.refresh_token }, auth: false })); }
+  catch (e) { signOut(); throw e; }
+}
+function signOut() { session = null; localStorage.removeItem('session'); show('auth'); }
+
+// ------------------------------------------------------------------ screens
+let authMode = 'signin';
+function show(id) { ['auth', 'code', 'home'].forEach((s) => $(s).classList.toggle('hidden', s !== id)); }
+function setAuthMode(mode) {
+  authMode = mode;
+  $('nameRow').classList.toggle('hidden', mode !== 'create');
+  $('authGo').textContent = t(mode === 'create' ? 'create' : 'signIn');
+  $('authSwitch').textContent = t(mode === 'create' ? 'toSignIn' : 'toCreate');
+  $('password').autocomplete = mode === 'create' ? 'new-password' : 'current-password';
+}
+$('authSwitch').onclick = () => { setAuthMode(authMode === 'create' ? 'signin' : 'create'); $('authError').textContent = ''; };
+$('authForm').onsubmit = async (e) => {
+  e.preventDefault();
+  $('authError').textContent = '';
+  $('authGo').disabled = true;
+  try {
+    const email = $('email').value.trim(), password = $('password').value;
+    if (authMode === 'create') {
+      const json = await call('/auth/v1/signup', { method: 'POST', body: { email, password, data: { display_name: $('name').value.trim() } }, auth: false });
+      if (!json.access_token) { $('authError').textContent = t('confirmEmail'); return; }
+      keep(json);
+    } else {
+      keep(await call('/auth/v1/token?grant_type=password', { method: 'POST', body: { email, password }, auth: false }));
+    }
+    $('password').value = '';
+    await start();
+  } catch (err) {
+    $('authError').textContent = err.status ? (/confirm/i.test(err.message) ? t('confirmEmail') : t('wrongLogin')) : t('offline');
+  } finally { $('authGo').disabled = false; }
+};
+$('codeForm').onsubmit = async (e) => {
+  e.preventDefault();
+  $('codeError').textContent = '';
+  try {
+    await call('/rest/v1/rpc/redeem_invite', { method: 'POST', body: { p_code: $('codeInput').value } });
+    $('codeInput').value = '';
+    await start();
+  } catch (err) { $('codeError').textContent = err.status ? t('badCode') : t('offline'); }
+};
+$('codeBack').onclick = () => (people.length ? show('home') : null);
+$('addPerson').onclick = () => show('code');
+$('lang').onclick = () => { lang = lang === 'ar' ? 'en' : 'ar'; localStorage.setItem('lang', lang); applyLanguage(); };
+document.querySelectorAll('[data-act="signout"]').forEach((b) => (b.onclick = signOut));
+
+// ------------------------------------------------------------------ following
+let people = [];      // [{id, name}]
+let current = null;   // {person, readings: [{at, v, trend}]}
+let chosen = localStorage.getItem('person');
+
+async function loadPeople() {
+  const follows = await call(`/rest/v1/follows?follower=eq.${session.user}&select=owner`);
+  const ids = follows.map((f) => f.owner);
+  if (!ids.length) return [];
+  const names = await call(`/rest/v1/profiles?id=in.(${ids.join(',')})&select=id,display_name`);
+  return ids.map((id) => ({ id, name: (names.find((n) => n.id === id) || {}).display_name || '…' }));
+}
+async function loadReadings(id) {
+  const since = new Date(Date.now() - 3 * 3600 * 1000).toISOString();
+  const rows = await call(`/rest/v1/readings?user_id=eq.${id}&ts=gte.${encodeURIComponent(since)}&order=ts.asc&select=ts,mg_dl,trend`);
+  if (rows.length) return rows.map((r) => ({ at: Date.parse(r.ts), v: r.mg_dl, trend: r.trend }));
+  const last = await call(`/rest/v1/readings?user_id=eq.${id}&order=ts.desc&limit=1&select=ts,mg_dl,trend`);
+  return last.map((r) => ({ at: Date.parse(r.ts), v: r.mg_dl, trend: r.trend }));
+}
+
+async function start() {
+  if (DEMO) { people = [{ id: 'demo', name: lang === 'ar' ? 'ماما' : 'Mum' }]; current = { person: people[0], readings: demoReadings() }; show('home'); render(); return; }
+  if (!session) { show('auth'); return; }
+  try {
+    people = await loadPeople();
+  } catch (e) { if (e.status === 401) return signOut(); $('banner').textContent = t('offline'); $('banner').classList.add('on'); show('home'); return; }
+  if (!people.length) { show('code'); return; }
+  show('home');
+  await refresh();
+}
+async function refresh() {
+  if (DEMO || !session || !people.length) return;
+  const person = people.find((p) => p.id === chosen) || people[0];
+  try {
+    current = { person, readings: await loadReadings(person.id) };
+    $('banner').classList.remove('on');
+  } catch (e) { if (e.status === 401) return signOut(); }
+  render();
+}
+
+// ------------------------------------------------------------------ what it says (the app's own lines: urgent < 55, low < 70, high > 180)
+function render() {
+  if (!current) return;
+  const { person, readings } = current;
+  const name = person.name;
+  $('whoName').textContent = name;
+  $('avatar').textContent = (name.trim()[0] || '·').toUpperCase();
+  const box = $('people');
+  box.classList.toggle('hidden', people.length < 2);
+  box.replaceChildren(...people.map((p) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = p.name; b.setAttribute('aria-pressed', String(p.id === person.id));
+    b.onclick = () => { chosen = p.id; localStorage.setItem('person', p.id); refresh(); };
+    return b;
+  }));
+
+  const last = readings[readings.length - 1];
+  const minutes = last ? Math.max(0, Math.round((Date.now() - last.at) / 60000)) : null;
+  const fresh = last && minutes <= 10;
+  const v = last ? last.v : null;
+  const kind = !fresh ? 'gone' : v < 55 ? 'urgent' : v < 70 ? 'low' : v > 180 ? 'high' : 'ok';
+  const cls = kind === 'urgent' ? 'low' : kind;
+
+  $('pill').className = 'pill ' + cls;
+  $('pill').textContent = { gone: t('noSignal'), urgent: t('veryLow'), low: t('low'), high: t('high'), ok: t('inRange') }[kind];
+  $('value').className = 'value ' + cls;
+  $('value').textContent = fresh ? v : '–';
+  $('arrow').className = 'arrow ' + cls;
+  $('arrow').textContent = fresh ? ['↓', '↘', '→', '↗', '↑'][last.trend + 2] : '';
+  $('meta').textContent = fresh ? `${t('mgdl')} · ${t('trend')[String(last.trend)]} · ${minutes < 1 ? t('now') : t('minAgo')(minutes)}` : '';
+  $('liveDot').classList.toggle('pulse', !!fresh);
+  $('liveDot').style.background = fresh ? '' : 'var(--muted)';
+
+  // Heading low: where the last 15 minutes point in 20 more.
+  let headingIn = null;
+  if (fresh && kind === 'ok') {
+    const window = readings.filter((r) => last.at - r.at <= 15 * 60000);
+    const first = window[0];
+    const span = (last.at - first.at) / 60000;
+    if (window.length >= 3 && span >= 5) {
+      const projected = v + ((v - first.v) / span) * 20;
+      if (projected < 70) headingIn = Math.max(1, Math.round(((v - 70) * 20) / (v - projected)));
+    }
+  }
+  if (!last) { $('title').textContent = t('quiet')(name); $('detail').textContent = ''; }
+  else if (!fresh) { $('title').textContent = t('quiet')(name); $('detail').textContent = t('lastSeen')(last.v, minutes); }
+  else if (kind === 'urgent') { $('title').textContent = t('isVeryLow')(name); $('detail').textContent = t('callNow'); }
+  else if (kind === 'low') { $('title').textContent = t('isLow')(name); $('detail').textContent = ''; }
+  else if (headingIn) { $('title').textContent = t('headingLow')(name); $('detail').textContent = t('couldBe')(headingIn); }
+  else if (kind === 'high') { $('title').textContent = t('isHigh')(name); $('detail').textContent = ''; }
+  else { $('title').textContent = t('steady')(name); $('detail').textContent = ''; }
+
+  $('chart').innerHTML = chart(readings);
+  alarm(kind === 'urgent' || kind === 'low' || !!headingIn, kind);
+}
+
+function chart(readings) {
+  const w = 360, h = 132, now = Date.now(), from = now - 3 * 3600 * 1000;
+  const top = Math.max(220, ...readings.map((r) => r.v + 20)), bottom = 40;
+  const x = (at) => ((at - from) / (now - from)) * w;
+  const y = (v) => h - ((Math.min(Math.max(v, bottom), top) - bottom) / (top - bottom)) * (h - 8) - 4;
+  const pts = readings.filter((r) => r.at >= from);
+  let path = '';
+  pts.forEach((r, i) => {
+    const gap = i > 0 && r.at - pts[i - 1].at > 20 * 60000;
+    path += (i === 0 || gap ? 'M' : 'L') + x(r.at).toFixed(1) + ',' + y(r.v).toFixed(1);
+  });
+  const dots = pts.filter((r) => r.v < 70 || r.v > 180).map((r) => `<circle cx="${x(r.at).toFixed(1)}" cy="${y(r.v).toFixed(1)}" r="2.6" fill="var(${r.v < 70 ? '--low' : '--high'})"/>`).join('');
+  const end = pts[pts.length - 1];
+  const endDot = end ? `<circle cx="${x(end.at).toFixed(1)}" cy="${y(end.v).toFixed(1)}" r="4.5" fill="var(--sage)"/>` : '';
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="${t('chartCaption')}">
+    <rect x="0" y="${y(180)}" width="${w}" height="${y(70) - y(180)}" fill="var(--sage)" fill-opacity=".13"/>
+    <path d="${path}" fill="none" stroke="var(--sage)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>${dots}${endDot}</svg>`;
+}
+
+// ------------------------------------------------------------------ alarm while the page is open (iPhone needs a tap first to allow sound)
+let audio = null, lastAlarm = 0;
+$('soundOn').onclick = () => { audio = new (window.AudioContext || window.webkitAudioContext)(); localStorage.setItem('sound', '1'); $('soundCard').classList.add('hidden'); beep(1); };
+function beep(times) {
+  if (!audio) return;
+  for (let i = 0; i < times; i++) {
+    const o = audio.createOscillator(), g = audio.createGain(), at = audio.currentTime + i * 0.6;
+    o.type = 'sine'; o.frequency.setValueAtTime(880, at); o.frequency.exponentialRampToValueAtTime(587, at + 0.4);
+    g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(0.6, at + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.5);
+    o.connect(g).connect(audio.destination); o.start(at); o.stop(at + 0.55);
+  }
+}
+function alarm(on, kind) {
+  $('soundCard').classList.toggle('hidden', !!audio || !session && !DEMO);
+  if (!on) return;
+  const every = kind === 'urgent' ? 60000 : 5 * 60000;
+  if (Date.now() - lastAlarm < every) return;
+  lastAlarm = Date.now();
+  beep(kind === 'urgent' ? 4 : 2);
+  if (navigator.vibrate) navigator.vibrate([400, 200, 400]);
+}
+
+function demoReadings() {
+  const out = [], now = Date.now();
+  for (let m = 180; m >= 0; m -= 5) out.push({ at: now - m * 60000, v: Math.round(118 + 32 * Math.sin(m / 38) - (m < 30 ? (30 - m) * 0.4 : 0)), trend: m < 15 ? -1 : 0 });
+  return out;
+}
+
+// ------------------------------------------------------------------ go
+setInterval(() => { if (document.visibilityState === 'visible') refresh(); }, 60000);
+setInterval(() => { if (current) render(); }, 30000); // minutes-ago and the stale grey-out move on between readings
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refresh(); });
+if ('serviceWorker' in navigator && !DEMO) navigator.serviceWorker.register('sw.js').catch(() => {});
+applyLanguage();
+start();
+</script>
+</body>
+</html>

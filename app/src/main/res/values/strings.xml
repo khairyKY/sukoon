@@ -1114,4 +1114,6 @@
     <string name="settings_source_llu_body">Their sensor through Abbott\'s app, about a minute behind; needs the internet.</string>
     <string name="toast_source_llu">Readings now come from %1$s on LibreLinkUp.</string>
     <string name="llu_password">Password</string>
+    <string name="sharing_invite_send">Send</string>
+    <string name="sharing_invite_share">Follow my glucose on Sukoon. On Android, in the Sukoon app; on an iPhone or any phone, open %1$s (add it to the home screen). My code: %2$s (works once, for 24 hours).</string>
 </resources>

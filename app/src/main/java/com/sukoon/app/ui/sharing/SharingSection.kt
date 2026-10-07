@@ -245,7 +245,16 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
             null
         }
     }
-    invite?.let { Text(stringResource(R.string.sharing_invite_code, Sharing.formatCode(it)), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Sage) }
+    invite?.let { code ->
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.sharing_invite_code, Sharing.formatCode(code)), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Sage, modifier = Modifier.weight(1f))
+            // The code with the follower page: someone on an iPhone (or without the app) follows from the browser.
+            TextButton(onClick = {
+                val text = context.getString(R.string.sharing_invite_share, Sharing.FOLLOW_PAGE, Sharing.formatCode(code))
+                context.startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, text), null))
+            }) { Text(stringResource(R.string.sharing_invite_send), color = Sage, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) }
+        }
+    }
 
     // Following: people who invited me.
     Label(stringResource(R.string.sharing_following))
