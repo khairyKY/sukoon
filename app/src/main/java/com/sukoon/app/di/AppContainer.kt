@@ -62,6 +62,7 @@ import com.sukoon.app.sharing.CloudSource
 import com.sukoon.app.sharing.DexcomShare
 import com.sukoon.app.R
 import com.sukoon.app.platform.Updates
+import com.sukoon.app.alarms.AlarmStore
 
 /**
  * Manual dependency container (ponytail: no Hilt/Koin for a graph this small). Owns the
@@ -145,6 +146,7 @@ class AppContainer(private val context: Context) {
         settings = settings,
         notifier = notifier,
         log = alarmLog,
+        store = AlarmStore(context),
         emergency = emergency,
         scope = appScope,
         enabled = { _sourceKind.value.real },
