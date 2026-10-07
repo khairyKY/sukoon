@@ -69,7 +69,7 @@ class AppContainer(private val context: Context) {
 
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    private val database = AppDatabase.get(context)
+    internal val database = AppDatabase.get(context)
 
     val settings = SettingsPrefs(context)
 

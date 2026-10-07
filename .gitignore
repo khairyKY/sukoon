@@ -15,3 +15,8 @@
 # Third-party APKs and their decompiled output — reference material only, never redistributed.
 *.apk
 /_apk-analysis/
+
+# Release signing key: never in git (see local.properties).
+/keystore/
+*.jks
+*.keystore

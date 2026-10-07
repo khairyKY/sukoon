@@ -1090,4 +1090,14 @@
     <string name="hc_last_sync">Sukoon last checked %1$s: %2$d new, %3$d updated.</string>
     <string name="hc_last_sync_failed">Sukoon last checked %1$s and couldn\'t: %2$s</string>
     <string name="you_language_auto">Phone\'s language</string>
+    <string name="backup_title">Backup</string>
+    <string name="backup_make">Back up everything</string>
+    <string name="backup_restore">Restore</string>
+    <string name="backup_saved">Backup saved. Keep it somewhere safe: it holds your readings, logbook and settings.</string>
+    <string name="backup_failed">Couldn\'t back up: %1$s</string>
+    <string name="backup_restore_title">Restore this backup?</string>
+    <string name="backup_restore_body">It replaces everything in Sukoon now. Sukoon closes; open it again and it\'s back as it was in the backup.</string>
+    <string name="backup_restore_go">Restore</string>
+    <string name="backup_not_one">That file isn\'t a Sukoon backup.</string>
+    <string name="backup_restarting">Restored. Sukoon is closing: open it again.</string>
 </resources>

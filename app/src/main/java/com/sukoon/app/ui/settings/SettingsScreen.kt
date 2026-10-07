@@ -297,6 +297,9 @@ fun SettingsScreen(
                         Gap()
                         SectionLabel(stringResource(R.string.export_title))
                         ExportSection(buildCsv)
+                        Gap()
+                        SectionLabel(stringResource(R.string.backup_title))
+                        BackupSection()
                     }
                     YouPage.APPEARANCE -> {
                         SectionLabel(stringResource(R.string.you_theme))
