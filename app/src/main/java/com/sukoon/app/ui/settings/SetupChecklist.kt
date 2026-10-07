@@ -84,7 +84,7 @@ fun SetupChecklist(only: Set<SetupItem>? = null) {
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(item.titleRes), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                    Text(stringResource(item.whyRes), fontSize = 12.sp, color = CaptionMuted)
+                    if (!done) Text(stringResource(item.whyRes), fontSize = 12.sp, color = CaptionMuted) // what's done needs no reason
                 }
                 if (!done) {
                     Spacer(Modifier.width(8.dp))

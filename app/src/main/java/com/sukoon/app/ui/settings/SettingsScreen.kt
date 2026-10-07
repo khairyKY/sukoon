@@ -636,7 +636,6 @@ private fun LanguageChoice() {
             }
         }
     }
-    Text(stringResource(R.string.you_language_note), fontSize = 13.sp, color = CaptionMuted, modifier = Modifier.padding(top = 10.dp, start = 4.dp, end = 4.dp))
 }
 
 @Composable

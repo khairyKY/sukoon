@@ -97,7 +97,7 @@
     <string name="ask_suggest_meal">What happened after my last meal?</string>
     <string name="ask_suggest_week">Summarize my week</string>
     <string name="ask_no_key_title">Add a Gemini key to start</string>
-    <string name="ask_no_key_body">Sukoon\'s AI runs on Google Gemini with your own free key from aistudio.google.com. Paste it in You → AI.</string>
+    <string name="ask_no_key_body">Add your free Gemini key in You → Apps &amp; data → AI assistant.</string>
     <string name="ask_open_settings">Open settings</string>
 
     <!-- You tab / settings -->
@@ -107,7 +107,7 @@
     <string name="settings_source_demo">Demo data</string>
     <string name="settings_source_demo_body">Simulated readings to try the app. Cleared when you switch to a real source.</string>
     <string name="settings_ai_title">AI</string>
-    <string name="settings_ai_body">Paste a free Gemini API key from aistudio.google.com. When you ask a question or estimate a meal, a summary of your recent readings and logs (or the meal photo) is sent to Google.</string>
+    <string name="settings_ai_body">A free key from aistudio.google.com. Asking sends a summary of your data to Google.</string>
     <string name="settings_ai_key">Gemini API key</string>
     <string name="settings_ai_saved">Key saved.</string>
     <string name="settings_about_title">About</string>
@@ -126,12 +126,12 @@
     <string name="carb_ai_disclaimer">AI estimates can be off — check before you dose.</string>
     <!-- You → Your sensor (direct Libre 2 connection) -->
     <string name="sensor_title">Your sensor</string>
-    <string name="sensor_body_unpaired">Sukoon reads your FreeStyle Libre 2 directly: one NFC tap to pair, then Bluetooth every minute.</string>
+    <string name="sensor_body_unpaired">Tap your Libre 2 once with NFC; then Bluetooth every minute.</string>
     <string name="sensor_check">Check sensor (read-only)</string>
-    <string name="sensor_check_hint">Reads and decodes the sensor without changing anything. DiaBox keeps working, so you can compare the two numbers.</string>
+    <string name="sensor_check_hint">Reads it without taking it over.</string>
     <string name="sensor_connect">Connect sensor</string>
     <string name="sensor_repair">Pair again</string>
-    <string name="sensor_connect_hint">Moves the sensor\'s Bluetooth stream to Sukoon. DiaBox (or any other app) stops getting readings and alarms until you scan with it again.</string>
+    <string name="sensor_connect_hint">Takes its readings over; other apps stop getting them.</string>
     <string name="sensor_hold">Hold the back of your phone flat on the sensor…</string>
     <string name="sensor_cancel">Cancel</string>
     <string name="sensor_forget">Forget sensor</string>
@@ -143,7 +143,7 @@
     <string name="sensor_memory_bad">The sensor\'s memory didn\'t decrypt cleanly. Sukoon won\'t use it.</string>
     <string name="sensor_unsupported">Not a Libre 2 EU sensor (patch info %1$s). Sukoon can\'t stream from it yet.</string>
     <string name="sensor_failed">Couldn\'t read the sensor: %1$s</string>
-    <string name="sensor_connected_now">Connected. Sukoon now reads this sensor over Bluetooth; the first live reading arrives within a minute or two.</string>
+    <string name="sensor_connected_now">Connected. The first reading comes within a minute or two.</string>
     <string name="sensor_paired">Libre 2 · %1$s · day %2$s of %3$s</string>
     <string name="sensor_status_connected">Receiving readings</string>
     <string name="sensor_status_connecting">Looking for the sensor…</string>
@@ -219,7 +219,7 @@
     <string name="setup_dnd">Do Not Disturb access</string>
     <string name="setup_dnd_why">Lets low and urgent-low alarms sound even when Do Not Disturb is on.</string>
     <string name="setup_oem">Phone maker\'s battery settings</string>
-    <string name="setup_oem_why">Samsung and others add their own app sleeping. Set Sukoon to “Never sleeping” / Unrestricted.</string>
+    <string name="setup_oem_why">Set Sukoon to Unrestricted / Never sleeping.</string>
     <string name="setup_allow">Allow</string>
     <string name="setup_open">Open</string>
     <string name="setup_fix">Fix</string>
@@ -246,7 +246,7 @@
     <string name="alarms_after_minutes">after %1$d min</string>
     <string name="readings_title">Readings</string>
     <string name="readings_save_every">Save a reading every</string>
-    <string name="readings_body">The sensor sends one reading a minute. Saving fewer keeps your history lighter; alarms still check every single reading.</string>
+    <string name="readings_body">Alarms still check every reading.</string>
     <string name="custom_value">Custom…</string>
     <string name="custom_value_title">Custom value</string>
     <string name="custom_value_range">Between %1$d and %2$d</string>
@@ -256,14 +256,14 @@
     <!-- You → Nightscout / Your data -->
     <string name="ns_title">Nightscout</string>
     <string name="ns_upload">Upload to Nightscout</string>
-    <string name="ns_upload_body">Sends your readings and logbook to your Nightscout site (what DiaBox used to do), so Nightscout-based tools keep working.</string>
+    <string name="ns_upload_body">Readings and logbook to your Nightscout site.</string>
     <string name="ns_url">Nightscout URL</string>
     <string name="ns_secret">API secret</string>
     <string name="ns_upload_now">Upload now</string>
     <string name="ns_status_ok">Uploaded %2$d new at %1$s.</string>
     <string name="ns_status_failed">Upload failed at %1$s: %2$s</string>
     <string name="export_title">Your data</string>
-    <string name="export_body">Everything Sukoon records — readings and logbook — as a CSV for Excel, Sheets or your doctor.</string>
+    <string name="export_body">Readings and logbook as a spreadsheet.</string>
     <string name="export_csv">Export CSV</string>
     <string name="export_days">%1$d days</string>
     <string name="export_all">All</string>
@@ -272,7 +272,7 @@
     <!-- Trends → Insights -->
     <string name="insights_title">Insights</string>
     <string name="insights_tab">Insights</string>
-    <string name="insights_banner">Patterns from your own data and published research. Not medical advice — you decide, ideally with your diabetes team.</string>
+    <string name="insights_banner">Patterns from your own data. Not medical advice.</string>
     <string name="insights_ack_title">Before you use Insights</string>
     <string name="insights_ack_body">Sukoon looks for patterns in your readings and logbook and compares them with published clinical targets and formulas. It doesn\'t diagnose or prescribe, it doesn\'t know your whole situation, and it can be wrong — sensors drift and logs miss things.\n\nNothing here tells you to change a dose. Any change to insulin, food or activity is your own decision and responsibility, ideally made with your diabetes team. If you feel unwell or you\'re low, treat first and get help.</string>
     <string name="insights_ack_button">I understand</string>
@@ -373,7 +373,7 @@
     <string name="graph_in_range">in range (70–180)</string>
     <string name="graph_average">Average %1$d mg/dL</string>
     <string name="graph_gmi">GMI (estimated A1C) %1$s%%</string>
-    <string name="graph_gmi_note">GMI estimates A1C from your average glucose. It is meaningful over about 14 days of data (Bergenstal et al., Diabetes Care 2018).</string>
+    <string name="graph_gmi_note">GMI estimates A1C; it means most over about 14 days.</string>
     <string name="graph_readings">Readings</string>
     <string name="graph_today">Today</string>
     <string name="graph_yesterday">Yesterday</string>
@@ -396,7 +396,7 @@
     <string name="emergency_send_failed_title">Couldn\'t text your emergency contacts</string>
     <string name="emergency_send_failed">Allow texts in You → Emergency contacts so Sukoon can reach them.</string>
     <string name="emergency_title">Emergency contacts</string>
-    <string name="emergency_body">If an urgent low (under 55), or a lost signal while you were low, gets no answer, Sukoon counts down 60 s and then texts everyone here and calls the first one. Any answer stops it: a button, or even swiping the alarm away.</string>
+    <string name="emergency_body">An urgent low with no answer texts and calls your contacts.</string>
     <string name="emergency_your_name">Your name in the texts</string>
     <string name="emergency_add_contact">Add from contacts</string>
     <string name="emergency_add_number">Add a number</string>
@@ -426,10 +426,10 @@
     <string name="toast_emergency_no_contacts">Add an emergency contact first.</string>
     <string name="toast_emergency_no_location">Location not allowed, so texts won\'t include it.</string>
     <string name="setup_emergency">Emergency texts and calls</string>
-    <string name="setup_emergency_why">So Sukoon can text and call your emergency contacts when an urgent low gets no answer.</string>
+    <string name="setup_emergency_why">To text and call your contacts in an emergency.</string>
     <string name="sharing_title">Sharing</string>
     <string name="sharing_not_configured">Sharing isn\'t set up in this build.</string>
-    <string name="sharing_body">Make an account to share your readings with family (they see them live, read-only), or to follow someone who shared theirs with you.</string>
+    <string name="sharing_body">Share your readings with family, or follow someone.</string>
     <string name="sharing_your_name">Your name</string>
     <string name="sharing_email">Email</string>
     <string name="sharing_password">Password (6+ characters)</string>
@@ -472,7 +472,7 @@
     <string name="follow_alarm_body">Check on %1$s now.</string>
     <string name="follow_alarm_signal_body">No readings from %1$s for %2$d min.</string>
     <string name="sharing_alerts">Alert me about them</string>
-    <string name="sharing_alerts_body">Lows, highs and lost signal, with your alarm levels and sounds. Keeps a small notification with their latest reading.</string>
+    <string name="sharing_alerts_body">Their lows, highs and lost signal, with your alarm levels.</string>
     <string name="hc_title">Health Connect</string>
     <string name="hc_body">Bring in meals other apps log (MyFitnessPal sends each meal\'s carbs there) and share your glucose readings with other health apps.</string>
     <string name="hc_unavailable">Health Connect isn\'t available on this phone.</string>
@@ -516,7 +516,7 @@
     <string name="life_ended_body">No more readings from it. Apply a new sensor and connect it in You → Your sensor.</string>
     <string name="calibration_title">Calibration</string>
     <string name="calibration_toggle">Calibrate with my finger-pricks</string>
-    <string name="calibration_body">Adjusts readings to match your recent finger-pricks taken while your glucose was steady. Off by default: the sensor\'s factory calibration is usually best.</string>
+    <string name="calibration_body">Matches readings to steady finger-pricks. Off by default.</string>
     <string name="calibration_waiting">Log a finger-prick while your glucose is steady (no fast arrow) to start.</string>
     <string name="calibration_using">Using %1$d finger-prick(s): reading × %2$s %3$s mg/dL.</string>
     <string name="calibration_example">Sensor %1$d → %2$d; a low %3$d → %4$d (lows are never raised).</string>
@@ -526,10 +526,10 @@
     <string name="toast_calibration_off">Calibration off: factory readings.</string>
     <string name="home_iob">%1$s u active</string>
     <string name="insulin_title">Insulin</string>
-    <string name="insulin_body">How your rapid insulin works over time, for the active insulin shown on Home and when you log a dose. Long-acting (basal) insulin isn\'t counted.</string>
+    <string name="insulin_body">How your rapid insulin acts, for the active insulin shown.</string>
     <string name="insulin_duration">Lasts</string>
     <string name="insulin_peak">Strongest after</string>
-    <string name="insulin_peak_hint">55 min suits ultra-rapid insulin (Fiasp, Lyumjev), 75 min rapid (Apidra, NovoRapid, Humalog). Check with your care team. The curve is the one OpenAPS and Loop use.</string>
+    <string name="insulin_peak_hint">55 min: Fiasp, Lyumjev. 75 min: Apidra, NovoRapid, Humalog.</string>
     <string name="report_tab">Report</string>
     <string name="report_title">Report</string>
     <string name="report_subtitle">Ambulatory Glucose Profile · %1$s – %2$s</string>
@@ -559,29 +559,29 @@
     <string name="service_stale_body">Last: %1$d mg/dL at %2$s. Reconnecting on its own.</string>
     <string name="settings_guide">Guide: how Sukoon works →</string>
     <string name="help_title">Guide</string>
-    <string name="help_intro">Tap a topic to open it. Everything here is also where you would look for it in the app.</string>
+    <string name="help_intro">Every detail, in one place.</string>
     <string name="help_sensor_title">Connecting your sensor</string>
-    <string name="help_sensor_body">You → Your sensor → Connect sensor, then hold the top of the phone against the sensor until it buzzes. Sukoon reads its memory (the last 8 hours appear at once) and takes over its Bluetooth stream; live readings arrive every minute. “Check sensor” only reads it without taking it over. Another app (like DiaBox) can take the sensor back with its own scan, and a new tap in Sukoon takes it back again.</string>
+    <string name="help_sensor_body">You → Sensor → Connect sensor, then hold the top of the phone against the sensor until it buzzes. Sukoon reads its memory (the last 8 hours appear at once) and takes over its Bluetooth stream, so other apps (like DiaBox) stop getting readings; a scan in that app takes it back, and a new tap in Sukoon takes it again. “Check sensor” only reads it. Readings come every minute; saving fewer (You → Sensor → Readings) keeps history lighter, and alarms still check every one. The 24-hour note under Connection counts gaps: usually the phone was out of reach (a few metres, less through a body or a wall), or the phone paused Sukoon in the background.</string>
     <string name="help_home_title">Now (Home)</string>
     <string name="help_home_body">The big number is your latest reading, with an arrow for where it\'s heading. A reading older than 10 minutes is greyed out and never shown as current. A new sensor needs an hour to warm up, and in its last day a banner tells you when it stops. The icons at the top log food and insulin; “u active” is rapid insulin that\'s still working.</string>
     <string name="help_alarms_title">Alarms</string>
-    <string name="help_alarms_body">Urgent low (under 55) is always on: it takes over the screen and keeps sounding until you answer it. Low, going-low, high and no-signal alarms are set in You → Alarms, each with its own sound (a phone sound or your own file). Tap Test to hear the urgent alarm. Allow everything in You → Setup so alarms get through silent mode and Do Not Disturb.</string>
+    <string name="help_alarms_body">Urgent low (under 55) is always on: it takes over the screen and keeps sounding until you answer it, a minute at a time. Low (70 by default), going low, high (180 by default) and no readings are set in You → Alarms &amp; sounds; each has Sukoon\'s own sound (Rise, Ripple, Drift, Warm, Knock), or a phone sound or your own file. While a low sounds, the alarm volume is lifted and put back after. “See and hear each alarm” plays any of them. “Can alarms reach you?” lists anything stopping them, with a fix for each; “What your alarms did” shows every alarm, what got through and how it was answered.</string>
     <string name="help_emergency_title">Emergency contacts</string>
-    <string name="help_emergency_body">If an urgent low, or a lost signal while you were low, gets no answer for the time you choose, Sukoon counts down 60 seconds on screen, then texts everyone in You → Emergency contacts and calls the first one. Tap I\'m OK at any time to stop it. The text can include a map link. On Now, “Alert my emergency contact” lets you text, WhatsApp or call them yourself.</string>
+    <string name="help_emergency_body">If an urgent low, or a lost signal while you were low, gets no answer for the time you choose (10 minutes by default), Sukoon counts down 60 seconds on screen, then texts everyone in You → People → Emergency contacts and calls the first one; again after 30 minutes if there\'s still no answer, and a “back to normal” text once you\'re 70 or more. Any answer, even swiping the alarm away, restarts the clock; “I\'m OK” stops it. On Now, “Alert my emergency contact” texts, WhatsApps or calls them yourself.</string>
     <string name="help_logbook_title">Logbook</string>
     <string name="help_logbook_body">Trends → Logbook holds meals, rapid and basal insulin, finger-pricks, activity and notes. A meal can carry the insulin you took for it and how many minutes before eating. Each entry shows your glucose at that moment; a finger-prick shows how far the sensor was from your meter. The AI can estimate a meal\'s carbs from a photo or a description, but it never suggests doses.</string>
     <string name="help_trends_title">Graph, Insights and Report</string>
     <string name="help_trends_body">The graph shows any range from 3 hours to 14 days, with time in range and GMI (an A1C estimate), and every reading listed below it. Insights finds patterns, like recurring lows at a certain hour, and says where each rule comes from; nothing there is an instruction. Report gives the one-page AGP summary clinics use, with a PDF to share.</string>
     <string name="help_widgets_title">Widgets</string>
-    <string name="help_widgets_body">Add a Sukoon widget from your home screen\'s widget list, or from You → Home-screen widgets. Resize it from one cell to half the screen; tap Edit to choose its graph and details.</string>
+    <string name="help_widgets_body">You → Appearance → Make a widget: pick a style (Number, Number + graph, Graph, Ring, Today, Insulin, Following), a size, what it shows and its background, and the preview is the real widget with your numbers. “Add to home screen” places it at that size. Long-press a widget to edit it. An old reading greys out, never shown as current.</string>
     <string name="help_sharing_title">Sharing and following</string>
-    <string name="help_sharing_body">Make an account in You → Sharing; “Invite someone to follow you” sends a one-time code (valid 24 hours). They enter it in their Sukoon and see your readings live, with alerts if they want them. You can remove a follower at any time. Only real sensor readings are shared.</string>
+    <string name="help_sharing_body">You → People → Sharing: make an account, then “Invite someone to follow you” makes a one-time code (24 hours); Send shares it with the follower page link. On Android they enter it in Sukoon; on an iPhone or any phone they open khairyky.github.io/sukoon, add it to the home screen and enter it there (alarms sound there only while it\'s open). Only real readings are shared, never demo data. Either side can end a follow.</string>
     <string name="help_data_title">Your data elsewhere</string>
-    <string name="help_data_body">Nightscout: Sukoon uploads readings and logbook entries to your own Nightscout site. Your data: export everything as a CSV file. Health Connect: meals from MyFitnessPal come into the Logbook, and your readings go out for other apps.</string>
+    <string name="help_data_body">Nightscout (You → Apps &amp; data): readings and logbook go to your own site. AI assistant: your free Gemini key; asking a question or estimating a meal sends a summary of your readings and logbook (or the photo) to Google, and it never suggests doses. Reports: CSV export, and Backup (below).</string>
     <string name="help_calibration_title">Calibration</string>
-    <string name="help_calibration_body">Off by default, because the sensor\'s factory calibration is usually best. When on, Sukoon nudges readings toward your recent finger-pricks taken while your glucose was steady, within strict limits, and it never raises a low reading.</string>
+    <string name="help_calibration_body">Off by default, because the sensor\'s factory calibration is usually best. When on (You → Sensor), Sukoon nudges readings toward up to 4 finger-pricks from the last 7 days taken while your glucose was steady, within ±20 mg/dL and ×0.8–1.25, and it never raises a low reading.</string>
     <string name="help_reliability_title">Keeping it running</string>
-    <string name="help_reliability_body">Sukoon keeps a small notification showing your glucose; that is what keeps the sensor connection alive. Let it ignore battery optimization, and on Samsung or Xiaomi phones open the extra background settings in You → Setup. After a restart or an update it reconnects by itself.</string>
+    <string name="help_reliability_body">Sukoon keeps a small notification with your glucose; that keeps it running. Allow everything in You → Help &amp; about → Setup check, and on Samsung or Xiaomi set Sukoon to Unrestricted / Never sleeping. If the phone stops Sukoon anyway, a watchdog wakes it and the no-readings alarm sounds. After a restart or an update it reconnects by itself (a minute or two).</string>
     <string name="help_safety_title">Safety</string>
     <string name="help_safety_body">Sukoon is not a medical device. If a reading doesn\'t match how you feel, check with a finger-prick, and follow your care team\'s advice on treatment. In an emergency, call your local emergency number.</string>
     <string name="start_title">Getting started</string>
@@ -943,7 +943,7 @@
     <string name="insight_carbdays_discuss">Which meals on bigger days are hardest to cover.</string>
     <string name="insight_src_carbdays">Nutrition therapy consensus (Evert et al., Diabetes Care 2019)</string>
     <string name="alarms_reach_title">Can alarms reach you?</string>
-    <string name="alarms_off_demo">Alarms are off right now: they only sound for your sensor\'s readings, never for demo data. Choose your sensor under You → Sensor.</string>
+    <string name="alarms_off_demo">Alarms are off: demo data never sounds them.</string>
     <string name="alarms_history_title">What your alarms did</string>
     <string name="alarm_log_empty">Nothing yet. Press Test above to hear the urgent low alarm, and it will show here.</string>
     <string name="alarm_log_reached">Sounded and took the screen</string>
@@ -960,7 +960,7 @@
     <string name="home_headline_still_low">Still low. Have another 15 g.</string>
     <string name="home_low_again_action">It\'s been 15 minutes and you\'re still under 70: have another 15 g of fast carbs (juice, glucose tablets), then press I\'ve treated it again.</string>
     <string name="alarms_see_hear">See and hear each alarm</string>
-    <string name="alarms_preview_body">Hear plays its sound for 5 seconds. See shows the whole alert, marked TEST, with its sound.</string>
+    <string name="alarms_preview_body">Hear: 5 seconds. See: the whole alert, marked TEST.</string>
     <string name="alarms_hear">Hear</string>
     <string name="alarms_see">See</string>
     <string name="alarms_sound_phone">phone sound</string>
@@ -994,7 +994,7 @@
     <string name="apps_ai_key_ending">Gemini key ending %1$s</string>
     <string name="sensor_connection_title">Connection</string>
     <string name="sensor_gaps_none">Last 24 hours: no gaps in your readings.</string>
-    <string name="sensor_gaps_why">Gaps usually mean the phone was out of the sensor\'s reach (a few metres, less through a body or a wall), or the phone stopped Sukoon in the background: check the battery items under You → Alarms.</string>
+    <string name="sensor_gaps_why">Usually distance from the sensor, or the phone pausing Sukoon.</string>
     <plurals name="setup_banner">
         <item quantity="one">One setting still needed for reliable readings and alarms.</item>
         <item quantity="other">%1$d settings still needed for reliable readings and alarms.</item>
@@ -1079,14 +1079,14 @@
     <string name="widget_info_iob">Active insulin</string>
     <string name="widget_info_long">Long-acting</string>
     <string name="widget_info_long_hint">Taken today, or a Took it button</string>
-    <string name="widgets_body_maker">Your glucose on the home screen. Make as many as you like: pick a style, a size and what each one shows.</string>
+    <string name="widgets_body_maker">Your glucose on the home screen, the way you want it.</string>
     <string name="widgets_make">+ Make a widget</string>
     <string name="hc_resync">Resync</string>
     <string name="hc_resyncing">Resyncing…</string>
     <string name="hc_resync_done">Resynced: %1$d MyFitnessPal meals in the last 7 days (%2$d new, %3$d updated).</string>
     <string name="hc_resync_none">Health Connect has no MyFitnessPal meals from the last 7 days. In MyFitnessPal: More → Apps &amp; Devices → search Health Connect → Connect, turn it on and allow every permission (scroll the list).</string>
     <string name="hc_mfp_in_hc">Health Connect has %1$d MyFitnessPal meals this week; the newest %2$s.</string>
-    <string name="hc_mfp_none_in_hc">Health Connect has no MyFitnessPal meals this week, so MyFitnessPal isn\'t sharing them. In MyFitnessPal: More → Apps &amp; Devices → search Health Connect → Connect, turn it on and allow every permission (scroll the list).</string>
+    <string name="hc_mfp_none_in_hc">No MyFitnessPal meals in Health Connect this week. In MyFitnessPal: More → Apps &amp; Devices → Health Connect.</string>
     <string name="hc_last_sync">Sukoon last checked %1$s: %2$d new, %3$d updated.</string>
     <string name="hc_last_sync_failed">Sukoon last checked %1$s and couldn\'t: %2$s</string>
     <string name="you_language_auto">Phone\'s language</string>
@@ -1101,7 +1101,7 @@
     <string name="backup_not_one">That file isn\'t a Sukoon backup.</string>
     <string name="backup_restarting">Restored. Sukoon is closing: open it again.</string>
     <string name="llu_title">LibreLinkUp</string>
-    <string name="llu_body">Follow anyone who shares from Abbott\'s Libre app (Libre 2, 3 and Plus, Android or iPhone). Sign in with your LibreLinkUp account.</string>
+    <string name="llu_body">Follow anyone sharing from Abbott\'s Libre app.</string>
     <string name="llu_connect">Connect</string>
     <string name="llu_connecting">Connecting…</string>
     <string name="llu_connected">LibreLinkUp connected: following %1$d.</string>
@@ -1109,7 +1109,7 @@
     <string name="llu_accept_terms">Open the LibreLinkUp app once and accept its terms, then connect again.</string>
     <string name="llu_unreachable">Couldn\'t reach LibreLinkUp. Check the internet and try again.</string>
     <string name="llu_failed">LibreLinkUp refused the connection. Try again later.</string>
-    <string name="llu_nobody">Nobody shares with this account yet. In their Libre app: Connected apps → LibreLinkUp → add your email.</string>
+    <string name="llu_nobody">Nobody shares with this account yet.</string>
     <string name="settings_source_llu">LibreLinkUp · %1$s</string>
     <string name="settings_source_llu_body">Their sensor through Abbott\'s app, about a minute behind; needs the internet.</string>
     <string name="toast_source_llu">Readings now come from %1$s on LibreLinkUp.</string>
@@ -1122,7 +1122,7 @@
     <string name="settings_source_dexcom_body">Through Dexcom\'s servers, every 5 minutes; needs the internet.</string>
     <string name="toast_source_dexcom">Readings now come from Dexcom Share.</string>
     <string name="dexcom_title">Dexcom</string>
-    <string name="dexcom_body">A Dexcom wearer\'s readings (G6, G7, ONE) with their Dexcom login. Share must be on in their Dexcom app.</string>
+    <string name="dexcom_body">A Dexcom wearer\'s readings, with their Dexcom login.</string>
     <string name="dexcom_name">Their name</string>
     <string name="dexcom_username">Dexcom username or email</string>
     <string name="dexcom_region_world">Outside the US</string>
@@ -1138,4 +1138,12 @@
     <string name="sound_warm">Warm</string>
     <string name="sound_knock">Knock</string>
     <string name="sound_chime">Chime</string>
+    <string name="help_sources_title">Other sensors: LibreLinkUp and Dexcom</string>
+    <string name="help_sources_body">LibreLinkUp (You → People): sign in with a LibreLinkUp account and everyone sharing with it from Abbott\'s Libre app (Libre 2, 3 and Plus, Android or iPhone) is followed here, with their alarms. In their Libre app: Connected apps → LibreLinkUp → add your email. Dexcom (You → People): a Dexcom wearer\'s login, with Share on in their Dexcom app (G6, G7, ONE). Either can also be your own glucose: You → Sensor. Both come through the internet, a minute (LibreLinkUp) or five (Dexcom) behind the sensor, and use those companies\' own apps\' connections, which they can change.</string>
+    <string name="help_mfp_title">MyFitnessPal and Health Connect</string>
+    <string name="help_mfp_body">Meals logged in MyFitnessPal come into the Logbook with every nutrient, through Health Connect: in MyFitnessPal, More → Apps &amp; Devices → Health Connect → Connect, and allow every permission. Pull down on Now or the Logbook to bring the latest in; You → Apps &amp; data → Resync reads the last 7 days again and says how many MyFitnessPal meals Health Connect has. If that\'s none, MyFitnessPal isn\'t sharing: update it and connect again. Workouts of 10 minutes or more, steps and water come in the same way.</string>
+    <string name="help_reminders_title">Long-acting reminder</string>
+    <string name="help_reminders_body">You → Insulin &amp; logbook → Reminder: at your time each day, if no long-acting was logged in the 12 hours before, a notification comes. “Took it” logs your last amount; “In 30 min” waits. It comes back every 30 minutes, 3 times, and goes away as soon as the dose is logged anywhere. The Insulin widget has “Took it” too.</string>
+    <string name="help_backup_title">Backup and moving phones</string>
+    <string name="help_backup_body">You → Reports → Back up everything saves one file with your readings, logbook, settings, sensor pairing and meal photos; keep it somewhere safe, it\'s private. Restore puts it all back on this or a new phone: Sukoon closes and opens as it was. Home-screen widgets need adding again.</string>
 </resources>

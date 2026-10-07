@@ -97,7 +97,7 @@
     <string name="ask_suggest_meal">إيه اللي حصل بعد آخر وجبة؟</string>
     <string name="ask_suggest_week">لخّصلي الأسبوع</string>
     <string name="ask_no_key_title">ضيف مفتاح Gemini علشان تبدأ</string>
-    <string name="ask_no_key_body">الذكاء الاصطناعي في سكون شغّال بـ Google Gemini بمفتاحك المجاني من aistudio.google.com. حطّه في حسابي ← الذكاء الاصطناعي.</string>
+    <string name="ask_no_key_body">ضيف مفتاح Gemini المجاني من حسابي ← التطبيقات والبيانات ← المساعد الذكي.</string>
     <string name="ask_open_settings">افتح الإعدادات</string>
 
     <!-- You tab / settings -->
@@ -107,7 +107,7 @@
     <string name="settings_source_demo">بيانات تجريبية</string>
     <string name="settings_source_demo_body">قرايات وهمية علشان تجرّب الأبلكيشن. بتتمسح لما تختار مصدر حقيقي.</string>
     <string name="settings_ai_title">الذكاء الاصطناعي</string>
-    <string name="settings_ai_body">حط مفتاح Gemini API مجاني من aistudio.google.com. لما تسأل سؤال أو تقدّر وجبة، ملخص قراياتك وتسجيلاتك الأخيرة (أو صورة الأكل) بيتبعت لجوجل.</string>
+    <string name="settings_ai_body">مفتاح مجاني من aistudio.google.com. لما تسأل، ملخص من بياناتك بيروح لجوجل.</string>
     <string name="settings_ai_key">مفتاح Gemini API</string>
     <string name="settings_ai_saved">المفتاح اتحفظ.</string>
     <string name="settings_about_title">عن الأبلكيشن</string>
@@ -126,12 +126,12 @@
     <string name="carb_ai_disclaimer">تقدير الذكاء الاصطناعي ممكن يغلط — راجعه قبل الجرعة.</string>
     <!-- You → Your sensor (direct Libre 2 connection) -->
     <string name="sensor_title">الحساس بتاعك</string>
-    <string name="sensor_body_unpaired">سكون بيقرا الـ FreeStyle Libre 2 بتاعك مباشرةً: لمسة NFC واحدة للربط، وبعدين بلوتوث كل دقيقة.</string>
+    <string name="sensor_body_unpaired">المس الـ Libre 2 مرة بالـ NFC؛ وبعدها بلوتوث كل دقيقة.</string>
     <string name="sensor_check">افحص الحساس (قراية بس)</string>
-    <string name="sensor_check_hint">بيقرا ويفك الحساس من غير ما يغيّر أي حاجة. DiaBox هيفضل شغّال، فتقدر تقارن الرقمين.</string>
+    <string name="sensor_check_hint">بيقراه من غير ما ياخده.</string>
     <string name="sensor_connect">وصّل الحساس</string>
     <string name="sensor_repair">اربطه تاني</string>
-    <string name="sensor_connect_hint">بينقل بث البلوتوث بتاع الحساس لسكون. DiaBox (أو أي أبلكيشن تاني) هيبطّل ياخد قرايات وتنبيهات لحد ما تمسح بيه تاني.</string>
+    <string name="sensor_connect_hint">بياخد القرايات؛ التطبيقات التانية بتبطّل تاخدها.</string>
     <string name="sensor_hold">حط ضهر الموبايل على الحساس…</string>
     <string name="sensor_cancel">إلغاء</string>
     <string name="sensor_forget">انسَ الحساس</string>
@@ -143,7 +143,7 @@
     <string name="sensor_memory_bad">ذاكرة الحساس ما اتفكّتش صح. سكون مش هيستخدمه.</string>
     <string name="sensor_unsupported">ده مش حساس Libre 2 أوروبي (patch info %1$s). سكون لسه مش بيقدر يقرا منه.</string>
     <string name="sensor_failed">مقدرناش نقرا الحساس: %1$s</string>
-    <string name="sensor_connected_now">اتوصّل. سكون بيقرا الحساس ده بالبلوتوث دلوقتي؛ أول قراية مباشرة هتوصل خلال دقيقة أو اتنين.</string>
+    <string name="sensor_connected_now">اتوصل. أول قراية بتيجي خلال دقيقة أو اتنين.</string>
     <string name="sensor_paired">Libre 2 · %1$s · يوم %2$s من %3$s</string>
     <string name="sensor_status_connected">القرايات بتوصل</string>
     <string name="sensor_status_connecting">بندوّر على الحساس…</string>
@@ -219,7 +219,7 @@
     <string name="setup_dnd">صلاحية عدم الإزعاج</string>
     <string name="setup_dnd_why">بتخلّي تنبيهات الهبوط ترن حتى لو وضع عدم الإزعاج شغّال.</string>
     <string name="setup_oem">إعدادات بطارية الشركة المصنّعة</string>
-    <string name="setup_oem_why">سامسونج وغيرها بيحطّوا الأبلكيشنز في وضع نوم. خلّي سكون “مش بينام” / غير مقيّد.</string>
+    <string name="setup_oem_why">خلّي سكون بدون قيود / عمره ما ينام.</string>
     <string name="setup_allow">اسمح</string>
     <string name="setup_open">افتح</string>
     <string name="setup_fix">ظبّط</string>
@@ -246,7 +246,7 @@
     <string name="alarms_after_minutes">بعد %1$d دقيقة</string>
     <string name="readings_title">القرايات</string>
     <string name="readings_save_every">احفظ قراية كل</string>
-    <string name="readings_body">الحساس بيبعت قراية كل دقيقة. لو حفظت أقل السجل هيبقى أخف؛ والتنبيهات برضه بتفحص كل قراية.</string>
+    <string name="readings_body">المنبّهات بتشوف كل قراية برضه.</string>
     <string name="custom_value">قيمة تانية…</string>
     <string name="custom_value_title">قيمة مخصّصة</string>
     <string name="custom_value_range">من %1$d لـ %2$d</string>
@@ -256,14 +256,14 @@
     <!-- You → Nightscout / Your data -->
     <string name="ns_title">Nightscout</string>
     <string name="ns_upload">ارفع على Nightscout</string>
-    <string name="ns_upload_body">بيبعت قراياتك وسجلّك لموقع Nightscout بتاعك (اللي كان DiaBox بيعمله)، علشان الأدوات اللي بتقرا منه تفضل شغّالة.</string>
+    <string name="ns_upload_body">القرايات والسجل لموقع Nightscout بتاعك.</string>
     <string name="ns_url">رابط Nightscout</string>
     <string name="ns_secret">الـ API secret</string>
     <string name="ns_upload_now">ارفع دلوقتي</string>
     <string name="ns_status_ok">اترفع %2$d جديد الساعة %1$s.</string>
     <string name="ns_status_failed">الرفع فشل الساعة %1$s: %2$s</string>
     <string name="export_title">بياناتك</string>
-    <string name="export_body">كل اللي سكون بيسجّله — القرايات والسجل — كملف CSV لإكسل أو شيتس أو الدكتور.</string>
+    <string name="export_body">القرايات والسجل كجدول.</string>
     <string name="export_csv">صدّر CSV</string>
     <string name="export_days">%1$d يوم</string>
     <string name="export_all">الكل</string>
@@ -272,7 +272,7 @@
     <!-- Trends → Insights -->
     <string name="insights_title">ملاحظات</string>
     <string name="insights_tab">ملاحظات</string>
-    <string name="insights_banner">أنماط من بياناتك وأبحاث منشورة. مش نصيحة طبية — القرار قرارك، والأفضل مع فريقك الطبي.</string>
+    <string name="insights_banner">أنماط من بياناتك. مش نصيحة طبية.</string>
     <string name="insights_ack_title">قبل ما تستخدم الملاحظات</string>
     <string name="insights_ack_body">سكون بيدوّر على أنماط في قراياتك وسجلّك ويقارنها بأهداف ومعادلات طبية منشورة. مش بيشخّص ولا بيوصف علاج، ومش عارف ظروفك كلها، وممكن يغلط — الحساسات بتنحرف والسجل ممكن ينقصه حاجات.\n\nمفيش حاجة هنا بتقولك تغيّر جرعة. أي تغيير في الإنسولين أو الأكل أو النشاط قرارك ومسؤوليتك، والأفضل يكون مع فريقك الطبي. لو حاسس إنك تعبان أو هابط، عالج الأول واطلب مساعدة.</string>
     <string name="insights_ack_button">فهمت</string>
@@ -373,7 +373,7 @@
     <string name="graph_in_range">في المدى (٧٠–١٨٠)</string>
     <string name="graph_average">المتوسط %1$d ملغم/دل</string>
     <string name="graph_gmi">GMI (A1C تقديري) %1$s%%</string>
-    <string name="graph_gmi_note">الـ GMI بيقدّر الـ A1C من متوسط السكر، وبيبقى له معنى على بيانات حوالي ١٤ يوم (Bergenstal et al., Diabetes Care 2018).</string>
+    <string name="graph_gmi_note">GMI بيقدّر التراكمي؛ بيبقى دقيق أكتر على ١٤ يوم.</string>
     <string name="graph_readings">القرايات</string>
     <string name="graph_today">النهارده</string>
     <string name="graph_yesterday">امبارح</string>
@@ -396,7 +396,7 @@
     <string name="emergency_send_failed_title">مقدرناش نبعت لجهات الطوارئ</string>
     <string name="emergency_send_failed">اسمح بالرسائل من إنت ← جهات الطوارئ علشان سكون يقدر يوصلهم.</string>
     <string name="emergency_title">جهات الطوارئ</string>
-    <string name="emergency_body">لو هبوط خطير (تحت ٥٥)، أو إشارة اتقطعت وإنت واطي، محدش ردّ عليه، سكون بيعدّ ٦٠ ثانية وبعدها بيبعت رسالة لكل اللي هنا وبيكلّم أول واحد. أي رد بيوقفه: زرار، أو حتى إنك تسحب المنبّه.</string>
+    <string name="emergency_body">هبوط شديد من غير رد بيبعت رسالة ويتصل بجهات الطوارئ.</string>
     <string name="emergency_your_name">اسمك في الرسائل</string>
     <string name="emergency_add_contact">ضيف من الأسماء</string>
     <string name="emergency_add_number">ضيف رقم</string>
@@ -426,10 +426,10 @@
     <string name="toast_emergency_no_contacts">ضيف جهة طوارئ الأول.</string>
     <string name="toast_emergency_no_location">المكان مش مسموح، فالرسائل مش هتبعته.</string>
     <string name="setup_emergency">رسائل ومكالمات الطوارئ</string>
-    <string name="setup_emergency_why">علشان سكون يقدر يبعت رسائل ويكلّم جهات الطوارئ لو هبوط خطير محدش ردّ عليه.</string>
+    <string name="setup_emergency_why">علشان يبعت ويتصل بجهات الطوارئ وقت الطوارئ.</string>
     <string name="sharing_title">المشاركة</string>
     <string name="sharing_not_configured">المشاركة مش متجهزة في النسخة دي.</string>
-    <string name="sharing_body">اعمل حساب علشان تشارك قراياتك مع أهلك (بيشوفوها أول بأول، من غير ما يقدروا يغيّروا حاجة)، أو علشان تتابع حد شاركك قراياته.</string>
+    <string name="sharing_body">شارك قراياتك مع العيلة، أو تابع حد.</string>
     <string name="sharing_your_name">اسمك</string>
     <string name="sharing_email">الإيميل</string>
     <string name="sharing_password">كلمة السر (٦ حروف أو أكتر)</string>
@@ -472,7 +472,7 @@
     <string name="follow_alarm_body">اطمّن على %1$s دلوقتي.</string>
     <string name="follow_alarm_signal_body">مفيش قرايات من %1$s بقالها %2$d دقيقة.</string>
     <string name="sharing_alerts">نبّهني عليهم</string>
-    <string name="sharing_alerts_body">الهبوط والارتفاع وانقطاع الإشارة، بنفس مستويات وأصوات المنبّهات بتاعتك. بيفضل فيه إشعار صغير بآخر قراية ليهم.</string>
+    <string name="sharing_alerts_body">الهبوط والارتفاع وانقطاع الإشارة عندهم، بحدود منبّهاتك.</string>
     <string name="hc_title">Health Connect</string>
     <string name="hc_body">هات الوجبات اللي التطبيقات التانية بتسجّلها (MyFitnessPal بيبعت كربوهيدرات كل وجبة هناك)، وشارك قرايات السكر مع تطبيقات الصحة التانية.</string>
     <string name="hc_unavailable">Health Connect مش موجود على الموبايل ده.</string>
@@ -516,7 +516,7 @@
     <string name="life_ended_body">مفيش قرايات منه تاني. ركّب حساس جديد ووصّله من إنت ← الحساس بتاعك.</string>
     <string name="calibration_title">المعايرة</string>
     <string name="calibration_toggle">عايِر بقياسات الصباع</string>
-    <string name="calibration_body">بيظبط القرايات على قياسات الصباع الأخيرة اللي اتاخدت والسكر ثابت. مقفولة من الأول: معايرة المصنع للحساس غالبًا الأحسن.</string>
+    <string name="calibration_body">بيظبط القرايات على قياسات الصباع الثابتة. مقفول في الأول.</string>
     <string name="calibration_waiting">سجّل قياس صباع والسكر ثابت (من غير سهم سريع) علشان تبدأ.</string>
     <string name="calibration_using">بنستخدم %1$d قياس صباع: القراية × %2$s %3$s ملغم/دل.</string>
     <string name="calibration_example">الحساس %1$d ← %2$d؛ والهبوط %3$d ← %4$d (الهبوط عمره ما بيترفع).</string>
@@ -526,10 +526,10 @@
     <string name="toast_calibration_off">المعايرة اتقفلت: قرايات المصنع.</string>
     <string name="home_iob">%1$s وحدة شغّالة</string>
     <string name="insulin_title">الإنسولين</string>
-    <string name="insulin_body">إزاي الإنسولين السريع بيشتغل مع الوقت، علشان الإنسولين الشغّال اللي بيظهر في الرئيسية ووقت ما تسجّل جرعة. الإنسولين طويل المفعول (القاعدي) مش بيتحسب.</string>
+    <string name="insulin_body">الأنسولين السريع بيشتغل إزاي، علشان الأنسولين الشغّال.</string>
     <string name="insulin_duration">مدة المفعول</string>
     <string name="insulin_peak">أقوى مفعول بعد</string>
-    <string name="insulin_peak_hint">٥٥ دقيقة للإنسولين فائق السرعة (Fiasp وLyumjev)، و٧٥ دقيقة للسريع (Apidra وNovoRapid وHumalog). اتأكد مع دكتورك. المنحنى هو نفس اللي OpenAPS وLoop بيستخدموه.</string>
+    <string name="insulin_peak_hint">٥٥ دقيقة: Fiasp وLyumjev. ٧٥ دقيقة: Apidra وNovoRapid وHumalog.</string>
     <string name="report_tab">التقرير</string>
     <string name="report_title">التقرير</string>
     <string name="report_subtitle">ملف السكر المجمّع (AGP) · %1$s – %2$s</string>
@@ -559,29 +559,29 @@
     <string name="service_stale_body">آخر قراية: %1$d ملغم/دل الساعة %2$s. بيرجع يتوصل لوحده.</string>
     <string name="settings_guide">الدليل: سكون بيشتغل إزاي ←</string>
     <string name="help_title">الدليل</string>
-    <string name="help_intro">دوس على أي موضوع علشان يفتح. كل حاجة هنا موجودة في نفس المكان اللي هتدوّر عليها فيه في التطبيق.</string>
+    <string name="help_intro">كل التفاصيل في مكان واحد.</string>
     <string name="help_sensor_title">توصيل الحساس</string>
-    <string name="help_sensor_body">حسابي ← الحساس بتاعك ← وصّل الحساس، وبعدين قرّب الجزء اللي فوق في الموبايل من الحساس لحد ما يهزّ. سكون بيقرا ذاكرة الحساس (آخر ٨ ساعات بتظهر على طول) وبياخد بث البلوتوث بتاعه؛ والقرايات المباشرة بتوصل كل دقيقة. «افحص الحساس» بيقراه بس من غير ما ياخده. أي تطبيق تاني (زي DiaBox) يقدر ياخد الحساس تاني بسكان منه، ولمسة جديدة في سكون بترجّعه.</string>
+    <string name="help_sensor_body">حسابي ← الحساس ← وصّل الحساس، وبعدين قرّب أعلى الموبايل من الحساس لحد ما يهتز. سكون بيقرا الذاكرة (آخر ٨ ساعات بتظهر على طول) وبياخد البلوتوث، فالتطبيقات التانية (زي DiaBox) بتبطّل تاخد قرايات؛ مسح في التطبيق ده بيرجّعه، ولمسة جديدة في سكون بتاخده تاني. «افحص الحساس» بيقراه بس. القرايات كل دقيقة؛ حفظ أقل (حسابي ← الحساس ← القرايات) بيخفف السجل، والمنبّهات بتشوف كل قراية برضه. ملاحظة الـ ٢٤ ساعة تحت الاتصال بتعدّ الانقطاعات: غالبًا الموبايل كان بعيد (كام متر، وأقل لو فيه جسم أو حيطة)، أو الموبايل وقّف سكون في الخلفية.</string>
     <string name="help_home_title">دلوقتي (الرئيسية)</string>
     <string name="help_home_body">الرقم الكبير هو آخر قراية، والسهم بيقولك رايح على فين. القراية اللي عدّى عليها أكتر من ١٠ دقايق بتبقى رمادي وعمرها ما بتتعرض كأنها حالية. الحساس الجديد محتاج ساعة يسخّن، وفي آخر يوم من عمره فيه شريط بيقولك هيقف إمتى. الأيقونات اللي فوق بتسجّل أكل وإنسولين؛ و«وحدة شغّالة» هي الإنسولين السريع اللي لسه شغّال.</string>
     <string name="help_alarms_title">التنبيهات</string>
-    <string name="help_alarms_body">الهبوط الخطير (تحت ٥٥) دايمًا شغّال: بياخد الشاشة كلها ويفضل يرنّ لحد ما ترد عليه. تنبيهات الهبوط والنزول والارتفاع وانقطاع الإشارة بتتظبط من حسابي ← التنبيهات، وكل واحد ليه صوته (صوت من الموبايل أو ملف من عندك). دوس «جرّب» علشان تسمع تنبيه الهبوط الخطير. اسمح بكل حاجة في حسابي ← التجهيز علشان التنبيهات توصلك حتى في الصامت وعدم الإزعاج.</string>
+    <string name="help_alarms_body">الهبوط الشديد (تحت ٥٥) شغّال دايمًا: بياخد الشاشة وبيرن لحد ما ترد، دقيقة كل مرة. الهبوط (٧٠ في الأول)، والنزول، والارتفاع (١٨٠ في الأول)، وانقطاع القرايات بيتظبطوا من حسابي ← المنبّهات والأصوات؛ لكل واحد صوت سكون الخاص (صعود، تموّج، انسياب، دفا، دقّة)، أو صوت من الموبايل أو ملف من عندك. وقت الهبوط صوت المنبّه بيعلى وبيرجع بعدها. «شوف واسمع كل منبّه» بيشغّل أي واحد. «المنبّهات توصلك؟» بتقول أي حاجة مانعاها مع حلّها؛ و«المنبّهات عملت إيه» بتوري كل منبّه، وصل ولا لأ، واترد عليه إزاي.</string>
     <string name="help_emergency_title">جهات الطوارئ</string>
-    <string name="help_emergency_body">لو هبوط خطير، أو إشارة اتقطعت وإنت واطي، محدش ردّ عليه المدة اللي اخترتها، سكون بيعدّ ٦٠ ثانية على الشاشة، وبعدها بيبعت رسالة لكل اللي في حسابي ← جهات الطوارئ وبيكلّم أول واحد. دوس «أنا كويس» في أي وقت علشان توقفه. الرسالة ممكن يبقى فيها لينك خريطة. وفي «دلوقتي»، «نبّه جهة الطوارئ» بيخليك تبعت رسالة أو واتساب أو تتصل بنفسك.</string>
+    <string name="help_emergency_body">لو هبوط شديد، أو انقطاع إشارة وإنت واطي، مترودش عليه في الوقت اللي تختاره (١٠ دقايق في الأول)، سكون بيعدّ ٦٠ ثانية على الشاشة، وبعدين بيبعت رسالة لكل اللي في حسابي ← الناس ← جهات الطوارئ وبيتصل بأولهم؛ وتاني بعد ٣٠ دقيقة لو لسه مفيش رد، ورسالة «رجع طبيعي» لما تبقى ٧٠ أو أكتر. أي رد، حتى لو شلت المنبّه، بيبدأ العدّ من الأول؛ و«أنا كويس» بيوقّفه. في الرئيسية، «بلّغ جهة الطوارئ» بيخليك تبعتلهم أو تكلّمهم بنفسك.</string>
     <string name="help_logbook_title">السجل</string>
     <string name="help_logbook_body">التقارير ← السجل فيه الأكل، والإنسولين السريع والقاعدي، وقياسات الصباع، والنشاط، والملاحظات. الوجبة ممكن تتسجّل معاها جرعة الإنسولين وكام دقيقة قبل الأكل. كل تسجيل بيظهر جنبه السكر في اللحظة دي؛ وقياس الصباع بيوريك الحساس كان بعيد قد إيه عن الجهاز. الذكاء الاصطناعي يقدر يقدّر كربوهيدرات الوجبة من صورة أو وصف، بس عمره ما بيقترح جرعات.</string>
     <string name="help_trends_title">الرسم البياني والملاحظات والتقرير</string>
     <string name="help_trends_body">الرسم البياني بيوري أي مدة من ٣ ساعات لـ ١٤ يوم، ومعاه الوقت في المدى والـ GMI (تقدير للـ A1C)، وكل القرايات تحته. الملاحظات بتلاقي أنماط، زي هبوط بيتكرر في ساعة معينة، وبتقول كل قاعدة جاية منين؛ ومفيش فيها أي أوامر. والتقرير بيدّيك ملخص الـ AGP في صفحة واحدة اللي العيادات بتستخدمه، ومعاه PDF تشاركه.</string>
     <string name="help_widgets_title">الويدجت</string>
-    <string name="help_widgets_body">ضيف ويدجت سكون من قايمة الويدجت في الشاشة الرئيسية، أو من حسابي ← ويدجت الشاشة الرئيسية. كبّره من خانة واحدة لنص الشاشة؛ ودوس «عدّل» علشان تختار الرسم والتفاصيل.</string>
+    <string name="help_widgets_body">حسابي ← المظهر ← اعمل ويدجت: اختار الشكل (الرقم، الرقم والرسم، الرسم، الدايرة، النهارده، الأنسولين، اللي بتتابعهم)، والمقاس، ويعرض إيه، والخلفية، والمعاينة هي الويدجت الحقيقي بأرقامك. «حطّه على الشاشة الرئيسية» بيحطه بالمقاس ده. دوس مطوّل على الويدجت علشان تعدّله. القراية القديمة بتبهت، عمرها ما بتظهر كأنها حالية.</string>
     <string name="help_sharing_title">المشاركة والمتابعة</string>
-    <string name="help_sharing_body">اعمل حساب من حسابي ← المشاركة؛ و«اعزم حد يتابعك» بيبعت كود يشتغل مرة واحدة (صالح ٢٤ ساعة). الشخص بيدخّله في سكون عنده وبيشوف قراياتك أول بأول، ومعاها تنبيهات لو عايز. تقدر تشيل أي متابع في أي وقت. بيتشارك بس قرايات الحساس الحقيقية.</string>
+    <string name="help_sharing_body">حسابي ← الناس ← المشاركة: اعمل حساب، وبعدين «ادعي حد يتابعك» بيعمل كود لمرة واحدة (٢٤ ساعة)؛ «ابعت» بيشاركه مع رابط صفحة المتابعة. على أندرويد بيكتبوه في سكون؛ على الآيفون أو أي موبايل بيفتحوا khairyky.github.io/sukoon، يحطوها على الشاشة الرئيسية ويكتبوه هناك (المنبّه هناك بيرن بس والصفحة مفتوحة). القرايات الحقيقية بس اللي بتتشارك، عمر بيانات التجربة. أي طرف يقدر يوقّف المتابعة.</string>
     <string name="help_data_title">بياناتك في أماكن تانية</string>
-    <string name="help_data_body">Nightscout: سكون بيرفع القرايات والسجل على موقع Nightscout بتاعك. بياناتك: صدّر كل حاجة كملف CSV. Health Connect: الوجبات من MyFitnessPal بتدخل السجل، والقرايات بتطلع للتطبيقات التانية.</string>
+    <string name="help_data_body">Nightscout (حسابي ← التطبيقات والبيانات): القرايات والسجل بيروحوا لموقعك. المساعد الذكي: مفتاح Gemini المجاني بتاعك؛ لما تسأل أو تقدّر وجبة، ملخص من قراياتك وسجلك (أو الصورة) بيروح لجوجل، وعمره ما بيقترح جرعات. التقارير: تصدير CSV، والنسخة الاحتياطية (تحت).</string>
     <string name="help_calibration_title">المعايرة</string>
-    <string name="help_calibration_body">مقفولة من الأول، لأن معايرة المصنع للحساس غالبًا الأحسن. لما تشغّلها، سكون بيقرّب القرايات من قياسات الصباع الأخيرة اللي اتاخدت والسكر ثابت، في حدود صارمة، وعمره ما بيرفع قراية واطية.</string>
+    <string name="help_calibration_body">مقفولة في الأول، لأن معايرة المصنع غالبًا الأحسن. لما تشغّلها (حسابي ← الحساس)، سكون بيقرّب القرايات من آخر ٤ قياسات صباع في ٧ أيام اتاخدت والسكر ثابت، في حدود ±٢٠ مجم/دل و×٠٫٨–١٫٢٥، وعمره ما بيعلّي قراية واطية.</string>
     <string name="help_reliability_title">علشان يفضل شغّال</string>
-    <string name="help_reliability_body">سكون بيسيب إشعار صغير فيه السكر بتاعك؛ ده اللي بيحافظ على توصيل الحساس. اسمح له يتجاهل توفير البطارية، وفي موبايلات سامسونج أو شاومي افتح إعدادات الخلفية الزيادة اللي في حسابي ← التجهيز. بعد إعادة التشغيل أو التحديث بيرجع يتوصل لوحده.</string>
+    <string name="help_reliability_body">سكون بيسيب إشعار صغير فيه السكر؛ ده اللي بيخليه شغّال. اسمح بكل حاجة في حسابي ← المساعدة ← فحص الإعداد، وعلى سامسونج أو شاومي خلّي سكون بدون قيود / عمره ما ينام. لو الموبايل وقّف سكون برضه، فيه حارس بيصحّيه ومنبّه «مفيش قرايات» بيرن. بعد إعادة التشغيل أو التحديث بيوصّل لوحده (دقيقة أو اتنين).</string>
     <string name="help_safety_title">الأمان</string>
     <string name="help_safety_body">سكون مش جهاز طبي. لو القراية مش متطابقة مع إحساسك، اتأكد بقياس صباع، واتبع نصيحة الفريق الطبي في العلاج. في الطوارئ، اتصل برقم الطوارئ المحلي.</string>
     <string name="start_title">نبدأ</string>
@@ -943,7 +943,7 @@
     <string name="insight_carbdays_discuss">أنهي وجبات في الأيام الكبيرة أصعب في التغطية.</string>
     <string name="insight_src_carbdays">توافق العلاج الغذائي (Evert وآخرون، Diabetes Care 2019)</string>
     <string name="alarms_reach_title">المنبّهات توصلك؟</string>
-    <string name="alarms_off_demo">المنبّهات مقفولة دلوقتي: بتشتغل بس على قراءات الحساس بتاعك، عمرها ما بتشتغل على بيانات التجربة. اختار الحساس من حسابي ← الحساس.</string>
+    <string name="alarms_off_demo">المنبّهات مقفولة: بيانات التجربة عمرها ما بترنّها.</string>
     <string name="alarms_history_title">المنبّهات عملت إيه</string>
     <string name="alarm_log_empty">لسه مفيش. دوس تجربة فوق علشان تسمع منبّه الهبوط الشديد، وهيظهر هنا.</string>
     <string name="alarm_log_reached">رنّ وظهر على الشاشة</string>
@@ -960,7 +960,7 @@
     <string name="home_headline_still_low">لسه واطي. خد ١٥ جرام كمان.</string>
     <string name="home_low_again_action">عدّت ١٥ دقيقة ولسه تحت ٧٠: خد ١٥ جرام سكريات سريعة كمان (عصير، أقراص جلوكوز)، وبعدين دوس عالجته تاني.</string>
     <string name="alarms_see_hear">شوف واسمع كل منبّه</string>
-    <string name="alarms_preview_body">اسمع بيشغّل الصوت ٥ ثواني. شوف بيعرض التنبيه كله بصوته، ومكتوب عليه تجربة.</string>
+    <string name="alarms_preview_body">اسمع: ٥ ثواني. شوف: التنبيه كله، مكتوب عليه تجربة.</string>
     <string name="alarms_hear">اسمع</string>
     <string name="alarms_see">شوف</string>
     <string name="alarms_sound_phone">صوت الموبايل</string>
@@ -994,7 +994,7 @@
     <string name="apps_ai_key_ending">مفتاح Gemini آخره %1$s</string>
     <string name="sensor_connection_title">الاتصال</string>
     <string name="sensor_gaps_none">آخر ٢٤ ساعة: مفيش انقطاع في القراءات.</string>
-    <string name="sensor_gaps_why">الانقطاع غالبًا معناه إن الموبايل كان بعيد عن الحساس (كام متر، وأقل لو فيه جسم أو حيطة في النص)، أو إن الموبايل وقّف سكون في الخلفية: راجع بنود البطارية في حسابي ← المنبّهات.</string>
+    <string name="sensor_gaps_why">غالبًا بُعد عن الحساس، أو الموبايل موقّف سكون.</string>
     <plurals name="setup_banner">
         <item quantity="zero">كل الإعدادات متظبطة.</item>
         <item quantity="one">لسه إعداد واحد محتاج يتظبط علشان القرايات والتنبيهات تبقى مضمونة.</item>
@@ -1087,14 +1087,14 @@
     <string name="widget_info_iob">الأنسولين الشغّال</string>
     <string name="widget_info_long">طويل المفعول</string>
     <string name="widget_info_long_hint">اتاخد النهارده، أو زرار أخدتها</string>
-    <string name="widgets_body_maker">سكرك على الشاشة الرئيسية. اعمل اللي إنت عايزه: اختار الشكل والمقاس وكل واحد يعرض إيه.</string>
+    <string name="widgets_body_maker">سكرك على الشاشة الرئيسية، بالشكل اللي تحبه.</string>
     <string name="widgets_make">+ اعمل ويدجت</string>
     <string name="hc_resync">زامن من الأول</string>
     <string name="hc_resyncing">بيزامن…</string>
     <string name="hc_resync_done">اتزامن: %1$d وجبة من MyFitnessPal في آخر ٧ أيام (%2$d جديد، %3$d اتحدّث).</string>
     <string name="hc_resync_none">Health Connect مفيهوش وجبات من MyFitnessPal في آخر ٧ أيام. في MyFitnessPal: المزيد ← Apps &amp; Devices ← دوّر على Health Connect ← Connect، شغّله واسمح بكل الأذونات (انزل في القايمة).</string>
     <string name="hc_mfp_in_hc">Health Connect فيه %1$d وجبة من MyFitnessPal الأسبوع ده؛ آخرهم %2$s.</string>
-    <string name="hc_mfp_none_in_hc">Health Connect مفيهوش وجبات من MyFitnessPal الأسبوع ده، يعني MyFitnessPal مش بيشاركها. في MyFitnessPal: المزيد ← Apps &amp; Devices ← دوّر على Health Connect ← Connect، شغّله واسمح بكل الأذونات (انزل في القايمة).</string>
+    <string name="hc_mfp_none_in_hc">مفيش وجبات من MyFitnessPal في Health Connect الأسبوع ده. في MyFitnessPal: المزيد ← Apps &amp; Devices ← Health Connect.</string>
     <string name="hc_last_sync">سكون شاف آخر مرة %1$s: %2$d جديد، %3$d اتحدّث.</string>
     <string name="hc_last_sync_failed">سكون حاول يشوف %1$s ومعرفش: %2$s</string>
     <string name="you_language_auto">لغة الموبايل</string>
@@ -1109,7 +1109,7 @@
     <string name="backup_not_one">الملف ده مش نسخة من سكون.</string>
     <string name="backup_restarting">اتسترجع. سكون بيقفل: افتحه تاني.</string>
     <string name="llu_title">LibreLinkUp</string>
-    <string name="llu_body">تابع أي حد بيشارك من تطبيق Libre بتاع Abbott (Libre 2 و3 وPlus، أندرويد أو آيفون). ادخل بحساب LibreLinkUp بتاعك.</string>
+    <string name="llu_body">تابع أي حد بيشارك من تطبيق Libre بتاع Abbott.</string>
     <string name="llu_connect">وصّل</string>
     <string name="llu_connecting">بيوصّل…</string>
     <string name="llu_connected">LibreLinkUp اتوصل: بتتابع %1$d.</string>
@@ -1117,7 +1117,7 @@
     <string name="llu_accept_terms">افتح تطبيق LibreLinkUp مرة واقبل الشروط، وبعدين وصّل تاني.</string>
     <string name="llu_unreachable">مقدرتش أوصل لـ LibreLinkUp. اتأكد من النت وجرّب تاني.</string>
     <string name="llu_failed">LibreLinkUp رفض الاتصال. جرّب بعدين.</string>
-    <string name="llu_nobody">مفيش حد بيشارك مع الحساب ده لسه. في تطبيق Libre بتاعهم: التطبيقات المتصلة ← LibreLinkUp ← ضيف إيميلك.</string>
+    <string name="llu_nobody">مفيش حد بيشارك مع الحساب ده لسه.</string>
     <string name="settings_source_llu">LibreLinkUp · %1$s</string>
     <string name="settings_source_llu_body">الحساس بتاعهم عن طريق تطبيق Abbott، متأخر حوالي دقيقة؛ محتاج نت.</string>
     <string name="toast_source_llu">القرايات دلوقتي جاية من %1$s على LibreLinkUp.</string>
@@ -1130,7 +1130,7 @@
     <string name="settings_source_dexcom_body">عن طريق سيرفرات Dexcom، كل ٥ دقايق؛ محتاج نت.</string>
     <string name="toast_source_dexcom">القرايات دلوقتي جاية من Dexcom Share.</string>
     <string name="dexcom_title">Dexcom</string>
-    <string name="dexcom_body">قرايات حد لابس Dexcom (G6 وG7 وONE) بحساب Dexcom بتاعه. لازم المشاركة تكون شغّالة في تطبيق Dexcom بتاعه.</string>
+    <string name="dexcom_body">قرايات حد لابس Dexcom، بحساب Dexcom بتاعه.</string>
     <string name="dexcom_name">اسمه</string>
     <string name="dexcom_username">اسم المستخدم أو الإيميل في Dexcom</string>
     <string name="dexcom_region_world">برّه أمريكا</string>
@@ -1146,4 +1146,12 @@
     <string name="sound_warm">دفا</string>
     <string name="sound_knock">دقّة</string>
     <string name="sound_chime">رنّة</string>
+    <string name="help_sources_title">حساسات تانية: LibreLinkUp وDexcom</string>
+    <string name="help_sources_body">LibreLinkUp (حسابي ← الناس): ادخل بحساب LibreLinkUp وأي حد بيشارك معاه من تطبيق Libre بتاع Abbott (Libre 2 و3 وPlus، أندرويد أو آيفون) هيتتابع هنا بمنبّهاته. في تطبيق Libre بتاعهم: التطبيقات المتصلة ← LibreLinkUp ← ضيف إيميلك. Dexcom (حسابي ← الناس): حساب حد لابس Dexcom، والمشاركة شغّالة في تطبيق Dexcom بتاعه (G6 وG7 وONE). أي واحد منهم ممكن يبقى السكر بتاعك: حسابي ← الحساس. الاتنين بييجوا عن طريق النت، متأخرين دقيقة (LibreLinkUp) أو خمسة (Dexcom) عن الحساس، وبيستخدموا اتصالات تطبيقات الشركات دي، اللي ممكن يغيّروها.</string>
+    <string name="help_mfp_title">MyFitnessPal وHealth Connect</string>
+    <string name="help_mfp_body">الوجبات اللي بتسجلها في MyFitnessPal بتيجي السجل بكل العناصر، عن طريق Health Connect: في MyFitnessPal، المزيد ← Apps &amp; Devices ← Health Connect ← Connect، واسمح بكل الأذونات. اسحب لتحت في الرئيسية أو السجل علشان يجيب الجديد؛ حسابي ← التطبيقات والبيانات ← زامن من الأول بيقرا آخر ٧ أيام تاني وبيقول Health Connect فيه كام وجبة من MyFitnessPal. لو مفيش، يبقى MyFitnessPal مش بيشارك: حدّثه ووصّله تاني. التمارين ١٠ دقايق أو أكتر، والخطوات، والمية بييجوا بنفس الطريقة.</string>
+    <string name="help_reminders_title">تذكير الأنسولين طويل المفعول</string>
+    <string name="help_reminders_body">حسابي ← الأنسولين والسجل ← تذكير: في ميعادك كل يوم، لو مفيش أنسولين طويل المفعول اتسجّل في الـ ١٢ ساعة اللي قبلها، بييجي إشعار. «أخدتها» بيسجّل آخر جرعة؛ «بعد ٣٠ دقيقة» بيستنى. بيرجع كل ٣٠ دقيقة، ٣ مرات، وبيختفي أول ما الجرعة تتسجّل في أي حتة. ويدجت الأنسولين فيه «أخدتها» برضه.</string>
+    <string name="help_backup_title">النسخة الاحتياطية ونقل الموبايل</string>
+    <string name="help_backup_body">حسابي ← التقارير ← خد نسخة من كل حاجة بيحفظ ملف واحد فيه قراياتك وسجلك وإعداداتك وربط الحساس وصور الوجبات؛ خلّيه في مكان أمان، ده خاص. الاسترجاع بيرجّع كل حاجة على نفس الموبايل أو موبايل جديد: سكون بيقفل ويفتح زي ما كان. ويدجت الشاشة الرئيسية لازم تتضاف تاني.</string>
 </resources>
