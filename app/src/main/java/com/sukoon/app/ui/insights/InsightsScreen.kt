@@ -101,6 +101,7 @@ private fun InsightCard(insight: Insight) {
             is Insight.Targets -> {
                 Title(stringResource(R.string.insight_tir_title, insight.days))
                 TargetRow(R.string.insight_tir_in_range, insight.inRange, stringResource(R.string.insight_goal_over, 70), insight.metInRange)
+                if (insight.inYourRange != null && insight.yourHigh != null) Body(stringResource(R.string.insight_tir_yours, insight.yourHigh, insight.inYourRange))
                 TargetRow(R.string.insight_tir_below70, insight.below70, stringResource(R.string.insight_goal_under, 4), insight.metBelow70)
                 TargetRow(R.string.insight_tir_below54, insight.below54, stringResource(R.string.insight_goal_under, 1), insight.metBelow54)
                 TargetRow(R.string.insight_tir_above180, insight.above180, stringResource(R.string.insight_goal_under, 25), insight.metAbove180)

@@ -37,6 +37,14 @@ King & Armstrong found the published rules give **too little** insulin at good c
 first suggestion that's the safe direction: start with the classic rule and let the learning
 correct it. Sukoon already has TDD (`Insight.Formulas`, complete days only).
 
+### Children and teenagers
+
+Same rules, a different daily total per kg (ISPAD Clinical Practice Consensus Guidelines 2022,
+insulin treatment): prepubertal 0.7–1.0 u/kg/day, puberty 1.0–1.2 or more, partial remission under
+0.5. Sukoon takes the cautious end (0.7 under 12, 1.0 for 12–17): a smaller total gives a weaker
+ratio, so less insulin per gram. Weight is required for a child; there's no generic fallback. A
+parent lock (PIN) guards a child's dose settings and alarms.
+
 ## Learning the numbers from the logbook
 
 - **What a "right" dose is** (King & Armstrong 2007): a meal dose was right if glucose is back

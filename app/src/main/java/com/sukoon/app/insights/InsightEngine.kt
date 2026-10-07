@@ -41,6 +41,9 @@ sealed interface Insight {
         val above250: Int,
         val meanMgDl: Int,
         val gmiPercent: Double,
+        /** Time in your own tighter range (70 to [yourHigh]); null when it's the international 70–180. */
+        val inYourRange: Int? = null,
+        val yourHigh: Int? = null,
     ) : Insight {
         val metInRange get() = inRange >= 70
         val metBelow70 get() = below70 < 4
@@ -183,6 +186,8 @@ data class RangeSummary(
     val veryHigh: Double,
     val meanMgDl: Int,
     val gmiPercent: Double,
+    /** 70 to your range's top ([TargetRange.high]); the same as [inRange] at 180. */
+    val inYourRange: Double = inRange,
 )
 
 /**
@@ -197,7 +202,8 @@ object InsightEngine {
     private val EPISODE_MIN = Duration.ofMinutes(15)
     private val GAP_BREAKS_RUN = Duration.ofMinutes(20)
 
-    fun analyze(allReadings: List<GlucoseReading>, allEvents: List<EventEntity>, now: Instant, zone: ZoneId): List<Insight> {
+    /** [high]: the top of your own range, shown beside the international targets when it's tighter. */
+    fun analyze(allReadings: List<GlucoseReading>, allEvents: List<EventEntity>, now: Instant, zone: ZoneId, high: Int = 180): List<Insight> {
         val start = now.minus(Duration.ofDays(WINDOW_DAYS))
         val readings = allReadings.filter { it.timestamp > start && it.timestamp <= now }.sortedBy { it.timestamp }
         val events = allEvents.filter { Instant.ofEpochMilli(it.timestampMillis).let { t -> t > start && t <= now } }.sortedBy { it.timestampMillis }
@@ -207,7 +213,7 @@ object InsightEngine {
 
         val out = mutableListOf<Insight>()
         val lows = lowEpisodes(readings)
-        out += targets(readings, days, coverage, now)
+        out += targets(readings, days, coverage, now, high)
         out += Insight.Variability(cvPercent(readings, now))
         recurringLows(lows, zone)?.let(out::add)
         recurringHighs(readings, zone)?.let(out::add)
@@ -252,7 +258,7 @@ object InsightEngine {
     }
 
     /** [r] oldest first; null when empty. The graph's stats use this too, so they always match the Insights card. */
-    fun summary(r: List<GlucoseReading>, now: Instant): RangeSummary? {
+    fun summary(r: List<GlucoseReading>, now: Instant, high: Int = 180): RangeSummary? {
         if (r.isEmpty()) return null
         val w = weights(r, now)
         val total = w.sum()
@@ -266,11 +272,12 @@ object InsightEngine {
             veryHigh = pct { it > 250 },
             meanMgDl = mean.roundToInt(),
             gmiPercent = (GlucoseMetrics.gmiPercent(mean) * 10).roundToInt() / 10.0,
+            inYourRange = pct { it in 70..high },
         )
     }
 
-    private fun targets(r: List<GlucoseReading>, days: Int, coverage: Int, now: Instant): Insight.Targets {
-        val s = requireNotNull(summary(r, now))
+    private fun targets(r: List<GlucoseReading>, days: Int, coverage: Int, now: Instant, high: Int): Insight.Targets {
+        val s = requireNotNull(summary(r, now, high))
         return Insight.Targets(
             days = days,
             coveragePercent = coverage,
@@ -281,6 +288,8 @@ object InsightEngine {
             above250 = s.veryHigh.roundToInt(),
             meanMgDl = s.meanMgDl,
             gmiPercent = s.gmiPercent,
+            inYourRange = s.inYourRange.roundToInt().takeIf { high < 180 },
+            yourHigh = high.takeIf { it < 180 },
         )
     }
 

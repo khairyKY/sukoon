@@ -1,5 +1,8 @@
 package com.sukoon.app.ui.settings
 
+import androidx.compose.runtime.remember
+import com.sukoon.app.domain.metrics.TargetRange
+import com.sukoon.app.insulin.Profile
 import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -174,7 +177,20 @@ fun SettingsScreen(
     doseStartingPoints: suspend () -> Insight.Formulas? = { null },
     /** Every meal's verdict and the ratios learned from the clean ones, given the correction factor (null: estimate it). */
     learningReport: suspend (Double?) -> RatioLearner.Report = { RatioLearner.Report(emptyList(), null, false, emptyList()) },
+    profile: Profile = Profile(),
+    onProfile: (Profile) -> Unit = {},
+    /** The top of your target range (70 to this). */
+    targetHigh: Int = TargetRange.DEFAULT_HIGH,
+    onTargetHigh: (Int) -> Unit = {},
+    parentPin: String? = null,
+    onParentPin: (String?) -> Unit = {},
 ) {
+    // The parent lock: while it's on (and not unlocked on this visit), changes ask for the PIN first.
+    var unlocked by rememberSaveable { mutableStateOf(false) }
+    var askingPin by remember { mutableStateOf(false) }
+    val locked = parentPin != null && !unlocked
+    fun <T> guarded(change: (T) -> Unit): (T) -> Unit = { if (locked) askingPin = true else change(it) }
+    if (askingPin) PinDialog(setting = false, stored = parentPin, onDone = { unlocked = true; askingPin = false }, onDismiss = { askingPin = false })
     val context = LocalContext.current
     var page by rememberSaveable { mutableStateOf<YouPage?>(null) }
     BackHandler(enabled = page != null) { page = null }
@@ -281,7 +297,13 @@ fun SettingsScreen(
                             AlarmReach(sensorIsSource = sourceKind.real)
                             Gap()
                         }
-                        AlarmSettingsSection(alarmSettings, onAlarmSettings, onTestAlarm, onPreviewAlarm, onPreviewPack)
+                        if (locked) {
+                            LockedNotice { askingPin = true }
+                            Gap()
+                        }
+                        RangeCard(targetHigh, guarded(onTargetHigh))
+                        Gap()
+                        AlarmSettingsSection(alarmSettings, guarded(onAlarmSettings), onTestAlarm, onPreviewAlarm, onPreviewPack)
                         Gap()
                         if (!blocked) {
                             SectionLabel(stringResource(R.string.alarms_reach_title))
@@ -313,7 +335,7 @@ fun SettingsScreen(
                         Gap()
                         InsulinSection(insulinAction, onInsulinAction, doseSettings.step) { onDoseSettings(doseSettings.copy(step = it)) }
                         Gap()
-                        DoseCard(doseSettings, onDoseSettings, doseStartingPoints, learningReport, insulinAction.durationMinutes / 60)
+                        DoseCard(doseSettings, guarded(onDoseSettings), doseStartingPoints, learningReport, insulinAction.durationMinutes / 60, profile, guarded(onProfile), locked, { askingPin = true }, parentPin, onParentPin)
                     }
                     YouPage.APPS -> {
                         HealthConnectSection(healthConnect)

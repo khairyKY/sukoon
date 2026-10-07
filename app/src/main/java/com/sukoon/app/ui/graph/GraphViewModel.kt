@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.graph
 
+import com.sukoon.app.domain.metrics.TargetRange
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -57,7 +58,7 @@ class GraphViewModel(
     }
 
     val uiState: StateFlow<GraphUiState> = combine(_range, readings, events) { range, readings, events ->
-        GraphUiState(range = range, readings = readings, events = events, summary = InsightEngine.summary(readings, Instant.now()))
+        GraphUiState(range = range, readings = readings, events = events, summary = InsightEngine.summary(readings, Instant.now(), TargetRange.high))
     }
         .flowOn(Dispatchers.Default) // 14 days is ~20k readings: keep the summary off the main thread
         .stateIn(

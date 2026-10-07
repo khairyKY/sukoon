@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.components
 
+import com.sukoon.app.domain.metrics.TargetRange
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -74,7 +75,7 @@ internal fun homeBars(readings: List<GlucoseReading>, now: Instant, count: Int =
         when {
             values.isEmpty() -> null
             values.min() < 70 -> values.min()
-            values.max() > 180 -> values.max()
+            values.max() > TargetRange.high -> values.max()
             else -> values.average().roundToInt()
         }
     }
@@ -82,6 +83,6 @@ internal fun homeBars(readings: List<GlucoseReading>, now: Instant, count: Int =
 
 private fun colorFor(mgDl: Int): Color = when {
     mgDl < 70 -> StateLow
-    mgDl <= 180 -> Sage
+    mgDl <= TargetRange.high -> Sage
     else -> StateHigh
 }

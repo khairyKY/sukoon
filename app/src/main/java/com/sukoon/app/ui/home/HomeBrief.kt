@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.home
 
+import com.sukoon.app.domain.metrics.TargetRange
 import com.sukoon.app.alarms.AlarmEngine
 import com.sukoon.app.data.db.EventEntity
 import com.sukoon.app.data.db.LogEventType
@@ -87,6 +88,7 @@ object HomeBriefs {
     ): Brief? {
         val latest = readings.lastOrNull()?.takeIf { Duration.between(it.timestamp, now) <= HomeUiStateMapper.STALE_AFTER } ?: return null
         val v = latest.glucoseMgDl
+        val top = TargetRange.high // your range's top: "high" here matches Home's high state
         fun ago(minutes: Long): Instant = now.minus(Duration.ofMinutes(minutes))
         fun EventEntity.at(): Instant = Instant.ofEpochMilli(timestampMillis)
         fun last(type: LogEventType, withinMinutes: Long) = events.lastOrNull { it.logType == type && it.at() in ago(withinMinutes)..now }
@@ -108,10 +110,10 @@ object HomeBriefs {
         return when {
             projected < 70 -> Brief.HeadingLow((((v - 70) * 20) / (v - projected)).roundToInt().coerceAtLeast(1), insulin)
             v > 250 && run(readings) { it > 250 } >= 120 -> Brief.VeryHighFor(run(readings) { it > 250 })
-            v > 180 && lastLow != null -> Brief.Rebound(lastLow.start)
-            v > 180 && insulin > 0 -> Brief.InsulinWorking(insulin)
-            meal != null && (v > 180 || rising) -> Brief.AfterMeal(meal.value?.roundToInt()?.takeIf { it > 0 }, meal.at())
-            v > 180 -> Brief.HighFor(run(readings) { it > 180 }, over250 = v > 250)
+            v > top && lastLow != null -> Brief.Rebound(lastLow.start)
+            v > top && insulin > 0 -> Brief.InsulinWorking(insulin)
+            meal != null && (v > top || rising) -> Brief.AfterMeal(meal.value?.roundToInt()?.takeIf { it > 0 }, meal.at())
+            v > top -> Brief.HighFor(run(readings) { it > top }, over250 = v > 250)
             // In range from here on.
             lastLow != null && lastLow.end > ago(60) -> Brief.BackFromLow(lastLow.start)
             rising && hour in 4..8 -> Brief.DawnRise
@@ -122,7 +124,7 @@ object HomeBriefs {
             life is SensorLife.Running && now < life.startedAt.plus(Duration.ofHours(25)) -> Brief.NewSensor
             hour in 0..4 -> Brief.QuietNight
             hour in 5..10 && goodNight(readings, now, zone) -> Brief.GoodNight
-            run(readings) { it in 70..180 } >= 180 -> Brief.InRangeFor(run(readings) { it in 70..180 })
+            run(readings) { it in 70..top } >= 180 -> Brief.InRangeFor(run(readings) { it in 70..top }) // 180 minutes
             // The calm message changes with the hour, not with every reading.
             else -> goodDay(readings, now, zone)?.let { Brief.GoodDay(it) } ?: Brief.Steady((now.epochSecond / 3600 % STEADY_VARIANTS).toInt())
         }
@@ -144,7 +146,7 @@ object HomeBriefs {
         val midnight = now.atZone(zone).toLocalDate().atStartOfDay(zone).toInstant()
         val night = r.filter { it.timestamp >= midnight && it.timestamp < midnight.plus(Duration.ofHours(6)) }
         return night.size >= 2 && Duration.between(night.first().timestamp, night.last().timestamp) >= Duration.ofHours(4) &&
-            night.all { it.glucoseMgDl in 70..180 }
+            night.all { it.glucoseMgDl in 70..TargetRange.high }
     }
 
     /** Time in range since midnight, once there are 6 hours of today to judge and it's 80 % or better. */
@@ -152,6 +154,6 @@ object HomeBriefs {
         val midnight = now.atZone(zone).toLocalDate().atStartOfDay(zone).toInstant()
         val today = r.filter { it.timestamp >= midnight }
         if (today.size < 2 || Duration.between(today.first().timestamp, today.last().timestamp) < Duration.ofHours(6)) return null
-        return InsightEngine.summary(today, now)?.inRange?.roundToInt()?.takeIf { it >= 80 }
+        return InsightEngine.summary(today, now, TargetRange.high)?.inYourRange?.roundToInt()?.takeIf { it >= 80 }
     }
 }

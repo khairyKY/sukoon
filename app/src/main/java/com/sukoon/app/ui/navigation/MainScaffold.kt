@@ -1,5 +1,8 @@
 package com.sukoon.app.ui.navigation
 
+import com.sukoon.app.data.db.logType
+import com.sukoon.app.domain.metrics.TargetRange
+import com.sukoon.app.insulin.Dose
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -207,6 +210,22 @@ fun MainScaffold() {
                 val latest by repository.latestReading.collectAsStateWithLifecycle(initialValue = null)
                 var askingForHelp by remember { mutableStateOf(false) }
                 val insulinOnBoard by (context.applicationContext as SukoonApp).container.insulinOnBoard.collectAsStateWithLifecycle(initialValue = 0.0)
+                // Beta: a correction when you're above your range and haven't eaten in 2 hours.
+                val recentEvents by remember { home.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofHours(6).toMillis()) }.collectAsStateWithLifecycle(initialValue = emptyList())
+                val correction = latest?.let { r ->
+                    val now = Instant.now()
+                    Dose.correction(
+                        settings = home.settings.doseSettings,
+                        glucose = r.glucoseMgDl,
+                        trend = r.trend,
+                        readingAt = r.timestamp,
+                        now = now,
+                        top = TargetRange.high,
+                        onBoard = insulinOnBoard,
+                        lastCarbsAt = recentEvents.lastOrNull { it.logType == LogEventType.CARB && (it.value ?: 0.0) > 0 }?.let { Instant.ofEpochMilli(it.timestampMillis) },
+                        slot = InsightEngine.slotFor(now.atZone(ZoneId.systemDefault()).hour),
+                    )
+                }
                 if (askingForHelp) EmergencyActionsDialog(emergencyAlerts, latest, onDismiss = { askingForHelp = false })
                 var viewing by remember { mutableStateOf<String?>(null) }
                 viewing?.let { id ->
@@ -264,6 +283,7 @@ fun MainScaffold() {
                         onAddFood = { pendingEntry = LogEventType.CARB; navController.navigateToTab(SukoonTab.TRENDS) },
                         onAddInsulin = { pendingEntry = LogEventType.INSULIN; navController.navigateToTab(SukoonTab.TRENDS) },
                         insulinOnBoard = insulinOnBoard,
+                        correction = correction,
                         stats = stats,
                         chosenStats = chosenStats,
                         onChooseStats = { pickingStats = true },
@@ -285,7 +305,7 @@ fun MainScaffold() {
                 val logbookViewModel: LogbookViewModel = viewModel(factory = LogbookViewModel.factory(container.logbookRepository, container.glucoseRepository, container.gemini, container.entryPhotos) { container.settings.insulinAction })
                 val logbookState by logbookViewModel.uiState.collectAsStateWithLifecycle()
                 val askViewModel: AskViewModel = viewModel(
-                    factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini, doseSettings = { container.settings.doseSettings }) { container.settings.insulinAction },
+                    factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini, doseSettings = { container.settings.doseSettings }, profile = { container.settings.profile }) { container.settings.insulinAction },
                 )
                 val askState by askViewModel.uiState.collectAsStateWithLifecycle()
                 val insightsViewModel: InsightsViewModel = viewModel(
@@ -331,6 +351,9 @@ fun MainScaffold() {
                 var insulinAction by remember { mutableStateOf(container.settings.insulinAction) }
                 var basalReminder by remember { mutableStateOf(container.settings.basalReminder) }
                 var doseSettings by remember { mutableStateOf(container.settings.doseSettings) }
+                var profile by remember { mutableStateOf(container.settings.profile) }
+                var parentPin by remember { mutableStateOf(container.settings.parentPin) }
+                var targetHigh by remember { mutableIntStateOf(container.settings.targetHigh) }
                 val youContext = LocalContext.current
                 val themeMode by container.themeMode.collectAsStateWithLifecycle()
                 var saveInterval by remember { mutableIntStateOf(container.settings.saveIntervalMinutes) }
@@ -400,6 +423,27 @@ fun MainScaffold() {
                     },
                     doseStartingPoints = {
                         InsightEngine.formulas(container.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofDays(14).toMillis()).first(), ZoneId.systemDefault())
+                    },
+                    parentPin = parentPin,
+                    onParentPin = { pin ->
+                        container.settings.parentPin = pin
+                        parentPin = pin
+                    },
+                    profile = profile,
+                    onProfile = { changed ->
+                        container.settings.profile = changed
+                        profile = changed
+                    },
+                    targetHigh = targetHigh,
+                    onTargetHigh = { high ->
+                        // A high alarm sitting at the old top of the range moves with it; one set apart stays.
+                        val alarms = container.settings.alarmSettings
+                        if (alarms.highMgDl == container.settings.targetHigh) {
+                            container.settings.alarmSettings = alarms.copy(highMgDl = high).sanitized()
+                            alarmSettings = container.settings.alarmSettings
+                        }
+                        container.settings.targetHigh = high
+                        targetHigh = container.settings.targetHigh
                     },
                     learningReport = { factor ->
                         withContext(Dispatchers.Default) {

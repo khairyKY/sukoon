@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.insights
 
+import com.sukoon.app.domain.metrics.TargetRange
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -37,7 +38,7 @@ class InsightsViewModel(
         logbook.eventsSince(since()),
         acknowledged.asStateFlow(),
     ) { readings, events, ack ->
-        InsightsUiState(ack, InsightEngine.analyze(readings, events, Instant.now(), ZoneId.systemDefault()))
+        InsightsUiState(ack, InsightEngine.analyze(readings, events, Instant.now(), ZoneId.systemDefault(), TargetRange.high))
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), InsightsUiState(settings.insightsAcknowledged))
 
     fun acknowledge() {

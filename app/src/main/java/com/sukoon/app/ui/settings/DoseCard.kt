@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.settings
 
+import com.sukoon.app.platform.ParentLock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -39,6 +40,7 @@ import com.sukoon.app.R
 import com.sukoon.app.insights.Insight
 import com.sukoon.app.insights.MealSlot
 import com.sukoon.app.insulin.DoseSettings
+import com.sukoon.app.insulin.Profile
 import com.sukoon.app.insulin.RatioLearner
 import com.sukoon.app.ui.insights.slot
 import com.sukoon.app.ui.logbook.Eyebrow
@@ -67,7 +69,24 @@ fun DoseCard(
     startingPoints: suspend () -> Insight.Formulas?,
     learningReport: suspend (Double?) -> RatioLearner.Report,
     insulinHours: Int,
+    profile: Profile,
+    onProfile: (Profile) -> Unit,
+    locked: Boolean = false,
+    onUnlock: () -> Unit = {},
+    parentPin: String? = null,
+    onParentPin: (String?) -> Unit = {},
 ) {
+    var settingPin by remember { mutableStateOf(false) }
+    val child = (profile.ageYears ?: 99) < 18
+    // A child's suggestions only go on behind a parent lock, so the numbers can't be changed by the child.
+    fun switch(on: Boolean) {
+        if (on && child && parentPin == null) settingPin = true else onChange(settings.copy(enabled = on))
+    }
+    if (settingPin) PinDialog(setting = true, stored = null, onDone = { pin ->
+        onParentPin(ParentLock.encode(pin))
+        onChange(settings.copy(enabled = true))
+        settingPin = false
+    }, onDismiss = { settingPin = false })
     var learning by remember { mutableStateOf(false) }
     // Learning runs whether suggestions are on or off: it only reads the logbook.
     val report by produceState<RatioLearner.Report?>(null, settings.correctionFactor) {
@@ -76,7 +95,7 @@ fun DoseCard(
     }
     val learned = report?.learned.orEmpty()
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Column(Tile.modifier(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(DoseTile.modifier(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.dose_switch), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
                 Text(
@@ -87,18 +106,25 @@ fun DoseCard(
                     letterSpacing = 0.6.sp,
                     color = SageDeep,
                 )
-                Switch(settings.enabled, { onChange(settings.copy(enabled = it)) }, colors = SwitchDefaults.colors(checkedTrackColor = Sage))
+                Switch(settings.enabled, { switch(it) }, colors = SwitchDefaults.colors(checkedTrackColor = Sage))
             }
             Text(
-                stringResource(if (settings.enabled) R.string.dose_warning else R.string.dose_off_body),
+                stringResource(if (settings.enabled) R.string.dose_warning else if (child && parentPin == null) R.string.dose_off_child else R.string.dose_off_body),
                 fontSize = 12.5.sp,
                 color = if (settings.enabled) PillHighText else CaptionMuted,
             )
         }
         LearningRow(report) { learning = true }
+        if (locked) {
+            LockedNotice(onUnlock)
+            return@Column
+        }
+        ParentLockRow(parentPin, onParentPin)
         if (!settings.enabled) return@Column
 
-        StartingPoints(settings, onChange, startingPoints)
+        val fromLogbook by produceState<Insight.Formulas?>(null) { value = runCatching { startingPoints() }.getOrNull() }
+        ProfileRow(profile, onProfile)
+        SuggestRatios(settings, profile, fromLogbook, onChange)
 
         Eyebrow(stringResource(R.string.dose_ratio_label), Modifier.padding(top = 4.dp))
         MealSlot.entries.chunked(2).forEach { pair ->
@@ -107,9 +133,9 @@ fun DoseCard(
                     val current = settings.carbRatio[s]
                     val l = learned.firstOrNull { it.slot == s }
                     val next = l?.let { RatioLearner.step(current, it.ratio) }
-                    Column(Tile.modifier(Modifier.weight(1f))) {
+                    Column(DoseTile.modifier(Modifier.weight(1f))) {
                         Text(slot(s), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted)
-                        NumberField(current, prefix = "1 : ", suffix = stringResource(R.string.logbook_unit_grams)) { v ->
+                        DoseNumberField(current, prefix = "1 : ", suffix = stringResource(R.string.logbook_unit_grams)) { v ->
                             onChange(settings.copy(carbRatio = if (v == null) settings.carbRatio - s else settings.carbRatio + (s to v)))
                         }
                         if (l != null && next != null && (current == null || abs(next - current) >= 0.5)) {
@@ -139,13 +165,13 @@ fun DoseCard(
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Column(Tile.modifier(Modifier.weight(1.3f))) {
+            Column(DoseTile.modifier(Modifier.weight(1.3f))) {
                 Text(stringResource(R.string.dose_factor_label), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted)
-                NumberField(settings.correctionFactor, suffix = stringResource(R.string.home_unit_mgdl)) { onChange(settings.copy(correctionFactor = it)) }
+                DoseNumberField(settings.correctionFactor, suffix = stringResource(R.string.home_unit_mgdl)) { onChange(settings.copy(correctionFactor = it)) }
             }
-            Column(Tile.modifier(Modifier.weight(1f))) {
+            Column(DoseTile.modifier(Modifier.weight(1f))) {
                 Text(stringResource(R.string.dose_target_label), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted)
-                NumberField(settings.target.toDouble()) { v -> v?.takeIf { it in 80.0..180.0 }?.let { onChange(settings.copy(target = it.toInt())) } }
+                DoseNumberField(settings.target.toDouble()) { v -> v?.takeIf { it in 80.0..180.0 }?.let { onChange(settings.copy(target = it.toInt())) } }
             }
         }
         MoreSettings(settings, onChange)
@@ -159,7 +185,7 @@ fun DoseCard(
 private fun LearningRow(report: RatioLearner.Report?, onOpen: () -> Unit) {
     val clean = report?.meals?.count { it.verdict == RatioLearner.Verdict.CLEAN } ?: 0
     Row(
-        Tile.modifier(Modifier.fillMaxWidth().clickable(onClick = onOpen)),
+        DoseTile.modifier(Modifier.fillMaxWidth().clickable(onClick = onOpen)),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -175,36 +201,13 @@ private fun LearningRow(report: RatioLearner.Report?, onOpen: () -> Unit) {
     }
 }
 
-private object Tile {
+internal object DoseTile {
     @Composable
     fun modifier(base: Modifier = Modifier): Modifier = base
         .clip(RoundedCornerShape(16.dp))
         .background(MaterialTheme.colorScheme.surface)
         .border(1.dp, outline(), RoundedCornerShape(16.dp))
         .padding(horizontal = 12.dp, vertical = 10.dp)
-}
-
-/** The textbook starting points from the logbook's daily totals, while a box is still empty. */
-@Composable
-private fun StartingPoints(settings: DoseSettings, onChange: (DoseSettings) -> Unit, startingPoints: suspend () -> Insight.Formulas?) {
-    val start by produceState<Insight.Formulas?>(null) { value = runCatching { startingPoints() }.getOrNull() }
-    val f = start?.takeIf { settings.carbRatio.size < MealSlot.entries.size || settings.correctionFactor == null } ?: return
-    Row(Tile.modifier(Modifier.fillMaxWidth()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(
-            stringResource(R.string.dose_start_points, f.completeDays, formatAmountLocalized(f.totalDailyDose), formatAmountLocalized(f.gramsPerUnit500), formatAmountLocalized(f.mgDlPerUnit1800)),
-            fontSize = 12.5.sp,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.weight(1f),
-        )
-        PillButton(stringResource(R.string.dose_use_start)) {
-            onChange(
-                settings.copy(
-                    carbRatio = MealSlot.entries.associateWith { settings.carbRatio[it] ?: f.gramsPerUnit500 },
-                    correctionFactor = settings.correctionFactor ?: f.mgDlPerUnit1800,
-                ),
-            )
-        }
-    }
 }
 
 /** The maximum dose: rarely changed, so one line until opened. */
@@ -234,16 +237,16 @@ private fun MoreSettings(settings: DoseSettings, onChange: (DoseSettings) -> Uni
         return
     }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Column(Tile.modifier(Modifier.weight(1f))) {
+        Column(DoseTile.modifier(Modifier.weight(1f))) {
             Text(stringResource(R.string.dose_max_label), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted)
-            NumberField(settings.maxDose, suffix = units) { v -> v?.takeIf { it in 1.0..50.0 }?.let { onChange(settings.copy(maxDose = it)) } }
+            DoseNumberField(settings.maxDose, suffix = units) { v -> v?.takeIf { it in 1.0..50.0 }?.let { onChange(settings.copy(maxDose = it)) } }
         }
     }
 }
 
 /** A big number typed in place; empty is allowed (null). Keeps what's being typed ("1.") while it parses. */
 @Composable
-private fun NumberField(value: Double?, prefix: String = "", suffix: String = "", onChange: (Double?) -> Unit) {
+internal fun DoseNumberField(value: Double?, prefix: String = "", suffix: String = "", onChange: (Double?) -> Unit) {
     var text by remember { mutableStateOf(value?.let(::formatAmount).orEmpty()) }
     LaunchedEffect(value) { if (text.toDoubleOrNull() != value) text = value?.let(::formatAmount).orEmpty() }
     val big = TextStyle(fontFamily = HeadlineSerifFontFamily, fontWeight = FontWeight.Light, fontSize = 30.sp, color = MaterialTheme.colorScheme.onBackground)

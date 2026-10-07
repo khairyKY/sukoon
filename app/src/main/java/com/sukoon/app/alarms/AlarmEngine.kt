@@ -43,7 +43,7 @@ data class AlarmSettings(
     /** Clamp anything stored (or hand-edited) into safe ranges: a low alarm can't sit below urgent. */
     fun sanitized() = copy(
         lowMgDl = lowMgDl.coerceIn(URGENT_LOW_MG_DL + 5, 110),
-        highMgDl = highMgDl.coerceIn(150, 400),
+        highMgDl = highMgDl.coerceIn(120, 400),
         signalLossMinutes = signalLossMinutes.coerceIn(10, 120),
         lowSnoozeMinutes = lowSnoozeMinutes.coerceIn(5, 60),
         highSnoozeMinutes = highSnoozeMinutes.coerceIn(15, 240),

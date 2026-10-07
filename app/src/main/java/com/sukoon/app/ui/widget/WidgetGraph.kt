@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.widget
 
+import com.sukoon.app.domain.metrics.TargetRange
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
@@ -87,7 +88,7 @@ object WidgetGraph {
         for (s in samples) {
             val color = when {
                 s.glucoseMgDl < 70 -> StateLow
-                s.glucoseMgDl > 180 -> StateHigh
+                s.glucoseMgDl > TargetRange.high -> StateHigh
                 else -> continue
             }
             dot.color = color.toArgb()

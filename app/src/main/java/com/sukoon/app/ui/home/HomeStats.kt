@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.home
 
+import com.sukoon.app.domain.metrics.TargetRange
 import com.sukoon.app.data.db.EventEntity
 import com.sukoon.app.data.db.LogEventType
 import com.sukoon.app.data.db.logType
@@ -30,7 +31,7 @@ internal fun todayStats(events: List<EventEntity>, readings: List<GlucoseReading
     val meals = today.filter { it.logType == LogEventType.CARB }
     fun sum(values: List<Double?>) = values.filterNotNull().takeIf { it.isNotEmpty() }?.sum()
     val todayReadings = readings.filter { it.timestamp >= midnight && it.timestamp <= now }
-    val summary = todayReadings.takeIf { it.size >= 2 }?.let { InsightEngine.summary(it, now) }
+    val summary = todayReadings.takeIf { it.size >= 2 }?.let { InsightEngine.summary(it, now, TargetRange.high) }
     return buildMap {
         sum(meals.map { it.kcal })?.let { put(HomeStat.KCAL, it) }
         sum(meals.map { it.value })?.let { put(HomeStat.CARBS, it) }
@@ -39,7 +40,7 @@ internal fun todayStats(events: List<EventEntity>, readings: List<GlucoseReading
         sum(today.filter { it.logType == LogEventType.INSULIN }.map { it.value })?.let { put(HomeStat.RAPID, it) }
         sum(today.filter { it.logType == LogEventType.BASAL }.map { it.value })?.let { put(HomeStat.LONG, it) }
         summary?.let {
-            put(HomeStat.TIR, it.inRange.roundToInt().toDouble())
+            put(HomeStat.TIR, it.inYourRange.roundToInt().toDouble())
             put(HomeStat.AVERAGE, it.meanMgDl.toDouble())
             put(HomeStat.LOWS, InsightEngine.lowEpisodes(todayReadings).size.toDouble())
         }
