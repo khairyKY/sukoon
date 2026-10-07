@@ -1413,4 +1413,9 @@
     <string name="learn_use_value">Use %1$s</string>
     <string name="learn_fit_note" formatted="false">Each one\'s change at 4 hours ≈ carbs × a − insulin × b: b is how far 1 unit lowers you, b ÷ a is each meal\'s ratio. It needs no numbers to start from. Use moves a number at most 20% at a time.</string>
     <string name="learn_data_says">Your data says %1$s · Use %2$s</string>
+    <string name="nudge_eyebrow">Learned · beta</string>
+    <string name="nudge_ratio">%1$s: your meals suggest 1 : %2$s</string>
+    <string name="nudge_factor">Your data suggests 1 unit lowers %1$s mg/dL</string>
+    <string name="nudge_look">Take a look</string>
+    <string name="nudge_not_now">Not now</string>
 </resources>

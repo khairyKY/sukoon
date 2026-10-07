@@ -169,6 +169,8 @@ class AppContainer(private val context: Context) {
 
     /** A new entry something outside the app asked for (a reminder's "Log it"); MainScaffold opens it. */
     val requestedEntry = MutableStateFlow<LogEventType?>(null)
+    /** Home's learning notice asked for You → Insulin → Learning. */
+    val requestedLearning = MutableStateFlow(false)
 
     init {
         glucoseRepository.start()

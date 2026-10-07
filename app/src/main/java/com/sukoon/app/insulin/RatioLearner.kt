@@ -179,6 +179,25 @@ object RatioLearner {
             Learned(slot, half(at(0.5)), half(at(0.25)), half(at(0.75)), clean, factor)
         }.sortedBy { it.slot.ordinal }
 
+    /** Home's notice: a learned number that differs from yours. [slot] null = the correction factor. */
+    data class Nudge(val slot: MealSlot?, val value: Double) {
+        /** What "Not now" remembers: the same suggestion stays hidden, a different one shows. */
+        val key: String get() = "${slot?.name ?: "FACTOR"}:$value"
+    }
+
+    /**
+     * The one suggestion worth a notice on Home: a meal time's clean-meal lesson first, then what
+     * everything logged says (a ratio, then the factor). Only when it's 10% or more from your number,
+     * or you have none, so a small wobble doesn't nag.
+     */
+    fun nudge(report: Report, settings: DoseSettings): Nudge? {
+        fun differs(current: Double?, learned: Double) = current == null || kotlin.math.abs(learned - current) >= current * 0.1
+        report.learned.firstOrNull { differs(settings.carbRatio[it.slot], it.ratio) }?.let { return Nudge(it.slot, it.ratio) }
+        val fit = report.fit ?: return null
+        fit.ratios.entries.firstOrNull { differs(settings.carbRatio[it.key], it.value) }?.let { return Nudge(it.key, it.value) }
+        return if (differs(settings.correctionFactor, fit.factor)) Nudge(null, fit.factor) else null
+    }
+
     /** Moves from [current] toward [learned] by at most 20% at a time (a step, then learn again). */
     fun step(current: Double?, learned: Double): Double =
         if (current == null) learned else half(learned.coerceIn(current * 0.8, current * 1.2))

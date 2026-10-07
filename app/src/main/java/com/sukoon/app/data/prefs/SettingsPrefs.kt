@@ -126,6 +126,11 @@ class SettingsPrefs(context: Context) {
         get() = prefs.getString(KEY_PARENT_PIN, null)
         set(value) = prefs.edit().apply { if (value == null) remove(KEY_PARENT_PIN) else putString(KEY_PARENT_PIN, value) }.apply()
 
+    /** The learning suggestion Home was told "Not now" about ([com.sukoon.app.insulin.RatioLearner.Nudge.key]). */
+    var nudgeDismissed: String?
+        get() = prefs.getString(KEY_NUDGE_DISMISSED, null)
+        set(value) = prefs.edit().putString(KEY_NUDGE_DISMISSED, value).apply()
+
     /** About you, for the dose setup: each part optional, stored as absent when empty. */
     var profile: Profile
         get() = Profile(
@@ -231,6 +236,7 @@ class SettingsPrefs(context: Context) {
         private const val KEY_INSULIN_PEAK = "insulin_peak_minutes"
         private const val KEY_TARGET_HIGH = "target_high"
         private const val KEY_PARENT_PIN = "parent_pin"
+        private const val KEY_NUDGE_DISMISSED = "nudge_dismissed"
         private const val KEY_WEIGHT = "profile_weight_kg"
         private const val KEY_HEIGHT = "profile_height_cm"
         private const val KEY_AGE = "profile_age"

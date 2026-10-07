@@ -97,6 +97,21 @@ class RatioLearnerTest {
     }
 
     @Test
+    fun `home nudges about a lesson first, then the fit, only when it differs by 10 percent or more`() {
+        val lesson = RatioLearner.Learned(MealSlot.LUNCH, 11.0, 10.0, 12.0, emptyList(), 50.0)
+        val fit = RatioLearner.Fit(45.0, mapOf(MealSlot.DINNER to 10.0), 9, 2)
+        val report = RatioLearner.Report(emptyList(), 50.0, false, listOf(lesson), fit)
+        val mine = DoseSettings(enabled = true, carbRatio = MealSlot.entries.associateWith { 13.0 }, correctionFactor = 50.0)
+        assertEquals(RatioLearner.Nudge(MealSlot.LUNCH, 11.0), RatioLearner.nudge(report, mine))
+        val lunchDone = mine.copy(carbRatio = mine.carbRatio + (MealSlot.LUNCH to 11.0))
+        assertEquals(RatioLearner.Nudge(MealSlot.DINNER, 10.0), RatioLearner.nudge(report, lunchDone))
+        val ratiosDone = lunchDone.copy(carbRatio = lunchDone.carbRatio + (MealSlot.DINNER to 10.5))
+        assertEquals(RatioLearner.Nudge(null, 45.0), RatioLearner.nudge(report, ratiosDone)) // 45 vs 50: exactly 10%
+        assertEquals(null, RatioLearner.nudge(report, ratiosDone.copy(correctionFactor = 47.0)))
+        assertEquals("LUNCH:11.0", RatioLearner.Nudge(MealSlot.LUNCH, 11.0).key)
+    }
+
+    @Test
     fun `a proposal moves 20 percent at most`() {
         assertEquals(10.0, RatioLearner.step(null, 10.0), 1e-9)
         assertEquals(12.0, RatioLearner.step(15.0, 10.0), 1e-9)

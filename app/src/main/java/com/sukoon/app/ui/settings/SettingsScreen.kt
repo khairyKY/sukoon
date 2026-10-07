@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.settings
 
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import com.sukoon.app.domain.metrics.TargetRange
 import com.sukoon.app.insulin.Profile
@@ -184,6 +185,9 @@ fun SettingsScreen(
     onTargetHigh: (Int) -> Unit = {},
     parentPin: String? = null,
     onParentPin: (String?) -> Unit = {},
+    /** Home's learning notice: open You → Insulin with the Learning screen up. */
+    openLearning: Boolean = false,
+    onOpenedLearning: () -> Unit = {},
 ) {
     // The parent lock: while it's on (and not unlocked on this visit), changes ask for the PIN first.
     var unlocked by rememberSaveable { mutableStateOf(false) }
@@ -193,6 +197,7 @@ fun SettingsScreen(
     if (askingPin) PinDialog(setting = false, stored = parentPin, onDone = { unlocked = true; askingPin = false }, onDismiss = { askingPin = false })
     val context = LocalContext.current
     var page by rememberSaveable { mutableStateOf<YouPage?>(null) }
+    LaunchedEffect(openLearning) { if (openLearning) page = YouPage.INSULIN }
     BackHandler(enabled = page != null) { page = null }
     val missing = rememberMissingSetup()
 
@@ -335,7 +340,7 @@ fun SettingsScreen(
                         Gap()
                         InsulinSection(insulinAction, onInsulinAction, doseSettings.step) { onDoseSettings(doseSettings.copy(step = it)) }
                         Gap()
-                        DoseCard(doseSettings, guarded(onDoseSettings), doseStartingPoints, learningReport, insulinAction.durationMinutes / 60, profile, guarded(onProfile), locked, { askingPin = true }, parentPin, onParentPin)
+                        DoseCard(doseSettings, guarded(onDoseSettings), doseStartingPoints, learningReport, insulinAction.durationMinutes / 60, profile, guarded(onProfile), locked, { askingPin = true }, parentPin, onParentPin, openLearning, onOpenedLearning)
                     }
                     YouPage.APPS -> {
                         HealthConnectSection(healthConnect)

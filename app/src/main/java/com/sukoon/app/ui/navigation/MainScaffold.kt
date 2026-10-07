@@ -1,5 +1,8 @@
 package com.sukoon.app.ui.navigation
 
+import androidx.compose.runtime.produceState
+import com.sukoon.app.ui.logbook.formatAmountLocalized
+import com.sukoon.app.ui.insights.slot
 import com.sukoon.app.data.db.logType
 import com.sukoon.app.domain.metrics.TargetRange
 import com.sukoon.app.insulin.Dose
@@ -210,6 +213,23 @@ fun MainScaffold() {
                 val latest by repository.latestReading.collectAsStateWithLifecycle(initialValue = null)
                 var askingForHelp by remember { mutableStateOf(false) }
                 val insulinOnBoard by (context.applicationContext as SukoonApp).container.insulinOnBoard.collectAsStateWithLifecycle(initialValue = 0.0)
+                // Beta: what the learning would change, worked out once each time Home opens.
+                val doseNow = home.settings.doseSettings
+                val learningReport by produceState<RatioLearner.Report?>(null) {
+                    if (!doseNow.enabled) return@produceState
+                    value = withContext(Dispatchers.Default) {
+                        runCatching {
+                            val since = System.currentTimeMillis() - Duration.ofDays(30).toMillis()
+                            RatioLearner.report(repository.readingsSince(since).first(), home.logbookRepository.eventsSince(since).first(), doseNow.correctionFactor, ZoneId.systemDefault(), home.settings.insulinAction)
+                        }.getOrNull()
+                    }
+                }
+                var dismissedNudge by remember { mutableStateOf(home.settings.nudgeDismissed) }
+                val nudge = learningReport?.takeIf { doseNow.enabled }?.let { RatioLearner.nudge(it, doseNow) }?.takeIf { it.key != dismissedNudge }
+                val nudgeText = nudge?.let { n ->
+                    if (n.slot == null) stringResource(R.string.nudge_factor, formatAmountLocalized(n.value))
+                    else stringResource(R.string.nudge_ratio, slot(n.slot), formatAmountLocalized(n.value))
+                }
                 // Beta: a correction when you're above your range and haven't eaten in 2 hours.
                 val recentEvents by remember { home.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofHours(6).toMillis()) }.collectAsStateWithLifecycle(initialValue = emptyList())
                 val correction = latest?.let { r ->
@@ -284,6 +304,15 @@ fun MainScaffold() {
                         onAddInsulin = { pendingEntry = LogEventType.INSULIN; navController.navigateToTab(SukoonTab.TRENDS) },
                         insulinOnBoard = insulinOnBoard,
                         correction = correction,
+                        nudge = nudgeText,
+                        onNudge = {
+                            home.requestedLearning.value = true
+                            navController.navigateToTab(SukoonTab.YOU)
+                        },
+                        onNudgeDismiss = {
+                            home.settings.nudgeDismissed = nudge?.key
+                            dismissedNudge = nudge?.key
+                        },
                         stats = stats,
                         chosenStats = chosenStats,
                         onChooseStats = { pickingStats = true },
@@ -424,6 +453,8 @@ fun MainScaffold() {
                     doseStartingPoints = {
                         InsightEngine.formulas(container.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofDays(14).toMillis()).first(), ZoneId.systemDefault())
                     },
+                    openLearning = container.requestedLearning.collectAsStateWithLifecycle().value,
+                    onOpenedLearning = { container.requestedLearning.value = false },
                     parentPin = parentPin,
                     onParentPin = { pin ->
                         container.settings.parentPin = pin

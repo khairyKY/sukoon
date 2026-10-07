@@ -243,6 +243,12 @@ none was still working, no workout, not very rich, starting 70–300 with readin
 It shows once there are 8 points with 3 at one meal time and the answer is plausible (1 u lowers
 10–300, ratios 1:3 to 1:60). *Use* moves each number at most 20% at a time.
 
+**Learned, on Home**: with suggestions on, each time Home opens it works out the learning, and if a
+number differs from yours by 10% or more (or you have none) it shows one notice: a meal time's
+clean-meal lesson first, then what everything logged says (a ratio, then the factor), e.g. "Lunch:
+your meals suggest 1 : 11". *Take a look* opens You → Insulin → Learning; *Not now* hides that
+suggestion until a different one appears. It never changes a number itself.
+
 **Correction on Home**: with suggestions on and a correction factor set, Home shows "Correction · beta"
 when the reading is fresh and above your range, nothing with carbs was logged in the last 2 hours,
 and under 0.5 u is still working (otherwise Home's message already says to give it time). It shows

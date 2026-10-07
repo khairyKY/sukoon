@@ -1,5 +1,7 @@
 package com.sukoon.app.ui.home
 
+import com.sukoon.app.ui.theme.SageDeep
+import androidx.compose.material3.TextButton
 import com.sukoon.app.ui.logbook.formatAmountLocalized
 import com.sukoon.app.insulin.DoseAdvice
 import androidx.compose.animation.core.RepeatMode
@@ -128,8 +130,12 @@ fun HomeScreen(
     onSync: (suspend () -> String)? = null,
     /** Beta: a correction when you're above your range and not eating ([com.sukoon.app.insulin.Dose.correction]). */
     correction: DoseAdvice.Suggestion? = null,
+    /** Beta: a learned number that differs from yours ("Lunch: your meals suggest 1 : 11"). */
+    nudge: String? = null,
+    onNudge: () -> Unit = {},
+    onNudgeDismiss: () -> Unit = {},
 ) {
-    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction)) {
+    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss)) {
         PullToSync(onSync, modifier) {
             HomeContent(state, brief, Modifier.fillMaxSize(), onTreated, onSnooze, onAlertEmergencyContact, onTroubleshoot, onPairSensor, onEnterCodeManually)
         }
@@ -145,6 +151,9 @@ private class Shortcuts(
     val chosenStats: List<HomeStat> = emptyList(),
     val onChooseStats: () -> Unit = {},
     val correction: DoseAdvice.Suggestion? = null,
+    val nudge: String? = null,
+    val onNudge: () -> Unit = {},
+    val onNudgeDismiss: () -> Unit = {},
 )
 private val LocalShortcuts = staticCompositionLocalOf { Shortcuts({}, {}) }
 
@@ -672,7 +681,27 @@ private fun BriefCards(brief: Brief?) {
     Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         MessageCard(title, body)
         shortcuts.correction?.let { CorrectionCard(it, shortcuts.onInsulin) }
+        shortcuts.nudge?.let { NudgeCard(it, shortcuts.onNudge, shortcuts.onNudgeDismiss) }
         NextStep(brief.step)
+    }
+}
+
+/** Beta: a learned number differs from yours. It changes nothing: Take a look opens Learning, Not now hides this one. */
+@Composable
+private fun NudgeCard(text: String, onLook: () -> Unit, onDismiss: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(SageMist)
+            .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 4.dp),
+    ) {
+        Text(stringResource(R.string.nudge_eyebrow).uppercase(), fontWeight = FontWeight.SemiBold, fontSize = 11.sp, letterSpacing = 1.sp, color = SageDeep)
+        Text(text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 2.dp, end = 8.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.nudge_not_now), color = SageDeep) }
+            TextButton(onClick = onLook) { Text(stringResource(R.string.nudge_look), color = SageDeep, fontWeight = FontWeight.SemiBold) }
+        }
     }
 }
 

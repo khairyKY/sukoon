@@ -75,6 +75,8 @@ fun DoseCard(
     onUnlock: () -> Unit = {},
     parentPin: String? = null,
     onParentPin: (String?) -> Unit = {},
+    startLearning: Boolean = false,
+    onStartedLearning: () -> Unit = {},
 ) {
     var settingPin by remember { mutableStateOf(false) }
     val child = (profile.ageYears ?: 99) < 18
@@ -88,6 +90,12 @@ fun DoseCard(
         settingPin = false
     }, onDismiss = { settingPin = false })
     var learning by remember { mutableStateOf(false) }
+    LaunchedEffect(startLearning) {
+        if (startLearning) {
+            learning = true
+            onStartedLearning()
+        }
+    }
     // Learning runs whether suggestions are on or off: it only reads the logbook.
     val report by produceState<RatioLearner.Report?>(null, settings.correctionFactor) {
         delay(800) // the factor may still be being typed
