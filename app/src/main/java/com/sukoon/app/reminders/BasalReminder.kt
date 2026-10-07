@@ -23,6 +23,8 @@ import java.time.ZonedDateTime
 import java.util.Locale
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import com.sukoon.app.alarms.SukoonSounds
+import android.media.AudioAttributes
 
 /** You → Insulin: a nudge at [minuteOfDay] when long-acting insulin isn't logged by then. Off until turned on. */
 data class BasalReminderSettings(val enabled: Boolean = false, val minuteOfDay: Int = 22 * 60)
@@ -75,7 +77,7 @@ class BasalReminder : BroadcastReceiver() {
         private const val ACTION_TOOK = "com.sukoon.app.reminders.BASAL_TOOK"
         private const val ACTION_LATER = "com.sukoon.app.reminders.BASAL_LATER"
         private const val EXTRA_NAG = "nag"
-        private const val CHANNEL = "reminders"
+        private const val CHANNEL = "reminders2" // channels keep their first sound: a new id for Sukoon's chime
         private const val NOTIFICATION_ID = 3000
         private const val NAGS = 3
         private val NAG_EVERY: Duration = Duration.ofMinutes(30)
@@ -139,7 +141,12 @@ class BasalReminder : BroadcastReceiver() {
         private fun notify(context: Context, dose: Double?, nag: Int) {
             val manager = context.getSystemService(NotificationManager::class.java)
             if (manager.getNotificationChannel(CHANNEL) == null) {
-                manager.createNotificationChannel(NotificationChannel(CHANNEL, context.getString(R.string.reminder_channel), NotificationManager.IMPORTANCE_HIGH))
+                manager.deleteNotificationChannel("reminders") // the first one played the phone's default sound
+                manager.createNotificationChannel(
+                    NotificationChannel(CHANNEL, context.getString(R.string.reminder_channel), NotificationManager.IMPORTANCE_HIGH).apply {
+                        setSound(SukoonSounds.uri(context, SukoonSounds.CHIME), AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).build())
+                    },
+                )
             }
             val units = dose?.let { String.format(Locale.getDefault(), "%.0f", it) }
             val open = PendingIntent.getActivity(

@@ -1140,4 +1140,10 @@
     <string name="dexcom_wrong_login">Dexcom مقبلش الدخول ده. اتأكد من اسم المستخدم والباسورد والمنطقة.</string>
     <string name="dexcom_unreachable">مقدرتش أوصل لـ Dexcom. اتأكد من النت وجرّب تاني.</string>
     <string name="dexcom_failed">Dexcom رفض الاتصال. جرّب بعدين.</string>
+    <string name="sound_rise">صعود</string>
+    <string name="sound_ripple">تموّج</string>
+    <string name="sound_drift">انسياب</string>
+    <string name="sound_warm">دفا</string>
+    <string name="sound_knock">دقّة</string>
+    <string name="sound_chime">رنّة</string>
 </resources>

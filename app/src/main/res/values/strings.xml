@@ -1132,4 +1132,10 @@
     <string name="dexcom_wrong_login">Dexcom didn\'t accept that login. Check the username, password and region.</string>
     <string name="dexcom_unreachable">Couldn\'t reach Dexcom. Check the internet and try again.</string>
     <string name="dexcom_failed">Dexcom refused the connection. Try again later.</string>
+    <string name="sound_rise">Rise</string>
+    <string name="sound_ripple">Ripple</string>
+    <string name="sound_drift">Drift</string>
+    <string name="sound_warm">Warm</string>
+    <string name="sound_knock">Knock</string>
+    <string name="sound_chime">Chime</string>
 </resources>
