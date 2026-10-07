@@ -92,6 +92,7 @@ import kotlinx.coroutines.flow.first
 import com.sukoon.app.reminders.BasalReminder
 import com.sukoon.app.ui.settings.minuteLabel
 import java.time.ZoneId
+import com.sukoon.app.ui.settings.UpdateBanner
 
 /**
  * Top-level navigation, per the shipped design's 3-tab bottom bar (Now / Trends / You) — not the
@@ -237,6 +238,7 @@ fun MainScaffold() {
                     (life as? SensorLife.Running)
                         ?.takeIf { Duration.between(Instant.now(), it.endsAt) <= Duration.ofHours(24) }
                         ?.let { SensorEndingBanner(it, onClick = toYou) }
+                    UpdateBanner(home.updates, onBackUp = toYou)
                     HomeScreen(
                         state = homeState,
                         brief = brief,
@@ -363,6 +365,7 @@ fun MainScaffold() {
                     healthConnect = container.healthConnect,
                     calibration = container.calibration,
                     onOpenGuide = { showGuide = true },
+                    updates = container.updates,
                     themeMode = themeMode,
                     onThemeMode = { mode ->
                         container.settings.themeMode = mode

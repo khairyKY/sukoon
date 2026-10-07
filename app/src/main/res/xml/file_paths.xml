@@ -4,4 +4,6 @@
     <cache-path name="photos" path="photos/" />
     <!-- The doctor's report PDF (reports/AgpPdf.kt), shared through the share sheet. -->
     <cache-path name="reports" path="reports/" />
+    <!-- A downloaded update, handed to Android's installer (platform/Updates.kt). -->
+    <cache-path name="updates" path="updates/" />
 </paths>

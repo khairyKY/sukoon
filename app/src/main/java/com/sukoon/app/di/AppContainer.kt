@@ -61,6 +61,7 @@ import com.sukoon.app.sharing.LibreLinkUp
 import com.sukoon.app.sharing.CloudSource
 import com.sukoon.app.sharing.DexcomShare
 import com.sukoon.app.R
+import com.sukoon.app.platform.Updates
 
 /**
  * Manual dependency container (ponytail: no Hilt/Koin for a graph this small). Owns the
@@ -90,6 +91,9 @@ class AppContainer(private val context: Context) {
 
     /** Abbott's follow service: people sharing from Abbott's Libre app (Libre 3 too). */
     val libreLinkUp = LibreLinkUp(context)
+
+    /** Updates from Sukoon's GitHub releases. */
+    val updates = Updates(context, appScope)
 
     /** Dexcom Share: a Dexcom wearer's readings through Dexcom's servers. */
     val dexcom = DexcomShare(context)
@@ -167,6 +171,7 @@ class AppContainer(private val context: Context) {
     init {
         glucoseRepository.start()
         BasalReminder.schedule(context, settings.basalReminder)
+        updates.checkIfDue()
         // Long-acting logged anywhere clears its reminder.
         appScope.launch {
             logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofHours(12).toMillis()).collect { events ->

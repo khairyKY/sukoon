@@ -1154,4 +1154,18 @@
     <string name="help_reminders_body">حسابي ← الأنسولين والسجل ← تذكير: في ميعادك كل يوم، لو مفيش أنسولين طويل المفعول اتسجّل في الـ ١٢ ساعة اللي قبلها، بييجي إشعار. «أخدتها» بيسجّل آخر جرعة؛ «بعد ٣٠ دقيقة» بيستنى. بيرجع كل ٣٠ دقيقة، ٣ مرات، وبيختفي أول ما الجرعة تتسجّل في أي حتة. ويدجت الأنسولين فيه «أخدتها» برضه.</string>
     <string name="help_backup_title">النسخة الاحتياطية ونقل الموبايل</string>
     <string name="help_backup_body">حسابي ← التقارير ← خد نسخة من كل حاجة بيحفظ ملف واحد فيه قراياتك وسجلك وإعداداتك وربط الحساس وصور الوجبات؛ خلّيه في مكان أمان، ده خاص. الاسترجاع بيرجّع كل حاجة على نفس الموبايل أو موبايل جديد: سكون بيقفل ويفتح زي ما كان. ويدجت الشاشة الرئيسية لازم تتضاف تاني.</string>
+    <string name="updates_title">التحديثات</string>
+    <string name="update_this_version">سكون %1$s</string>
+    <string name="update_check">دوّر على تحديث</string>
+    <string name="update_checking">بيدوّر…</string>
+    <string name="update_up_to_date">عندك آخر نسخة.</string>
+    <string name="update_out">سكون %1$s نزل</string>
+    <string name="update_dismiss">مش دلوقتي</string>
+    <string name="update_now">حدّث</string>
+    <string name="update_whats_new">إيه الجديد</string>
+    <string name="update_downloading">بينزّل… %1$d%%</string>
+    <string name="update_install">ثبّت</string>
+    <string name="update_new_key">النسخة دي بتوقيع سكون الجديد، فأندرويد محتاج تثبيت من الأول: خد نسخة من كل حاجة، امسح سكون، ثبّته، وبعدين استرجع.</string>
+    <string name="update_get_it">نزّله</string>
+    <string name="update_failed">معرفتش أحدّث: %1$s</string>
 </resources>

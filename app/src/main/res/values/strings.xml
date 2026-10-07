@@ -1146,4 +1146,18 @@
     <string name="help_reminders_body">You → Insulin &amp; logbook → Reminder: at your time each day, if no long-acting was logged in the 12 hours before, a notification comes. “Took it” logs your last amount; “In 30 min” waits. It comes back every 30 minutes, 3 times, and goes away as soon as the dose is logged anywhere. The Insulin widget has “Took it” too.</string>
     <string name="help_backup_title">Backup and moving phones</string>
     <string name="help_backup_body">You → Reports → Back up everything saves one file with your readings, logbook, settings, sensor pairing and meal photos; keep it somewhere safe, it\'s private. Restore puts it all back on this or a new phone: Sukoon closes and opens as it was. Home-screen widgets need adding again.</string>
+    <string name="updates_title">Updates</string>
+    <string name="update_this_version">Sukoon %1$s</string>
+    <string name="update_check">Check for updates</string>
+    <string name="update_checking">Checking…</string>
+    <string name="update_up_to_date">You have the latest.</string>
+    <string name="update_out">Sukoon %1$s is out</string>
+    <string name="update_dismiss">Not now</string>
+    <string name="update_now">Update</string>
+    <string name="update_whats_new">What\'s new</string>
+    <string name="update_downloading">Downloading… %1$d%%</string>
+    <string name="update_install">Install</string>
+    <string name="update_new_key">This version uses Sukoon\'s new signature, so Android needs a reinstall: back up everything, uninstall Sukoon, install it, then restore.</string>
+    <string name="update_get_it">Get it</string>
+    <string name="update_failed">Couldn\'t update: %1$s</string>
 </resources>

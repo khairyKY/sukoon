@@ -100,6 +100,7 @@ import com.sukoon.app.sharing.LibreLinkUp
 import androidx.compose.runtime.produceState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sukoon.app.ui.sharing.DexcomSection
+import com.sukoon.app.platform.Updates
 
 /** The You tab's sections (design "You, divided"): each opens its own page from the hub. */
 private enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
@@ -157,6 +158,7 @@ fun SettingsScreen(
     basalReminder: BasalReminderSettings = BasalReminderSettings(),
     onBasalReminder: (BasalReminderSettings) -> Unit = {},
     usualBasalMinute: suspend () -> Int? = { null },
+    updates: Updates? = null,
 ) {
     val context = LocalContext.current
     var page by rememberSaveable { mutableStateOf<YouPage?>(null) }
@@ -355,6 +357,11 @@ fun SettingsScreen(
                         SectionLabel(stringResource(R.string.setup_title))
                         SetupChecklist()
                         Gap()
+                        updates?.let {
+                            SectionLabel(stringResource(R.string.updates_title))
+                            UpdatesSection(it, onBackUp = { page = YouPage.REPORTS })
+                            Gap()
+                        }
                         SectionLabel(stringResource(R.string.settings_about_title))
                         Text(stringResource(R.string.settings_about_body, BuildConfig.VERSION_NAME), fontSize = 12.5.sp, color = CaptionMuted)
                     }

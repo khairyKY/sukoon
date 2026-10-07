@@ -38,6 +38,8 @@
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Updates: hand a downloaded release to Android's installer (platform/Updates.kt). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- SignalWatchdog: wake Sukoon on time if the phone stopped it (exact alarms; USE_EXACT_ALARM from 13, SCHEDULE before). -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
