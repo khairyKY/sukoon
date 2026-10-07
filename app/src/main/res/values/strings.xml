@@ -1085,4 +1085,8 @@
     <string name="hc_resyncing">Resyncing…</string>
     <string name="hc_resync_done">Resynced: %1$d MyFitnessPal meals in the last 7 days (%2$d new, %3$d updated).</string>
     <string name="hc_resync_none">Health Connect has no MyFitnessPal meals from the last 7 days. In MyFitnessPal: Settings → Sharing &amp; Privacy → Health Connect, and turn on Nutrition.</string>
+    <string name="hc_mfp_in_hc">Health Connect has %1$d MyFitnessPal meals this week; the newest %2$s.</string>
+    <string name="hc_mfp_none_in_hc">Health Connect has no MyFitnessPal meals this week, so MyFitnessPal isn\'t sharing them. In MyFitnessPal: Settings → Sharing &amp; Privacy → Health Connect, turn it off and on again with Nutrition allowed.</string>
+    <string name="hc_last_sync">Sukoon last checked %1$s: %2$d new, %3$d updated.</string>
+    <string name="hc_last_sync_failed">Sukoon last checked %1$s and couldn\'t: %2$s</string>
 </resources>

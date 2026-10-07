@@ -149,8 +149,40 @@ class HealthConnectSync(
         }
     }
 
-    /** One pass, both ways, as far as the grants allow. */
-    suspend fun sync(): Result = mutex.withLock {
+    /** The last sync, whatever started it (the 15-minute loop, opening the app, a pull, Resync): shown under MyFitnessPal. */
+    data class LastSync(val at: Instant, val added: Int, val updated: Int, val error: String?)
+
+    val lastSync: LastSync?
+        get() = prefs.getLong(KEY_LAST_SYNC_AT, 0L).takeIf { it > 0 }?.let {
+            LastSync(Instant.ofEpochMilli(it), prefs.getInt(KEY_LAST_SYNC_ADDED, 0), prefs.getInt(KEY_LAST_SYNC_UPDATED, 0), prefs.getString(KEY_LAST_SYNC_ERROR, null))
+        }
+
+    /** What Health Connect holds from MyFitnessPal over the last 7 days: how many meals, and the newest one's time. */
+    suspend fun mfpInHealthConnect(): Pair<Int, Instant?> {
+        if (!canReadMeals()) return 0 to null
+        val records = client.readRecords(
+            ReadRecordsRequest(NutritionRecord::class, TimeRangeFilter.after(Instant.now().minus(Duration.ofDays(7))), dataOriginFilter = setOf(DataOrigin(MFP))),
+        ).records
+        return records.size to records.maxOfOrNull { it.startTime }
+    }
+
+    /** One pass, both ways, as far as the grants allow. Its outcome, or its error, is kept for [lastSync]. */
+    suspend fun sync(): Result = try {
+        syncOnce().also {
+            Log.i(TAG, "Synced: ${it.mealsAdded} new, ${it.mealsUpdated} updated, ${it.readingsShared} readings shared")
+            recordSync(it.mealsAdded, it.mealsUpdated, null)
+        }
+    } catch (e: Exception) {
+        recordSync(0, 0, e.message ?: e.javaClass.simpleName)
+        throw e
+    }
+
+    private fun recordSync(added: Int, updated: Int, error: String?) {
+        prefs.edit().putLong(KEY_LAST_SYNC_AT, System.currentTimeMillis()).putInt(KEY_LAST_SYNC_ADDED, added).putInt(KEY_LAST_SYNC_UPDATED, updated)
+            .putString(KEY_LAST_SYNC_ERROR, error).apply()
+    }
+
+    private suspend fun syncOnce(): Result = mutex.withLock {
         if (!available) return@withLock Result(0, 0, 0)
         val granted = granted()
         val types = buildSet {
@@ -347,6 +379,10 @@ class HealthConnectSync(
     companion object {
         /** MyFitnessPal's package: its meals' source, and the app You → Apps & data opens. */
         const val MFP = "com.myfitnesspal.android"
+        private const val KEY_LAST_SYNC_AT = "hc_last_sync_at"
+        private const val KEY_LAST_SYNC_ADDED = "hc_last_sync_added"
+        private const val KEY_LAST_SYNC_UPDATED = "hc_last_sync_updated"
+        private const val KEY_LAST_SYNC_ERROR = "hc_last_sync_error"
         private const val TAG = "HealthConnect"
         private const val KEY_IMPORT = "hc_import_meals"
         private const val KEY_EXPORT = "hc_share_glucose"

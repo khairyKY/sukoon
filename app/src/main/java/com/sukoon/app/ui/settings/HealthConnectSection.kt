@@ -60,6 +60,8 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import com.sukoon.app.ui.theme.PillHighText
+import com.sukoon.app.ui.theme.PillLowText
 
 /** You → Apps & data: MyFitnessPal (meals and workouts in, through Health Connect), then Health Connect itself (glucose out, background sync). */
 @Composable
@@ -75,9 +77,13 @@ fun HealthConnectSection(sync: HealthConnectSync) {
     var busy by remember { mutableStateOf(false) }
     var lastMeal by remember { mutableStateOf<Instant?>(null) }
     var resyncing by remember { mutableStateOf(false) }
+    var inHc by remember { mutableStateOf<Pair<Int, Instant?>?>(null) }
+    var last by remember { mutableStateOf<HealthConnectSync.LastSync?>(null) }
     LaunchedEffect(checks) {
         granted = runCatching { sync.granted() }.getOrDefault(emptySet())
         lastMeal = runCatching { sync.lastMfpMeal() }.getOrNull()
+        inHc = runCatching { sync.mfpInHealthConnect() }.getOrNull()
+        last = sync.lastSync
     }
 
     fun syncNow() {
@@ -169,6 +175,27 @@ fun HealthConnectSection(sync: HealthConnectSync) {
                     }
                 }
                 if (!connected) Text(stringResource(R.string.hc_mfp_hint), fontSize = 12.sp, color = CaptionMuted)
+                // What Health Connect has from MyFitnessPal, and how Sukoon's last look went: says whose side a gap is on.
+                if (connected) {
+                    inHc?.let { (count, newest) ->
+                        Text(
+                            if (count == 0) stringResource(R.string.hc_mfp_none_in_hc)
+                            else stringResource(R.string.hc_mfp_in_hc, count, newest?.let(::mealTime).orEmpty()),
+                            fontSize = 12.5.sp,
+                            lineHeight = 17.sp,
+                            color = if (count == 0) PillHighText else CaptionMuted,
+                        )
+                    }
+                    last?.let { s ->
+                        Text(
+                            if (s.error != null) stringResource(R.string.hc_last_sync_failed, mealTime(s.at), s.error)
+                            else stringResource(R.string.hc_last_sync, mealTime(s.at), s.added, s.updated),
+                            fontSize = 12.5.sp,
+                            lineHeight = 17.sp,
+                            color = if (s.error != null) PillLowText else CaptionMuted,
+                        )
+                    }
+                }
             }
             AppCard {
                 Column {
