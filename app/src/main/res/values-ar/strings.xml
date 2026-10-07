@@ -354,7 +354,6 @@
     <string name="alarm_sound_default">الافتراضي</string>
     <string name="alarm_sound_phone">أصوات الموبايل…</string>
     <string name="alarm_sound_file">ملف صوت من عندي…</string>
-    <string name="alarm_sound_reset">رجّع الافتراضي</string>
     <string name="alarm_sound_play">شغّله</string>
     <string name="toast_alarm_sound">صوت %1$s: %2$s</string>
     <string name="toast_alarm_sound_bad">الملف ده مش بيشتغل. هنسيب الصوت الحالي.</string>
@@ -1122,12 +1121,6 @@
     <string name="dexcom_wrong_login">Dexcom مقبلش الدخول ده. اتأكد من اسم المستخدم والباسورد والمنطقة.</string>
     <string name="dexcom_unreachable">مقدرتش أوصل لـ Dexcom. اتأكد من النت وجرّب تاني.</string>
     <string name="dexcom_failed">Dexcom رفض الاتصال. جرّب بعدين.</string>
-    <string name="sound_rise">صعود</string>
-    <string name="sound_ripple">تموّج</string>
-    <string name="sound_drift">انسياب</string>
-    <string name="sound_warm">دفا</string>
-    <string name="sound_knock">دقّة</string>
-    <string name="sound_chime">رنّة</string>
     <string name="help_sources_title">حساسات تانية: LibreLinkUp وDexcom</string>
     <string name="help_sources_body">LibreLinkUp (حسابي ← الناس): ادخل بحساب LibreLinkUp وأي حد بيشارك معاه من تطبيق Libre بتاع Abbott (Libre 2 و3 وPlus، أندرويد أو آيفون) هيتتابع هنا بمنبّهاته. في تطبيق Libre بتاعهم: التطبيقات المتصلة ← LibreLinkUp ← ضيف إيميلك. Dexcom (حسابي ← الناس): حساب حد لابس Dexcom، والمشاركة شغّالة في تطبيق Dexcom بتاعه (G6 وG7 وONE). أي واحد منهم ممكن يبقى السكر بتاعك: حسابي ← الحساس. الاتنين بييجوا عن طريق النت، متأخرين دقيقة (LibreLinkUp) أو خمسة (Dexcom) عن الحساس، وبيستخدموا اتصالات تطبيقات الشركات دي، اللي ممكن يغيّروها.</string>
     <string name="help_mfp_title">MyFitnessPal وHealth Connect</string>
@@ -1467,4 +1460,18 @@
     <string name="learn_how_7_body">قراية في الأول وبعد ٤ ساعات.</string>
     <string name="learn_how_after">الوجبات الدسمة أوي (٣٥ جم دهون أو بروتين أو أكتر) بترفع متأخر، فمش بتتحسب. ٥ وجبات نضيفة في نفس الميعاد بيعملوا درس؛ «استخدم» بيحرّك نسبتك ٢٠٪ بالكتير كل مرة.</string>
     <string name="learn_how_never">ماتسيبش الإنسولين ولا تغيّر جرعة عشان الوجبة تتحسب.</string>
+    <string name="alarm_sound_reset">رجّع صوت المجموعة</string>
+    <string name="pack_title">الأصوات</string>
+    <string name="pack_body">المجموعة بتدّي كل منبّه صوته. اللي اخترتله صوت لوحده بيفضل عليه.</string>
+    <string name="pack_play">شغّل %1$s</string>
+    <string name="pack_astral">نجوم</string>
+    <string name="pack_astral_body">فضاء هادي: أجراس بتلمع في صدى واسع</string>
+    <string name="pack_orbit">مدار</string>
+    <string name="pack_orbit_body">فضاء حديث: زقزقات وأصوات أجهزة</string>
+    <string name="pack_glass">زجاج</string>
+    <string name="pack_glass_body">كاليمبا وأوعية رنّانة، صافية وواضحة</string>
+    <string name="pack_clear">واضح</string>
+    <string name="pack_clear_body">صفّارات ناعمة بإيقاع أجهزة المستشفيات</string>
+    <string name="pack_bells">أجراس</string>
+    <string name="pack_bells_body">الأصوات الأولى: أجراس وخشب</string>
 </resources>

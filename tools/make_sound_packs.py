@@ -4,7 +4,9 @@ urgent (urgent low, loops), low (loops), going_low, high, no_readings, reminder.
 to write it into res/raw as the app's sounds; with --preview DIR to write every pack there for listening.
 
     python tools/make_sound_packs.py --preview out/          # all packs, for the picker page
-    python tools/make_sound_packs.py astral                  # install one pack into the app
+    python tools/make_sound_packs.py --app                   # every pack into the app (<pack>_<role>.wav)
+
+The app's Bells pack is the first sounds (tools/make_sounds.py, sukoon_*.wav), kept as they were.
 """
 import os
 import sys
@@ -16,8 +18,6 @@ RATE = 32000
 RNG = np.random.default_rng(7)  # fixed: the same file every run
 RAW = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'app', 'src', 'main', 'res', 'raw')
 ROLES = ['urgent', 'low', 'going_low', 'high', 'no_readings', 'reminder']
-# The app's file per role (res/raw names, kept so stored choices stay valid).
-APP_NAMES = {'urgent': 'sukoon_rise', 'low': 'sukoon_ripple', 'going_low': 'sukoon_drift', 'high': 'sukoon_warm', 'no_readings': 'sukoon_knock', 'reminder': 'sukoon_chime'}
 
 
 def hz(semitones_from_a4):
@@ -230,8 +230,8 @@ if __name__ == '__main__':
             for role, wave in make().items():
                 write(os.path.join(out, f'{name}-{role}.wav'), wave, role)
                 print(name, role, f'{len(wave) / RATE:.1f}s')
-    else:
-        name = sys.argv[1]
-        for role, wave in PACKS[name]().items():
-            write(os.path.join(RAW, APP_NAMES[role] + '.wav'), wave, role)
-            print(name, role, '->', APP_NAMES[role])
+    elif sys.argv[1:2] == ['--app']:
+        for name, make in PACKS.items():
+            for role, wave in make().items():
+                write(os.path.join(RAW, f'{name}_{role}.wav'), wave, role)
+                print(name, role, '->', f'{name}_{role}.wav')

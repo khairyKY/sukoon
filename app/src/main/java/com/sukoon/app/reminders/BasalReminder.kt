@@ -24,6 +24,9 @@ import java.util.Locale
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import com.sukoon.app.alarms.SukoonSounds
+import com.sukoon.app.alarms.SoundPack
+import com.sukoon.app.alarms.SoundRole
+import com.sukoon.app.data.prefs.SettingsPrefs
 import android.media.AudioAttributes
 
 /** You → Insulin: a nudge at [minuteOfDay] when long-acting insulin isn't logged by then. Off until turned on. */
@@ -77,7 +80,8 @@ class BasalReminder : BroadcastReceiver() {
         private const val ACTION_TOOK = "com.sukoon.app.reminders.BASAL_TOOK"
         private const val ACTION_LATER = "com.sukoon.app.reminders.BASAL_LATER"
         private const val EXTRA_NAG = "nag"
-        private const val CHANNEL = "reminders2" // channels keep their first sound: a new id for Sukoon's chime
+        // Channels keep their first sound, so each pack has its own; the others are removed when it changes.
+        private fun channel(pack: SoundPack) = "reminder_${pack.key}"
         private const val NOTIFICATION_ID = 3000
         private const val NAGS = 3
         private val NAG_EVERY: Duration = Duration.ofMinutes(30)
@@ -140,11 +144,13 @@ class BasalReminder : BroadcastReceiver() {
 
         private fun notify(context: Context, dose: Double?, nag: Int) {
             val manager = context.getSystemService(NotificationManager::class.java)
-            if (manager.getNotificationChannel(CHANNEL) == null) {
-                manager.deleteNotificationChannel("reminders") // the first one played the phone's default sound
+            val pack = SettingsPrefs(context).alarmSettings.soundPack
+            val channelId = channel(pack)
+            if (manager.getNotificationChannel(channelId) == null) {
+                manager.notificationChannels.filter { it.id.startsWith("reminder") }.forEach { manager.deleteNotificationChannel(it.id) }
                 manager.createNotificationChannel(
-                    NotificationChannel(CHANNEL, context.getString(R.string.reminder_channel), NotificationManager.IMPORTANCE_HIGH).apply {
-                        setSound(SukoonSounds.uri(context, SukoonSounds.CHIME), AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).build())
+                    NotificationChannel(channelId, context.getString(R.string.reminder_channel), NotificationManager.IMPORTANCE_HIGH).apply {
+                        setSound(SukoonSounds.uri(context, pack, SoundRole.REMINDER), AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).build())
                     },
                 )
             }
@@ -155,7 +161,7 @@ class BasalReminder : BroadcastReceiver() {
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
-            val builder = NotificationCompat.Builder(context, CHANNEL)
+            val builder = NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(R.drawable.ic_stat_sukoon)
                 .setContentTitle(context.getString(R.string.reminder_basal_title))
                 .setContentText(context.getString(if (units != null) R.string.reminder_basal_body_dose else R.string.reminder_basal_body, units))

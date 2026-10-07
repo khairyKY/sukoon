@@ -27,8 +27,10 @@ data class AlarmSettings(
     val signalLossMinutes: Int = 20,
     val lowSnoozeMinutes: Int = 15,
     val highSnoozeMinutes: Int = 60,
-    /** Per-alarm sound; absent = the phone's default for that kind of alert. */
+    /** Per-alarm sound (a phone sound or your own file); absent = the pack's sound for that alarm. */
     val sounds: Map<AlarmType, AlarmSound> = emptyMap(),
+    /** Sukoon's own sounds, as a set. */
+    val soundPack: SoundPack = SoundPack.ASTRAL,
     /** Local hours with no high alarm (wrapping midnight); -1 = off. Lows are never quiet. */
     val quietHighsFrom: Int = -1,
     val quietHighsTo: Int = -1,

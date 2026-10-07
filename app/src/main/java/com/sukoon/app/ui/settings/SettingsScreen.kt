@@ -46,6 +46,7 @@ import com.sukoon.app.BuildConfig
 import com.sukoon.app.R
 import com.sukoon.app.alarms.AlarmSettings
 import com.sukoon.app.alarms.AlarmType
+import com.sukoon.app.alarms.SoundPack
 import com.sukoon.app.calibration.CalibrationManager
 import com.sukoon.app.data.export.ConnectionTest
 import com.sukoon.app.data.export.NightscoutConfig
@@ -137,6 +138,7 @@ fun SettingsScreen(
     onAlarmSettings: (AlarmSettings) -> Unit,
     onTestAlarm: (AlarmType) -> Unit,
     onPreviewAlarm: (AlarmType) -> Unit,
+    onPreviewPack: (SoundPack) -> Unit = {},
     emergency: EmergencySettings,
     emergencyAlerts: EmergencyAlerts,
     onEmergency: (EmergencySettings) -> Unit,
@@ -279,7 +281,7 @@ fun SettingsScreen(
                             AlarmReach(sensorIsSource = sourceKind.real)
                             Gap()
                         }
-                        AlarmSettingsSection(alarmSettings, onAlarmSettings, onTestAlarm, onPreviewAlarm)
+                        AlarmSettingsSection(alarmSettings, onAlarmSettings, onTestAlarm, onPreviewAlarm, onPreviewPack)
                         Gap()
                         if (!blocked) {
                             SectionLabel(stringResource(R.string.alarms_reach_title))

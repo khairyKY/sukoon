@@ -354,7 +354,6 @@
     <string name="alarm_sound_default">Default</string>
     <string name="alarm_sound_phone">Phone sounds…</string>
     <string name="alarm_sound_file">My own sound file…</string>
-    <string name="alarm_sound_reset">Back to default</string>
     <string name="alarm_sound_play">Play it</string>
     <string name="toast_alarm_sound">%1$s sound: %2$s</string>
     <string name="toast_alarm_sound_bad">That file can\'t be played. Keeping the current sound.</string>
@@ -1114,12 +1113,6 @@
     <string name="dexcom_wrong_login">Dexcom didn\'t accept that login. Check the username, password and region.</string>
     <string name="dexcom_unreachable">Couldn\'t reach Dexcom. Check the internet and try again.</string>
     <string name="dexcom_failed">Dexcom refused the connection. Try again later.</string>
-    <string name="sound_rise">Rise</string>
-    <string name="sound_ripple">Ripple</string>
-    <string name="sound_drift">Drift</string>
-    <string name="sound_warm">Warm</string>
-    <string name="sound_knock">Knock</string>
-    <string name="sound_chime">Chime</string>
     <string name="help_sources_title">Other sensors: LibreLinkUp and Dexcom</string>
     <string name="help_sources_body">LibreLinkUp (You → People): sign in with a LibreLinkUp account and everyone sharing with it from Abbott\'s Libre app (Libre 2, 3 and Plus, Android or iPhone) is followed here, with their alarms. In their Libre app: Connected apps → LibreLinkUp → add your email. Dexcom (You → People): a Dexcom wearer\'s login, with Share on in their Dexcom app (G6, G7, ONE). Either can also be your own glucose: You → Sensor. Both come through the internet, a minute (LibreLinkUp) or five (Dexcom) behind the sensor, and use those companies\' own apps\' connections, which they can change.</string>
     <string name="help_mfp_title">MyFitnessPal and Health Connect</string>
@@ -1355,4 +1348,18 @@
     <string name="learn_how_7_body">A reading at the start and 4 hours later.</string>
     <string name="learn_how_after" formatted="false">Very rich meals (35 g of fat or protein or more) rise late, so they\'re left out. 5 clean meals at a meal time make a lesson; Use moves your ratio at most 20% at a time.</string>
     <string name="learn_how_never">Never skip insulin or change a dose to make a meal count.</string>
+    <string name="alarm_sound_reset">Back to the pack\'s sound</string>
+    <string name="pack_title">Sounds</string>
+    <string name="pack_body">A pack gives every alarm its sound. One you\'ve set on its own keeps it.</string>
+    <string name="pack_play">Play %1$s</string>
+    <string name="pack_astral">Astral</string>
+    <string name="pack_astral_body">Space, calm: shimmering bells in a starry reverb</string>
+    <string name="pack_orbit">Orbit</string>
+    <string name="pack_orbit_body">Space, modern: chirps and console tones</string>
+    <string name="pack_glass">Glass</string>
+    <string name="pack_glass_body">Kalimba and singing bowls, bright and dry</string>
+    <string name="pack_clear">Clear</string>
+    <string name="pack_clear_body">Soft beeps in the rhythm hospital monitors use</string>
+    <string name="pack_bells">Bells</string>
+    <string name="pack_bells_body">The first sounds: bells and wood</string>
 </resources>
