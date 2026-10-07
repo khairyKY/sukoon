@@ -1086,8 +1086,8 @@
     <string name="hc_resync_done">Resynced: %1$d MyFitnessPal meals in the last 7 days (%2$d new, %3$d updated).</string>
     <string name="hc_resync_none">Health Connect has no MyFitnessPal meals from the last 7 days. In MyFitnessPal: More → Apps &amp; Devices → search Health Connect → Connect, turn it on and allow every permission (scroll the list).</string>
     <string name="hc_mfp_in_hc">Health Connect has %1$d MyFitnessPal meals this week; the newest %2$s.</string>
-    <string name="hc_mfp_none_in_hc">Health Connect has no MyFitnessPal meals this week, so MyFitnessPal isn't sharing them. In MyFitnessPal: More → Apps &amp; Devices → search Health Connect → Connect, turn it on and allow every permission (scroll the list).</string>
+    <string name="hc_mfp_none_in_hc">Health Connect has no MyFitnessPal meals this week, so MyFitnessPal isn\'t sharing them. In MyFitnessPal: More → Apps &amp; Devices → search Health Connect → Connect, turn it on and allow every permission (scroll the list).</string>
     <string name="hc_last_sync">Sukoon last checked %1$s: %2$d new, %3$d updated.</string>
     <string name="hc_last_sync_failed">Sukoon last checked %1$s and couldn\'t: %2$s</string>
-    <string name="you_language_auto">Phone's language</string>
+    <string name="you_language_auto">Phone\'s language</string>
 </resources>
