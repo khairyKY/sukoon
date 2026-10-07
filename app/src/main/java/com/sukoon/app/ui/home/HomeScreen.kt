@@ -91,6 +91,7 @@ import java.time.Instant
 import com.sukoon.app.ui.components.MiniGraph
 import com.sukoon.app.ui.theme.NeutralWarm
 import com.sukoon.app.ui.components.PullToSync
+import androidx.compose.ui.res.pluralStringResource
 
 /**
  * The Home/Now screen, in every state it can be in (docs/design-screens.md §2). Copy, colors,
@@ -570,7 +571,7 @@ private fun TreatedButton(at: Instant) {
         Icon(painterResource(R.drawable.ic_check), contentDescription = null, tint = com.sukoon.app.ui.theme.SageDeep, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(8.dp))
         Text(
-            if (left > 0) stringResource(R.string.home_treated_wait, left) else stringResource(R.string.home_treated_check),
+            if (left > 0) pluralStringResource(R.plurals.home_treated_wait, left.toInt(), left) else stringResource(R.string.home_treated_check),
             fontWeight = FontWeight.SemiBold,
             fontSize = 14.sp,
             color = com.sukoon.app.ui.theme.SageDeep,
@@ -731,7 +732,7 @@ private fun briefText(brief: Brief): Pair<String, String> {
     fun units(u: Double) = String.format(Locale.getDefault(), "%.1f", u)
     return when (brief) {
         is Brief.HeadingLow -> stringResource(R.string.home_brief_heading_low_title) to listOfNotNull(
-            stringResource(R.string.home_brief_heading_low_body, brief.minutes),
+            pluralStringResource(R.plurals.home_brief_heading_low_body, brief.minutes.toInt(), brief.minutes),
             if (brief.insulin > 0) stringResource(R.string.home_insulin_working, units(brief.insulin)) else null,
         ).joinToString(" ")
         is Brief.VeryHighFor -> stringResource(R.string.home_brief_very_high_title) to

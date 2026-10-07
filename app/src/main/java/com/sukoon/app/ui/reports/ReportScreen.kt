@@ -53,6 +53,7 @@ import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.ui.res.pluralStringResource
 
 /** Trends → Report: the AGP and its metrics over 7, 14 or 30 days, and a one-page PDF for the doctor. */
 @Composable
@@ -69,7 +70,7 @@ fun ReportScreen(state: ReportUiState, name: String, onSelectDays: (Int) -> Unit
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(stringResource(R.string.report_title), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
-        NumberChips(listOf(7, 14, 30), state.days, 1..90, { stringResource(R.string.report_days, it) }) { onSelectDays(it) }
+        NumberChips(listOf(7, 14, 30), state.days, 1..90, { pluralStringResource(R.plurals.report_days, it.toInt(), it) }) { onSelectDays(it) }
         val report = state.report
         if (report == null) {
             Text(stringResource(if (state.loading) R.string.report_loading else R.string.report_no_data), fontSize = 14.sp, color = CaptionMuted)

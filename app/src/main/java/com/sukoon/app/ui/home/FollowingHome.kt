@@ -82,6 +82,7 @@ import kotlinx.coroutines.delay
 import com.sukoon.app.alarms.AlarmEngine
 import com.sukoon.app.alarms.AlarmSettings
 import kotlin.math.roundToInt
+import androidx.compose.ui.res.pluralStringResource
 
 private val THREE_HOURS: Duration = Duration.ofHours(3)
 
@@ -190,7 +191,7 @@ private fun PersonView(sharing: Sharing, settings: SettingsPrefs, person: Follow
         }
         if (minutesAgo != null) {
             Text(
-                "${stringResource(R.string.home_unit_mgdl)} · ${if (minutesAgo < 1) stringResource(R.string.graph_just_now) else stringResource(R.string.graph_min_ago, minutesAgo.toInt())}",
+                "${stringResource(R.string.home_unit_mgdl)} · ${if (minutesAgo < 1) stringResource(R.string.graph_just_now) else pluralStringResource(R.plurals.graph_min_ago, minutesAgo.toInt(), minutesAgo.toInt())}",
                 fontSize = 13.sp,
                 color = CaptionMuted,
             )
@@ -256,7 +257,7 @@ private fun followerWords(name: String, readings: List<GlucoseReading>, latest: 
     return when {
         v < AlarmSettings.URGENT_LOW_MG_DL -> Triple(context.getString(R.string.follow_urgent, name), context.getString(R.string.follow_urgent_for, runFor { it < AlarmSettings.URGENT_LOW_MG_DL }), false)
         v < 70 -> Triple(context.getString(R.string.follow_low, name), context.getString(R.string.follow_low_for, runFor { it < 70 }), false)
-        projected < 70 -> Triple(context.getString(R.string.follow_heading_low, name), context.getString(R.string.follow_heading_low_in, (((v - 70) * 20) / (v - projected)).roundToInt().coerceAtLeast(1)), false)
+        projected < 70 -> Triple(context.getString(R.string.follow_heading_low, name), context.resources.getQuantityString(R.plurals.follow_heading_low_in, ((((v - 70) * 20) / (v - projected)).roundToInt().coerceAtLeast(1)).toInt(), (((v - 70) * 20) / (v - projected)).roundToInt().coerceAtLeast(1)), false)
         v > 250 -> Triple(context.getString(R.string.follow_high, name), context.getString(R.string.follow_high_for, runFor { it > 180 }), false)
         v > 180 -> Triple(context.getString(R.string.follow_high, name), context.getString(R.string.follow_high_for, runFor { it > 180 }), true)
         else -> Triple(context.getString(R.string.follow_steady, name), context.getString(R.string.follow_in_range_for, runFor { it in 70..180 }), true)

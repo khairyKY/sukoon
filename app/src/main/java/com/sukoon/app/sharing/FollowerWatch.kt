@@ -120,7 +120,7 @@ class FollowerWatch(
         val name = person.name.ifBlank { "…" }
         val r = person.latest ?: return "$name · ${context.getString(R.string.sharing_no_readings)}"
         val minutes = Duration.between(r.timestamp, Instant.now()).toMinutes().coerceAtLeast(0)
-        val age = if (minutes < 1) context.getString(R.string.graph_just_now) else context.getString(R.string.graph_min_ago, minutes.toInt())
+        val age = if (minutes < 1) context.getString(R.string.graph_just_now) else context.resources.getQuantityString(R.plurals.graph_min_ago, minutes.toInt(), minutes.toInt())
         return "$name  ${String.format(Locale.getDefault(), "%d", r.glucoseMgDl)} ${r.trend.arrow} · $age"
     }
 

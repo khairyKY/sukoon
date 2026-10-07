@@ -318,7 +318,7 @@ private fun Card(model: WidgetModel, options: WidgetOptions, palette: Palette, s
         if (footerHeight > 0.dp) {
             val parts = listOfNotNull(
                 if (options.shows(WidgetInfo.TIR)) model.tirTodayPercent?.let { context.getString(R.string.widget_tir_today, it) } else null,
-                if (options.graphShown && !narrow) context.getString(R.string.widget_last_hours, options.graphHours) else null,
+                if (options.graphShown && !narrow) context.resources.getQuantityString(R.plurals.widget_last_hours, options.graphHours.toInt(), options.graphHours) else null,
             )
             Text(parts.joinToString(" · "), style = small(palette, 11.5f), maxLines = 1, modifier = GlanceModifier.padding(top = 6.dp))
         }
@@ -366,7 +366,7 @@ private fun GraphStyle(model: WidgetModel, options: WidgetOptions, palette: Pale
             Reading(model, palette, numberSp, showArrow = options.shows(WidgetInfo.ARROW))
             Spacer(GlanceModifier.defaultWeight())
             val parts = listOfNotNull(
-                context.getString(R.string.widget_last_hours, options.graphHours),
+                context.resources.getQuantityString(R.plurals.widget_last_hours, options.graphHours.toInt(), options.graphHours),
                 if (options.shows(WidgetInfo.AGO)) ago(model) else null,
             )
             Text(parts.joinToString(" · "), style = small(palette, 11.5f), maxLines = 1)
@@ -511,7 +511,7 @@ private fun FollowingStyle(person: PersonReading?, options: WidgetOptions, palet
     val numberSp = if (size.height < 100.dp) (size.height.value * 0.5f).coerceIn(16f, 40f) else minOf(size.width.value * 0.3f, 56f)
     val number = if (person.stale || person.mgDl == null) "---" else person.mgDl.toString()
     val arrow = if (options.shows(WidgetInfo.ARROW) && !person.stale) person.trend?.arrow?.let { " $it" }.orEmpty() else ""
-    val ago = person.minutesAgo?.let { if (it < 1) context.getString(R.string.widget_now) else context.getString(R.string.widget_minutes_ago, it.toInt()) }
+    val ago = person.minutesAgo?.let { if (it < 1) context.getString(R.string.widget_now) else context.resources.getQuantityString(R.plurals.widget_minutes_ago, it.toInt(), it.toInt()) }
     val wide = size.width > size.height * 1.6f
     if (wide) {
         Row(GlanceModifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
@@ -614,7 +614,7 @@ private fun Graph(model: WidgetModel, options: WidgetOptions, palette: Palette, 
 private fun ago(model: WidgetModel): String {
     val context = LocalContext.current
     val minutes = model.minutesAgo ?: return context.getString(R.string.widget_no_readings)
-    return if (minutes < 1) context.getString(R.string.widget_now) else context.getString(R.string.widget_minutes_ago, minutes.toInt())
+    return if (minutes < 1) context.getString(R.string.widget_now) else context.resources.getQuantityString(R.plurals.widget_minutes_ago, minutes.toInt(), minutes.toInt())
 }
 
 private fun amount(value: Double): String =

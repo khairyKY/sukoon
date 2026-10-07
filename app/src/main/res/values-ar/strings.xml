@@ -158,11 +158,9 @@
     <string name="widget_label">السكر</string>
     <string name="widget_description">آخر قراية والاتجاه والرسم. كبّره من مربع واحد لحد نص الشاشة.</string>
     <string name="widget_now">دلوقتي</string>
-    <string name="widget_minutes_ago">من %1$d دقيقة</string>
     <string name="widget_no_readings">لسه مفيش قرايات</string>
     <string name="widget_last_value">آخر قراية %1$d</string>
     <string name="widget_tir_today">في المدى النهارده %1$d%%</string>
-    <string name="widget_last_hours">آخر %1$d ساعة</string>
     <string name="widget_graph_description">رسم السكر، آخر %1$d ساعة</string>
     <string name="widget_config_title">الويدجت</string>
     <string name="widget_config_resize_hint">اسحب الويدجت لأي حجم، من مربع واحد لحد نص الشاشة. الشكل بيتظبط على المساحة اللي تديهاله.</string>
@@ -200,9 +198,7 @@
     <string name="alarm_high_title">ارتفاع</string>
     <string name="alarm_high_body">أعلى من حد التنبيه. افحص الكيتونات لو فضل عالي.</string>
     <string name="alarm_signal_title">مفيش قرايات</string>
-    <string name="alarm_signal_body">مفيش حاجة من الحساس من %1$d دقيقة. خلّي الموبايل قريّب والبلوتوث شغّال.</string>
     <string name="alarm_action_treating">بعالجه دلوقتي</string>
-    <string name="alarm_action_snooze">أجّل %1$d دقيقة</string>
     <string name="alarm_action_ok">تمام</string>
     <!-- You → Setup checklist -->
     <string name="setup_title">التجهيز</string>
@@ -242,8 +238,6 @@
     <string name="alarms_signal_body">لما الحساس يسكت.</string>
     <string name="alarms_below">أقل من %1$d</string>
     <string name="alarms_above">أعلى من %1$d</string>
-    <string name="alarms_minutes">%1$d دقيقة</string>
-    <string name="alarms_after_minutes">بعد %1$d دقيقة</string>
     <string name="readings_title">القرايات</string>
     <string name="readings_save_every">احفظ قراية كل</string>
     <string name="readings_body">المنبّهات بتشوف كل قراية برضه.</string>
@@ -265,7 +259,6 @@
     <string name="export_title">بياناتك</string>
     <string name="export_body">القرايات والسجل كجدول.</string>
     <string name="export_csv">صدّر CSV</string>
-    <string name="export_days">%1$d يوم</string>
     <string name="export_all">الكل</string>
     <string name="export_done">اتحفظ %1$d سطر.</string>
     <string name="export_failed">مقدرناش نحفظ: %1$s</string>
@@ -368,7 +361,6 @@
     <string name="toast_no_sound_picker">الموبايل ده مفيهوش اختيار أصوات. اختار ملف بدل كده.</string>
     <string name="graph_range_days">%1$dي</string>
     <string name="graph_just_now">دلوقتي</string>
-    <string name="graph_min_ago">من %1$d دقيقة</string>
     <string name="graph_tir_title">الوقت في المدى · %1$s</string>
     <string name="graph_in_range">في المدى (٧٠–١٨٠)</string>
     <string name="graph_average">المتوسط %1$d ملغم/دل</string>
@@ -500,9 +492,6 @@
     <string name="home_btn_new_sensor">وصّل حساس جديد</string>
     <string name="banner_sensor_ending">الحساس هيخلص %1$s (بعد %2$s). جهّز واحد جديد.</string>
     <string name="life_in_days">%1$d يوم و%2$d ساعة</string>
-    <string name="life_in_hours">%1$d ساعة</string>
-    <string name="life_in_minutes">%1$d دقيقة</string>
-    <string name="sensor_life_warming">بيسخّن: القرايات هتبدأ بعد %1$d دقيقة.</string>
     <string name="sensor_life_running">هيخلص %1$s (بعد %2$s).</string>
     <string name="sensor_life_ended">خلص %1$s.</string>
     <string name="life_channel">تذكيرات الحساس</string>
@@ -533,7 +522,6 @@
     <string name="report_tab">التقرير</string>
     <string name="report_title">التقرير</string>
     <string name="report_subtitle">ملف السكر المجمّع (AGP) · %1$s – %2$s</string>
-    <string name="report_days">%1$d يوم</string>
     <string name="report_loading">بنحسب…</string>
     <string name="report_no_data">لسه مفيش قرايات في الفترة دي.</string>
     <string name="report_active">وقت شغل الحساس</string>
@@ -555,7 +543,6 @@
     <string name="report_pdf_generated">اتعمل %1$s</string>
     <string name="report_pdf_footer">اتعمل بسكون، وهو مش جهاز طبي. القرايات من حساس FreeStyle Libre 2 بيقراه سكون. النسب المئوية حسب الوقت في اليوم على مدار الفترة؛ والأهداف من الإجماع الدولي على الوقت في المدى (Battelino et al., Diabetes Care 2019).</string>
     <string name="toast_report_failed">مقدرناش نعمل الـ PDF: %1$s</string>
-    <string name="service_stale_title">مفيش قراية بقالها %1$d دقيقة</string>
     <string name="service_stale_body">آخر قراية: %1$d ملغم/دل الساعة %2$s. بيرجع يتوصل لوحده.</string>
     <string name="settings_guide">الدليل: سكون بيشتغل إزاي ←</string>
     <string name="help_title">الدليل</string>
@@ -590,7 +577,6 @@
     <string name="start_guide">اقرا الدليل</string>
     <string name="start_dismiss">تمام</string>
     <string name="logbook_when_now">دلوقتي</string>
-    <string name="logbook_when_ago">من %1$d دقيقة</string>
     <string name="logbook_when_pick">اختار وقت</string>
     <string name="alarms_quiet">هادي بالليل</string>
     <string name="alarms_quiet_body">مفيش تنبيهات ارتفاع في الساعات دي. الهبوط دايمًا بيرن.</string>
@@ -605,7 +591,6 @@
     <string name="home_nothing_to_do">مفيش حاجة تعملها دلوقتي.</string>
     <string name="home_insulin_working">لسه فيه %1$s وحدة أنسولين سريع شغّالة.</string>
     <string name="home_brief_heading_low_title">السكر نازل.</string>
-    <string name="home_brief_heading_low_body">بالمعدل ده هتقرّب من ٧٠ في حوالي %1$d دقيقة.</string>
     <string name="home_brief_very_high_title">عالي من فترة.</string>
     <string name="home_brief_very_high_body">فوق ٢٥٠ بقالك %1$s.</string>
     <string name="home_brief_rebound_title">غالبًا ده ارتداد.</string>
@@ -723,7 +708,6 @@
     <string name="you_back">ارجع لصفحتك</string>
     <string name="you_wears">لابس حساس</string>
     <string name="you_needs_one">حاجة واحدة محتاجاك: %1$s</string>
-    <string name="you_needs_many">%1$d حاجات محتاجاك</string>
     <string name="you_fix">صلّحها</string>
     <string name="you_sensor_demo">بيانات تجريبية</string>
     <string name="you_sensor_none">مش متوصّل</string>
@@ -954,7 +938,6 @@
     <string name="alarm_log_snoozed">%1$s: اتأجل %2$d دقيقة</string>
     <string name="alarm_log_dismissed">%1$s: اتشال من الإشعارات</string>
     <string name="alarm_log_resolved">%1$s: خلص</string>
-    <string name="home_treated_wait">قيس تاني بعد %1$d دقيقة</string>
     <string name="home_treated_check">شوف السكر دلوقتي</string>
     <string name="home_btn_log_carbs">سجّل اللي أخدته</string>
     <string name="home_headline_still_low">لسه واطي. خد ١٥ جرام كمان.</string>
@@ -1014,7 +997,6 @@
     <string name="follow_urgent">سكر %1$s واطي جدًا.</string>
     <string name="follow_urgent_for">تحت ٥٥ بقاله %1$s. اتصل دلوقتي.</string>
     <string name="follow_heading_low">سكر %1$s نازل ناحية الهبوط.</string>
-    <string name="follow_heading_low_in">ممكن يبقى تحت ٧٠ في حوالي %1$d دقيقة.</string>
     <string name="home_last_3_hours">آخر ٣ ساعات</string>
     <string name="reminder_channel">تذكيرات</string>
     <string name="reminder_basal_title">الأنسولين طويل المفعول</string>
@@ -1154,4 +1136,213 @@
     <string name="help_reminders_body">حسابي ← الأنسولين والسجل ← تذكير: في ميعادك كل يوم، لو مفيش أنسولين طويل المفعول اتسجّل في الـ ١٢ ساعة اللي قبلها، بييجي إشعار. «أخدتها» بيسجّل آخر جرعة؛ «بعد ٣٠ دقيقة» بيستنى. بيرجع كل ٣٠ دقيقة، ٣ مرات، وبيختفي أول ما الجرعة تتسجّل في أي حتة. ويدجت الأنسولين فيه «أخدتها» برضه.</string>
     <string name="help_backup_title">النسخة الاحتياطية ونقل الموبايل</string>
     <string name="help_backup_body">حسابي ← التقارير ← خد نسخة من كل حاجة بيحفظ ملف واحد فيه قراياتك وسجلك وإعداداتك وربط الحساس وصور الوجبات؛ خلّيه في مكان أمان، ده خاص. الاسترجاع بيرجّع كل حاجة على نفس الموبايل أو موبايل جديد: سكون بيقفل ويفتح زي ما كان. ويدجت الشاشة الرئيسية لازم تتضاف تاني.</string>
+    <string name="updates_title">التحديثات</string>
+    <string name="update_this_version">سكون %1$s</string>
+    <string name="update_check">دوّر على تحديث</string>
+    <string name="update_checking">بيدوّر…</string>
+    <string name="update_up_to_date">عندك آخر نسخة.</string>
+    <string name="update_out">سكون %1$s نزل</string>
+    <string name="update_dismiss">مش دلوقتي</string>
+    <string name="update_now">حدّث</string>
+    <string name="update_whats_new">إيه الجديد</string>
+    <string name="update_downloading">بينزّل… %1$d%%</string>
+    <string name="update_install">ثبّت</string>
+    <string name="update_new_key">النسخة دي بتوقيع سكون الجديد، فأندرويد محتاج تثبيت من الأول: خد نسخة من كل حاجة، امسح سكون، ثبّته، وبعدين استرجع.</string>
+    <string name="update_get_it">نزّله</string>
+    <string name="update_failed">معرفتش أحدّث: %1$s</string>
+    <plurals name="widget_minutes_ago">
+        <item quantity="zero">من %1$d دقيقة</item>
+        <item quantity="one">من دقيقة</item>
+        <item quantity="two">من دقيقتين</item>
+        <item quantity="few">من %1$d دقايق</item>
+        <item quantity="many">من %1$d دقيقة</item>
+        <item quantity="other">من %1$d دقيقة</item>
+    </plurals>
+    <plurals name="graph_min_ago">
+        <item quantity="zero">من %1$d دقيقة</item>
+        <item quantity="one">من دقيقة</item>
+        <item quantity="two">من دقيقتين</item>
+        <item quantity="few">من %1$d دقايق</item>
+        <item quantity="many">من %1$d دقيقة</item>
+        <item quantity="other">من %1$d دقيقة</item>
+    </plurals>
+    <plurals name="logbook_when_ago">
+        <item quantity="zero">من %1$d دقيقة</item>
+        <item quantity="one">من دقيقة</item>
+        <item quantity="two">من دقيقتين</item>
+        <item quantity="few">من %1$d دقايق</item>
+        <item quantity="many">من %1$d دقيقة</item>
+        <item quantity="other">من %1$d دقيقة</item>
+    </plurals>
+    <plurals name="alarms_minutes">
+        <item quantity="zero">%1$d دقيقة</item>
+        <item quantity="one">دقيقة</item>
+        <item quantity="two">دقيقتين</item>
+        <item quantity="few">%1$d دقايق</item>
+        <item quantity="many">%1$d دقيقة</item>
+        <item quantity="other">%1$d دقيقة</item>
+    </plurals>
+    <plurals name="alarm_action_snooze">
+        <item quantity="zero">أجّل %1$d دقيقة</item>
+        <item quantity="one">أجّل دقيقة</item>
+        <item quantity="two">أجّل دقيقتين</item>
+        <item quantity="few">أجّل %1$d دقايق</item>
+        <item quantity="many">أجّل %1$d دقيقة</item>
+        <item quantity="other">أجّل %1$d دقيقة</item>
+    </plurals>
+    <plurals name="home_treated_wait">
+        <item quantity="zero">قيس تاني بعد %1$d دقيقة</item>
+        <item quantity="one">قيس تاني بعد دقيقة</item>
+        <item quantity="two">قيس تاني بعد دقيقتين</item>
+        <item quantity="few">قيس تاني بعد %1$d دقايق</item>
+        <item quantity="many">قيس تاني بعد %1$d دقيقة</item>
+        <item quantity="other">قيس تاني بعد %1$d دقيقة</item>
+    </plurals>
+    <plurals name="life_in_hours">
+        <item quantity="zero">%1$d ساعة</item>
+        <item quantity="one">ساعة</item>
+        <item quantity="two">ساعتين</item>
+        <item quantity="few">%1$d ساعات</item>
+        <item quantity="many">%1$d ساعة</item>
+        <item quantity="other">%1$d ساعة</item>
+    </plurals>
+    <plurals name="life_in_minutes">
+        <item quantity="zero">%1$d دقيقة</item>
+        <item quantity="one">دقيقة</item>
+        <item quantity="two">دقيقتين</item>
+        <item quantity="few">%1$d دقايق</item>
+        <item quantity="many">%1$d دقيقة</item>
+        <item quantity="other">%1$d دقيقة</item>
+    </plurals>
+    <plurals name="service_stale_title">
+        <item quantity="zero">مفيش قراية بقالها %1$d دقيقة</item>
+        <item quantity="one">مفيش قراية بقالها دقيقة</item>
+        <item quantity="two">مفيش قراية بقالها دقيقتين</item>
+        <item quantity="few">مفيش قراية بقالها %1$d دقايق</item>
+        <item quantity="many">مفيش قراية بقالها %1$d دقيقة</item>
+        <item quantity="other">مفيش قراية بقالها %1$d دقيقة</item>
+    </plurals>
+    <plurals name="sensor_life_warming">
+        <item quantity="zero">بيسخّن: القرايات هتبدأ بعد %1$d دقيقة.</item>
+        <item quantity="one">بيسخّن: القرايات هتبدأ بعد دقيقة.</item>
+        <item quantity="two">بيسخّن: القرايات هتبدأ بعد دقيقتين.</item>
+        <item quantity="few">بيسخّن: القرايات هتبدأ بعد %1$d دقايق.</item>
+        <item quantity="many">بيسخّن: القرايات هتبدأ بعد %1$d دقيقة.</item>
+        <item quantity="other">بيسخّن: القرايات هتبدأ بعد %1$d دقيقة.</item>
+    </plurals>
+    <plurals name="export_days">
+        <item quantity="zero">%1$d يوم</item>
+        <item quantity="one">يوم</item>
+        <item quantity="two">يومين</item>
+        <item quantity="few">%1$d أيام</item>
+        <item quantity="many">%1$d يوم</item>
+        <item quantity="other">%1$d يوم</item>
+    </plurals>
+    <plurals name="report_days">
+        <item quantity="zero">%1$d يوم</item>
+        <item quantity="one">يوم</item>
+        <item quantity="two">يومين</item>
+        <item quantity="few">%1$d أيام</item>
+        <item quantity="many">%1$d يوم</item>
+        <item quantity="other">%1$d يوم</item>
+    </plurals>
+    <plurals name="you_needs_many">
+        <item quantity="zero">%1$d حاجة محتاجاك</item>
+        <item quantity="one">حاجة واحدة محتاجاك</item>
+        <item quantity="two">حاجتين محتاجينك</item>
+        <item quantity="few">%1$d حاجات محتاجاك</item>
+        <item quantity="many">%1$d حاجة محتاجاك</item>
+        <item quantity="other">%1$d حاجة محتاجاك</item>
+    </plurals>
+    <plurals name="home_brief_heading_low_body">
+        <item quantity="zero">بالمعدل ده هتقرّب من ٧٠ في حوالي %1$d دقيقة.</item>
+        <item quantity="one">بالمعدل ده هتقرّب من ٧٠ في حوالي دقيقة.</item>
+        <item quantity="two">بالمعدل ده هتقرّب من ٧٠ في حوالي دقيقتين.</item>
+        <item quantity="few">بالمعدل ده هتقرّب من ٧٠ في حوالي %1$d دقايق.</item>
+        <item quantity="many">بالمعدل ده هتقرّب من ٧٠ في حوالي %1$d دقيقة.</item>
+        <item quantity="other">بالمعدل ده هتقرّب من ٧٠ في حوالي %1$d دقيقة.</item>
+    </plurals>
+    <plurals name="follow_heading_low_in">
+        <item quantity="zero">ممكن يبقى تحت ٧٠ في حوالي %1$d دقيقة.</item>
+        <item quantity="one">ممكن يبقى تحت ٧٠ في حوالي دقيقة.</item>
+        <item quantity="two">ممكن يبقى تحت ٧٠ في حوالي دقيقتين.</item>
+        <item quantity="few">ممكن يبقى تحت ٧٠ في حوالي %1$d دقايق.</item>
+        <item quantity="many">ممكن يبقى تحت ٧٠ في حوالي %1$d دقيقة.</item>
+        <item quantity="other">ممكن يبقى تحت ٧٠ في حوالي %1$d دقيقة.</item>
+    </plurals>
+    <plurals name="alarms_after_minutes">
+        <item quantity="zero">بعد %1$d دقيقة</item>
+        <item quantity="one">بعد دقيقة</item>
+        <item quantity="two">بعد دقيقتين</item>
+        <item quantity="few">بعد %1$d دقايق</item>
+        <item quantity="many">بعد %1$d دقيقة</item>
+        <item quantity="other">بعد %1$d دقيقة</item>
+    </plurals>
+    <plurals name="widget_last_hours">
+        <item quantity="zero">آخر %1$d ساعة</item>
+        <item quantity="one">آخر ساعة</item>
+        <item quantity="two">آخر ساعتين</item>
+        <item quantity="few">آخر %1$d ساعات</item>
+        <item quantity="many">آخر %1$d ساعة</item>
+        <item quantity="other">آخر %1$d ساعة</item>
+    </plurals>
+    <plurals name="alarm_signal_body">
+        <item quantity="zero">مفيش حاجة من الحساس من %1$d دقيقة. خلّي الموبايل قريّب والبلوتوث شغّال.</item>
+        <item quantity="one">مفيش حاجة من الحساس من دقيقة. خلّي الموبايل قريّب والبلوتوث شغّال.</item>
+        <item quantity="two">مفيش حاجة من الحساس من دقيقتين. خلّي الموبايل قريّب والبلوتوث شغّال.</item>
+        <item quantity="few">مفيش حاجة من الحساس من %1$d دقايق. خلّي الموبايل قريّب والبلوتوث شغّال.</item>
+        <item quantity="many">مفيش حاجة من الحساس من %1$d دقيقة. خلّي الموبايل قريّب والبلوتوث شغّال.</item>
+        <item quantity="other">مفيش حاجة من الحساس من %1$d دقيقة. خلّي الموبايل قريّب والبلوتوث شغّال.</item>
+    </plurals>
+
+    <!-- أماكن الحقن -->
+    <string name="site_where">فين؟</string>
+    <string name="site_skip">تخطّي</string>
+    <string name="site_add">إضافة</string>
+    <string name="site_change">تغيير</string>
+    <string name="site_optional">اختياري</string>
+    <string name="site_next">الجاي: %1$s</string>
+    <string name="site_suggested">المقترح الجاي</string>
+    <string name="site_dashed">الدايرة المتقطّعة: المكان اللي ارتاح أكتر.</string>
+    <string name="site_front">قدّام</string>
+    <string name="site_back">ورا</string>
+    <string name="site_l">شمال</string>
+    <string name="site_r">يمين</string>
+    <string name="site_abdomen_left">البطن، شمال</string>
+    <string name="site_abdomen_right">البطن، يمين</string>
+    <string name="site_thigh_left">الفخد الشمال</string>
+    <string name="site_thigh_right">الفخد اليمين</string>
+    <string name="site_arm_left">الدراع الشمال</string>
+    <string name="site_arm_right">الدراع اليمين</string>
+    <string name="site_buttock_left">المقعدة، شمال</string>
+    <string name="site_buttock_right">المقعدة، يمين</string>
+    <string name="site_last_today">آخر مرة هنا النهارده</string>
+    <string name="site_last_yesterday">آخر مرة هنا امبارح</string>
+    <string name="site_not_lately">ماستخدمتهوش من فترة</string>
+    <plurals name="site_last_days">
+        <item quantity="zero">آخر مرة هنا من %1$d يوم</item>
+        <item quantity="one">آخر مرة هنا من يوم</item>
+        <item quantity="two">آخر مرة هنا من يومين</item>
+        <item quantity="few">آخر مرة هنا من %1$d أيام</item>
+        <item quantity="many">آخر مرة هنا من %1$d يوم</item>
+        <item quantity="other">آخر مرة هنا من %1$d يوم</item>
+    </plurals>
+    <string name="sites_title">أماكن الحقن</string>
+    <string name="sites_empty">سجّل كل جرعة راحت فين (اختياري)، وسكون يقترح المكان اللي ارتاح أكتر.</string>
+    <plurals name="sites_doses">
+        <item quantity="zero">%1$d جرعة في آخر ٣٠ يوم</item>
+        <item quantity="one">جرعة واحدة في آخر ٣٠ يوم</item>
+        <item quantity="two">جرعتين في آخر ٣٠ يوم</item>
+        <item quantity="few">%1$d جرعات في آخر ٣٠ يوم</item>
+        <item quantity="many">%1$d جرعة في آخر ٣٠ يوم</item>
+        <item quantity="other">%1$d جرعة في آخر ٣٠ يوم</item>
+    </plurals>
+    <string name="sites_crowded">%1$s: %2$d من %3$d جرعة في أسبوعين. غيّر المكان: الحقن في نفس المكان كل مرة ممكن يعمل كتل تخلّي الإنسولين أبطأ.</string>
+    <string name="sites_speed">البطن أسرع، بعده الدراع، الفخد، المقعدة. التفاصيل في الدليل.</string>
+    <string name="insight_rotation_title">مكان حقن واحد واخد أغلب الجرعات</string>
+    <string name="insight_rotation_body">%1$s: %2$d من %3$d جرعة في آخر أسبوعين (%4$s).</string>
+    <string name="insight_rotation_discuss">لو فيه كتل أو جلد ناشف مكان الحقن، وإزاي توزّع الجرعات على أماكن أكتر، بينهم عرض صباع.</string>
+    <string name="insight_src_rotation">Frid وزملاؤه، Mayo Clin Proc ٢٠١٦ (FIT)</string>
+    <string name="help_sites_title">أماكن الحقن</string>
+    <string name="help_sites_body">لما تسجّل إنسولين سريع أو طويل المفعول، «فين؟» بتاخد المكان والناحية بلمسة واحدة على رسمة الجسم (شمالك على الشمال، قدّام وورا). ده اختياري، وتقدر تضيفه بعدين لما تفتح الإدخال. الدايرة المتقطّعة هي المكان اللي بتستخدمه وارتاح أكتر. تغيير المكان مهم: الحقن في نفس المكان كل مرة ممكن يعمل كتل تحت الجلد (lipohypertrophy) تمتص الإنسولين بشكل مش منتظم. البطن أسرع امتصاص (ابعد كام سنتي عن السرّة)، بعدها ضهر الدراع، وجنب الفخد، وأعلى المقعدة من بره؛ ناس كتير بتخلّي منطقة واحدة للطويل المفعول وبتغيّر جواها. صفحة الإنسولين بتوريك آخر ٣٠ يوم. المصدر: Frid وزملاؤه، Mayo Clin Proc ٢٠١٦.</string>
 </resources>

@@ -64,6 +64,7 @@ import com.sukoon.app.data.db.LogEventType
 import com.sukoon.app.data.db.logType
 import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.insights.MeterCheck
+import com.sukoon.app.insulin.injectionSite
 import com.sukoon.app.ui.theme.CanvasDark
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
@@ -238,6 +239,7 @@ fun LogbookScreen(
             insulinOnBoard = state.insulinOnBoard,
             appMeals = appMeals,
             photoFile = existing?.let { state.photos[it.id] },
+            siteHistory = state.siteHistory,
             onEstimateCarbs = onEstimateCarbs,
             onSave = { draft ->
                 editor = null
@@ -338,6 +340,15 @@ private fun EntryRow(
                         fontSize = 12.5.sp,
                         color = if (check.agrees) SageDeep else PillHighText,
                     )
+                    // A dose: where it went, or a quiet "Where?" (the row opens the entry to add it).
+                    type == LogEventType.INSULIN || type == LogEventType.BASAL -> {
+                        val site = event.injectionSite
+                        Text(
+                            listOfNotNull(typeLabel(type).takeIf { event.note != null }, site?.let { siteName(it) } ?: stringResource(R.string.site_where)).joinToString(" · "),
+                            fontSize = 12.5.sp,
+                            color = if (site == null) SageDeep else CaptionMuted,
+                        )
+                    }
                     !isMeal && event.note != null -> Text(typeLabel(type), fontSize = 12.5.sp, color = CaptionMuted)
                 }
             }
@@ -352,7 +363,12 @@ private fun EntryRow(
         group.insulin.forEach { dose ->
             Row(Modifier.fillMaxWidth().clickable { onOpenDose(dose) }.padding(start = 21.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(7.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onBackground))
-                Text("${typeLabel(LogEventType.INSULIN)} · ${doseTiming(dose, event)}", fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f).padding(start = 12.dp))
+                Text(
+                    listOfNotNull(typeLabel(LogEventType.INSULIN), doseTiming(dose, event), dose.injectionSite?.let { siteName(it) }).joinToString(" · "),
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.weight(1f).padding(start = 12.dp),
+                )
                 Text("${formatAmountLocalized(dose.value ?: 0.0)}${unitLabel(LogEventType.INSULIN)}", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground)
                 Text(hmFormatter.format(Instant.ofEpochMilli(dose.timestampMillis)), fontSize = 13.sp, color = CaptionMuted, textAlign = TextAlign.End, modifier = Modifier.width(48.dp))
             }

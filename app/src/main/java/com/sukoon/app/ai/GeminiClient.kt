@@ -17,8 +17,9 @@ class AiException(message: String) : Exception(message)
  * Minimal Gemini `generateContent` client over HttpURLConnection + the platform's org.json
  * (ponytail: no SDK/Retrofit for one POST). The user brings their own free AI Studio key.
  *
- * Tries [MODELS] in order and falls through on "busy / gone" answers (429/5xx/404) — the free
- * tier regularly returns 503 "high demand" for the newest model while older ones answer fine.
+ * Tries [MODELS] in order and falls through on "busy / gone" answers (429/5xx/404) and on a model
+ * that never answers — the free tier regularly returns 503 "high demand" (or just hangs) for the
+ * newest model while older ones answer fine.
  * Auth/request errors (400/403) fail fast since every model would reject them the same way.
  */
 class GeminiClient(private val apiKey: () -> String) {
@@ -38,7 +39,7 @@ class GeminiClient(private val apiKey: () -> String) {
             val (code, response) = post(model, key, body)
             if (code == 200) return@withContext replyText(response)
             lastError = errorMessage(code, response)
-            if (code != 404 && code != 429 && code < 500) break
+            if (code != TIMED_OUT && code != 404 && code != 429 && code < 500) break
         }
         throw AiException(lastError)
     }
@@ -48,14 +49,20 @@ class GeminiClient(private val apiKey: () -> String) {
         connection.requestMethod = "POST"
         connection.doOutput = true
         connection.connectTimeout = 15_000
-        connection.readTimeout = 60_000
+        connection.readTimeout = 40_000
         connection.setRequestProperty("Content-Type", "application/json")
         connection.setRequestProperty("x-goog-api-key", key) // header, not ?key=, so it stays out of URL logs
         return try {
-            connection.outputStream.use { it.write(body.toByteArray()) }
-            val code = connection.responseCode
-            val stream = if (code in 200..299) connection.inputStream else connection.errorStream
-            code to (stream?.bufferedReader()?.use { it.readText() } ?: "")
+            connection.connect() // failing here is the network itself, the same for every model
+            try {
+                connection.outputStream.use { it.write(body.toByteArray()) }
+                val code = connection.responseCode
+                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+                code to (stream?.bufferedReader()?.use { it.readText() } ?: "")
+            } catch (e: java.net.SocketTimeoutException) {
+                // Connected, but this model never answered (seen with gemini-flash-latest): try the next.
+                TIMED_OUT to ""
+            }
         } catch (e: java.io.IOException) {
             throw AiException("Couldn't reach Gemini — check your connection. (${e.message})")
         } finally {
@@ -65,6 +72,8 @@ class GeminiClient(private val apiKey: () -> String) {
 
     companion object {
         private const val BASE = "https://generativelanguage.googleapis.com/v1beta/models"
+        /** Not an HTTP code: the model took longer than the read timeout. */
+        const val TIMED_OUT = -1
         const val NO_KEY = "Add your Gemini API key in You → AI to use this."
 
         // `*-latest` aliases track Google's current models so the app doesn't break when one is
@@ -110,6 +119,7 @@ class GeminiClient(private val apiKey: () -> String) {
             return when (code) {
                 400, 403 -> if (message?.contains("API key", ignoreCase = true) == true) "Gemini rejected the API key. Check it in You → AI." else "Gemini error $code: ${message ?: "bad request"}"
                 429 -> "Gemini's free quota is used up for now — try again in a minute."
+                TIMED_OUT -> "Gemini took too long to answer. Try again shortly."
                 else -> "Gemini is busy right now ($code). Try again shortly."
             }
         }

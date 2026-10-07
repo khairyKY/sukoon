@@ -17,8 +17,11 @@ import org.json.JSONObject
 import com.sukoon.app.data.source.nearestTo
 import com.sukoon.app.insights.Insight
 import com.sukoon.app.insights.InsightEngine
+import com.sukoon.app.insulin.InjectionRegion
+import com.sukoon.app.insulin.InjectionSite
 import com.sukoon.app.insulin.InsulinAction
 import com.sukoon.app.insulin.InsulinOnBoard
+import com.sukoon.app.insulin.injectionSite
 
 /**
  * Everything the AI is told. Pure (clock + zone injected) so the data brief is unit-tested; the
@@ -152,8 +155,9 @@ object AiPrompts {
                 "${if (v % 1.0 == 0.0) v.toLong() else v}$unit"
             }.orEmpty()
             val glucose = readings.nearestTo(event.timestampMillis)?.let { "sensor ${it.glucoseMgDl} ${it.trend.name.lowercase().replace('_', ' ')}" }.orEmpty()
+            val site = event.injectionSite?.let { "injected in ${siteLabel(it)}" }.orEmpty()
             appendLine(
-                listOf(dayTime.format(Instant.ofEpochMilli(event.timestampMillis)), event.logType.name.lowercase(), amount, event.note.orEmpty(), glucose)
+                listOf(dayTime.format(Instant.ofEpochMilli(event.timestampMillis)), event.logType.name.lowercase(), amount, site, event.note.orEmpty(), glucose)
                     .filter { it.isNotBlank() }
                     .joinToString(" · "),
             )
@@ -194,8 +198,19 @@ object AiPrompts {
             is Insight.Nights -> "${insight.inRange} of ${insight.nights} nights stayed 70–180 from 00 to 06; ${insight.withLows} nights had a low."
             is Insight.CarbDays -> "Days over ${insight.splitGrams} g carbs: ${insight.higherTir}% in range vs ${insight.lowerTir}% on lighter days " +
                 "(${insight.days} days) [Evert et al. 2019]."
+            is Insight.Rotation -> "Injection sites: ${siteLabel(insight.site)} took ${insight.count} of ${insight.total} " +
+                "${if (insight.longActing) "long-acting" else "rapid"} doses in 2 weeks; using one spot often can cause lipohypertrophy [Frid et al. 2016]."
         }
     }
+
+    /** "left abdomen", "right upper arm" (the person's own left and right). */
+    private fun siteLabel(site: InjectionSite): String =
+        (if (site.left) "left " else "right ") + when (site.region) {
+            InjectionRegion.ABDOMEN -> "abdomen"
+            InjectionRegion.THIGH -> "thigh"
+            InjectionRegion.ARM -> "upper arm"
+            InjectionRegion.BUTTOCK -> "buttock"
+        }
 
     // Exact extremes (with times) matter: the 15-minute averages below smooth away short lows.
     private fun summary(label: String, readings: List<GlucoseReading>, time: DateTimeFormatter): String {

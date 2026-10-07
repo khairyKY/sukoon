@@ -44,7 +44,7 @@ internal fun alarmBody(context: Context, type: AlarmType, minutesSinceReading: L
         AlarmType.LOW -> context.getString(R.string.alarm_low_body)
         AlarmType.GOING_LOW -> context.getString(R.string.alarm_going_low_body)
         AlarmType.HIGH -> context.getString(R.string.alarm_high_body)
-        AlarmType.SIGNAL_LOSS -> context.getString(R.string.alarm_signal_body, minutesSinceReading ?: 0)
+        AlarmType.SIGNAL_LOSS -> context.resources.getQuantityString(R.plurals.alarm_signal_body, (minutesSinceReading ?: 0).toInt(), minutesSinceReading ?: 0)
     }
 }
 
@@ -97,7 +97,7 @@ class AlarmNotifier(private val context: Context, private val log: AlarmLog) {
         val snoozeLabel = when {
             treating -> context.getString(R.string.alarm_action_treating)
             alert.type == AlarmType.URGENT_LOW -> context.getString(R.string.alarm_action_ok)
-            else -> context.getString(R.string.alarm_action_snooze, snoozeMinutes)
+            else -> context.resources.getQuantityString(R.plurals.alarm_action_snooze, snoozeMinutes.toInt(), snoozeMinutes)
         }
         val channel = channelFor(alert.type)
         // Every alarm takes the screen: over the lock screen through the full-screen intent, and

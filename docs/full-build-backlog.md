@@ -64,6 +64,16 @@ Designs: the "Sukoon — onboarding, logbook & settings redesign" canvas (claude
 - ✅ Widgets (design "Round 3 · Widgets"): seven styles (Number, Number + graph, Graph, Ring, Today, Insulin with "Took it", Following), five landing sizes, and a widget maker (You → Appearance) with the real widget as its preview; "Add to home screen" places it at the chosen size; the launcher's reconfigure opens the maker too.
 - ⏸ Why alerts didn't reach Kai on the 5c3be68 build: needs the phone on USB (logcat, notification channels, app ops).
 
+## More sources, followers anywhere, updates (Kai, 2026-10-07)
+- ✅ Follower web page for an iPhone (web/, GitHub Pages): enter the invite code, live number, chart, alarms while open.
+- ✅ LibreLinkUp and Dexcom Share: follow people through them, or use one as this phone's own glucose (polled every minute).
+- ✅ Release signing key (docs/signing.md), backup and restore of everything for the one-time key change.
+- ✅ New alarm sounds, made for Sukoon (tools/make_sounds.py); calmer, shorter texts with the details moved to the Guide; Arabic counts with proper plurals.
+- ✅ Updates: a dismissable notice when a newer Sukoon is on GitHub, Check for updates, and Update (downloads, checks it's signed by the same key, installs).
+- ✅ Alarm state survives a restart; the sensor reconnects within seconds after an update.
+- ✅ Injection sites (design "Round 4 · Where the insulin went"): "Where?" on rapid and long-acting entries with a two-figure body map (spot and side in one tap), the spot rested longest suggested, sites in the logbook rows, You → Insulin & logbook heat map for 30 days, a rotation insight, sites in the AI brief, a Guide topic (Room v4).
+- ⏸ Bubble (Libre 1 transmitter): no hardware to test with.
+
 Rules: no APK builds or installs unless Kai asks (compile + unit tests only); no AI attribution in commits or PRs.
 
 iPhone (Kai's father, own sensor): not possible without Apple's paid developer account — free personal teams can't use NFC to pair a Libre. Options: an Android phone with NFC (runs Sukoon fully), or the $99/yr account + a Mac + an iOS port. Kai declined the license (2026-10-03).

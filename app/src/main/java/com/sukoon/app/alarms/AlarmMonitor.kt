@@ -38,6 +38,8 @@ class AlarmMonitor(
     private val settings: SettingsPrefs,
     private val notifier: AlarmNotifier,
     private val log: AlarmLog,
+    /** Survives restarts: snoozes, answers, "treated at" and where an emergency stands. */
+    private val store: AlarmStore? = null,
     private val emergency: EmergencyAlerts,
     private val scope: CoroutineScope,
     private val enabled: () -> Boolean,
@@ -45,13 +47,14 @@ class AlarmMonitor(
     private val watchdog: (Duration) -> Unit = {},
 ) {
     private val mutex = Mutex()
-    private var state = AlarmState()
+    private val restored = store?.load()
+    private var state = restored?.state ?: AlarmState()
     private val recent = TreeMap<Instant, GlucoseReading>()
 
     /** Newest reading however old: losing the signal after a low is escalated long after the 30-min window empties. */
     private var newest: GlucoseReading? = null
 
-    private val _escalation = MutableStateFlow<EscalationPhase>(EscalationPhase.Idle)
+    private val _escalation = MutableStateFlow(restored?.phase ?: EscalationPhase.Idle)
 
     /** For the alert screen: idle, counting down to texting the contacts, or texts sent. */
     val escalation: StateFlow<EscalationPhase> = _escalation.asStateFlow()
@@ -61,7 +64,7 @@ class AlarmMonitor(
     /** Alarms going on right now (snoozed ones too): the alert screen closes itself once its alarm is over. */
     val active: StateFlow<Set<AlarmType>> = _active.asStateFlow()
 
-    private val _treatedAt = MutableStateFlow<Instant?>(null)
+    private val _treatedAt = MutableStateFlow(restored?.treatedAt)
 
     /** When a low was last marked treated: Home counts the 15-15 rule's minutes from it. */
     val treatedAt: StateFlow<Instant?> = _treatedAt.asStateFlow()
@@ -107,6 +110,7 @@ class AlarmMonitor(
             val now = Instant.now()
             state = AlarmEngine.acknowledge(state, type, now)
             if (minutes > 0) state = AlarmEngine.snooze(state, type, minutes, now)
+            remember()
             if (enabled()) escalateLocked(now)
         }
         if (minutes > 0) notifier.cancel(type)
@@ -210,6 +214,12 @@ class AlarmMonitor(
             null -> Unit
         }
         _escalation.value = phase
+        remember()
+    }
+
+    /** Keep the alarms' state for a restart (written only when it changed). */
+    private fun remember() {
+        store?.save(AlarmStore.Snapshot(state, _treatedAt.value, _escalation.value))
     }
 
     private companion object {

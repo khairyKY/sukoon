@@ -42,6 +42,9 @@ import com.sukoon.app.ui.theme.Motion.staggerIn
 import com.sukoon.app.ui.theme.SageLight
 import com.sukoon.app.ui.theme.SageDeep
 import com.sukoon.app.ui.theme.PillLowText
+import com.sukoon.app.data.db.LogEventType
+import com.sukoon.app.ui.logbook.siteName
+import com.sukoon.app.ui.logbook.typeLabel
 
 /**
  * Trends → Insights. Gated by a one-time acknowledgement; afterwards a standing one-line reminder
@@ -233,6 +236,12 @@ private fun InsightCard(insight: Insight) {
                 Body(stringResource(R.string.insight_carbdays_body, insight.splitGrams, insight.higherTir, insight.lowerTir, insight.days))
                 if (insight.level == Level.ATTENTION) Discuss(stringResource(R.string.insight_carbdays_discuss))
                 Source(stringResource(R.string.insight_src_carbdays))
+            }
+            is Insight.Rotation -> {
+                Title(stringResource(R.string.insight_rotation_title))
+                Body(stringResource(R.string.insight_rotation_body, siteName(insight.site), insight.count, insight.total, typeLabel(if (insight.longActing) LogEventType.BASAL else LogEventType.INSULIN)))
+                Discuss(stringResource(R.string.insight_rotation_discuss))
+                Source(stringResource(R.string.insight_src_rotation))
             }
         }
     }

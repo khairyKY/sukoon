@@ -57,7 +57,7 @@ object AgpPdf {
         var y = 56f
         c.drawText(context.getString(R.string.report_pdf_title), MARGIN, y, title)
         y += 18f
-        val period = "${day.format(report.from)} – ${day.format(report.to)} · ${context.getString(R.string.report_days, report.days)}"
+        val period = "${day.format(report.from)} – ${day.format(report.to)} · ${context.resources.getQuantityString(R.plurals.report_days, report.days.toInt(), report.days)}"
         c.drawText(listOfNotNull(name.trim().takeIf { it.isNotEmpty() }, period).joinToString(" · "), MARGIN, y, body)
         y += 14f
         c.drawText(context.getString(R.string.report_pdf_generated, DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm").format(LocalDateTime.now())), MARGIN, y, small)

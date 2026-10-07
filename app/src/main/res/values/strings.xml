@@ -158,11 +158,9 @@
     <string name="widget_label">Glucose</string>
     <string name="widget_description">Your latest reading, trend and graph. Resize it from one tile up to half the screen.</string>
     <string name="widget_now">now</string>
-    <string name="widget_minutes_ago">%1$d min ago</string>
     <string name="widget_no_readings">No readings yet</string>
     <string name="widget_last_value">last %1$d</string>
     <string name="widget_tir_today">In range today %1$d%%</string>
-    <string name="widget_last_hours">last %1$d h</string>
     <string name="widget_graph_description">Glucose graph, last %1$d hours</string>
     <string name="widget_config_title">Widget</string>
     <string name="widget_config_resize_hint">Drag the widget to any size, from a single tile up to half your screen. The layout adapts to the space you give it.</string>
@@ -200,9 +198,7 @@
     <string name="alarm_high_title">High</string>
     <string name="alarm_high_body">Above your high alarm. Check ketones if it stays up.</string>
     <string name="alarm_signal_title">No readings</string>
-    <string name="alarm_signal_body">Nothing from your sensor for %1$d minutes. Keep the phone close and Bluetooth on.</string>
     <string name="alarm_action_treating">I\'m treating it</string>
-    <string name="alarm_action_snooze">Snooze %1$d min</string>
     <string name="alarm_action_ok">OK</string>
     <!-- You → Setup checklist -->
     <string name="setup_title">Setup</string>
@@ -242,8 +238,6 @@
     <string name="alarms_signal_body">When the sensor goes quiet.</string>
     <string name="alarms_below">below %1$d</string>
     <string name="alarms_above">above %1$d</string>
-    <string name="alarms_minutes">%1$d min</string>
-    <string name="alarms_after_minutes">after %1$d min</string>
     <string name="readings_title">Readings</string>
     <string name="readings_save_every">Save a reading every</string>
     <string name="readings_body">Alarms still check every reading.</string>
@@ -265,7 +259,6 @@
     <string name="export_title">Your data</string>
     <string name="export_body">Readings and logbook as a spreadsheet.</string>
     <string name="export_csv">Export CSV</string>
-    <string name="export_days">%1$d days</string>
     <string name="export_all">All</string>
     <string name="export_done">Saved %1$d rows.</string>
     <string name="export_failed">Couldn\'t save: %1$s</string>
@@ -368,7 +361,6 @@
     <string name="toast_no_sound_picker">This phone has no sound picker. Choose a file instead.</string>
     <string name="graph_range_days">%1$dd</string>
     <string name="graph_just_now">just now</string>
-    <string name="graph_min_ago">%1$d min ago</string>
     <string name="graph_tir_title">Time in range · %1$s</string>
     <string name="graph_in_range">in range (70–180)</string>
     <string name="graph_average">Average %1$d mg/dL</string>
@@ -500,9 +492,6 @@
     <string name="home_btn_new_sensor">Connect a new sensor</string>
     <string name="banner_sensor_ending">Sensor ends %1$s (in %2$s). Have a new one ready.</string>
     <string name="life_in_days">%1$d d %2$d h</string>
-    <string name="life_in_hours">%1$d h</string>
-    <string name="life_in_minutes">%1$d min</string>
-    <string name="sensor_life_warming">Warming up: readings start in %1$d min.</string>
     <string name="sensor_life_running">Ends %1$s (in %2$s).</string>
     <string name="sensor_life_ended">Ended %1$s.</string>
     <string name="life_channel">Sensor reminders</string>
@@ -533,7 +522,6 @@
     <string name="report_tab">Report</string>
     <string name="report_title">Report</string>
     <string name="report_subtitle">Ambulatory Glucose Profile · %1$s – %2$s</string>
-    <string name="report_days">%1$d days</string>
     <string name="report_loading">Working it out…</string>
     <string name="report_no_data">No readings in this period yet.</string>
     <string name="report_active">Time the sensor was active</string>
@@ -555,7 +543,6 @@
     <string name="report_pdf_generated">Generated %1$s</string>
     <string name="report_pdf_footer">Made by Sukoon, which is not a medical device. Readings from a FreeStyle Libre 2 sensor read by Sukoon. Percentiles by time of day over the period; targets from the International Consensus on Time in Range (Battelino et al., Diabetes Care 2019).</string>
     <string name="toast_report_failed">Couldn\'t make the PDF: %1$s</string>
-    <string name="service_stale_title">No reading for %1$d min</string>
     <string name="service_stale_body">Last: %1$d mg/dL at %2$s. Reconnecting on its own.</string>
     <string name="settings_guide">Guide: how Sukoon works →</string>
     <string name="help_title">Guide</string>
@@ -590,7 +577,6 @@
     <string name="start_guide">Read the guide</string>
     <string name="start_dismiss">Got it</string>
     <string name="logbook_when_now">Now</string>
-    <string name="logbook_when_ago">%1$d min ago</string>
     <string name="logbook_when_pick">Pick a time</string>
     <string name="alarms_quiet">Quiet at night</string>
     <string name="alarms_quiet_body">No high alarms in these hours. Lows always sound.</string>
@@ -605,7 +591,6 @@
     <string name="home_nothing_to_do">Nothing to do right now.</string>
     <string name="home_insulin_working">%1$s u of rapid insulin is still working.</string>
     <string name="home_brief_heading_low_title">Heading down.</string>
-    <string name="home_brief_heading_low_body">At this rate you\'ll be near 70 in about %1$d min.</string>
     <string name="home_brief_very_high_title">High for a while.</string>
     <string name="home_brief_very_high_body">Over 250 for %1$s.</string>
     <string name="home_brief_rebound_title">A rebound, most likely.</string>
@@ -723,7 +708,6 @@
     <string name="you_back">Back to You</string>
     <string name="you_wears">Wears a sensor</string>
     <string name="you_needs_one">1 thing needs you: %1$s</string>
-    <string name="you_needs_many">%1$d things need you</string>
     <string name="you_fix">Fix</string>
     <string name="you_sensor_demo">Demo data</string>
     <string name="you_sensor_none">Not connected</string>
@@ -954,7 +938,6 @@
     <string name="alarm_log_snoozed">%1$s: snoozed %2$d min</string>
     <string name="alarm_log_dismissed">%1$s: swiped away</string>
     <string name="alarm_log_resolved">%1$s: over</string>
-    <string name="home_treated_wait">Check again in %1$d min</string>
     <string name="home_treated_check">Check your glucose now</string>
     <string name="home_btn_log_carbs">Log what you had</string>
     <string name="home_headline_still_low">Still low. Have another 15 g.</string>
@@ -1006,7 +989,6 @@
     <string name="follow_urgent">%1$s is very low.</string>
     <string name="follow_urgent_for">Below 55 for %1$s. Call now.</string>
     <string name="follow_heading_low">%1$s is heading low.</string>
-    <string name="follow_heading_low_in">Could be under 70 in about %1$d min.</string>
     <string name="home_last_3_hours">Last 3 hours</string>
     <string name="reminder_channel">Reminders</string>
     <string name="reminder_basal_title">Long-acting insulin</string>
@@ -1146,4 +1128,133 @@
     <string name="help_reminders_body">You → Insulin &amp; logbook → Reminder: at your time each day, if no long-acting was logged in the 12 hours before, a notification comes. “Took it” logs your last amount; “In 30 min” waits. It comes back every 30 minutes, 3 times, and goes away as soon as the dose is logged anywhere. The Insulin widget has “Took it” too.</string>
     <string name="help_backup_title">Backup and moving phones</string>
     <string name="help_backup_body">You → Reports → Back up everything saves one file with your readings, logbook, settings, sensor pairing and meal photos; keep it somewhere safe, it\'s private. Restore puts it all back on this or a new phone: Sukoon closes and opens as it was. Home-screen widgets need adding again.</string>
+    <string name="updates_title">Updates</string>
+    <string name="update_this_version">Sukoon %1$s</string>
+    <string name="update_check">Check for updates</string>
+    <string name="update_checking">Checking…</string>
+    <string name="update_up_to_date">You have the latest.</string>
+    <string name="update_out">Sukoon %1$s is out</string>
+    <string name="update_dismiss">Not now</string>
+    <string name="update_now">Update</string>
+    <string name="update_whats_new">What\'s new</string>
+    <string name="update_downloading">Downloading… %1$d%%</string>
+    <string name="update_install">Install</string>
+    <string name="update_new_key">This version uses Sukoon\'s new signature, so Android needs a reinstall: back up everything, uninstall Sukoon, install it, then restore.</string>
+    <string name="update_get_it">Get it</string>
+    <string name="update_failed">Couldn\'t update: %1$s</string>
+    <plurals name="widget_minutes_ago">
+        <item quantity="one">%1$d min ago</item>
+        <item quantity="other">%1$d min ago</item>
+    </plurals>
+    <plurals name="graph_min_ago">
+        <item quantity="one">%1$d min ago</item>
+        <item quantity="other">%1$d min ago</item>
+    </plurals>
+    <plurals name="logbook_when_ago">
+        <item quantity="one">%1$d min ago</item>
+        <item quantity="other">%1$d min ago</item>
+    </plurals>
+    <plurals name="alarms_minutes">
+        <item quantity="one">%1$d min</item>
+        <item quantity="other">%1$d min</item>
+    </plurals>
+    <plurals name="alarm_action_snooze">
+        <item quantity="one">Snooze %1$d min</item>
+        <item quantity="other">Snooze %1$d min</item>
+    </plurals>
+    <plurals name="home_treated_wait">
+        <item quantity="one">Check again in %1$d min</item>
+        <item quantity="other">Check again in %1$d min</item>
+    </plurals>
+    <plurals name="life_in_hours">
+        <item quantity="one">%1$d h</item>
+        <item quantity="other">%1$d h</item>
+    </plurals>
+    <plurals name="life_in_minutes">
+        <item quantity="one">%1$d min</item>
+        <item quantity="other">%1$d min</item>
+    </plurals>
+    <plurals name="service_stale_title">
+        <item quantity="one">No reading for %1$d min</item>
+        <item quantity="other">No reading for %1$d min</item>
+    </plurals>
+    <plurals name="sensor_life_warming">
+        <item quantity="one">Warming up: readings start in %1$d min.</item>
+        <item quantity="other">Warming up: readings start in %1$d min.</item>
+    </plurals>
+    <plurals name="export_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <plurals name="report_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <plurals name="you_needs_many">
+        <item quantity="one">%1$d thing needs you</item>
+        <item quantity="other">%1$d things need you</item>
+    </plurals>
+    <plurals name="home_brief_heading_low_body">
+        <item quantity="one">At this rate you\'ll be near 70 in about %1$d min.</item>
+        <item quantity="other">At this rate you\'ll be near 70 in about %1$d min.</item>
+    </plurals>
+    <plurals name="follow_heading_low_in">
+        <item quantity="one">Could be under 70 in about %1$d min.</item>
+        <item quantity="other">Could be under 70 in about %1$d min.</item>
+    </plurals>
+    <plurals name="alarms_after_minutes">
+        <item quantity="one">after %1$d min</item>
+        <item quantity="other">after %1$d min</item>
+    </plurals>
+    <plurals name="widget_last_hours">
+        <item quantity="one">last %1$d h</item>
+        <item quantity="other">last %1$d h</item>
+    </plurals>
+    <plurals name="alarm_signal_body">
+        <item quantity="one">Nothing from your sensor for %1$d minutes. Keep the phone close and Bluetooth on.</item>
+        <item quantity="other">Nothing from your sensor for %1$d minutes. Keep the phone close and Bluetooth on.</item>
+    </plurals>
+
+    <!-- Injection sites: where a dose went, and rotating them -->
+    <string name="site_where">Where?</string>
+    <string name="site_skip">Skip</string>
+    <string name="site_add">Add</string>
+    <string name="site_change">Change</string>
+    <string name="site_optional">Optional</string>
+    <string name="site_next">Next: %1$s</string>
+    <string name="site_suggested">Suggested next</string>
+    <string name="site_dashed">Dashed ring: the spot that has rested longest.</string>
+    <string name="site_front">Front</string>
+    <string name="site_back">Back</string>
+    <string name="site_l">L</string>
+    <string name="site_r">R</string>
+    <string name="site_abdomen_left">Left belly</string>
+    <string name="site_abdomen_right">Right belly</string>
+    <string name="site_thigh_left">Left thigh</string>
+    <string name="site_thigh_right">Right thigh</string>
+    <string name="site_arm_left">Left arm</string>
+    <string name="site_arm_right">Right arm</string>
+    <string name="site_buttock_left">Left buttock</string>
+    <string name="site_buttock_right">Right buttock</string>
+    <string name="site_last_today">last here today</string>
+    <string name="site_last_yesterday">last here yesterday</string>
+    <string name="site_not_lately">not used lately</string>
+    <plurals name="site_last_days">
+        <item quantity="one">last here %1$d day ago</item>
+        <item quantity="other">last here %1$d days ago</item>
+    </plurals>
+    <string name="sites_title">Injection sites</string>
+    <string name="sites_empty">Log where each dose goes (it\'s optional) and Sukoon suggests the spot that has rested longest.</string>
+    <plurals name="sites_doses">
+        <item quantity="one">%1$d dose in 30 days</item>
+        <item quantity="other">%1$d doses in 30 days</item>
+    </plurals>
+    <string name="sites_crowded">%1$s: %2$d of %3$d doses in 2 weeks. Move around: the same spot again and again can form lumps that slow insulin down.</string>
+    <string name="sites_speed">Belly acts fastest, then arms, thighs, buttocks. More in the Guide.</string>
+    <string name="insight_rotation_title">One injection spot does most of the work</string>
+    <string name="insight_rotation_body">%1$s took %2$d of %3$d doses in the last 2 weeks (%4$s).</string>
+    <string name="insight_rotation_discuss">Any lumps or firm skin where you inject, and spreading doses over more spots, a finger-width apart.</string>
+    <string name="insight_src_rotation">Frid et al., Mayo Clin Proc 2016 (FIT)</string>
+    <string name="help_sites_title">Injection sites</string>
+    <string name="help_sites_body">When you log rapid or long-acting insulin, “Where?” takes the spot and the side in one tap on the body map (your left is on the left, front and back). It\'s optional, and you can add it later by opening the entry. The dashed ring is the spot you use that has rested longest. Moving around matters: the same spot again and again can form lumps under the skin (lipohypertrophy) that take up insulin unevenly. The belly acts fastest (keep a few centimetres from the navel), then the back of the upper arms, the outer thighs and the upper outer buttocks; many people keep one area for long-acting and move around within it. You → Insulin &amp; logbook shows the last 30 days. Source: Frid et al., Mayo Clin Proc 2016.</string>
 </resources>
