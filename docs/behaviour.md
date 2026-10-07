@@ -84,9 +84,9 @@ a high 10 below its line.
 |---|---|---|---|---|---|
 | **Urgent low** | Under 55 | Always on | Nothing: can't be turned off or moved | Every **5 min**; snooze capped at 5 | Alarm stream, looping 1 min, alarm volume lifted to at least 80% |
 | **Low** | Under your low line | 70 | Line 60 to 110, on/off | After its snooze (15 min) | Alarm stream, 30 s, volume lifted to at least 50% |
-| **Going low** | Heading under your low line within 20 min | On | On/off | Once per episode | Alarm stream, volume lifted to at least 50% |
-| **High** | Over your high line | 180 | Line 150 to 400, on/off, quiet hours | After its snooze (60 min) | Notification stream |
-| **No readings** | No reading for N min | 20 min | 10 to 120, on/off | Every 30 min | Notification stream |
+| **Going low** | Heading under your low line within 20 min | On | On/off | Once per episode | Alarm stream, 8 s, volume lifted to at least 50% |
+| **High** | Over your high line | 180 | Line 150 to 400, on/off, quiet hours | After its snooze (60 min) | Notification stream, 8 s |
+| **No readings** | No reading for N min | 20 min | 10 to 120, on/off | Every 30 min | Notification stream, 8 s |
 
 - Urgent low takes over from low, and low from going low. Easing out of an urgent low into a low is the same episode, not a new alarm.
 - Each alarm, every time: a notification, the full-screen alert (over the lock screen, or over any app with "display over other apps"), and its sound. The volume goes back to where it was once the sound stops.

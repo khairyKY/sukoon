@@ -294,13 +294,11 @@ class AlarmNotifier(private val context: Context, private val log: AlarmLog) {
         private const val TAG = "AlarmNotifier"
         private const val URGENT_SOUND_MS = 60_000L
 
-        /** How long each alarm's (short, looping) sound keeps going: urgent a minute, a low half that, the gentle ones two or three times. */
+        /** How long each alarm's (short, looping) sound keeps going: urgent a minute, a low half that, the rest long enough to notice. */
         private fun soundFor(type: AlarmType): Long = when (type) {
             AlarmType.URGENT_LOW -> URGENT_SOUND_MS
             AlarmType.LOW -> 30_000L
-            AlarmType.GOING_LOW -> 4_000L
-            AlarmType.HIGH -> 4_500L
-            AlarmType.SIGNAL_LOSS -> 2_000L
+            AlarmType.GOING_LOW, AlarmType.HIGH, AlarmType.SIGNAL_LOSS -> 8_000L
         }
         private const val PREVIEW_MS = 5_000L
         private const val COUNTDOWN_ID = 2000
