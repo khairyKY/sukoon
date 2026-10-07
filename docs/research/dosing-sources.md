@@ -20,7 +20,8 @@ talk about doses** once beta is on. Kai doesn't follow a system yet, so his numb
 ```
 meal dose       = carbs (g) / carb ratio (g per unit)                 ← per meal slot
 correction      = (glucose now − target) / correction factor (mg/dL per unit)
-suggested dose  = meal dose + correction − insulin still working       ← never below 0
+suggested dose  = meal dose + max(0, correction − insulin still working) ← never below 0
+                  (below target the correction is negative and takes some off the meal)
 ```
 Taught exactly this way in practice ([Davidson et al., Endocr Pract 2008;14:1095](https://1library.net/document/qmvwjp4q-analysis-guidelines-insulin-dosing-insulin-correction-carbohydrate-insulin.html)).
 
@@ -91,8 +92,9 @@ stops and tells you to treat the moment glucose goes under 70 (warn at 90).
   calculator for others is a regulated medical device (FDA / EU MDR).
 - No suggestion when under 70 or falling fast toward it. That case is treat the low (15 g, recheck
   in 15 min, ADA Standards of Care §6).
-- Subtract insulin still working; never below 0; round **down** to the pen's step (0.5 or 1 u);
-  a maximum dose Kai sets.
+- Insulin still working offsets the correction only, as pump bolus calculators do (earlier meal
+  insulin is busy with earlier food); never below 0; round **down** to the pen's step (0.5 or
+  1 u); a maximum dose Kai sets.
 - Always shown with its maths ("45 g ÷ 12 = 3.8, +0.5 correction, −1.0 still working → 3 u").
   Never typed into the amount for him.
 - Learned changes are proposals with their evidence (n meals, the range). They only apply once

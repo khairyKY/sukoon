@@ -94,6 +94,9 @@ import com.sukoon.app.ui.settings.minuteLabel
 import java.time.ZoneId
 import com.sukoon.app.ui.settings.UpdateBanner
 import com.sukoon.app.insights.InsightEngine
+import com.sukoon.app.insulin.RatioLearner
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Top-level navigation, per the shipped design's 3-tab bottom bar (Now / Trends / You) — not the
@@ -396,6 +399,14 @@ fun MainScaffold() {
                     },
                     doseStartingPoints = {
                         InsightEngine.formulas(container.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofDays(14).toMillis()).first(), ZoneId.systemDefault())
+                    },
+                    learnRatios = { factor ->
+                        withContext(Dispatchers.Default) {
+                            val since = System.currentTimeMillis() - Duration.ofDays(30).toMillis()
+                            val events = container.logbookRepository.eventsSince(since).first()
+                            val cf = factor ?: InsightEngine.formulas(events, ZoneId.systemDefault())?.mgDlPerUnit1800
+                            if (cf == null) emptyList() else RatioLearner.learn(container.glucoseRepository.readingsSince(since).first(), events, cf, ZoneId.systemDefault(), container.settings.insulinAction)
+                        }
                     },
                     injectionSites = {
                         container.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofDays(30).toMillis()).first().filter { it.site != null }

@@ -1366,4 +1366,14 @@
     <string name="dose_on_board">%1$s لسه شغالين بيغطّوا جزء</string>
     <string name="dose_rounded">مقرّب لتحت</string>
     <string name="dose_capped">عند أقصى جرعة</string>
+    <plurals name="dose_learned">
+        <item quantity="zero">%1$s: %2$d وجبة نضيفة بتقول وحدة لكل %3$s جم (%4$s–%5$s)</item>
+        <item quantity="one">%1$s: وجبة نضيفة بتقول وحدة لكل %3$s جم (%4$s–%5$s)</item>
+        <item quantity="two">%1$s: وجبتين نضاف بيقولوا وحدة لكل %3$s جم (%4$s–%5$s)</item>
+        <item quantity="few">%1$s: %2$d وجبات نضيفة بتقول وحدة لكل %3$s جم (%4$s–%5$s)</item>
+        <item quantity="many">%1$s: %2$d وجبة نضيفة بتقول وحدة لكل %3$s جم (%4$s–%5$s)</item>
+        <item quantity="other">%1$s: %2$d وجبة نضيفة بتقول وحدة لكل %3$s جم (%4$s–%5$s)</item>
+    </plurals>
+    <string name="dose_learned_use">استخدم %1$s</string>
+    <string name="dose_learning_needs">التعلّم من وجباتك: محتاج ٥ وجبات نضيفة في نفس الميعاد (متسجّل معاها الإنسولين، ومفيش أكل تاني لمدة ٤ ساعات) ومعامل تصحيح، أو ٣ أيام كاملة.</string>
 </resources>

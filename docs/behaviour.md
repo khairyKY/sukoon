@@ -206,6 +206,14 @@ Shown on new rapid entries (a meal, insulin for an imported meal, or insulin alo
 offers the textbook starting points (500 and 1800 rules) to fill empty boxes. While it's on, the AI
 assistant may work out doses with the same maths and settings.
 
+**Learning the ratios** from the last 30 days. A meal counts when it's *clean*: at least 10 g, logged with
+its rapid insulin (an hour before to 30 min after), starting between 70 and 250, nothing else eaten
+from an hour before to 4 h after, no extra insulin in those 4 h, and under 0.5 u still working from
+before. Its ratio is carbs ÷ (insulin + glucose change at 4 h ÷ correction factor); the factor is
+yours, or the 1800 rule's estimate. With 5 or more clean meals at a meal time, the card shows the
+median and the middle half ("Lunch: 7 clean meals point to 1 u per 11 g (9–13)") and *Use* moves the
+ratio toward it by at most 20% at a time. Nothing changes until you press it.
+
 ## 10. Known limits
 
 - Snoozes, answers, "treated at" and texts already sent are kept across a restart. A countdown cut off by one starts again from 60 seconds (with its screen and sound) if the alarm is still unanswered.

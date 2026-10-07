@@ -396,6 +396,9 @@ object InsightEngine {
         val change4h: Int? = null,
         val fat: Double? = null,
         val protein: Double? = null,
+        /** Glucose at the meal. */
+        val start: Int = 0,
+        val atMillis: Long = 0,
     )
 
     internal fun slotFor(hour: Int) = when (hour) {
@@ -429,6 +432,8 @@ object InsightEngine {
                 change4h = nearest(t.plus(Duration.ofHours(4)), Duration.ofMinutes(20))?.glucoseMgDl?.minus(pre.glucoseMgDl),
                 fat = meal.fat,
                 protein = meal.protein,
+                start = pre.glucoseMgDl,
+                atMillis = meal.timestampMillis,
             )
         }
 

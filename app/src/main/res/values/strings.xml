@@ -1278,4 +1278,10 @@
     <string name="dose_on_board">%1$s still working covers part</string>
     <string name="dose_rounded">rounded down</string>
     <string name="dose_capped">capped at your maximum</string>
+    <plurals name="dose_learned">
+        <item quantity="one">%1$s: %2$d clean meal points to 1 u per %3$s g (%4$s–%5$s)</item>
+        <item quantity="other">%1$s: %2$d clean meals point to 1 u per %3$s g (%4$s–%5$s)</item>
+    </plurals>
+    <string name="dose_learned_use">Use %1$s</string>
+    <string name="dose_learning_needs">Learning from your meals: it needs 5 clean meals at a meal time (logged with their insulin, nothing else eaten for 4 h) and a correction factor, or 3 complete days.</string>
 </resources>

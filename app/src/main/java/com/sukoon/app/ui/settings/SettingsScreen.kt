@@ -105,6 +105,7 @@ import androidx.compose.ui.res.pluralStringResource
 import com.sukoon.app.data.db.EventEntity
 import com.sukoon.app.insights.Insight
 import com.sukoon.app.insulin.DoseSettings
+import com.sukoon.app.insulin.RatioLearner
 
 /** The You tab's sections (design "You, divided"): each opens its own page from the hub. */
 private enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
@@ -169,6 +170,8 @@ fun SettingsScreen(
     onDoseSettings: (DoseSettings) -> Unit = {},
     /** Textbook starting points from the logbook's daily totals, when there are enough days. */
     doseStartingPoints: suspend () -> Insight.Formulas? = { null },
+    /** Ratios learned from clean logged meals, given the correction factor (null: estimate it). */
+    learnRatios: suspend (Double?) -> List<RatioLearner.Learned> = { emptyList() },
 ) {
     val context = LocalContext.current
     var page by rememberSaveable { mutableStateOf<YouPage?>(null) }
@@ -308,7 +311,7 @@ fun SettingsScreen(
                         Gap()
                         InsulinSection(insulinAction, onInsulinAction)
                         Gap()
-                        DoseCard(doseSettings, onDoseSettings, doseStartingPoints)
+                        DoseCard(doseSettings, onDoseSettings, doseStartingPoints, learnRatios)
                     }
                     YouPage.APPS -> {
                         HealthConnectSection(healthConnect)

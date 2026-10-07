@@ -32,6 +32,10 @@ import com.sukoon.app.R
 import com.sukoon.app.insights.Insight
 import com.sukoon.app.insights.MealSlot
 import com.sukoon.app.insulin.DoseSettings
+import com.sukoon.app.insulin.RatioLearner
+import androidx.compose.ui.res.pluralStringResource
+import kotlinx.coroutines.delay
+import kotlin.math.abs
 import com.sukoon.app.ui.components.ChoiceChips
 import com.sukoon.app.ui.insights.slot
 import com.sukoon.app.ui.logbook.PillButton
@@ -47,7 +51,12 @@ import com.sukoon.app.ui.theme.Sage
  * ratio per meal; every box may stay empty, and that part is then left out.
  */
 @Composable
-fun DoseCard(settings: DoseSettings, onChange: (DoseSettings) -> Unit, startingPoints: suspend () -> Insight.Formulas?) {
+fun DoseCard(
+    settings: DoseSettings,
+    onChange: (DoseSettings) -> Unit,
+    startingPoints: suspend () -> Insight.Formulas?,
+    learnRatios: suspend (Double?) -> List<RatioLearner.Learned>,
+) {
     Column(
         Modifier
             .fillMaxWidth()
@@ -78,6 +87,29 @@ fun DoseCard(settings: DoseSettings, onChange: (DoseSettings) -> Unit, startingP
                 }
             }
         }
+        // What clean logged meals point to, one 20% step at a time, each applied only on Use.
+        val learned by produceState(emptyList<RatioLearner.Learned>(), settings.correctionFactor) {
+            delay(800) // the factor may still be being typed
+            value = runCatching { learnRatios(settings.correctionFactor) }.getOrDefault(emptyList())
+        }
+        learned.forEach { l ->
+            val current = settings.carbRatio[l.slot]
+            val next = RatioLearner.step(current, l.ratio)
+            if (current == null || abs(next - current) >= 0.5) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        pluralStringResource(R.plurals.dose_learned, l.meals, slot(l.slot), l.meals, formatAmountLocalized(l.ratio), formatAmountLocalized(l.low), formatAmountLocalized(l.high)),
+                        fontSize = 12.5.sp,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.weight(1f),
+                    )
+                    PillButton(stringResource(R.string.dose_learned_use, formatAmountLocalized(next))) {
+                        onChange(settings.copy(carbRatio = settings.carbRatio + (l.slot to next)))
+                    }
+                }
+            }
+        }
+        if (learned.isEmpty()) Text(stringResource(R.string.dose_learning_needs), fontSize = 12.sp, color = CaptionMuted)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             NumberBox(stringResource(R.string.dose_factor_label), settings.correctionFactor, Modifier.weight(1.4f)) { onChange(settings.copy(correctionFactor = it)) }
             NumberBox(stringResource(R.string.dose_target_label), settings.target.toDouble(), Modifier.weight(1f)) { v ->
