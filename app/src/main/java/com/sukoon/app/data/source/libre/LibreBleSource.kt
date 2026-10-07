@@ -72,6 +72,11 @@ class LibreBleSource(
     private var attemptStartedAt = 0L
     private var connectedThisAttempt = false
     private var directFailures = 0
+    private var refreshedThisAttempt = false
+
+    /** BluetoothGatt.refresh() (hidden API, widely used by BLE apps): drops the cached service table. */
+    private fun refreshCache(g: BluetoothGatt): Boolean =
+        runCatching { g.javaClass.getMethod("refresh").invoke(g) as Boolean }.getOrDefault(false)
 
     override suspend fun connect() {
         main.post {
@@ -116,10 +121,14 @@ class LibreBleSource(
             if (address != null && BluetoothAdapter.checkBluetoothAddress(address)) {
                 // Direct connect first (fast, ~30 s timeout); after a failed direct attempt let the
                 // stack wait for the sensor in the background (autoConnect) until the watchdog cycles.
-                val auto = directFailures > 0
+                // Quick direct attempts (each gives up in ~10 s) catch the sensor within seconds of it
+                // becoming free, e.g. right after an update cut the old connection; the background
+                // connect (autoConnect) is far slower to notice, so it's only the fallback.
+                val auto = directFailures >= DIRECT_TRIES
                 Log.i(TAG, "Connecting ${if (auto) "(background)" else "directly"} to $address")
                 attemptStartedAt = System.currentTimeMillis()
                 connectedThisAttempt = false
+                refreshedThisAttempt = false
                 gatt = remoteDevice(adapter, address).connectGatt(context, auto, gattCallback, BluetoothDevice.TRANSPORT_LE)
                 return
             }
@@ -244,6 +253,13 @@ class LibreBleSource(
                 val notify = g.getService(SERVICE)?.getCharacteristic(NOTIFY)
                 val cccd = notify?.getDescriptor(CCCD)
                 if (notify == null || cccd == null) {
+                    // Usually Android's cached services from before (an update, a restart): clear the cache and look again, once.
+                    if (!refreshedThisAttempt && refreshCache(g)) {
+                        refreshedThisAttempt = true
+                        Log.i(TAG, "Libre service missing: refreshed the cache, discovering again")
+                        main.postDelayed({ g.discoverServices() }, 600)
+                        return@post
+                    }
                     Log.w(TAG, "Libre service/characteristics missing")
                     g.disconnect()
                     return@post
@@ -370,6 +386,8 @@ class LibreBleSource(
         private const val WARMUP_MINUTES = 60
         private const val RETRY_MS = 15_000L
         private const val RECONNECT_MS = 2_000L
+        /** Direct attempts before the slower background connect: about 90 s of quick tries. */
+        private const val DIRECT_TRIES = 8
         private const val WATCHDOG_MS = 60_000L
         private const val STALL_MS = 3 * 60_000L
         private const val SCAN_RESTART_MS = 10 * 60_000L
