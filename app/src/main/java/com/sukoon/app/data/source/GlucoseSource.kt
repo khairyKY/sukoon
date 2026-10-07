@@ -34,7 +34,18 @@ enum class TrendDirection {
     RISING_FAST,  // > 2
 }
 
-enum class SourceKind { SIMULATED, LIBRE_BLE }
+enum class SourceKind {
+    SIMULATED,
+    LIBRE_BLE,
+    /** A LibreLinkUp connection (Abbott's follow service: any Libre on Abbott's app, Libre 3 included). */
+    LIBRE_LINK_UP,
+    /** A Dexcom Share account (G6, G7, ONE through Dexcom's servers). */
+    DEXCOM_SHARE,
+    ;
+
+    /** Real glucose (not demo data): alarms sound for it, it's shared, it goes to other apps. */
+    val real: Boolean get() = this != SIMULATED
+}
 
 sealed interface SourceStatus {
     data object Disconnected : SourceStatus

@@ -245,7 +245,16 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
             null
         }
     }
-    invite?.let { Text(stringResource(R.string.sharing_invite_code, Sharing.formatCode(it)), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Sage) }
+    invite?.let { code ->
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.sharing_invite_code, Sharing.formatCode(code)), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Sage, modifier = Modifier.weight(1f))
+            // The code with the follower page: someone on an iPhone (or without the app) follows from the browser.
+            TextButton(onClick = {
+                val text = context.getString(R.string.sharing_invite_share, Sharing.FOLLOW_PAGE, Sharing.formatCode(code))
+                context.startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, text), null))
+            }) { Text(stringResource(R.string.sharing_invite_send), color = Sage, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) }
+        }
+    }
 
     // Following: people who invited me.
     Label(stringResource(R.string.sharing_following))
@@ -262,7 +271,7 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
                     Text(person.name.ifBlank { "…" }, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
                     Text(latestLine(person.latest), fontSize = 12.sp, color = latestColor(person.latest))
                 }
-                TextButton(onClick = {
+                if (!person.viaLibreLinkUp) TextButton(onClick = {
                     act {
                         sharing.stopFollowing(person.id)
                         watch.refreshNow()
@@ -313,7 +322,7 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
 
 /** Someone you follow, full screen: their current value and trend, chart, time in range and readings, refreshed every minute. */
 @Composable
-private fun FollowViewer(sharing: Sharing, person: Followed, onClose: () -> Unit) {
+internal fun FollowViewer(sharing: Sharing, person: Followed, onClose: () -> Unit) {
     val context = LocalContext.current
     var range by remember { mutableStateOf(GraphRange.H6) }
     var readings by remember { mutableStateOf<List<GlucoseReading>>(emptyList()) }
@@ -364,7 +373,7 @@ private fun CodeDialog(onRedeem: (String) -> Unit, onDismiss: () -> Unit) {
 }
 
 @Composable
-private fun latestLine(r: GlucoseReading?): String {
+internal fun latestLine(r: GlucoseReading?): String {
     if (r == null) return stringResource(R.string.sharing_no_readings)
     val minutes = Duration.between(r.timestamp, Instant.now()).toMinutes().coerceAtLeast(0)
     val age = if (minutes < 1) stringResource(R.string.graph_just_now) else stringResource(R.string.graph_min_ago, minutes.toInt())
@@ -372,7 +381,7 @@ private fun latestLine(r: GlucoseReading?): String {
 }
 
 @Composable
-private fun latestColor(r: GlucoseReading?): Color = when {
+internal fun latestColor(r: GlucoseReading?): Color = when {
     r == null || Duration.between(r.timestamp, Instant.now()).toMinutes() > 10 -> CaptionMuted
     r.glucoseMgDl < 70 -> StateLow
     r.glucoseMgDl > 180 -> StateHigh

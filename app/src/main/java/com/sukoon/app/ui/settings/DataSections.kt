@@ -52,6 +52,7 @@ import kotlinx.coroutines.withContext
 import android.content.Context
 import com.sukoon.app.data.export.ConnectionTest
 import com.sukoon.app.ui.components.toast
+import com.sukoon.app.data.backup.Backup
 
 /** You → Nightscout: Sukoon uploads readings + logbook (the job DiaBox used to do). Every save checks the connection and says how it went. */
 @Composable
@@ -192,5 +193,61 @@ private fun Pill(label: String, filled: Boolean = true, onClick: () -> Unit) {
             .padding(horizontal = if (filled) 18.dp else 6.dp, vertical = 10.dp),
     ) {
         Text(label, color = if (filled) Color.White else Sage, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+    }
+}
+
+/**
+ * Everything in one file (readings, logbook, settings, sensor pairing, photos), and back. Restoring
+ * replaces what's here and closes Sukoon; it starts with the backup the next time it's opened.
+ */
+@Composable
+fun BackupSection() {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var confirm by remember { mutableStateOf<android.net.Uri?>(null) }
+    val container = (context.applicationContext as com.sukoon.app.SukoonApp).container
+    val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val ok = runCatching {
+                withContext(Dispatchers.IO) {
+                    (context.contentResolver.openOutputStream(uri) ?: error("can't open the file")).use { Backup.write(context, container.database, it) }
+                }
+            }
+            context.toast(ok.fold({ context.getString(R.string.backup_saved) }, { context.getString(R.string.backup_failed, it.message ?: it.javaClass.simpleName) }), long = true)
+        }
+    }
+    val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> confirm = uri }
+    SectionCard {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Pill(stringResource(R.string.backup_make)) { save.launch("sukoon-backup-${LocalDate.now()}.zip") }
+            Pill(stringResource(R.string.backup_restore), filled = false) { open.launch(arrayOf("application/zip", "application/octet-stream")) }
+        }
+    }
+    confirm?.let { uri ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { confirm = null },
+            title = { Text(stringResource(R.string.backup_restore_title)) },
+            text = { Text(stringResource(R.string.backup_restore_body)) },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    confirm = null
+                    scope.launch {
+                        val staged = runCatching {
+                            withContext(Dispatchers.IO) { context.contentResolver.openInputStream(uri)?.use { Backup.stage(context, it) } ?: false }
+                        }.getOrDefault(false)
+                        if (!staged) {
+                            context.toast(context.getString(R.string.backup_not_one), long = true)
+                        } else {
+                            context.toast(context.getString(R.string.backup_restarting), long = true)
+                            kotlinx.coroutines.delay(1500)
+                            (context as? android.app.Activity)?.finishAffinity()
+                            Runtime.getRuntime().exit(0)
+                        }
+                    }
+                }) { Text(stringResource(R.string.backup_restore_go)) }
+            },
+            dismissButton = { androidx.compose.material3.TextButton(onClick = { confirm = null }) { Text(stringResource(R.string.sensor_cancel)) } },
+        )
     }
 }

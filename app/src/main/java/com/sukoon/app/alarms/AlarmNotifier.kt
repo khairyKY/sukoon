@@ -121,11 +121,7 @@ class AlarmNotifier(private val context: Context, private val log: AlarmLog) {
             manager.getNotificationChannel(channel)?.importance != NotificationManager.IMPORTANCE_NONE
         if (posted) manager.notify(person, notificationId(alert.type), builder.build())
         // Lows always sound; highs and signal loss stay quiet if the user blocked their notifications.
-        val sounded = when {
-            alert.type == AlarmType.URGENT_LOW -> play(alert.type, settings, loop = true, URGENT_SOUND_MS, person)
-            alert.type.loud || posted -> play(alert.type, settings, loop = false, SOUND_MS, person)
-            else -> false
-        }
+        val sounded = if (alert.type.loud || posted) play(alert.type, settings, loop = true, soundFor(alert.type), person) else false
         val fullScreen = posted && (Build.VERSION.SDK_INT < 34 || manager.canUseFullScreenIntent())
         log.add(AlarmLog.Entry(Instant.now(), alert.type, AlarmLog.Kind.FIRED, alert.mgDl, sounded = sounded, screen = overlaid || fullScreen, posted = posted, test = test, who = who))
     }
@@ -224,7 +220,8 @@ class AlarmNotifier(private val context: Context, private val log: AlarmLog) {
             .build()
         val defaults = listOf(if (type.loud) RingtoneManager.TYPE_ALARM else RingtoneManager.TYPE_NOTIFICATION, RingtoneManager.TYPE_ALARM, RingtoneManager.TYPE_RINGTONE)
             .mapNotNull { RingtoneManager.getActualDefaultRingtoneUri(context, it) }
-        val candidates = (listOfNotNull(settings.sounds[type]?.uri?.let(Uri::parse)) + defaults).distinct()
+        // Your choice, else Sukoon's own sound for this alarm, else the phone's: one always plays.
+        val candidates = (listOfNotNull(settings.sounds[type]?.uri?.let(Uri::parse), SukoonSounds.uri(context, SukoonSounds.defaultFor(type))) + defaults).distinct()
         player = candidates.firstNotNullOfOrNull { start(context, it, attributes, loop) }
         playing = type
         playingFor = person
@@ -296,7 +293,15 @@ class AlarmNotifier(private val context: Context, private val log: AlarmLog) {
     companion object {
         private const val TAG = "AlarmNotifier"
         private const val URGENT_SOUND_MS = 60_000L
-        private const val SOUND_MS = 30_000L
+
+        /** How long each alarm's (short, looping) sound keeps going: urgent a minute, a low half that, the gentle ones two or three times. */
+        private fun soundFor(type: AlarmType): Long = when (type) {
+            AlarmType.URGENT_LOW -> URGENT_SOUND_MS
+            AlarmType.LOW -> 30_000L
+            AlarmType.GOING_LOW -> 4_000L
+            AlarmType.HIGH -> 4_500L
+            AlarmType.SIGNAL_LOSS -> 2_000L
+        }
         private const val PREVIEW_MS = 5_000L
         private const val COUNTDOWN_ID = 2000
         private const val SENT_ID = 2001

@@ -22,7 +22,7 @@ class SignalWatchdog : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val container = (context.applicationContext as SukoonApp).container // waking builds it: alarms and sensor start
-        if (container.sourceKind.value != SourceKind.LIBRE_BLE) return
+        if (!container.sourceKind.value.real) return
         SensorService.start(context)
         arm(context, RECHECK)
     }

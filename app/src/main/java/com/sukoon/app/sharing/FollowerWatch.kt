@@ -90,7 +90,7 @@ class FollowerWatch(
     }
 
     private suspend fun checkLocked() {
-        val following = if (sharing.supabase.session.value != null && alertsOn) sharing.following() else emptyList()
+        val following = if (alertsOn) sharing.following() else emptyList()
         _people.value = following
         if (following.isEmpty()) {
             states.forEach { (id, state) -> state.activeSince.keys.forEach { notifier.cancel(it, id) } }

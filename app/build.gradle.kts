@@ -1,5 +1,10 @@
 import java.util.Properties
 
+// local.properties (gitignored): the Supabase keys, and the release signing key's location and passwords.
+val localProps = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -21,18 +26,29 @@ android {
         versionName = "0.6.1"
 
         // Followers backend (Supabase): URL + publishable key from the gitignored local.properties.
-        val local = Properties().apply {
-            rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+        buildConfigField("String", "SUPABASE_URL", "\"${localProps.getProperty("supabase.url", "")}\"")
+        buildConfigField("String", "SUPABASE_KEY", "\"${localProps.getProperty("supabase.publishableKey", "")}\"")
+    }
+
+    signingConfigs {
+        // Sukoon's own key, on the machine that has it (keystore/ + local.properties, never in git).
+        localProps.getProperty("release.storeFile")?.let { path ->
+            create("release") {
+                storeFile = rootProject.file(path)
+                storePassword = localProps.getProperty("release.storePassword")
+                keyAlias = localProps.getProperty("release.keyAlias")
+                keyPassword = localProps.getProperty("release.keyPassword")
+            }
         }
-        buildConfigField("String", "SUPABASE_URL", "\"${local.getProperty("supabase.url", "")}\"")
-        buildConfigField("String", "SUPABASE_KEY", "\"${local.getProperty("supabase.publishableKey", "")}\"")
     }
 
     buildTypes {
         release {
-            // Phone test installs: non-debuggable runs Compose at full speed (ART optimisation + baseline
-            // profiles); signed with the debug key so it updates the existing install in place.
-            signingConfig = signingConfigs.getByName("debug")
+            // Non-debuggable runs Compose at full speed (ART optimisation + baseline profiles). Signed with
+            // Sukoon's key where this machine has it, else the debug key; -PdebugSigned forces the debug key
+            // (the one build that updates a debug-signed install in place, to back up before moving keys).
+            signingConfig = if (project.hasProperty("debugSigned")) signingConfigs.getByName("debug")
+            else signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }

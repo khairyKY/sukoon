@@ -45,9 +45,13 @@ private val TOPICS = listOf(
     R.string.help_logbook_title to R.string.help_logbook_body,
     R.string.help_trends_title to R.string.help_trends_body,
     R.string.help_widgets_title to R.string.help_widgets_body,
+    R.string.help_sources_title to R.string.help_sources_body,
+    R.string.help_mfp_title to R.string.help_mfp_body,
+    R.string.help_reminders_title to R.string.help_reminders_body,
     R.string.help_sharing_title to R.string.help_sharing_body,
     R.string.help_data_title to R.string.help_data_body,
     R.string.help_calibration_title to R.string.help_calibration_body,
+    R.string.help_backup_title to R.string.help_backup_body,
     R.string.help_reliability_title to R.string.help_reliability_body,
     R.string.help_safety_title to R.string.help_safety_body,
 )
