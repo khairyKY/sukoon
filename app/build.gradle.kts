@@ -17,8 +17,8 @@ android {
         // and foreground-service behavior we need for continuous BLE collection anyway.
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "0.6.0"
+        versionCode = 7
+        versionName = "0.6.1"
 
         // Followers backend (Supabase): URL + publishable key from the gitignored local.properties.
         val local = Properties().apply {
