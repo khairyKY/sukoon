@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.json.JSONArray
 import org.json.JSONObject
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HydrationRecord
@@ -215,6 +216,13 @@ class HealthConnectSync(
     private suspend fun importRecords(types: Set<KClass<out Record>>): Pair<Int, Int> {
         // A new kind of record, or entries imported before nutrients were kept: read the last 7 days again, onto the same entries.
         val kinds = types.mapNotNull { it.simpleName }.sorted().joinToString(",")
+        if (prefs.getInt(KEY_IMPORT_VERSION, 1) < 8) {
+            // Before 6, each of MyFitnessPal's day totals was kept as one meal: those go, and its meals start from here (8: again, to keep today so far).
+            val gone = logbook.eventsSince(0).first().filter { it.source == MFP && it.logType == LogEventType.CARB }.map { it.id }.toSet()
+            gone.forEach { logbook.deleteById(it) }
+            saveMealIds(mealIds().filterValues { it !in gone })
+            prefs.edit().remove(KEY_DAY_TOTALS).apply()
+        }
         if (prefs.getInt(KEY_IMPORT_VERSION, 1) < IMPORT_VERSION || prefs.getString(KEY_TOKEN_TYPES, null) != kinds) {
             prefs.edit().remove(KEY_TOKEN).putInt(KEY_IMPORT_VERSION, IMPORT_VERSION).putString(KEY_TOKEN_TYPES, kinds).apply()
         }
@@ -238,7 +246,8 @@ class HealthConnectSync(
             // Take the token first so nothing written meanwhile is missed.
             token = client.getChangesToken(ChangesTokenRequest(types))
             val since = TimeRangeFilter.after(Instant.now().minus(Duration.ofDays(7)))
-            if (NutritionRecord::class in types) client.readRecords(ReadRecordsRequest(NutritionRecord::class, since)).records.forEach { importOne(it) }
+            // Oldest change first, so where one record replaced another the newer one lands last.
+            if (NutritionRecord::class in types) client.readRecords(ReadRecordsRequest(NutritionRecord::class, since)).records.sortedBy { it.metadata.lastModifiedTime }.forEach { importOne(it) }
             if (ExerciseSessionRecord::class in types) client.readRecords(ReadRecordsRequest(ExerciseSessionRecord::class, since)).records.forEach { importOne(it) }
         } else {
             while (true) {
@@ -264,21 +273,32 @@ class HealthConnectSync(
         return added to updated
     }
 
-    /** true = new logbook entry, false = updated, null = skipped (ours, or nothing in it). */
+    /** true = new logbook entry, false = updated, null = skipped (ours, a day's total, a copy, or nothing in it). */
     private suspend fun upsertMeal(record: NutritionRecord, ids: MutableMap<String, Long>): Boolean? {
-        if (record.metadata.dataOrigin.packageName == context.packageName) return null
+        val origin = record.metadata.dataOrigin.packageName
+        if (origin == context.packageName) return null
         val existing = ids[record.metadata.id]
         fun round1(x: Double?) = x?.takeIf { it > 0 }?.let { (it * 10).roundToInt() / 10.0 }
         val carbs = round1(record.totalCarbohydrate?.inGrams)
+        // What each record is, for working out an odd import (times and totals; never the food names).
+        Log.i(TAG, "Meal record ${record.metadata.id} from $origin: ${record.startTime}..${record.endTime}, changed ${record.metadata.lastModifiedTime}, type ${record.mealType}, named ${record.name != null}, ${carbs ?: 0} g, ${round1(record.energy?.inKilocalories) ?: 0} kcal")
+        // A day-long record is a day's running total (MyFitnessPal's, 10:00–22:00): its rises are the meals.
+        // ponytail: other apps' day-long records are left out (copies or summaries); split them too if one turns out to be a diary.
+        if (Duration.between(record.startTime, record.endTime) >= DAY_TOTAL) return if (origin == MFP) splitDayTotal(record) else null
+        // The same meal posted again by another app (Samsung Health passes MyFitnessPal's on): keep MyFitnessPal's.
+        if (origin != MFP && existing == null && carbs != null && isCopyOfMfp(record.startTime, carbs)) return null
         // A meal with no carbs (eggs and coffee) still counts: its calories, protein and fat.
         if (carbs == null && listOf(record.energy?.inKilocalories, record.protein?.inGrams, record.totalFat?.inGrams).all { (it ?: 0.0) <= 0 }) {
             // A meal emptied out: drop the entry it made.
             existing?.let { logbook.deleteById(it); ids.remove(record.metadata.id) }
             return null
         }
+        // The time you said you ate it beats the one the app sends (MyFitnessPal's can be hours off).
+        val yours = existing?.let { logbook.byId(it) }?.takeIf { it.timeSet }
         val event = EventEntity(
             id = existing ?: 0,
-            timestampMillis = record.startTime.toEpochMilli(),
+            timestampMillis = yours?.timestampMillis ?: record.startTime.toEpochMilli(),
+            timeSet = yours != null,
             type = LogEventType.CARB.name,
             value = carbs ?: 0.0,
             note = record.name?.takeIf { it.isNotBlank() }, // the foods, as the other app names them
@@ -298,6 +318,110 @@ class HealthConnectSync(
             true
         }
     }
+
+    /** A rise in the day's total becomes a meal, when you logged it; a fall comes off the newest of that day's meals. */
+    private suspend fun splitDayTotal(record: NutritionRecord): Boolean? {
+        val totals = dayTotals()
+        val zone = ZoneId.systemDefault()
+        // By day, not record: MyFitnessPal writes each change as a new record and deletes the old one.
+        val key = "${record.metadata.dataOrigin.packageName}|${record.startTime.atZone(zone).toLocalDate()}"
+        val changed = record.metadata.lastModifiedTime.toEpochMilli()
+        fun g(m: androidx.health.connect.client.units.Mass?) = m?.inGrams ?: 0.0
+        val now = listOf(g(record.totalCarbohydrate), g(record.dietaryFiber), g(record.sugar), g(record.protein), g(record.totalFat), record.energy?.inKilocalories ?: 0.0)
+        val prior = totals.optJSONObject(key)
+        if (prior == null) {
+            // First seen: what today held so far is one entry (it can't be told apart into meals); earlier days are left out.
+            val today = record.startTime.atZone(zone).toLocalDate() == java.time.LocalDate.now(zone)
+            val sofar = if (today && (now[DayTotals.CARBS] >= 1 || now[DayTotals.KCAL] >= 20)) {
+                val at = minOf(record.metadata.lastModifiedTime, Instant.now())
+                EventEntity(timestampMillis = at.toEpochMilli(), type = LogEventType.CARB.name, source = MFP, summary = true).withSums(now).let { it.copy(id = logbook.insert(it)) }
+            } else {
+                null
+            }
+            totals.put(key, JSONObject().put("seen", JSONArray(now)).put("meals", JSONArray(listOfNotNull(sofar?.id))).put("changed", changed))
+            saveDayTotals(totals)
+            return if (sofar != null) true else null
+        }
+        // An older copy of the day read after a newer one (before its deletion arrives) changes nothing.
+        if (changed < prior.optLong("changed")) return null
+        val seen = prior.getJSONArray("seen").let { a -> List(a.length()) { a.getDouble(it) } }
+        val ids = prior.getJSONArray("meals").let { a -> List(a.length()) { a.getLong(it) } }
+        val step = DayTotals.step(seen, now)
+        var meals = ids.mapNotNull { logbook.byId(it) }
+        var outcome: Boolean? = null
+        step.removed?.let { removed ->
+            DayTotals.takeOff(meals.map { it.sums() }, removed).zip(meals).forEach { (left, meal) ->
+                if (left == null) logbook.deleteById(meal.id) else if (left != meal.sums()) logbook.update(meal.withSums(left))
+            }
+            meals = meals.filter { m -> logbook.byId(m.id) != null }
+            outcome = false
+        }
+        step.meal?.let { added ->
+            // When it was logged; a past day filled in later goes at that day's end instead of now.
+            val at = record.metadata.lastModifiedTime.takeIf { it.atZone(zone).toLocalDate() == record.startTime.atZone(zone).toLocalDate() } ?: record.endTime
+            val meal = EventEntity(timestampMillis = minOf(at, Instant.now()).toEpochMilli(), type = LogEventType.CARB.name, source = MFP).withSums(added)
+            meals = meals + meal.copy(id = logbook.insert(meal))
+            outcome = true
+        }
+        totals.put(key, JSONObject().put("seen", JSONArray(step.seen)).put("meals", JSONArray(meals.map { it.id })).put("changed", changed))
+        saveDayTotals(totals)
+        return outcome
+    }
+
+    private fun EventEntity.sums() = listOf(value ?: 0.0, fiber ?: 0.0, sugar ?: 0.0, protein ?: 0.0, fat ?: 0.0, kcal ?: 0.0)
+
+    private fun EventEntity.withSums(s: List<Double>): EventEntity {
+        fun r(x: Double) = x.takeIf { it > 0 }?.let { (it * 10).roundToInt() / 10.0 }
+        return copy(value = r(s[0]) ?: 0.0, fiber = r(s[1]), sugar = r(s[2]), protein = r(s[3]), fat = r(s[4]), kcal = r(s[5]))
+    }
+
+    private fun dayTotals(): JSONObject = runCatching { JSONObject(prefs.getString(KEY_DAY_TOTALS, "{}") ?: "{}") }.getOrDefault(JSONObject())
+
+    private fun saveDayTotals(totals: JSONObject) {
+        // ponytail: only the last 14 days' totals are followed; older days stop taking edits made in MyFitnessPal.
+        if (totals.length() > 14) totals.keys().asSequence().toList().dropLast(14).forEach { totals.remove(it) }
+        prefs.edit().putString(KEY_DAY_TOTALS, totals.toString()).apply()
+    }
+
+    /** An MyFitnessPal meal already in the logbook within 10 minutes of [at] with the same carbs (to 1 g). */
+    private suspend fun isCopyOfMfp(at: Instant, carbs: Double): Boolean =
+        logbook.eventsSince(at.minus(COPY_WINDOW).toEpochMilli()).first().any {
+            it.source == MFP && it.logType == LogEventType.CARB &&
+                kotlin.math.abs(it.timestampMillis - at.toEpochMilli()) <= COPY_WINDOW.toMillis() &&
+                kotlin.math.abs((it.value ?: 0.0) - carbs) <= 1.0
+        }
+
+    /** Everything Health Connect holds for an imported meal, read when its detail opens: its times and every nutrient sent. */
+    data class MealRecord(val start: Instant, val end: Instant, val name: String?, val mealType: Int, val origin: String, val nutrients: List<Pair<Nutrient, Double>>)
+
+    /** The nutrients beyond those kept on the entry; [milligrams] ones are shown in mg. */
+    enum class Nutrient(val labelRes: Int, val milligrams: Boolean, val of: (NutritionRecord) -> androidx.health.connect.client.units.Mass?) {
+        SATURATED_FAT(R.string.nutrient_saturated, false, { it.saturatedFat }),
+        TRANS_FAT(R.string.nutrient_trans, false, { it.transFat }),
+        MONO_FAT(R.string.nutrient_mono, false, { it.monounsaturatedFat }),
+        POLY_FAT(R.string.nutrient_poly, false, { it.polyunsaturatedFat }),
+        CHOLESTEROL(R.string.nutrient_cholesterol, true, { it.cholesterol }),
+        SODIUM(R.string.nutrient_sodium, true, { it.sodium }),
+        POTASSIUM(R.string.nutrient_potassium, true, { it.potassium }),
+        CALCIUM(R.string.nutrient_calcium, true, { it.calcium }),
+        IRON(R.string.nutrient_iron, true, { it.iron }),
+        VITAMIN_C(R.string.nutrient_vitamin_c, true, { it.vitaminC }),
+        CAFFEINE(R.string.nutrient_caffeine, true, { it.caffeine }),
+    }
+
+    /** The Health Connect record behind logbook entry [eventId] (null: not imported, gone, or not allowed). */
+    suspend fun mealRecord(eventId: Long): MealRecord? = runCatching {
+        val recordId = mealIds().entries.firstOrNull { it.value == eventId }?.key ?: return null
+        val r = client.readRecord(NutritionRecord::class, recordId).record
+        MealRecord(
+            start = r.startTime,
+            end = r.endTime,
+            name = r.name?.takeIf { it.isNotBlank() },
+            mealType = r.mealType,
+            origin = r.metadata.dataOrigin.packageName,
+            nutrients = Nutrient.entries.mapNotNull { n -> n.of(r)?.let { m -> (if (n.milligrams) m.inMilligrams else m.inGrams).takeIf { it > 0 }?.let { n to it } } },
+        )
+    }.getOrNull()
 
     /** true = new logbook entry, false = updated, null = skipped (ours, or under 10 minutes). */
     private suspend fun upsertActivity(record: ExerciseSessionRecord, ids: MutableMap<String, Long>): Boolean? {
@@ -389,7 +513,10 @@ class HealthConnectSync(
         private const val KEY_TOKEN = "hc_nutrition_token"
         private const val KEY_MEAL_IDS = "hc_meal_ids"
         private const val KEY_IMPORT_VERSION = "hc_import_version"
-        private const val IMPORT_VERSION = 3 // 2: nutrients, meal type and source app; 3: workouts
+        private const val IMPORT_VERSION = 8 // 2: nutrients, meal type and source app; 3: workouts; 4: copies from other apps left out; 5: your own meal times kept; 6: MyFitnessPal's day totals split into meals; 7: its days followed by date; 8: today so far kept
+        private val COPY_WINDOW: Duration = Duration.ofMinutes(10)
+        private val DAY_TOTAL: Duration = Duration.ofHours(6)
+        private const val KEY_DAY_TOTALS = "hc_day_totals"
         private const val KEY_IMPORT_ACTIVITY = "hc_import_activity"
         private const val KEY_TOKEN_TYPES = "hc_token_types"
         private const val MIN_WORKOUT_MINUTES = 10

@@ -1,5 +1,7 @@
 package com.sukoon.app.ui.graph
 
+import java.time.ZoneId
+import java.time.LocalDate
 import com.sukoon.app.domain.metrics.TargetRange
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -37,6 +39,9 @@ data class GraphUiState(
     val events: List<EventEntity> = emptyList(),
     /** Time in range, mean and GMI for [readings] (the same math as Insights); null when there are none. */
     val summary: RangeSummary? = null,
+    /** The past day shown, and where its chart ends; null for up to now. */
+    val day: LocalDate? = null,
+    val endMillis: Long? = null,
 )
 
 class GraphViewModel(
@@ -46,19 +51,32 @@ class GraphViewModel(
 
     private val _range = MutableStateFlow(GraphRange.H3)
     val range: StateFlow<GraphRange> = _range.asStateFlow()
+    private val day = MutableStateFlow<LocalDate?>(null)
+
+    /** Look back at [date] (null: up to now). A past day is shown whole. */
+    fun showDay(date: LocalDate?) {
+        day.value = date
+        if (date != null) _range.value = GraphRange.H24
+    }
+
+    /** Where the chart ends: the chosen day's midnight, or now (null). */
+    private fun endOf(date: LocalDate?): Long? = date?.plusDays(1)?.atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val readings = _range.flatMapLatest { range ->
-        glucoseRepository.readingsSince(System.currentTimeMillis() - range.millis)
+    private val readings = combine(_range, day) { r, d -> r to d }.flatMapLatest { (range, d) ->
+        val end = endOf(d)
+        if (end == null) glucoseRepository.readingsSince(System.currentTimeMillis() - range.millis) else glucoseRepository.readingsBetween(end - range.millis, end)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val events = _range.flatMapLatest { range ->
-        logbookRepository.eventsSince(System.currentTimeMillis() - range.millis)
+    private val events = combine(_range, day) { r, d -> r to d }.flatMapLatest { (range, d) ->
+        val end = endOf(d)
+        if (end == null) logbookRepository.eventsSince(System.currentTimeMillis() - range.millis) else logbookRepository.eventsBetween(end - range.millis, end)
     }
 
-    val uiState: StateFlow<GraphUiState> = combine(_range, readings, events) { range, readings, events ->
-        GraphUiState(range = range, readings = readings, events = events, summary = InsightEngine.summary(readings, Instant.now(), TargetRange.high))
+    val uiState: StateFlow<GraphUiState> = combine(_range, readings, events, day) { range, readings, events, d ->
+        val end = endOf(d)
+        GraphUiState(range = range, readings = readings, events = events, summary = InsightEngine.summary(readings, end?.let(Instant::ofEpochMilli) ?: Instant.now(), TargetRange.high), day = d, endMillis = end)
     }
         .flowOn(Dispatchers.Default) // 14 days is ~20k readings: keep the summary off the main thread
         .stateIn(

@@ -85,6 +85,15 @@ Research and rules: docs/research/dosing-sources.md; behaviour: docs/behaviour.m
 - ✅ Main CSV adds injection site, source app and nutrients; Gemini moves to the next model when one hangs.
 - 🗓 Egyptian food portions from «افهم سكر» once Kai has a copy to read from; guided tests (basal, ratio, correction).
 
+## Meals from foods, sensor page, any day, cloud (Kai, 2026-10-08)
+Behaviour: docs/behaviour.md §11–14.
+- ✅ MyFitnessPal shares a running day total (one record per day, rewritten as a new record each time): split into meals by when they're logged, followed by date; the meal screen remade (dose first, *When did you eat?*, *What was it?*, one list of what's in it); every meal opens on it.
+- ✅ Meals from foods: Open Food Facts search (Arabic and English, photos, *Sold in Egypt*), barcodes with Sukoon's own camera, 88 sourced home dishes, *Ask the AI*, your usual foods, typed amounts, the plate.
+- ✅ Sensor page redone (state from the last reading, problems on top, life bar), Bluetooth-off warnings, 3-day notice; You opens on its hub, Troubleshoot on Sensor.
+- ✅ Any day in the logbook and graph; unlimited meal photos read together by the AI; daily backup to a cloud app (opt-in); 12-hour clock; R8 on release builds.
+- ✅ v0.8.0.
+- 🗓 Check the home-dish values against the Egyptian National Nutrition Institute tables or «افهم سكر» when a copy is available.
+
 Rules: no APK builds or installs unless Kai asks (compile + unit tests only); no AI attribution in commits or PRs.
 
 iPhone (Kai's father, own sensor): not possible without Apple's paid developer account — free personal teams can't use NFC to pair a Libre. Options: an Android phone with NFC (runs Sukoon fully), or the $99/yr account + a Mac + an iOS port. Kai declined the license (2026-10-03).

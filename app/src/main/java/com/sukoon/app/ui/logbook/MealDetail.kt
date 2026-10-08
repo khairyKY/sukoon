@@ -1,5 +1,29 @@
 package com.sukoon.app.ui.logbook
 
+import androidx.compose.foundation.horizontalScroll
+import com.sukoon.app.platform.TimeFormat
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.AlertDialog
+import java.time.ZonedDateTime
+import java.time.ZoneId
+import com.sukoon.app.ui.theme.SageDeep
+import com.sukoon.app.ui.theme.PillHighText
+import com.sukoon.app.ui.theme.PillHighBg
+import com.sukoon.app.insulin.injectionSite
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.layout.Spacer
+import android.text.format.DateFormat
+import android.app.TimePickerDialog
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import com.sukoon.app.health.HealthConnectSync
 import android.content.Intent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -143,7 +167,7 @@ internal fun SourceLine(app: SourceApp, details: List<String>) {
 
 /** A meal's name: its meal type when an app gave one, else what it was called, else "Meal". */
 @Composable
-internal fun mealTitle(meal: EventEntity): String = when (meal.mealType) {
+internal fun mealTitle(meal: EventEntity): String = if (meal.summary) stringResource(R.string.meal_summary_title) else when (meal.mealType) {
     MealType.MEAL_TYPE_BREAKFAST -> stringResource(R.string.hc_meal_breakfast)
     MealType.MEAL_TYPE_LUNCH -> stringResource(R.string.hc_meal_lunch)
     MealType.MEAL_TYPE_DINNER -> stringResource(R.string.hc_meal_dinner)
@@ -161,7 +185,7 @@ internal fun NutrientGrid(meal: EventEntity) {
         meal.sugar?.let { Triple(stringResource(R.string.entry_sugar), it, grams) },
         meal.protein?.let { Triple(stringResource(R.string.entry_protein), it, grams) },
         meal.fat?.let { Triple(stringResource(R.string.entry_fat), it, grams) },
-        meal.kcal?.let { Triple(stringResource(R.string.entry_energy), it, stringResource(R.string.entry_unit_kcal)) },
+        meal.kcal?.let { Triple(stringResource(R.string.entry_energy), Math.round(it).toDouble(), stringResource(R.string.entry_unit_kcal)) },
     )
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         cells.chunked(3).forEachIndexed { row, chunk ->
@@ -177,8 +201,8 @@ internal fun NutrientGrid(meal: EventEntity) {
                     ) {
                         Text(label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = if (lead) Color.White else CaptionMuted, maxLines = 1)
                         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                            Text(formatAmountLocalized(amount), fontFamily = HeadlineSerifFontFamily, fontSize = 23.sp, color = if (lead) Color.White else MaterialTheme.colorScheme.onBackground)
-                            Text(unit.trim(), fontSize = 12.sp, color = if (lead) Color.White else CaptionMuted, modifier = Modifier.padding(bottom = 3.dp))
+                            Text(formatAmountLocalized(amount), fontFamily = HeadlineSerifFontFamily, fontSize = 23.sp, maxLines = 1, softWrap = false, color = if (lead) Color.White else MaterialTheme.colorScheme.onBackground)
+                            Text(unit.trim(), fontSize = 12.sp, color = if (lead) Color.White else CaptionMuted, maxLines = 1, softWrap = false, modifier = Modifier.padding(bottom = 3.dp))
                         }
                     }
                 }
@@ -197,67 +221,246 @@ internal fun NutrientGrid(meal: EventEntity) {
 internal fun MealDetailSheet(
     meal: EventEntity,
     insulin: List<EventEntity>,
+    /** Its photos, in the order taken. */
+    photos: List<java.io.File> = emptyList(),
     readings: List<GlucoseReading>,
     onAddInsulin: () -> Unit,
     onEditInsulin: (EventEntity) -> Unit,
     onHide: () -> Unit,
     onDismiss: () -> Unit,
+    /** The Health Connect record behind it: its own time and every nutrient the other app sent. */
+    loadRecord: suspend () -> HealthConnectSync.MealRecord? = { null },
+    /** "When did you eat?": the time you picked; kept when the other app sends the meal again. */
+    onSetTime: (Instant) -> Unit = {},
+    /** "What was it?": your name for it (the other app doesn't share the foods). */
+    onRename: (String) -> Unit = {},
+    /** A meal logged in Sukoon: back to its editor. */
+    onEdit: () -> Unit = {},
 ) {
+    val imported = meal.source != null
+    var naming by remember { mutableStateOf(false) }
+    if (naming) NameDialog(meal.note.orEmpty(), onSave = { onRename(it); naming = false }, onDismiss = { naming = false })
     val context = LocalContext.current
     val app = rememberSourceApp(meal.source.orEmpty())
+    val record by produceState<HealthConnectSync.MealRecord?>(null, meal.id) { value = loadRecord() }
     val mealAt = Instant.ofEpochMilli(meal.timestampMillis)
     val now = Instant.now()
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.background) {
-        Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 18.dp).padding(bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(mealTitle(meal), fontFamily = HeadlineSerifFontFamily, fontSize = 28.sp, color = MaterialTheme.colorScheme.onBackground)
-                SourceLine(app, listOfNotNull(hmFormatter.format(mealAt), meal.note))
+                Text(
+                    mealTitle(meal),
+                    fontFamily = HeadlineSerifFontFamily,
+                    fontSize = 30.sp,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = if (meal.summary || !imported) Modifier else Modifier.clip(RoundedCornerShape(8.dp)).clickable { naming = true },
+                )
+                if (!imported) {
+                    Text(hmFormatter.format(mealAt), fontSize = 14.sp, color = CaptionMuted)
+                } else Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SourceLine(app, emptyList())
+                    if (!meal.summary && meal.note == null) {
+                        Text(
+                            stringResource(R.string.meal_name_add),
+                            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable { naming = true }.padding(vertical = 10.dp, horizontal = 4.dp),
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = SageDeep,
+                        )
+                    }
+                }
             }
-            NutrientGrid(meal)
-            if (slowMeal(meal.fat, meal.protein)) Text(stringResource(R.string.entry_slow_meal), fontSize = 13.sp, color = CaptionMuted)
-
+            if (photos.isNotEmpty()) {
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    photos.forEach { PhotoThumb(it, Modifier.size(120.dp).clip(RoundedCornerShape(14.dp))) }
+                }
+            }
+            if (imported) EatenAt(meal, app.label, onSetTime)
+            DoseCard(meal, insulin, onAddInsulin, onEditInsulin)
+            if (slowMeal(meal.fat, meal.protein)) {
+                Text(
+                    stringResource(R.string.meal_detail_rich),
+                    modifier = Modifier.clip(RoundedCornerShape(50)).background(PillHighBg).padding(horizontal = 10.dp, vertical = 6.dp),
+                    fontSize = 12.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = PillHighText,
+                )
+            }
             Card {
                 Eyebrow(stringResource(R.string.meal_detail_what))
                 ResponseChart(readings, mealAt, now)
                 Text(responseText(mealResponse(readings, mealAt, now)), fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground)
             }
-
-            Card {
-                Eyebrow(stringResource(R.string.meal_detail_insulin))
-                if (insulin.isEmpty()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.meal_detail_no_insulin), fontSize = 14.sp, color = CaptionMuted, modifier = Modifier.weight(1f))
-                        PillButton(stringResource(R.string.entry_add), onClick = onAddInsulin)
-                    }
-                } else {
-                    insulin.forEach { dose ->
-                        Row(Modifier.fillMaxWidth().clickable { onEditInsulin(dose) }.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Box(Modifier.size(8.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onBackground))
-                            Text(doseTiming(dose, meal), fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f).padding(start = 10.dp))
-                            Text("${formatAmountLocalized(dose.value ?: 0.0)}${stringResource(R.string.logbook_unit_units)}", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                        }
-                    }
+            WhatsInIt(meal, record)
+            if (!imported) {
+                TextButton(onClick = onEdit, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.meal_detail_edit), color = SageDeep, fontWeight = FontWeight.SemiBold)
                 }
+                return@Column
             }
-
-            Text(stringResource(R.string.entry_app_stays, app.label), fontSize = 12.5.sp, color = CaptionMuted)
-            context.packageManager.getLaunchIntentForPackage(app.packageName)?.let { launch ->
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 52.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .border(1.dp, outline(), RoundedCornerShape(14.dp))
-                        .clickable { context.startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(stringResource(R.string.meal_detail_open, app.label), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.meal_detail_foods_stay, app.label), fontSize = 13.sp, color = CaptionMuted, modifier = Modifier.weight(1f))
+                context.packageManager.getLaunchIntentForPackage(app.packageName)?.let { launch ->
+                    Text(
+                        stringResource(R.string.meal_detail_open, app.label),
+                        modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable { context.startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.padding(vertical = 10.dp, horizontal = 4.dp),
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = SageDeep,
+                    )
                 }
             }
             TextButton(onClick = onHide, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.meal_detail_hide), color = StateLow, fontWeight = FontWeight.SemiBold)
             }
         }
+    }
+}
+
+/**
+ * The meal's time, stated honestly: when it was logged in the other app (which can be later than you
+ * ate), so "When did you eat?" until you've said; then "Ate at 13:50 · Change".
+ */
+@Composable
+private fun EatenAt(meal: EventEntity, appName: String, onSetTime: (Instant) -> Unit) {
+    val context = LocalContext.current
+    val at = Instant.ofEpochMilli(meal.timestampMillis)
+    fun pick() {
+        val start = at.atZone(ZoneId.systemDefault())
+        TimePickerDialog(context, { _, hour, minute ->
+            val picked = start.withHour(hour).withMinute(minute).withSecond(0).withNano(0)
+            val now = ZonedDateTime.now()
+            onSetTime((if (picked.isAfter(now)) picked.minusDays(1) else picked).toInstant()) // later than now: the day before
+        }, start.hour, start.minute, !TimeFormat.twelve).show()
+    }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f))
+            .clickable(onClick = ::pick)
+            .padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            buildAnnotatedString {
+                if (meal.timeSet) {
+                    withStyle(SpanStyle(color = CaptionMuted)) { append(stringResource(R.string.meal_detail_ate_at) + " ") }
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(hmFormatter.format(at)) }
+                } else {
+                    withStyle(SpanStyle(color = CaptionMuted)) { append(stringResource(R.string.meal_detail_app_says, appName) + " ") }
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(hmFormatter.format(at)) }
+                }
+            },
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.weight(1f).padding(vertical = 10.dp),
+        )
+        Text(stringResource(if (meal.timeSet) R.string.apps_change else R.string.meal_detail_when), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = SageDeep)
+    }
+}
+
+/** What you dose from: the carbs and the insulin taken for them (or that none was), and each dose. */
+@Composable
+private fun DoseCard(meal: EventEntity, insulin: List<EventEntity>, onAdd: () -> Unit, onEdit: (EventEntity) -> Unit) {
+    val carbs = meal.value ?: 0.0
+    val units = insulin.sumOf { it.value ?: 0.0 }
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(if (insulin.isEmpty()) 1.5.dp else 1.dp, if (insulin.isEmpty()) Sage else outline(), RoundedCornerShape(18.dp))
+            .padding(14.dp),
+    ) {
+        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            BigAmount(stringResource(R.string.entry_carbs), formatAmountLocalized(carbs), stringResource(R.string.logbook_unit_grams).trim())
+            if (insulin.isNotEmpty()) {
+                BigAmount(stringResource(R.string.meal_detail_insulin), formatAmountLocalized(units), stringResource(R.string.logbook_unit_units).trim())
+                Text(
+                    if (units > 0 && carbs > 0) stringResource(R.string.meal_detail_ratio, formatAmountLocalized(Math.round(carbs / units * 10) / 10.0)) else "",
+                    fontSize = 13.sp,
+                    color = CaptionMuted,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.weight(1f).padding(bottom = 6.dp),
+                )
+            } else {
+                Spacer(Modifier.weight(1f))
+                Text(
+                    stringResource(R.string.logbook_add_insulin),
+                    modifier = Modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(50)).background(Sage).clickable(onClick = onAdd).padding(horizontal = 18.dp, vertical = 14.dp),
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
+                )
+            }
+        }
+        if (insulin.isEmpty()) {
+            Text(stringResource(R.string.meal_detail_no_insulin_yet), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = PillHighText, modifier = Modifier.padding(top = 2.dp))
+            return@Column
+        }
+        HorizontalDivider(Modifier.padding(top = 10.dp, bottom = 4.dp), color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
+        insulin.forEach { dose ->
+            Row(Modifier.fillMaxWidth().clickable { onEdit(dose) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(8.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onBackground))
+                Text(
+                    listOfNotNull(hmFormatter.format(Instant.ofEpochMilli(dose.timestampMillis)), doseTiming(dose, meal), dose.injectionSite?.let { siteName(it) }).joinToString(" · "),
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.weight(1f).padding(start = 10.dp),
+                )
+                Text(formatAmountLocalized(dose.value ?: 0.0) + stringResource(R.string.logbook_unit_units), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+            }
+        }
+        Text(
+            stringResource(R.string.meal_detail_add_more),
+            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onAdd).padding(vertical = 8.dp),
+            fontSize = 13.5.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = SageDeep,
+        )
+    }
+}
+
+@Composable
+private fun BigAmount(label: String, value: String, unit: String) {
+    Column {
+        Eyebrow(label)
+        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(value, fontFamily = HeadlineSerifFontFamily, fontWeight = FontWeight.Light, fontSize = 40.sp, maxLines = 1, softWrap = false, color = MaterialTheme.colorScheme.onBackground)
+            Text(unit, fontSize = 15.sp, color = CaptionMuted, maxLines = 1, modifier = Modifier.padding(bottom = 7.dp))
+        }
+    }
+}
+
+/** One list of everything in it: carbs (fibre and sugar under it), protein, fat (its kinds under it), calories, then the rest the app sent. */
+@Composable
+private fun WhatsInIt(meal: EventEntity, record: HealthConnectSync.MealRecord?) {
+    val g = stringResource(R.string.logbook_unit_grams).trim()
+    val mg = stringResource(R.string.meal_detail_mg)
+    val extra = record?.nutrients.orEmpty().toMap()
+    fun amount(x: Double, unit: String) = formatAmountLocalized(if (x >= 10) Math.round(x).toDouble() else Math.round(x * 10) / 10.0) + " " + unit
+    val fats = listOf(HealthConnectSync.Nutrient.SATURATED_FAT, HealthConnectSync.Nutrient.TRANS_FAT, HealthConnectSync.Nutrient.MONO_FAT, HealthConnectSync.Nutrient.POLY_FAT)
+    Card {
+        Eyebrow(stringResource(R.string.meal_detail_whats_in))
+        meal.value?.let { NutrientRow(stringResource(R.string.entry_carbs), amount(it, g), strong = true) }
+        meal.fiber?.let { NutrientRow(stringResource(R.string.entry_fiber), amount(it, g), sub = true) }
+        meal.sugar?.let { NutrientRow(stringResource(R.string.entry_sugar), amount(it, g), sub = true) }
+        meal.protein?.let { NutrientRow(stringResource(R.string.entry_protein), amount(it, g)) }
+        meal.fat?.let { NutrientRow(stringResource(R.string.entry_fat), amount(it, g)) }
+        fats.forEach { n -> extra[n]?.let { NutrientRow(stringResource(n.labelRes), amount(it, g), sub = true) } }
+        meal.kcal?.let { NutrientRow(stringResource(R.string.entry_energy), String.format(Locale.getDefault(), "%,d", Math.round(it)) + " " + stringResource(R.string.entry_unit_kcal)) }
+        extra.filterKeys { it !in fats }.forEach { (n, v) -> NutrientRow(stringResource(n.labelRes), amount(v, if (n.milligrams) mg else g)) }
+    }
+}
+
+@Composable
+private fun NutrientRow(label: String, value: String, strong: Boolean = false, sub: Boolean = false) {
+    HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f))
+    Row(Modifier.fillMaxWidth().padding(start = if (sub) 14.dp else 0.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, fontSize = if (sub) 13.5.sp else 14.5.sp, color = if (sub) CaptionMuted else MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
+        Text(value, fontSize = 14.5.sp, fontWeight = if (strong) FontWeight.Bold else FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
     }
 }
 
@@ -332,4 +535,19 @@ private fun ResponseChart(readings: List<GlucoseReading>, mealAt: Instant, now: 
         clipRect(top = y(180), bottom = y(70)) { drawPath(path, Sage, style = stroke) }
         clipRect(top = y(70)) { drawPath(path, StateLow, style = stroke) }
     }
+}
+
+/** "What did you eat?": a name for a meal whose foods stayed in the other app. */
+@Composable
+private fun NameDialog(current: String, onSave: (String) -> Unit, onDismiss: () -> Unit) {
+    var text by remember { mutableStateOf(current) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.meal_name_title)) },
+        text = {
+            OutlinedTextField(text, { text = it }, placeholder = { Text(stringResource(R.string.meal_name_hint)) }, singleLine = true)
+        },
+        confirmButton = { TextButton(onClick = { onSave(text.trim()) }) { Text(stringResource(R.string.meal_name_save)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.sensor_cancel)) } },
+    )
 }

@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.graph
 
+import com.sukoon.app.platform.TimeFormat
 import com.sukoon.app.data.source.GlucoseReading
 import java.time.Instant
 import java.time.ZoneId
@@ -34,7 +35,7 @@ internal data class ReadingDay(val date: LocalDate, val rows: List<ReadingRowTex
  * since the reading before it (only when that one is at most 15 minutes older).
  */
 internal fun readingDays(readings: List<GlucoseReading>, zone: ZoneId, locale: Locale = Locale.getDefault()): List<ReadingDay> {
-    val time = DateTimeFormatter.ofPattern("HH:mm").withZone(zone)
+    val time = TimeFormat.of(zone = zone)
     return readings.indices.reversed().map { i ->
         val r = readings[i]
         val older = readings.getOrNull(i - 1)?.takeIf { r.timestamp.toEpochMilli() - it.timestamp.toEpochMilli() <= DELTA_WINDOW_MS }

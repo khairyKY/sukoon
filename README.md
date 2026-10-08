@@ -92,7 +92,7 @@ I have type 1 diabetes and I live in Egypt, on EU-bought Libre 2 sensors. The of
 
 ### Pairing a sensor
 
-**You → Sensor → Connect**, then hold the phone to the sensor. Sukoon reads it over NFC, checks that it can decode it, and only then switches on its Bluetooth stream. From there a reading arrives every minute, a new sensor counts down its 60-minute warm-up on Home, and Sukoon reminds you a day and an hour before the sensor ends.
+**You → Sensor → Connect**, then hold the phone to the sensor. Sukoon reads it over NFC, checks that it can decode it, and only then switches on its Bluetooth stream. From there a reading arrives every minute, a new sensor counts down its 60-minute warm-up on Home, and Sukoon reminds you 3 days, a day and an hour before the sensor ends.
 
 > [!WARNING]
 > **A Libre 2 streams to one phone at a time.** Pairing Sukoon takes the sensor's Bluetooth from whichever app had it (LibreLink, DiaBox, xDrip+). To hand it back, scan the sensor once with the other app. To try Sukoon on a second phone, use **Follower** with an invite code from the first phone, or demo data.
@@ -115,6 +115,7 @@ I have type 1 diabetes and I live in Egypt, on EU-bought Libre 2 sensors. The of
 
 ### Log: quick entry first
 
+- 🌱 **Meals built from foods.** Search foods and brands in Arabic or English, or scan a barcode with Sukoon's own camera (it opens at once and reads offline). Packaged foods come from [Open Food Facts](https://world.openfoodfacts.org) with their photos; 88 Egyptian and Middle-Eastern home dishes (ملوخية, كشري, محشي, عيش بلدي…) are built in with sourced carbs; anything else, *Ask the AI*. Pick ¼, ½ or a whole pack, a bowl or a serving, or type your amount in grams or portions. The plate adds up the carbs, fibre, protein, fat and calories, the dose suggestion works from it, and your usual foods are one tap at the amount you last had.
 - ✅ **Meals, rapid and long-acting insulin, finger-pricks and activity** from big tiles and a number pad. A meal and its insulin save together, with pre-bolus minutes and *when it happened* (now, 15/30/60 minutes ago, or a picked time). Every entry shows the glucose at that moment. Undo on every save.
 - ✅ **Insulin on board** on the exponential curve OpenAPS and Loop use (peak 75 minutes, 5 hours by default), shown on Home and before you log another dose.
 - ✅ **Finger-pricks beside the sensor.** Each check shows the sensor reading at that minute and whether the two agree, and sits on the graph as a ring.
@@ -124,11 +125,14 @@ I have type 1 diabetes and I live in Egypt, on EU-bought Libre 2 sensors. The of
 - 🌱 **Starting ratios for when you don't know yours.** From your logged daily insulin (the 500 and 1800 rules), else your weight and age (0.5 u/kg a day for adults, 1.0 for 12–17, 0.7 under 12: the cautious end of the ADA and ISPAD ranges), else the common adult start.
 - 🌱 **Learning from your meals.** Every meal of the last 30 days gets a verdict. Clean ones (logged with their insulin, nothing else eaten for 4 hours, none still working, no workout) say what ratio they needed; a least-squares fit over every usable meal and correction finds how far 1 unit lowers you and each meal's ratio, with no numbers to start from. Each suggestion shows its meals, moves your number at most 20% per *Use*, and Home says when one is ready. Never changed by itself. The whole review exports as CSV.
 - 🌱 **Parent lock.** A PIN (kept as a salted hash) that guards the alarms, your range, dose settings and profile. Under 18, dose suggestions only switch on behind one.
-- ✅ **MyFitnessPal through Health Connect.** Meals arrive with every nutrient (edits and deletions follow), plus workouts, steps and water. Pull down on Home to sync. Readings go back out to Health Connect as blood glucose.
+- ✅ **Every meal shows what it did.** Tap any meal: its carbs and the insulin taken for it (or *Add insulin*), its photos, a *rich meal* note when fat and protein can keep you rising for hours, the glucose curve around it, and one list of everything in it.
+- ✅ **As many photos as you like** on a meal, and the AI carb estimate reads them all.
+- ✅ **MyFitnessPal through Health Connect.** MyFitnessPal shares a running total per day, not meals, so Sukoon splits it back into meals at the time you log each one; *When did you eat?* sets the real time and *What was it?* names it (the foods themselves stay in MyFitnessPal). Workouts, steps and water come in too. Pull down on Home to sync. Readings go back out to Health Connect as blood glucose.
 
 ### Trends: understand the week
 
 - ✅ **The graph:** 3 hours to 14 days, the line coloured by range with gaps left as gaps, time in range in five bands, average and GMI, and every reading listed underneath.
+- ✅ **Any day, back as far as you have data.** The logbook and the graph both have a *‹ Today ›* bar: a day back, a day on, or tap it for a calendar.
 - ✅ **Insights**, each with its source: time in range against the international consensus targets, variability (CV), recurring lows and highs, the dawn rise, what each meal did, pre-bolus timing, insulin stacking, this week against last, lows after workouts, highs after treating a low, one injection spot taking most doses. With a tighter range of your own, its share sits beside the international one.
 - ✅ **Report for your doctor:** an Ambulatory Glucose Profile (5–95, 25–75 and median by time of day) over 7, 14 or 30 days with GMI and CV, exported as a one-page A4 PDF.
 - ✅ **Ask.** A chat about your own data, and carb estimates from a meal photo or a description, through Google's Gemini with **your own free API key**. It sees summaries, not raw readings, and an estimate only ever pre-fills a field you confirm.
@@ -140,10 +144,12 @@ I have type 1 diabetes and I live in Egypt, on EU-bought Libre 2 sensors. The of
 - 🌱 **Follow from any phone's browser, iPhone included.** The [follow page](https://khairyky.github.io/sukoon/) shows the same number, arrow, 3-hour chart and words, in English or Arabic, installs to the home screen, and sounds an alarm while it's open. *Send* in You → People shares the code and the link in one message.
 - 🌱 **Follow anyone on Abbott's or Dexcom's apps.** Sign in to LibreLinkUp or Dexcom Share and those people sit next to your Sukoon follows, with the same Home, widget and alarms. Either connection can also be *this phone's* glucose, which is how a Libre 3 wearer can use Sukoon.
 - ✅ **Nightscout upload** (readings, treatments and finger-pricks), **CSV export**, and **Backup**: one zip with the database, every setting, the sensor pairing and the meal photos, restored in one step.
+- 🌱 **Daily backup to your own cloud** (opt-in): pick a file in Google Drive, OneDrive, Dropbox or any cloud app on the phone with Android's own *save to*, and Sukoon refreshes it once a day. *Back up now* and *Stop* in You → Reports.
 
 ### Everything else
 
-- ✅ **English and Egyptian Arabic**, right to left, with the language picked inside the app (1,266 strings in each, checked for parity).
+- ✅ **Your sensor at a glance.** You → Sensor says *Live*, *Reconnecting* or *No signal* from the last reading, puts what needs you on top in red or amber (Bluetooth off, no readings, sensor ending, ended) with the fix one tap away, and shows the sensor's life as a bar that turns amber 3 days before the end. Bluetooth off also shows on Home, and a notice comes 3 days, 1 day and 1 hour before the sensor stops.
+- ✅ **English and Egyptian Arabic**, right to left, with the language picked inside the app (1,385 strings in each, checked for parity), and a **12- or 24-hour clock** (or the phone's).
 - ✅ **Light, dark or like the phone**, with motion from the design spec that turns off when the phone's *Remove animations* is on.
 - ✅ **A built-in guide** (You → Guide) and a getting-started card on Home.
 - ✅ **Starts after a reboot or update**, and a watchdog wakes it if the phone kills it.
@@ -307,7 +313,9 @@ Nothing, unless you turn it on. There are no analytics, no ads and no tracking o
 | Your live readings | Your Supabase account, readable only by people you approved (row-level security) | you sign in and invite a follower |
 | Your LibreLinkUp or Dexcom login | Abbott's or Dexcom's servers, to fetch the readings you're allowed to see | you sign in to follow someone there, or use it as your glucose |
 | Readings and treatments | Your own Nightscout site | you add its address and token |
-| Summaries of your data, your profile and dose settings, a meal photo | Google Gemini, with your own API key | you add a key and ask a question |
+| Summaries of your data, your profile and dose settings, meal photos, a dish you ask about | Google Gemini, with your own API key | you add a key and ask a question or for an estimate |
+| What you type in food search, or a barcode you scan | Open Food Facts (free, open data), to find the food | you search or scan |
+| A full backup (readings, logbook, photos, settings, your AI key) | One file in the cloud app you chose | you turn on the daily cloud backup |
 | Glucose, how long, location | Your emergency contacts by SMS and phone call | an urgent low goes unanswered |
 
 **Cost:** Supabase, Gemini's free tier and Nightscout on your own machine are all $0. The app itself has no subscription, no account requirement and no server of its own.
@@ -323,6 +331,8 @@ Nothing, unless you turn it on. There are no analytics, no ads and no tracking o
 | "Signal lost" every so often | **You → Sensor** shows the last 24 hours of gaps. Short gaps are usually distance: keep the phone on the same side of your body as the sensor. |
 | Sukoon can't find the sensor after pairing | Another app has it. Force-stop LibreLink, DiaBox or xDrip+, then **You → Sensor → Connect** and scan again. |
 | No MyFitnessPal meals | **You → Apps & data → Resync** says how many meals Health Connect has. If it has none, sharing is off on MyFitnessPal's side (More → Apps & Devices → Health Connect). |
+| A MyFitnessPal meal shows the wrong time | MyFitnessPal shares totals, not meal times: a meal is timed when you logged it. Tap it, then *When did you eat?* |
+| Food search finds nothing | Open Food Facts needs the internet; your own foods and the home dishes work offline. Missing a product? Scan it and add it as your own, or *Ask the AI*. |
 | Ask says it's busy | Gemini's free tier is overloaded. Sukoon already falls back through three models; wait a minute. |
 | "App not installed" when updating | The new build is signed with a different key (0.6 and earlier used a debug key). Back up, uninstall, install, restore: see [Install](#-install). |
 
@@ -388,6 +398,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for branch and commit conventions. Sens
 | Direct Libre 2 / 2 Plus EU, alarms with Sukoon's own sounds, emergency escalation, logbook, insulin on board, calibration, insights, AGP report, widgets, Health Connect, Nightscout, CSV, backup, English + Arabic | ✅ built |
 | Followers on Supabase, the follow page for iPhone and any browser, LibreLinkUp and Dexcom Share | 🌱 built, being set up for daily use |
 | Dose suggestions and learning your ratios (beta), injection sites, your own range, parent lock, sound packs | 🌱 built, being tested daily |
+| Meals from foods (Open Food Facts, barcodes, home dishes, the AI), any day in the logbook and graph, cloud backup | 🌱 built, being tested daily |
 | Libre 1 and 2 through a Bubble transmitter | 🗓 possible: portable from GlucoseDirect, needs a transmitter to test |
 | Libre 3 / 3 Plus over Bluetooth | ✖ the open implementations depend on Abbott code under GPL, so it can't be ported. A Libre 3 works today through LibreLinkUp. |
 

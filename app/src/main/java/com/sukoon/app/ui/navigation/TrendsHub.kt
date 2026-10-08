@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.navigation
 
+import com.sukoon.app.health.HealthConnectSync
 import com.sukoon.app.insulin.DoseSettings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -67,8 +68,8 @@ fun TrendsHub(
     onUndoEntry: (List<Long>) -> Unit,
     onUpdateEvent: (EventEntity) -> Unit,
     onDeleteEvent: (EventEntity) -> Unit,
-    onEstimateCarbs: suspend (String, ByteArray?) -> CarbEstimate,
-    onEntryPhoto: (Long, ByteArray?) -> Unit,
+    onEstimateCarbs: suspend (String, List<ByteArray>) -> CarbEstimate,
+    onEntryPhoto: (Long, List<ByteArray>) -> Unit,
     askState: AskUiState,
     hasAiKey: Boolean,
     onAsk: (String) -> Unit,
@@ -84,9 +85,14 @@ fun TrendsHub(
     reportName: String,
     modifier: Modifier = Modifier,
     doseSettings: () -> DoseSettings = { DoseSettings() },
+    pendingMealInsulin: Long? = null,
+    onPendingMealInsulinHandled: () -> Unit = {},
+    mealRecord: suspend (Long) -> HealthConnectSync.MealRecord? = { null },
+    onGraphDay: (java.time.LocalDate?) -> Unit = {},
+    onLogbookDay: (java.time.LocalDate?) -> Unit = {},
 ) {
     var subTab by rememberSaveable { mutableStateOf(TrendsSubTab.GRAPH) }
-    if (pendingEntry != null) subTab = TrendsSubTab.LOGBOOK
+    if (pendingEntry != null || pendingMealInsulin != null) subTab = TrendsSubTab.LOGBOOK
 
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Row(
@@ -100,12 +106,13 @@ fun TrendsHub(
             SubTabChip(stringResource(R.string.ask_tab), subTab == TrendsSubTab.ASK) { subTab = TrendsSubTab.ASK }
         }
         when (subTab) {
-            TrendsSubTab.GRAPH -> GraphScreen(state = graphState, onSelectRange = onSelectRange, modifier = Modifier.weight(1f))
+            TrendsSubTab.GRAPH -> GraphScreen(state = graphState, onSelectRange = onSelectRange, modifier = Modifier.weight(1f), onDay = onGraphDay)
             TrendsSubTab.LOGBOOK -> LogbookScreen(
                 state = logbookState,
                 onSaveEntry = onSaveEntry,
                 onUndoEntry = onUndoEntry,
                 onUpdateEvent = onUpdateEvent,
+                onDay = onLogbookDay,
                 onDeleteEvent = onDeleteEvent,
                 modifier = Modifier.weight(1f),
                 onEstimateCarbs = onEstimateCarbs,
@@ -114,6 +121,9 @@ fun TrendsHub(
                 openNewEntry = pendingEntry,
                 onOpenedEntry = onPendingEntryHandled,
                 doseSettings = doseSettings,
+                openInsulinForMeal = pendingMealInsulin,
+                onOpenedInsulinForMeal = onPendingMealInsulinHandled,
+                mealRecord = mealRecord,
             )
             TrendsSubTab.INSIGHTS -> InsightsScreen(insightsState, onAcknowledgeInsights, Modifier.weight(1f))
             TrendsSubTab.REPORT -> ReportScreen(reportState, reportName, onSelectReportDays, Modifier.weight(1f))

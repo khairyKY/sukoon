@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.settings
 
+import com.sukoon.app.platform.TimeFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
@@ -71,4 +72,4 @@ fun ConnectionHealth(load: suspend () -> List<GlucoseReading>, saveEveryMinutes:
     }
 }
 
-private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+private val TIME: DateTimeFormatter get() = TimeFormat.of()

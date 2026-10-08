@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.settings
 
+import com.sukoon.app.platform.TimeFormat
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -233,7 +234,7 @@ fun HealthConnectSection(sync: HealthConnectSync) {
 private fun mealTime(at: Instant): String {
     val zone = ZoneId.systemDefault()
     val today = at.atZone(zone).toLocalDate() == LocalDate.now(zone)
-    return DateTimeFormatter.ofPattern(if (today) "HH:mm" else "EEE HH:mm", Locale.getDefault()).format(at.atZone(zone))
+    return TimeFormat.of(if (today) "HH:mm" else "EEE HH:mm").format(at.atZone(zone))
 }
 
 @Composable

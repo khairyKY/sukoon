@@ -1,5 +1,7 @@
 package com.sukoon.app.ui.home
 
+import com.sukoon.app.platform.TimeFormat
+import com.sukoon.app.data.db.EventEntity
 import com.sukoon.app.ui.theme.SageDeep
 import androidx.compose.material3.TextButton
 import com.sukoon.app.ui.logbook.formatAmountLocalized
@@ -134,8 +136,11 @@ fun HomeScreen(
     nudge: String? = null,
     onNudge: () -> Unit = {},
     onNudgeDismiss: () -> Unit = {},
+    /** Beta: a meal in the last hour with no insulin ([com.sukoon.app.insulin.Dose.mealDose]) and its dose. */
+    mealDose: Pair<EventEntity, DoseAdvice.Suggestion>? = null,
+    onMealDose: (EventEntity) -> Unit = {},
 ) {
-    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss)) {
+    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss, mealDose, onMealDose)) {
         PullToSync(onSync, modifier) {
             HomeContent(state, brief, Modifier.fillMaxSize(), onTreated, onSnooze, onAlertEmergencyContact, onTroubleshoot, onPairSensor, onEnterCodeManually)
         }
@@ -154,6 +159,8 @@ private class Shortcuts(
     val nudge: String? = null,
     val onNudge: () -> Unit = {},
     val onNudgeDismiss: () -> Unit = {},
+    val mealDose: Pair<EventEntity, DoseAdvice.Suggestion>? = null,
+    val onMealDose: (EventEntity) -> Unit = {},
 )
 private val LocalShortcuts = staticCompositionLocalOf { Shortcuts({}, {}) }
 
@@ -680,9 +687,48 @@ private fun BriefCards(brief: Brief?) {
     val shortcuts = LocalShortcuts.current
     Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         MessageCard(title, body)
+        shortcuts.mealDose?.let { (meal, dose) -> MealDoseCard(meal, dose) { shortcuts.onMealDose(meal) } }
         shortcuts.correction?.let { CorrectionCard(it, shortcuts.onInsulin) }
         shortcuts.nudge?.let { NudgeCard(it, shortcuts.onNudge, shortcuts.onNudgeDismiss) }
         NextStep(brief.step)
+    }
+}
+
+/** Beta: you ate in the last hour and logged no insulin. "Log it" opens insulin for that meal, with the maths. */
+@Composable
+private fun MealDoseCard(meal: EventEntity, dose: DoseAdvice.Suggestion, onLog: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.5.dp, Sage, RoundedCornerShape(16.dp))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(stringResource(R.string.home_meal_eyebrow).uppercase(), fontWeight = FontWeight.SemiBold, fontSize = 11.sp, letterSpacing = 1.sp, color = Sage)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                formatAmountLocalized(dose.units) + stringResource(R.string.logbook_unit_units),
+                fontFamily = HeadlineSerifFontFamily,
+                fontWeight = FontWeight.Light,
+                fontSize = 32.sp,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                stringResource(R.string.home_correction_log),
+                modifier = Modifier.clip(RoundedCornerShape(50)).background(Sage).clickable(onClick = onLog).padding(horizontal = 18.dp, vertical = 12.dp),
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 15.sp,
+            )
+        }
+        Text(
+            stringResource(R.string.home_meal_body, formatAmountLocalized(meal.value ?: 0.0), TimeFormat.of().format(java.time.Instant.ofEpochMilli(meal.timestampMillis))),
+            fontSize = 13.sp,
+            color = CaptionMuted,
+        )
     }
 }
 
@@ -842,7 +888,7 @@ private val STEADY = listOf(
     R.string.home_brief_steady_3_title to R.string.home_brief_steady_3_body,
 )
 
-private val HM: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+private val HM: DateTimeFormatter get() = TimeFormat.of()
 
 // ---------------------------------------------------------------------------------------------
 // Warm-up — screen 8g

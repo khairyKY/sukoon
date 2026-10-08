@@ -17,7 +17,9 @@ data class LogbookUiState(
     /** The current reading when fresh: shown on a new entry, which then carries it. */
     val glucoseNow: GlucoseReading? = null,
     /** Entry id → its attached photo. */
-    val photos: Map<Long, File> = emptyMap(),
+    val photos: Map<Long, List<File>> = emptyMap(),
+    /** The past day shown; null for the last 24 hours. */
+    val day: java.time.LocalDate? = null,
     /** The window's readings, oldest first: what a meal did to glucose. */
     val readings: List<GlucoseReading> = emptyList(),
     /** The last 30 days' doses logged with an injection site: what to suggest next. */

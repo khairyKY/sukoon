@@ -1,5 +1,8 @@
 package com.sukoon.app.ui.logbook
 
+import com.sukoon.app.ui.components.DayBar
+import com.sukoon.app.platform.TimeFormat
+import com.sukoon.app.health.HealthConnectSync
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.view.HapticFeedbackConstants
@@ -97,7 +100,7 @@ import com.sukoon.app.ui.components.PullToSync
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 
-internal val hmFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+internal val hmFormatter: DateTimeFormatter get() = TimeFormat.of()
 
 /**
  * Logbook (design A1–A3 and "Logbook with MyFitnessPal meals"): today's timeline, newest first,
@@ -114,11 +117,13 @@ fun LogbookScreen(
     onSaveEntry: (EntryDraft) -> Deferred<List<Long>>,
     onUndoEntry: (List<Long>) -> Unit,
     onUpdateEvent: (EventEntity) -> Unit,
+    /** Another day to look at (null: back to today). */
+    onDay: (java.time.LocalDate?) -> Unit = {},
     onDeleteEvent: (EventEntity) -> Unit,
     modifier: Modifier = Modifier,
-    onEstimateCarbs: (suspend (String, ByteArray?) -> CarbEstimate)? = null,
+    onEstimateCarbs: (suspend (String, List<ByteArray>) -> CarbEstimate)? = null,
     /** Attach, replace (bytes) or remove (null) an existing entry's photo. */
-    onEntryPhoto: (Long, ByteArray?) -> Unit = { _, _ -> },
+    onEntryPhoto: (Long, List<ByteArray>) -> Unit = { _, _ -> },
     /** Set by Home's shortcuts: open a new entry of this type once, then [onOpenedEntry]. */
     openNewEntry: LogEventType? = null,
     onOpenedEntry: () -> Unit = {},
@@ -126,6 +131,11 @@ fun LogbookScreen(
     onSync: (suspend () -> String)? = null,
     /** Beta dose suggestions, read when an entry opens. */
     doseSettings: () -> DoseSettings = { DoseSettings() },
+    /** Set by Home's "meal without insulin": open insulin for this meal once, then [onOpenedInsulinForMeal]. */
+    openInsulinForMeal: Long? = null,
+    onOpenedInsulinForMeal: () -> Unit = {},
+    /** An imported meal's Health Connect record, for its detail. */
+    mealRecord: suspend (Long) -> HealthConnectSync.MealRecord? = { null },
 ) {
     val context = LocalContext.current
     val view = LocalView.current
@@ -145,15 +155,21 @@ fun LogbookScreen(
             onOpenedEntry()
         }
     }
+    LaunchedEffect(openInsulinForMeal, state.events) {
+        val meal = openInsulinForMeal?.let { id -> state.events.firstOrNull { it.id == id } } ?: return@LaunchedEffect
+        editor = EditorRequest(LogEventType.INSULIN, forMeal = meal)
+        onOpenedInsulinForMeal()
+    }
     val zone = remember { ZoneId.systemDefault() }
     val now = Instant.now()
     val groups = remember(state.events) { groupEntries(state.events) }
-    val totals = remember(state.events) { todayTotals(state.events, Instant.now(), zone) }
+    val totals = remember(state.events, state.day) { todayTotals(state.events, state.day?.atTime(12, 0)?.atZone(zone)?.toInstant() ?: Instant.now(), zone) }
     val appMeals = remember(state.events) {
         state.events.filter { it.source != null && it.logType == LogEventType.CARB && Instant.ofEpochMilli(it.timestampMillis).atZone(zone).toLocalDate() == Instant.now().atZone(zone).toLocalDate() }
     }
     fun open(event: EventEntity) {
-        if (event.source != null && event.logType == LogEventType.CARB) detail = event else editor = EditorRequest(event.logType, existing = event)
+        // Every meal opens on what it did; yours have Edit meal there.
+        if (event.logType == LogEventType.CARB) detail = event else editor = EditorRequest(event.logType, existing = event)
     }
     fun announce(message: String, undo: List<Long>? = null) {
         scope.launch {
@@ -168,13 +184,15 @@ fun LogbookScreen(
             Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
                 Text(stringResource(R.string.logbook_title), fontFamily = HeadlineSerifFontFamily, fontSize = 28.sp, color = MaterialTheme.colorScheme.onBackground)
                 Text(
-                    stringResource(R.string.logbook_today_totals, formatAmountLocalized(totals.first), formatAmountLocalized(totals.second)),
+                    stringResource(if (state.day == null) R.string.logbook_today_totals else R.string.logbook_day_totals, formatAmountLocalized(totals.first), formatAmountLocalized(totals.second)),
                     fontSize = 13.sp,
                     color = CaptionMuted,
                 )
             }
-            Spacer(Modifier.height(8.dp))
-            if (state.events.isEmpty()) {
+            DayBar(state.day, onDay)
+            if (state.events.isEmpty() && state.day != null) {
+                Text(stringResource(R.string.logbook_day_empty), fontSize = 14.sp, color = CaptionMuted, modifier = Modifier.weight(1f).padding(top = 24.dp, start = 4.dp))
+            } else if (state.events.isEmpty()) {
                 // Scrollable, so pulling down to sync works on an empty day too.
                 LogbookEmptyState(onLogFirst = { adding = true }, modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()))
             } else {
@@ -188,7 +206,7 @@ fun LogbookScreen(
                                 group = group,
                                 check = state.meterChecks[main.id],
                                 glucose = state.glucoseAt[main.id],
-                                photo = state.photos[main.id],
+                                photo = state.photos[main.id]?.firstOrNull(),
                                 response = if (main.logType == LogEventType.CARB && Duration.between(mealAt, now) >= Duration.ofHours(1)) {
                                     mealResponse(state.readings, mealAt, now)?.takeIf { !it.stillRising }
                                 } else {
@@ -241,7 +259,7 @@ fun LogbookScreen(
             glucoseNow = state.glucoseNow,
             insulinOnBoard = state.insulinOnBoard,
             appMeals = appMeals,
-            photoFile = existing?.let { state.photos[it.id] },
+            photoFiles = existing?.let { state.photos[it.id] }.orEmpty(),
             siteHistory = state.siteHistory,
             doseSettings = remember(request) { doseSettings() },
             onEstimateCarbs = onEstimateCarbs,
@@ -251,10 +269,10 @@ fun LogbookScreen(
                 val saving = onSaveEntry(draft)
                 scope.launch { announce(savedMessage(context, draft), saving.await()) }
             },
-            onUpdate = { event, photo, photoRemoved ->
+            onUpdate = { event, photos ->
                 editor = null
                 onUpdateEvent(event)
-                if (photo != null || photoRemoved) onEntryPhoto(event.id, photo)
+                photos?.let { onEntryPhoto(event.id, it) }
                 announce(context.getString(R.string.toast_entry_updated))
             },
             onDelete = existing?.let { event ->
@@ -269,7 +287,19 @@ fun LogbookScreen(
     }
     detail?.let { meal ->
         MealDetailSheet(
+            loadRecord = { mealRecord(meal.id) },
+            onSetTime = { at ->
+                val moved = meal.copy(timestampMillis = at.toEpochMilli(), timeSet = true)
+                onUpdateEvent(moved)
+                detail = moved
+            },
+            onRename = { name ->
+                val named = meal.copy(note = name.ifBlank { null })
+                onUpdateEvent(named)
+                detail = named
+            },
             meal = meal,
+            photos = state.photos[meal.id].orEmpty(),
             insulin = groups.firstOrNull { it.main.id == meal.id }?.insulin.orEmpty(),
             readings = state.readings,
             onAddInsulin = {
@@ -284,6 +314,10 @@ fun LogbookScreen(
                 detail = null
                 onDeleteEvent(meal)
                 announce(context.getString(R.string.toast_meal_hidden))
+            },
+            onEdit = {
+                detail = null
+                editor = EditorRequest(LogEventType.CARB, existing = meal)
             },
             onDismiss = { detail = null },
         )
@@ -332,7 +366,7 @@ private fun EntryRow(
                         rememberSourceApp(event.source),
                         listOfNotNull(
                             event.note?.takeIf { it != title },
-                            event.kcal?.let { "${formatAmountLocalized(it)} ${stringResource(R.string.entry_unit_kcal)}" },
+                            event.kcal?.let { "${formatAmountLocalized(Math.round(it).toDouble())} ${stringResource(R.string.entry_unit_kcal)}" },
                         ),
                     )
                     check != null -> Text(
@@ -373,7 +407,7 @@ private fun EntryRow(
                     color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.weight(1f).padding(start = 12.dp),
                 )
-                Text("${formatAmountLocalized(dose.value ?: 0.0)}${unitLabel(LogEventType.INSULIN)}", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground)
+                Text("${formatAmountLocalized(dose.value ?: 0.0)}${unitLabel(LogEventType.INSULIN)}", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(start = 8.dp))
                 Text(hmFormatter.format(Instant.ofEpochMilli(dose.timestampMillis)), fontSize = 13.sp, color = CaptionMuted, textAlign = TextAlign.End, modifier = Modifier.width(48.dp))
             }
         }

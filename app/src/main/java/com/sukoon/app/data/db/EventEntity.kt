@@ -1,5 +1,6 @@
 package com.sukoon.app.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Entity
@@ -33,6 +34,12 @@ data class EventEntity(
     val kcal: Double? = null,
     /** Where an insulin dose went (InjectionSite.name); null = not given. */
     val site: String? = null,
+    /** The meal a rapid dose was taken for (its event id); null = matched to a meal by time. */
+    val mealId: Long? = null,
+    /** You said when you ate it: an imported meal keeps this time when its app sends it again. */
+    @ColumnInfo(defaultValue = "0") val timeSet: Boolean = false,
+    /** Several meals in one (what another app's day held before Sukoon followed it): no dose suggestion, nothing learned from it. */
+    @ColumnInfo(defaultValue = "0") val summary: Boolean = false,
 )
 
 /** INSULIN = rapid-acting (bolus, e.g. Apidra); BASAL = long-acting (e.g. Toujeo). Stored by name, so adding one needs no migration. */
@@ -57,6 +64,12 @@ interface EventDao {
     @Query("DELETE FROM events WHERE id = :id")
     suspend fun deleteById(id: Long)
 
+    @Query("SELECT * FROM events WHERE id = :id")
+    suspend fun byId(id: Long): EventEntity?
+
     @Query("SELECT * FROM events WHERE timestampMillis >= :sinceMillis ORDER BY timestampMillis ASC")
     fun since(sinceMillis: Long): Flow<List<EventEntity>>
+
+    @Query("SELECT * FROM events WHERE timestampMillis >= :fromMillis AND timestampMillis < :toMillis ORDER BY timestampMillis ASC")
+    fun between(fromMillis: Long, toMillis: Long): Flow<List<EventEntity>>
 }

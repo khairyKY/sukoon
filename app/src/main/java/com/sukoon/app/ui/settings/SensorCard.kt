@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import android.Manifest
 import android.app.Activity
 import android.content.Context
@@ -53,8 +54,29 @@ import java.util.Locale
 import androidx.compose.runtime.LaunchedEffect
 import com.sukoon.app.ui.components.toast
 import com.sukoon.app.data.source.libre.SensorLifecycle
-import com.sukoon.app.ui.components.lifeLine
 import java.time.Instant
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.Alignment
+import com.sukoon.app.data.source.libre.SensorLife
+import com.sukoon.app.ui.components.durationText
+import com.sukoon.app.ui.components.rememberBluetoothOn
+import com.sukoon.app.ui.components.sensorTime
+import com.sukoon.app.ui.components.turnOnBluetooth
+import com.sukoon.app.ui.logbook.outline
+import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
+import com.sukoon.app.ui.theme.PillHighBg
+import com.sukoon.app.ui.theme.PillHighText
+import com.sukoon.app.ui.theme.PillLowBg
+import com.sukoon.app.ui.theme.PillLowText
+import com.sukoon.app.ui.theme.StateHigh
+import java.time.Duration
+import kotlinx.coroutines.delay
 
 private enum class TapMode { CHECK, CONNECT }
 
@@ -140,50 +162,171 @@ fun SensorCard(
         }
     }
 
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        if (pairing != null) {
-            val now = Instant.now()
-            Text(
-                stringResource(R.string.sensor_paired, pairing.serial, days(((now.toEpochMilli() - pairing.startMillis) / 60_000).toInt()), days(pairing.lifetimeMinutes)),
-                fontSize = 13.5.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground,
+    val bluetooth = rememberBluetoothOn()
+    // The newest reading's time is what "Live" and "No signal" are judged by (here, in onboarding and on You → Sensor alike).
+    val latest by (context.applicationContext as com.sukoon.app.SukoonApp).container.glucoseRepository.latestReading.collectAsStateWithLifecycle(null)
+    val lastReadingAt = latest?.timestamp
+    val now by produceState(Instant.now()) {
+        while (true) {
+            delay(30_000)
+            value = Instant.now()
+        }
+    }
+    val life = pairing?.let { SensorLifecycle.of(it.startMillis, it.lifetimeMinutes, now) }
+    val agoMinutes = lastReadingAt?.let { Duration.between(it, now).toMinutes().coerceAtLeast(0) }
+    val inUse = pairing != null && sensorSelected
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        // What needs you, first and loud (design "Sensor, redone").
+        when {
+            inUse && !bluetooth -> Issue(true, stringResource(R.string.issue_bt_title), stringResource(R.string.issue_bt_body), stringResource(R.string.issue_bt_action)) { turnOnBluetooth(context) }
+            inUse && life is SensorLife.Running && (agoMinutes == null || agoMinutes >= 10) -> Issue(
+                true,
+                if (agoMinutes == null) stringResource(R.string.issue_no_readings_title) else stringResource(R.string.issue_signal_title, durationText(context, agoMinutes)),
+                stringResource(R.string.issue_signal_body),
             )
-            Text(lifeLine(context, SensorLifecycle.of(pairing.startMillis, pairing.lifetimeMinutes, now), now), fontSize = 12.sp, color = CaptionMuted)
-            if (sensorSelected) StatusLine(status)
-        } else {
-            Text(stringResource(R.string.sensor_body_unpaired), fontSize = 12.5.sp, color = CaptionMuted)
+        }
+        when (life) {
+            is SensorLife.Ended -> Issue(true, stringResource(R.string.issue_ended_title), stringResource(R.string.issue_ended_body))
+            is SensorLife.Running -> {
+                val left = Duration.between(now, life.endsAt)
+                if (left <= Duration.ofDays(3)) {
+                    Issue(left <= Duration.ofDays(1), stringResource(R.string.issue_ending_title, sensorTime(life.endsAt)), stringResource(R.string.issue_ending_body, durationText(context, left.toMinutes())))
+                }
+            }
+            else -> Unit
         }
 
-        when {
-            adapter == null -> Text(stringResource(R.string.sensor_no_nfc), fontSize = 13.sp, color = StateLow)
-            !adapter.isEnabled -> {
-                Text(stringResource(R.string.sensor_nfc_off), fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground)
-                CardButton(stringResource(R.string.sensor_nfc_settings)) { context.startActivity(Intent(Settings.ACTION_NFC_SETTINGS)) }
-            }
-            mode != null -> {
-                Text(stringResource(R.string.sensor_hold), fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground)
-                CardButton(stringResource(R.string.sensor_cancel), filled = false) { mode = null }
-            }
-            else -> {
-                CardButton(stringResource(R.string.sensor_check), filled = false) { result = null; mode = TapMode.CHECK }
-                Text(stringResource(R.string.sensor_check_hint), fontSize = 11.5.sp, color = CaptionMuted)
-                CardButton(stringResource(if (pairing == null) R.string.sensor_connect else R.string.sensor_repair)) {
-                    result = null
-                    if (bluetoothGranted()) mode = TapMode.CONNECT else requestPermissions.launch(permissions.toTypedArray())
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(18.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .border(1.dp, outline(), RoundedCornerShape(18.dp))
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            if (pairing == null) {
+                Text(stringResource(R.string.sensor_none_title), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
+                Text(stringResource(R.string.sensor_body_unpaired), fontSize = 13.5.sp, color = CaptionMuted)
+            } else {
+                // The state from the last reading, not the Bluetooth link: the sensor drops it after every reading.
+                val (state, color) = when {
+                    !sensorSelected -> stringResource(R.string.sensor_state_unused) to CaptionMuted
+                    life is SensorLife.Ended -> stringResource(R.string.sensor_state_ended) to StateLow
+                    life is SensorLife.WarmingUp || status == SourceStatus.WarmingUp -> stringResource(R.string.sensor_state_warming) to StateHigh
+                    !bluetooth -> stringResource(R.string.sensor_state_bt_off) to StateLow
+                    agoMinutes != null && agoMinutes < 6 -> stringResource(R.string.sensor_state_live) to Sage
+                    agoMinutes != null && agoMinutes < 20 -> stringResource(R.string.sensor_state_reconnecting) to StateHigh
+                    else -> stringResource(R.string.sensor_state_no_signal) to StateLow
                 }
-                Text(stringResource(R.string.sensor_connect_hint), fontSize = 11.5.sp, color = CaptionMuted)
-                if (pairing != null) CardButton(stringResource(R.string.sensor_forget), filled = false, onClick = onForget)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(10.dp).clip(CircleShape).background(color))
+                    Text(state, fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(start = 10.dp).weight(1f))
+                    Text(
+                        when (agoMinutes) {
+                            null -> stringResource(R.string.sensor_last_none)
+                            0L -> stringResource(R.string.sensor_last_now)
+                            else -> stringResource(R.string.sensor_last_ago, durationText(context, agoMinutes))
+                        },
+                        fontSize = 12.5.sp,
+                        color = CaptionMuted,
+                    )
+                }
+                Text(stringResource(R.string.sensor_serial, pairing.serial), fontSize = 12.5.sp, color = CaptionMuted)
+                life?.let { LifeBar(it, now) }
+                (status as? SourceStatus.Error)?.let { Text(stringResource(R.string.sensor_status_error, it.message), fontSize = 12.5.sp, color = StateLow) }
+            }
+
+            when {
+                adapter == null -> Text(stringResource(R.string.sensor_no_nfc), fontSize = 13.sp, color = StateLow)
+                !adapter.isEnabled -> {
+                    Text(stringResource(R.string.sensor_nfc_off), fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground)
+                    CardButton(stringResource(R.string.sensor_nfc_settings)) { context.startActivity(Intent(Settings.ACTION_NFC_SETTINGS)) }
+                }
+                mode != null -> {
+                    Text(stringResource(R.string.sensor_hold), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                    CardButton(stringResource(R.string.sensor_cancel), filled = false) { mode = null }
+                }
+                else -> {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        CardButton(stringResource(if (pairing == null) R.string.sensor_connect else R.string.sensor_repair)) {
+                            result = null
+                            if (bluetoothGranted()) mode = TapMode.CONNECT else requestPermissions.launch(permissions.toTypedArray())
+                        }
+                        CardButton(stringResource(R.string.sensor_check), filled = false) { result = null; mode = TapMode.CHECK }
+                    }
+                    Text(stringResource(R.string.sensor_connect_hint) + " " + stringResource(R.string.sensor_check_hint), fontSize = 12.sp, color = CaptionMuted)
+                }
+            }
+            result?.let { Text(it, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (failed) StateLow else Sage) }
+        }
+        if (pairing != null && mode == null) {
+            Text(
+                stringResource(R.string.sensor_forget),
+                modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onForget).padding(horizontal = 4.dp, vertical = 12.dp),
+                fontSize = 13.5.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = StateLow,
+            )
+        }
+    }
+}
+
+/** "Day 12 of 15 · ends Sun 11 Oct, 14:10" over a bar that turns amber in the last 3 days and red in the last. */
+@Composable
+private fun LifeBar(life: SensorLife, now: Instant) {
+    val context = LocalContext.current
+    when (life) {
+        is SensorLife.WarmingUp -> Text(context.resources.getQuantityString(R.plurals.sensor_life_warming, life.minutesLeft, life.minutesLeft), fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onBackground)
+        is SensorLife.Ended -> Text(stringResource(R.string.sensor_life_ended, sensorTime(life.endedAt)), fontSize = 13.5.sp, color = StateLow)
+        is SensorLife.Running -> {
+            val total = Duration.between(life.startedAt, life.endsAt)
+            val elapsed = Duration.between(life.startedAt, now)
+            val left = Duration.between(now, life.endsAt)
+            val color = when {
+                left <= Duration.ofDays(1) -> StateLow
+                left <= Duration.ofDays(3) -> StateHigh
+                else -> Sage
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(stringResource(R.string.sensor_day_of, elapsed.toDays() + 1, (total.toHours() + 12) / 24), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.sensor_ends_at, sensorTime(life.endsAt)), fontSize = 12.5.sp, color = CaptionMuted)
+                }
+                Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))) {
+                    Box(Modifier.fillMaxWidth((elapsed.toMinutes().toFloat() / total.toMinutes()).coerceIn(0.02f, 1f)).fillMaxHeight().background(color))
+                }
             }
         }
-        result?.let { Text(it, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (failed) StateLow else Sage) }
+    }
+}
+
+/** A problem with what to do about it: red when readings stop, amber when one is coming. */
+@Composable
+private fun Issue(danger: Boolean, title: String, body: String, action: String? = null, onAction: () -> Unit = {}) {
+    val bg = if (danger) PillLowBg else PillHighBg
+    val fg = if (danger) PillLowText else PillHighText
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(bg).padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(28.dp).clip(CircleShape).background(fg), contentAlignment = Alignment.Center) {
+            Text("!", color = bg, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        }
+        Column(Modifier.weight(1f).padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = fg)
+            Text(body, fontSize = 13.sp, lineHeight = 17.sp, color = fg)
+        }
+        action?.let {
+            Text(
+                it,
+                modifier = Modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(50)).background(fg).clickable(onClick = onAction).padding(horizontal = 16.dp, vertical = 14.dp),
+                color = bg,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp,
+            )
+        }
     }
 }
 
@@ -209,17 +352,6 @@ private fun logRead(read: LibreNfc.SensorRead) {
         val calibration = FactoryCalibration.fromFram(fram)
         Log.i("LibreNfc", "info=${Libre2.sensorInfo(fram)} calibration=$calibration points=${Libre2.parseFram(calibration, fram).joinToString { "${it.minute}:${it.mgDl}" }}")
     }
-}
-
-@Composable
-private fun StatusLine(status: SourceStatus) {
-    val (text, color) = when (status) {
-        SourceStatus.Connected -> stringResource(R.string.sensor_status_connected) to Sage
-        SourceStatus.WarmingUp -> stringResource(R.string.sensor_status_warming) to CaptionMuted
-        is SourceStatus.Error -> stringResource(R.string.sensor_status_error, status.message) to StateLow
-        else -> stringResource(R.string.sensor_status_connecting) to CaptionMuted
-    }
-    Text(text, fontSize = 12.5.sp, color = color)
 }
 
 @Composable

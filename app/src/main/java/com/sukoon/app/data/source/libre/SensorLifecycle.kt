@@ -13,7 +13,7 @@ sealed interface SensorLife {
 }
 
 /** One-time heads-ups about a sensor, in rising order of importance. */
-enum class SensorNotice { WARMED_UP, DAY_LEFT, HOUR_LEFT, ENDED }
+enum class SensorNotice { WARMED_UP, DAYS_LEFT, DAY_LEFT, HOUR_LEFT, ENDED }
 
 /**
  * A Libre 2 gives no glucose for its first hour and stops at the lifetime written in its memory
@@ -43,9 +43,10 @@ object SensorLifecycle {
         is SensorLife.Running -> buildSet {
             if (now.isBefore(life.startedAt.plus(WARMUP).plus(WARMED_UP_WINDOW))) add(SensorNotice.WARMED_UP)
             val left = Duration.between(now, life.endsAt)
+            if (left <= Duration.ofDays(3)) add(SensorNotice.DAYS_LEFT) // time to get a new one
             if (left <= Duration.ofHours(24)) add(SensorNotice.DAY_LEFT)
             if (left <= Duration.ofHours(1)) add(SensorNotice.HOUR_LEFT)
         }
-        is SensorLife.Ended -> setOf(SensorNotice.DAY_LEFT, SensorNotice.HOUR_LEFT, SensorNotice.ENDED)
+        is SensorLife.Ended -> setOf(SensorNotice.DAYS_LEFT, SensorNotice.DAY_LEFT, SensorNotice.HOUR_LEFT, SensorNotice.ENDED)
     }
 }

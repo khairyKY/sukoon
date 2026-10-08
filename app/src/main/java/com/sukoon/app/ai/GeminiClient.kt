@@ -29,11 +29,11 @@ class GeminiClient(private val apiKey: () -> String) {
     suspend fun generate(
         systemPrompt: String,
         turns: List<ChatTurn>,
-        imageJpeg: ByteArray? = null,
+        images: List<ByteArray> = emptyList(),
         jsonOutput: Boolean = false,
     ): String = withContext(Dispatchers.IO) {
         val key = apiKey().ifBlank { throw AiException(NO_KEY) }
-        val body = requestBody(systemPrompt, turns, imageJpeg, jsonOutput).toString()
+        val body = requestBody(systemPrompt, turns, images, jsonOutput).toString()
         var lastError = "No model answered"
         for (model in MODELS) {
             val (code, response) = post(model, key, body)
@@ -80,12 +80,12 @@ class GeminiClient(private val apiKey: () -> String) {
         // retired (gemini-2.5-flash already 404s for new keys); the pinned one is the fallback.
         val MODELS = listOf("gemini-flash-latest", "gemini-3.5-flash", "gemini-flash-lite-latest")
 
-        fun requestBody(systemPrompt: String, turns: List<ChatTurn>, imageJpeg: ByteArray?, jsonOutput: Boolean): JSONObject {
+        fun requestBody(systemPrompt: String, turns: List<ChatTurn>, images: List<ByteArray>, jsonOutput: Boolean): JSONObject {
             val contents = JSONArray()
             turns.forEachIndexed { index, turn ->
                 val parts = JSONArray().put(JSONObject().put("text", turn.text))
-                // The image rides on the last user turn (the one being answered).
-                if (imageJpeg != null && index == turns.lastIndex) {
+                // The photos ride on the last user turn (the one being answered), every one of them.
+                if (index == turns.lastIndex) images.forEach { imageJpeg ->
                     parts.put(
                         JSONObject().put(
                             "inline_data",

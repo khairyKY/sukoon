@@ -75,6 +75,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.sukoon.app.data.source.libre.SensorLife
 import com.sukoon.app.ui.home.SensorEndingBanner
+import com.sukoon.app.ui.home.BluetoothOffBanner
+import com.sukoon.app.ui.components.rememberBluetoothOn
+import com.sukoon.app.ui.components.turnOnBluetooth
+import com.sukoon.app.ui.settings.YouPage
 import java.time.Duration
 import java.time.Instant
 import com.sukoon.app.ui.reports.ReportViewModel
@@ -131,6 +135,8 @@ fun MainScaffold() {
     }
     // Home's food/insulin shortcuts: which new entry the Logbook should open on arrival.
     var pendingEntry by rememberSaveable { mutableStateOf<LogEventType?>(null) }
+    // Home's "meal without insulin": open insulin for this meal in the Logbook.
+    var pendingMealInsulin by rememberSaveable { mutableStateOf<Long?>(null) }
     // Pull down on Home or the Logbook: MyFitnessPal's latest through Health Connect, and what came in.
     val syncContext = LocalContext.current
     val syncMfp: suspend () -> String = {
@@ -152,8 +158,14 @@ fun MainScaffold() {
         navController.navigateToTab(SukoonTab.TRENDS)
         appContainer.requestedEntry.value = null
     }
+    // You opens on its hub, or on the page asked for (Troubleshoot → Sensor); the counter makes each ask count.
+    var youOpen by remember { mutableStateOf(0 to (null as YouPage?)) }
+    fun openYou(page: YouPage? = null) {
+        youOpen = youOpen.first + 1 to page
+        navController.navigateToTab(SukoonTab.YOU)
+    }
     Scaffold(
-        bottomBar = { SukoonBottomBar(navController) },
+        bottomBar = { SukoonBottomBar(navController, onYou = { openYou() }) },
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -171,8 +183,8 @@ fun MainScaffold() {
                     Column {
                         val missing = rememberMissingSetup().filter { it in FOLLOWER_SETUP }
                         var later by rememberSaveable { mutableStateOf(false) }
-                        if (missing.isNotEmpty() && !later) SetupBanner(missing, onFix = { navController.navigateToTab(SukoonTab.YOU) }, onLater = { later = true })
-                        FollowingHome(home.sharing, home.settings, onAddPerson = { navController.navigateToTab(SukoonTab.YOU) }, modifier = Modifier.weight(1f))
+                        if (missing.isNotEmpty() && !later) SetupBanner(missing, onFix = { openYou() }, onLater = { later = true })
+                        FollowingHome(home.sharing, home.settings, onAddPerson = { openYou() }, modifier = Modifier.weight(1f))
                     }
                     return@composable
                 }
@@ -202,7 +214,8 @@ fun MainScaffold() {
                 }
                 val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
                 val brief by homeViewModel.brief.collectAsStateWithLifecycle()
-                val toYou = { navController.navigateToTab(SukoonTab.YOU) }
+                val toYou = { openYou() }
+                val toSensor = { openYou(YouPage.SENSOR) }
                 val alarms = (LocalContext.current.applicationContext as SukoonApp).container.alarms
                 val settings = (LocalContext.current.applicationContext as SukoonApp).container.settings
                 val scope = rememberCoroutineScope()
@@ -246,6 +259,28 @@ fun MainScaffold() {
                         slot = InsightEngine.slotFor(now.atZone(ZoneId.systemDefault()).hour),
                     )
                 }
+                // Beta: a meal in the last hour with no insulin logged and none working.
+                val mealDose = latest?.let { r ->
+                    val now = Instant.now()
+                    recentEvents.lastOrNull { it.logType == LogEventType.CARB && (it.value ?: 0.0) >= 10 }?.takeUnless { it.summary }?.let { meal ->
+                        val mealAt = Instant.ofEpochMilli(meal.timestampMillis)
+                        // A meal from another app is timed when it was logged, which can be hours after you ate (and dosed): look further back.
+                        val lookBack = Duration.ofHours(if (meal.source != null && !meal.timeSet) 3 else 1).toMillis()
+                        val insulinSince = recentEvents.any { it.logType == LogEventType.INSULIN && (it.mealId == meal.id || it.timestampMillis >= meal.timestampMillis - lookBack) }
+                        Dose.mealDose(
+                            settings = home.settings.doseSettings,
+                            carbs = meal.value ?: 0.0,
+                            mealAt = mealAt,
+                            insulinSince = insulinSince,
+                            glucose = r.glucoseMgDl,
+                            trend = r.trend,
+                            readingAt = r.timestamp,
+                            now = now,
+                            onBoard = insulinOnBoard,
+                            slot = InsightEngine.slotFor(mealAt.atZone(ZoneId.systemDefault()).hour),
+                        )?.let { meal to it }
+                    }
+                }
                 if (askingForHelp) EmergencyActionsDialog(emergencyAlerts, latest, onDismiss = { askingForHelp = false })
                 var viewing by remember { mutableStateOf<String?>(null) }
                 viewing?.let { id ->
@@ -278,9 +313,11 @@ fun MainScaffold() {
                         )
                     }
                     val life by homeViewModel.sensorLife.collectAsStateWithLifecycle()
+                    val source by home.sourceKind.collectAsStateWithLifecycle()
+                    if (source == SourceKind.LIBRE_BLE && !rememberBluetoothOn()) BluetoothOffBanner { turnOnBluetooth(context) }
                     (life as? SensorLife.Running)
                         ?.takeIf { Duration.between(Instant.now(), it.endsAt) <= Duration.ofHours(24) }
-                        ?.let { SensorEndingBanner(it, onClick = toYou) }
+                        ?.let { SensorEndingBanner(it, onClick = toSensor) }
                     UpdateBanner(home.updates, onBackUp = toYou)
                     HomeScreen(
                         state = homeState,
@@ -289,7 +326,7 @@ fun MainScaffold() {
                         modifier = Modifier.weight(1f),
                         onPairSensor = toYou,
                         onEnterCodeManually = toYou,
-                        onTroubleshoot = toYou,
+                        onTroubleshoot = toSensor,
                         onTreated = { scope.launch { alarms.treated() } },
                         onSnooze = { scope.launch { alarms.acknowledge(AlarmType.LOW, 15) } },
                         onAlertEmergencyContact = {
@@ -304,10 +341,15 @@ fun MainScaffold() {
                         onAddInsulin = { pendingEntry = LogEventType.INSULIN; navController.navigateToTab(SukoonTab.TRENDS) },
                         insulinOnBoard = insulinOnBoard,
                         correction = correction,
+                        mealDose = mealDose,
+                        onMealDose = { meal ->
+                            pendingMealInsulin = meal.id
+                            navController.navigateToTab(SukoonTab.TRENDS)
+                        },
                         nudge = nudgeText,
                         onNudge = {
                             home.requestedLearning.value = true
-                            navController.navigateToTab(SukoonTab.YOU)
+                            openYou(YouPage.INSULIN)
                         },
                         onNudgeDismiss = {
                             home.settings.nudgeDismissed = nudge?.key
@@ -346,18 +388,20 @@ fun MainScaffold() {
                 TrendsHub(
                     graphState = graphState,
                     onSelectRange = graphViewModel::selectRange,
+                    onGraphDay = graphViewModel::showDay,
+                    onLogbookDay = logbookViewModel::showDay,
                     logbookState = logbookState,
                     onSaveEntry = logbookViewModel::save,
                     onUndoEntry = logbookViewModel::undo,
                     onUpdateEvent = logbookViewModel::updateEvent,
                     onDeleteEvent = logbookViewModel::deleteEvent,
                     onEstimateCarbs = logbookViewModel::estimateCarbs,
-                    onEntryPhoto = logbookViewModel::setPhoto,
+                    onEntryPhoto = logbookViewModel::setPhotos,
                     askState = askState,
                     hasAiKey = askViewModel.hasKey,
                     onAsk = askViewModel::ask,
                     onClearAsk = askViewModel::clear,
-                    onOpenSettings = { navController.navigateToTab(SukoonTab.YOU) },
+                    onOpenSettings = { openYou() },
                     insightsState = insightsState,
                     onAcknowledgeInsights = insightsViewModel::acknowledge,
                     pendingEntry = pendingEntry,
@@ -367,6 +411,9 @@ fun MainScaffold() {
                     onSelectReportDays = reportViewModel::selectDays,
                     reportName = container.settings.emergency.yourName,
                     doseSettings = { container.settings.doseSettings },
+                    pendingMealInsulin = pendingMealInsulin,
+                    onPendingMealInsulinHandled = { pendingMealInsulin = null },
+                    mealRecord = container.healthConnect::mealRecord,
                 )
             }
             composable(SukoonTab.YOU.route) {
@@ -453,6 +500,7 @@ fun MainScaffold() {
                     doseStartingPoints = {
                         InsightEngine.formulas(container.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofDays(14).toMillis()).first(), ZoneId.systemDefault())
                     },
+                    openPage = youOpen,
                     openLearning = container.requestedLearning.collectAsStateWithLifecycle().value,
                     onOpenedLearning = { container.requestedLearning.value = false },
                     parentPin = parentPin,
@@ -516,7 +564,7 @@ fun MainScaffold() {
 }
 
 @Composable
-private fun SukoonBottomBar(navController: NavHostController) {
+private fun SukoonBottomBar(navController: NavHostController, onYou: () -> Unit) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
@@ -538,7 +586,8 @@ private fun SukoonBottomBar(navController: NavHostController) {
                     label = stringResource(tab.labelRes),
                     selected = selected,
                     onClick = {
-                        if (!selected) navController.navigateToTab(tab)
+                        // You always opens on its hub, even when it's the tab already open.
+                        if (tab == SukoonTab.YOU) onYou() else if (!selected) navController.navigateToTab(tab)
                     },
                 )
             }

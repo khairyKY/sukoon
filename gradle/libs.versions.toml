@@ -12,10 +12,17 @@ kotlinxCoroutines = "1.9.0"
 junit = "4.13.2"
 json = "20240303"
 glance = "1.1.1"
+camerax = "1.3.4"
+mlkitBarcode = "17.3.0"
 # ponytail: newest that builds with compileSdk 35 / AGP 8.6; 1.1.0 final needs compileSdk 36 + AGP 8.9.1.
 healthConnect = "1.1.0-beta01"
 
 [libraries]
+androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax" }
+androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
+androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
+guava = { group = "com.google.guava", name = "guava", version = "31.1-android" }
+mlkit-barcode = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "mlkitBarcode" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

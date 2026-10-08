@@ -1,5 +1,6 @@
 package com.sukoon.app
 
+import com.sukoon.app.platform.TimeFormat
 import com.sukoon.app.domain.metrics.TargetRange
 import android.app.Application
 import com.sukoon.app.di.AppContainer
@@ -19,5 +20,6 @@ class SukoonApp : Application() {
         Backup.applyStaged(this) // a restore waiting from the last run: in place before anything opens it
         container = AppContainer(this)
         TargetRange.high = container.settings.targetHigh
+        TimeFormat.init(this, container.settings.timeFormat)
     }
 }

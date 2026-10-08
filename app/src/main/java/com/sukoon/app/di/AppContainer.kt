@@ -115,6 +115,9 @@ class AppContainer(private val context: Context) {
 
     val entryPhotos = EntryPhotos(context.filesDir)
 
+    /** Opt-in daily backup to a file in any cloud app (You → Reports). */
+    val cloudBackup = com.sukoon.app.data.backup.CloudBackup(context, database)
+
     val calibration = CalibrationManager(context, calibrationInForce, glucoseRepository, logbookRepository, appScope)
 
     /** Rapid insulin still active (Logbook doses on the exponential curve): every minute, and at once on a new dose. */
@@ -190,6 +193,7 @@ class AppContainer(private val context: Context) {
         followerWatch.start()
         healthConnect.start()
         calibration.start()
+        cloudBackup.start(appScope)
         // The sensor's ongoing notification shows the newest reading; re-drawn each minute for its age.
         appScope.launch {
             combine(glucoseRepository.latestReading, ticks(60_000)) { reading, _ -> reading }.collect { reading ->

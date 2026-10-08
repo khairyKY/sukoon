@@ -24,8 +24,9 @@ class SensorLifecycleTest {
         fun due(at: Instant) = SensorLifecycle.due(life(at), at)
         assertEquals(setOf(SensorNotice.WARMED_UP), due(t0.plus(Duration.ofMinutes(70))))
         assertEquals(emptySet<SensorNotice>(), due(t0.plus(Duration.ofDays(3))))
-        assertEquals(setOf(SensorNotice.DAY_LEFT), due(end.minus(Duration.ofHours(23))))
-        assertEquals(setOf(SensorNotice.DAY_LEFT, SensorNotice.HOUR_LEFT), due(end.minus(Duration.ofMinutes(30))))
-        assertEquals(setOf(SensorNotice.DAY_LEFT, SensorNotice.HOUR_LEFT, SensorNotice.ENDED), due(end.plusSeconds(60)))
+        assertEquals(setOf(SensorNotice.DAYS_LEFT), due(end.minus(Duration.ofDays(2))))
+        assertEquals(setOf(SensorNotice.DAYS_LEFT, SensorNotice.DAY_LEFT), due(end.minus(Duration.ofHours(23))))
+        assertEquals(setOf(SensorNotice.DAYS_LEFT, SensorNotice.DAY_LEFT, SensorNotice.HOUR_LEFT), due(end.minus(Duration.ofMinutes(30))))
+        assertEquals(setOf(SensorNotice.DAYS_LEFT, SensorNotice.DAY_LEFT, SensorNotice.HOUR_LEFT, SensorNotice.ENDED), due(end.plusSeconds(60)))
     }
 }

@@ -1,5 +1,10 @@
 package com.sukoon.app.ui.logbook
 
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import java.time.ZoneId
+import java.time.LocalDate
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -49,11 +54,31 @@ class LogbookViewModel(
 
 
     private val since = System.currentTimeMillis() - WINDOW_MILLIS
+    private val day = MutableStateFlow<LocalDate?>(null)
+
+    /** Look back at [date]'s entries (null: back to the last 24 hours). */
+    fun showDay(date: LocalDate?) {
+        day.value = date
+    }
+
+    /** A past day's entries, with its readings from half an hour before to 4 hours after (what its last meal did). */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val pastDay = day.flatMapLatest { d ->
+        if (d == null) {
+            flowOf(null)
+        } else {
+            val zone = ZoneId.systemDefault()
+            val from = d.atStartOfDay(zone).toInstant().toEpochMilli()
+            val to = d.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+            combine(repository.eventsBetween(from, to), glucose.readingsBetween(from - MeterCheck.WINDOW_MS, to + TimeUnit.HOURS.toMillis(4))) { e, r -> Triple(d, e, r) }
+        }
+    }
 
     // Readings ride along so each finger-prick can show what the sensor said at that moment. Events
     // load for a month: the doses' injection sites suggest the next spot; the list shows the window.
-    val uiState: StateFlow<LogbookUiState> = combine(repository.eventsSince(since - SITES_MILLIS), glucose.readingsSince(since - MeterCheck.WINDOW_MS), photoVersion) { month, readings, _ ->
-        val events = month.filter { it.timestampMillis >= since }
+    val uiState: StateFlow<LogbookUiState> = combine(repository.eventsSince(since - SITES_MILLIS), glucose.readingsSince(since - MeterCheck.WINDOW_MS), photoVersion, pastDay) { month, latest, _, past ->
+        val events = past?.second ?: month.filter { it.timestampMillis >= since }
+        val readings = past?.third ?: latest
         LogbookUiState(
             events = events.sortedByDescending { it.timestampMillis },
             siteHistory = month.filter { it.site != null },
@@ -65,6 +90,7 @@ class LogbookViewModel(
             photos = photos?.all().orEmpty(),
             glucoseNow = readings.lastOrNull()?.takeIf { Duration.between(it.timestamp, Instant.now()) <= HomeUiStateMapper.STALE_AFTER },
             readings = readings,
+            day = past?.first,
         )
     }
         .flowOn(Dispatchers.Default) // nearest-reading lookups and the photo folder stay off the main thread
@@ -81,10 +107,6 @@ class LogbookViewModel(
      */
     fun save(draft: EntryDraft): Deferred<List<Long>> = viewModelScope.async {
         val ids = mutableListOf<Long>()
-        draft.insulin?.takeIf { it > 0 }?.let { units ->
-            val at = draft.at.minusSeconds(draft.preBolusMinutes * 60L)
-            ids += repository.insert(EventEntity(timestampMillis = at.toEpochMilli(), type = LogEventType.INSULIN.name, value = units, site = draft.site?.name))
-        }
         val n = draft.nutrients
         val id = repository.insert(
             EventEntity(
@@ -93,6 +115,7 @@ class LogbookViewModel(
                 value = draft.amount,
                 note = draft.note,
                 site = draft.site?.name?.takeIf { draft.type == LogEventType.INSULIN || draft.type == LogEventType.BASAL },
+                mealId = draft.mealId,
                 fiber = n?.fiber,
                 sugar = n?.sugar,
                 protein = n?.protein,
@@ -101,7 +124,12 @@ class LogbookViewModel(
             ),
         )
         ids += id
-        if (draft.photo != null) setPhotoNow(id, draft.photo)
+        // A meal saved with its rapid insulin: the dose is linked to it (and stamped its pre-bolus minutes before).
+        draft.insulin?.takeIf { it > 0 }?.let { units ->
+            val at = draft.at.minusSeconds(draft.preBolusMinutes * 60L)
+            ids += repository.insert(EventEntity(timestampMillis = at.toEpochMilli(), type = LogEventType.INSULIN.name, value = units, site = draft.site?.name, mealId = id))
+        }
+        if (draft.photos.isNotEmpty()) setPhotoNow(id, draft.photos)
         ids
     }
 
@@ -110,7 +138,7 @@ class LogbookViewModel(
         viewModelScope.launch {
             ids.forEach { id ->
                 repository.deleteById(id)
-                setPhotoNow(id, null)
+                setPhotoNow(id, emptyList())
             }
         }
     }
@@ -122,26 +150,26 @@ class LogbookViewModel(
     fun deleteEvent(event: EventEntity) {
         viewModelScope.launch {
             repository.delete(event)
-            setPhotoNow(event.id, null)
+            setPhotoNow(event.id, emptyList())
         }
     }
 
-    /** Attach, replace (bytes) or remove (null) an entry's photo. */
-    fun setPhoto(id: Long, jpeg: ByteArray?) {
-        viewModelScope.launch { setPhotoNow(id, jpeg) }
+    /** An entry's photos become [jpegs] (none: removed). */
+    fun setPhotos(id: Long, jpegs: List<ByteArray>) {
+        viewModelScope.launch { setPhotoNow(id, jpegs) }
     }
 
-    private suspend fun setPhotoNow(id: Long, jpeg: ByteArray?) {
+    private suspend fun setPhotoNow(id: Long, jpegs: List<ByteArray>) {
         val store = photos ?: return
-        withContext(Dispatchers.IO) { if (jpeg != null) store.save(id, jpeg) else store.delete(id) }
+        withContext(Dispatchers.IO) { store.save(id, jpegs) }
         photoVersion.value++
     }
 
     /** AI carb estimate for the quick-entry sheet — a suggestion only; the sheet's Save logs it. */
-    suspend fun estimateCarbs(description: String, photoJpeg: ByteArray?): CarbEstimate {
-        val prompt = description.ifBlank { "Estimate the carbs in this meal." }
+    suspend fun estimateCarbs(description: String, photos: List<ByteArray>): CarbEstimate {
+        val prompt = description.ifBlank { if (photos.size > 1) "Estimate the carbs in this meal: these ${photos.size} photos are all the same meal." else "Estimate the carbs in this meal." }
         val arabic = Locale.getDefault().language == "ar"
-        val reply = gemini.generate(AiPrompts.carbSystemPrompt(arabic), listOf(ChatTurn(fromUser = true, text = prompt)), photoJpeg, jsonOutput = true)
+        val reply = gemini.generate(AiPrompts.carbSystemPrompt(arabic), listOf(ChatTurn(fromUser = true, text = prompt)), photos, jsonOutput = true)
         return CarbEstimate.parse(reply)
     }
 

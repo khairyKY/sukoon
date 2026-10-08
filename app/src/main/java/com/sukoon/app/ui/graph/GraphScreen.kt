@@ -1,5 +1,7 @@
 package com.sukoon.app.ui.graph
 
+import com.sukoon.app.ui.components.DayBar
+import com.sukoon.app.platform.TimeFormat
 import com.sukoon.app.ui.theme.SageDeep
 import com.sukoon.app.domain.metrics.TargetRange
 import androidx.compose.foundation.Canvas
@@ -108,7 +110,7 @@ private val READINGS_HEIGHT = 420.dp // the readings box; it scrolls inside, the
 private const val BUCKET_MS = 15 * 60_000L // 7/14-day charts draw 15-minute means
 private const val GAP_MS = 15 * 60_000L // a longer silence breaks the line instead of bridging it
 
-private val hm = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+private val hm: DateTimeFormatter get() = TimeFormat.of()
 
 /**
  * Trends → Graph (design 8j, overhauled 2026-10-03): the current value and trend, a chart colored by
@@ -121,6 +123,8 @@ fun GraphScreen(
     state: GraphUiState,
     onSelectRange: (GraphRange) -> Unit,
     modifier: Modifier = Modifier,
+    /** Another day to look at (null: up to now); absent when following someone. */
+    onDay: ((java.time.LocalDate?) -> Unit)? = null,
     /** Someone else's name when following them; "Graph" for your own. */
     title: String? = null,
 ) {
@@ -137,13 +141,14 @@ fun GraphScreen(
             .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 24.dp),
     ) {
         Header(state.readings.lastOrNull(), title)
-        Spacer(Modifier.height(16.dp))
+        onDay?.let { DayBar(state.day, it, Modifier.padding(top = 4.dp)) }
+        Spacer(Modifier.height(if (onDay == null) 16.dp else 4.dp))
         if (state.readings.isEmpty()) {
             Box(Modifier.fillMaxWidth().height(CHART_HEIGHT), contentAlignment = Alignment.Center) {
                 Text(stringResource(R.string.graph_empty), color = CaptionMuted, fontSize = 14.sp)
             }
         } else {
-            GlucoseChart(state.readings, state.range, state.events, zone)
+            GlucoseChart(state.readings, state.range, state.events, zone, end = state.endMillis)
         }
         Spacer(Modifier.height(12.dp))
         RangeSelector(state.range, onSelectRange)
@@ -224,12 +229,14 @@ internal fun GlucoseChart(
     zone: ZoneId,
     height: Dp = CHART_HEIGHT,
     interactive: Boolean = true,
+    /** Where the chart ends (a past day's midnight); null: now. */
+    end: Long? = null,
 ) {
     val onBg = MaterialTheme.colorScheme.onBackground
     val background = MaterialTheme.colorScheme.background
     // The chart always ends at "now", so a signal gap at the end shows as a gap.
-    val (tStart, tEnd, points) = remember(readings, range) {
-        val end = maxOf(System.currentTimeMillis(), readings.last().timestamp.toEpochMilli())
+    val (tStart, tEnd, points) = remember(readings, range, end) {
+        val end = end ?: maxOf(System.currentTimeMillis(), readings.last().timestamp.toEpochMilli())
         val start = end - range.millis
         val shown = readings.filter { it.timestamp.toEpochMilli() >= start }
         Triple(start, end, if (range.hours > 24) downsample(shown, BUCKET_MS) else shown)

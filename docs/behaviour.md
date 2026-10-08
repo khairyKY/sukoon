@@ -249,6 +249,14 @@ clean-meal lesson first, then what everything logged says (a ratio, then the fac
 your meals suggest 1 : 11". *Take a look* opens You → Insulin → Learning; *Not now* hides that
 suggestion until a different one appears. It never changes a number itself.
 
+**Meal without insulin, on Home**: with suggestions on, a meal of 10 g or more in the last hour with
+no insulin logged for it (linked, or from an hour before it), under 0.5 u still working, and a fresh
+reading that isn't low: Home shows the meal's dose with *Log it*, which opens insulin for that meal.
+After an hour it stops (a full meal dose that late risks a low); the correction covers a high.
+
+**When you're low**: no dose is suggested under 70, or under 100 and dropping. With a meal, the low
+card adds what the meal itself needs (carbs ÷ ratio, rounded down) for once you're back over 70.
+
 **Correction on Home**: with suggestions on and a correction factor set, Home shows "Correction · beta"
 when the reading is fresh and above your range, nothing with carbs was logged in the last 2 hours,
 and under 0.5 u is still working (otherwise Home's message already says to give it time). It shows
@@ -271,3 +279,66 @@ only for half-unit pens, and suggestions round down to the pen.
 
 - Snoozes, answers, "treated at" and texts already sent are kept across a restart. A countdown cut off by one starts again from 60 seconds (with its screen and sound) if the alarm is still unanswered.
 - If the phone kills the app, nothing inside it can sound. A watchdog covers that: every reading pushes a system alarm to just past your no-readings line (20 min + 2 by default). If readings stop because the app was killed, Android wakes Sukoon there; the sensor and alarms restart, and *No readings* goes off if the sensor is still quiet. It checks again every 5 minutes until readings return. The battery items in the check above still matter: they keep it from coming to that.
+
+## 11. Meals from other apps
+
+- MyFitnessPal doesn't send meals: it keeps **one record per day** in Health Connect (10:00–22:00),
+  the day's running total, rewritten each time food is added. Sukoon splits it back into meals: each
+  rise of at least 1 g carbs or 20 kcal is a meal, timed when it was logged (checked every 15
+  minutes); food taken off comes off that day's newest meals. What today held when Sukoon first saw
+  it becomes one *Earlier in the day* entry (several meals in one: no dose suggestion, nothing
+  learned from it); earlier days are left out. The foods themselves never reach Health
+  Connect. Other apps' day-long records are left out.
+- Tapping an imported meal shows, in order: when it was logged with *When did you eat?* (the time you
+  pick is kept), its carbs and insulin (or *Add insulin*), a *Rich meal* chip, what it did to glucose,
+  and one list of what's in it. Calories are whole numbers.
+- On Home, a meal from another app whose time you haven't set only gets a dose suggestion when no
+  rapid insulin was logged in the 3 hours before it (it may have been logged after you ate and dosed).
+- Insulin added for a meal is **linked to that meal** and stamped when you took it (*now* unless you
+  change it), so two meals at the same time can't swap doses. Insulin without a link is matched to
+  the nearest meal by time, as before.
+- A meal another app posts again (Samsung Health passing on MyFitnessPal's) within 10 minutes of a
+  MyFitnessPal meal with the same carbs is left out.
+- *What was it?* names an imported meal (the name becomes its title). Every meal, imported or
+  logged in Sukoon, opens on this screen; yours have *Edit meal* at the bottom.
+
+## 12. Meals from foods
+
+- A new meal starts from its foods: a search box with the barcode button inside it, three tiles
+  (Photo, MyFitnessPal, Just carbs) and your usual foods. *Just carbs* is the number pad, as before.
+- Search shows **yours** first (everything you've put on a plate, the most recent first, offline),
+  then **home dishes** (88 Egyptian and Middle-Eastern dishes in `assets/dishes.json`, each with its
+  source; Arabic matches however it's spelt: ة/ه, أ/ا, marks), then **Open Food Facts** after a 0.3 s
+  pause, in Arabic and English, with *Sold in Egypt* as a filter. A product without carbs is left
+  out: it couldn't be dosed from.
+- Dish carbs exclude fibre (as Open Food Facts counts them); stews (molokhia, bamya, besella…) are
+  without rice, which is its own food. Portions are typical; the per-100 g values are the sourced part.
+- A barcode is read by Sukoon's own camera (ML Kit inside the app): yours first, then Open Food
+  Facts. Not there: *Add it as your own*, and the next scan finds it.
+- *Ask the AI about "…"* estimates any dish (Gemini, your key); the estimate becomes one of yours,
+  counted in portions.
+- *How much?*: package parts or the serving, a dish's portion (½, 1, 1½, 2 bowls), −/+, or type it
+  in grams or portions. The plate adds carbs, fibre, protein, fat and calories into the meal, names
+  it after its foods (unless you named it), and the dose suggestion works from the total.
+- Photos: as many as you like per meal; the AI estimate reads them all as one meal.
+
+## 13. Your sensor (You → Sensor)
+
+- The state comes from the newest reading, not the Bluetooth link (the sensor drops it after every
+  reading): **Live** under 6 minutes old, **Reconnecting** under 20, else **No signal**; **Warming
+  up**, **Ended**, **Bluetooth off** and **Not in use** (another source chosen) override it.
+- What needs you is listed first: Bluetooth off (red, *Turn on*), no readings for 10 minutes or
+  more (red), ending within 3 days (amber; red on the last day), ended (red).
+- Its life is a bar, *Day 12 of 15 · ends …*, amber in the last 3 days and red on the last.
+- Notices: 3 days, 1 day and 1 hour before the end, and when it ends. Bluetooth off shows on Home,
+  and the no-readings alarm says Bluetooth is off when it is.
+
+## 14. Days, backup, clock
+
+- The logbook and the graph show the last 24 hours (or the chosen range) up to now; the *‹ Today ›*
+  bar goes to any earlier day (its entries, totals and the whole day's graph).
+- Cloud backup (opt-in, You → Reports): the full backup zip, written to one file you chose in a
+  cloud app, on choosing and then once a day (checked hourly while Sukoon runs). Sukoon keeps
+  permission to that file only. *Stop* releases it.
+- Times follow You → Appearance → Clock: the phone's, 12-hour or 24-hour, everywhere (alarms,
+  notifications and widgets included).

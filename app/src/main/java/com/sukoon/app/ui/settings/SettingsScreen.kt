@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.settings
 
+import com.sukoon.app.platform.TimeFormat
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import com.sukoon.app.domain.metrics.TargetRange
@@ -113,7 +114,7 @@ import com.sukoon.app.insulin.DoseSettings
 import com.sukoon.app.insulin.RatioLearner
 
 /** The You tab's sections (design "You, divided"): each opens its own page from the hub. */
-private enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
+enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
     SENSOR(R.string.you_sensor, R.drawable.ic_sensor),
     ALARMS(R.string.you_alarms, R.drawable.ic_bell),
     PEOPLE(R.string.you_people, R.drawable.ic_people),
@@ -185,6 +186,8 @@ fun SettingsScreen(
     onTargetHigh: (Int) -> Unit = {},
     parentPin: String? = null,
     onParentPin: (String?) -> Unit = {},
+    /** Each new count opens You on that page (null: the hub): the You tab, Troubleshoot → Sensor. */
+    openPage: Pair<Int, YouPage?> = 0 to null,
     /** Home's learning notice: open You → Insulin with the Learning screen up. */
     openLearning: Boolean = false,
     onOpenedLearning: () -> Unit = {},
@@ -197,6 +200,7 @@ fun SettingsScreen(
     if (askingPin) PinDialog(setting = false, stored = parentPin, onDone = { unlocked = true; askingPin = false }, onDismiss = { askingPin = false })
     val context = LocalContext.current
     var page by rememberSaveable { mutableStateOf<YouPage?>(null) }
+    LaunchedEffect(openPage.first) { if (openPage.first > 0) page = openPage.second }
     LaunchedEffect(openLearning) { if (openLearning) page = YouPage.INSULIN }
     BackHandler(enabled = page != null) { page = null }
     val missing = rememberMissingSetup()
@@ -388,6 +392,9 @@ fun SettingsScreen(
                         Gap()
                         SectionLabel(stringResource(R.string.you_language))
                         LanguageChoice()
+                        Gap()
+                        SectionLabel(stringResource(R.string.you_clock))
+                        ClockChoice()
                         Gap()
                         SectionLabel(stringResource(R.string.widgets_title))
                         WidgetsCard()
@@ -643,6 +650,55 @@ private fun MiniScreen(dark: Boolean, modifier: Modifier) {
         Box(Modifier.fillMaxWidth(0.7f).height(6.dp).clip(RoundedCornerShape(3.dp)).background(if (dark) OnCanvasDark else OnCanvasLight))
         Box(Modifier.fillMaxWidth().height(24.dp).clip(RoundedCornerShape(6.dp)).background(if (dark) SurfaceDark else SurfaceLight))
         Box(Modifier.fillMaxWidth().height(14.dp).clip(RoundedCornerShape(5.dp)).background(if (dark) SageLight else Sage))
+    }
+}
+
+/** 12- or 24-hour times everywhere in Sukoon, or the phone's. */
+@Composable
+private fun ClockChoice() {
+    val settings = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.settings
+    val sample = java.time.LocalTime.of(13, 50)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, outline(), RoundedCornerShape(18.dp)),
+    ) {
+        listOf(
+            TimeFormat.Mode.PHONE to stringResource(R.string.theme_auto),
+            TimeFormat.Mode.H12 to stringResource(R.string.you_clock_12),
+            TimeFormat.Mode.H24 to stringResource(R.string.you_clock_24),
+        ).forEach { (mode, label) ->
+            val on = mode == TimeFormat.mode
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp)
+                    .clickable(enabled = !on) {
+                        settings.timeFormat = mode
+                        TimeFormat.mode = mode
+                    }
+                    .padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                    Text(
+                        when (mode) {
+                            TimeFormat.Mode.PHONE -> stringResource(R.string.you_clock_phone)
+                            TimeFormat.Mode.H12 -> java.time.format.DateTimeFormatter.ofPattern("h:mm a").format(sample)
+                            TimeFormat.Mode.H24 -> java.time.format.DateTimeFormatter.ofPattern("HH:mm").format(sample)
+                        },
+                        fontSize = 12.5.sp,
+                        color = CaptionMuted,
+                    )
+                }
+                Box(Modifier.size(20.dp).clip(CircleShape).border(2.dp, if (on) Sage else CaptionMuted.copy(alpha = 0.5f), CircleShape), contentAlignment = Alignment.Center) {
+                    if (on) Box(Modifier.size(9.dp).clip(CircleShape).background(Sage))
+                }
+            }
+        }
     }
 }
 

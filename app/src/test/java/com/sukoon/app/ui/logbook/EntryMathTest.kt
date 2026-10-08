@@ -71,4 +71,17 @@ class EntryMathTest {
         assertEquals(listOf(4L, 0L), recentRepeats(events).map { it.id })
         assertEquals(107.0 to 8.0, todayTotals(events, t0, ZoneOffset.UTC))
     }
+
+    @Test
+    fun `a dose linked to a meal stays with it when two meals share a time`() {
+        val ten = java.time.Instant.parse("2026-10-08T10:00:00Z").toEpochMilli()
+        val first = com.sukoon.app.data.db.EventEntity(id = 1, timestampMillis = ten, type = "CARB", value = 109.0, source = "com.myfitnesspal.android")
+        val second = com.sukoon.app.data.db.EventEntity(id = 2, timestampMillis = ten, type = "CARB", value = 213.0, source = "com.myfitnesspal.android")
+        // Taken at 13:53 for the second meal: far from 10:00, and both meals sit there.
+        val dose = com.sukoon.app.data.db.EventEntity(id = 3, timestampMillis = ten + 233 * 60_000L, type = "INSULIN", value = 12.0, mealId = 2)
+        val groups = groupEntries(listOf(dose, second, first))
+        org.junit.Assert.assertEquals(listOf(dose), groups.single { it.main.id == 2L }.insulin)
+        org.junit.Assert.assertTrue(groups.single { it.main.id == 1L }.insulin.isEmpty())
+        org.junit.Assert.assertTrue(groups.none { it.main.id == 3L }) // shown under its meal, not on its own
+    }
 }
