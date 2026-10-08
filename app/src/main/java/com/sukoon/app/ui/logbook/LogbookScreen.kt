@@ -281,6 +281,11 @@ fun LogbookScreen(
     detail?.let { meal ->
         MealDetailSheet(
             loadRecord = { mealRecord(meal.id) },
+            onSetTime = { at ->
+                val moved = meal.copy(timestampMillis = at.toEpochMilli(), timeSet = true)
+                onUpdateEvent(moved)
+                detail = moved
+            },
             meal = meal,
             insulin = groups.firstOrNull { it.main.id == meal.id }?.insulin.orEmpty(),
             readings = state.readings,

@@ -1,5 +1,6 @@
 package com.sukoon.app.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Entity
@@ -35,6 +36,8 @@ data class EventEntity(
     val site: String? = null,
     /** The meal a rapid dose was taken for (its event id); null = matched to a meal by time. */
     val mealId: Long? = null,
+    /** You said when you ate it: an imported meal keeps this time when its app sends it again. */
+    @ColumnInfo(defaultValue = "0") val timeSet: Boolean = false,
 )
 
 /** INSULIN = rapid-acting (bolus, e.g. Apidra); BASAL = long-acting (e.g. Toujeo). Stored by name, so adding one needs no migration. */
@@ -58,6 +61,9 @@ interface EventDao {
 
     @Query("DELETE FROM events WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    @Query("SELECT * FROM events WHERE id = :id")
+    suspend fun byId(id: Long): EventEntity?
 
     @Query("SELECT * FROM events WHERE timestampMillis >= :sinceMillis ORDER BY timestampMillis ASC")
     fun since(sinceMillis: Long): Flow<List<EventEntity>>

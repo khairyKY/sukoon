@@ -29,4 +29,6 @@ class LogbookRepository(private val eventDao: EventDao) {
     suspend fun insert(event: EventEntity): Long = eventDao.insert(event)
 
     suspend fun deleteById(id: Long) = eventDao.deleteById(id)
+
+    suspend fun byId(id: Long): EventEntity? = eventDao.byId(id)
 }

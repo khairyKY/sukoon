@@ -282,9 +282,12 @@ class HealthConnectSync(
             existing?.let { logbook.deleteById(it); ids.remove(record.metadata.id) }
             return null
         }
+        // The time you said you ate it beats the one the app sends (MyFitnessPal's can be hours off).
+        val yours = existing?.let { logbook.byId(it) }?.takeIf { it.timeSet }
         val event = EventEntity(
             id = existing ?: 0,
-            timestampMillis = record.startTime.toEpochMilli(),
+            timestampMillis = yours?.timestampMillis ?: record.startTime.toEpochMilli(),
+            timeSet = yours != null,
             type = LogEventType.CARB.name,
             value = carbs ?: 0.0,
             note = record.name?.takeIf { it.isNotBlank() }, // the foods, as the other app names them
