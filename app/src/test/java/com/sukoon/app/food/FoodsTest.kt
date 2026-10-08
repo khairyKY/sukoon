@@ -31,4 +31,10 @@ class FoodsTest {
         val bowl = Food(name = "Koshari", per100 = listOf(70.0, 0.0, 0.0, 0.0, 0.0, 0.0), own = true)
         assertEquals(105.0, bowl.of(1.5)[Food.CARBS], 1e-9)
     }
+
+    @Test
+    fun `arabic spellings match whichever way they're typed`() {
+        assertEquals(Dishes.normalize("ملوخيه"), Dishes.normalize("مُلوخيّة"))
+        assertEquals(Dishes.normalize("ارانب"), Dishes.normalize("أرانب"))
+    }
 }
