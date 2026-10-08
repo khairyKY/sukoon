@@ -322,16 +322,21 @@ class HealthConnectSync(
     /** A rise in the day's total becomes a meal, when you logged it; a fall comes off the newest of that day's meals. */
     private suspend fun splitDayTotal(record: NutritionRecord): Boolean? {
         val totals = dayTotals()
-        val key = record.metadata.id
+        val zone = ZoneId.systemDefault()
+        // By day, not record: MyFitnessPal writes each change as a new record and deletes the old one.
+        val key = "${record.metadata.dataOrigin.packageName}|${record.startTime.atZone(zone).toLocalDate()}"
+        val changed = record.metadata.lastModifiedTime.toEpochMilli()
         fun g(m: androidx.health.connect.client.units.Mass?) = m?.inGrams ?: 0.0
         val now = listOf(g(record.totalCarbohydrate), g(record.dietaryFiber), g(record.sugar), g(record.protein), g(record.totalFat), record.energy?.inKilocalories ?: 0.0)
         val prior = totals.optJSONObject(key)
         if (prior == null) {
             // First seen: what's in it already stays out (it can't be told apart into meals any more).
-            totals.put(key, JSONObject().put("seen", JSONArray(now)).put("meals", JSONArray()))
+            totals.put(key, JSONObject().put("seen", JSONArray(now)).put("meals", JSONArray()).put("changed", changed))
             saveDayTotals(totals)
             return null
         }
+        // An older copy of the day read after a newer one (before its deletion arrives) changes nothing.
+        if (changed < prior.optLong("changed")) return null
         val seen = prior.getJSONArray("seen").let { a -> List(a.length()) { a.getDouble(it) } }
         val ids = prior.getJSONArray("meals").let { a -> List(a.length()) { a.getLong(it) } }
         val step = DayTotals.step(seen, now)
@@ -345,14 +350,13 @@ class HealthConnectSync(
             outcome = false
         }
         step.meal?.let { added ->
-            val zone = ZoneId.systemDefault()
             // When it was logged; a past day filled in later goes at that day's end instead of now.
             val at = record.metadata.lastModifiedTime.takeIf { it.atZone(zone).toLocalDate() == record.startTime.atZone(zone).toLocalDate() } ?: record.endTime
             val meal = EventEntity(timestampMillis = minOf(at, Instant.now()).toEpochMilli(), type = LogEventType.CARB.name, source = MFP).withSums(added)
             meals = meals + meal.copy(id = logbook.insert(meal))
             outcome = true
         }
-        totals.put(key, JSONObject().put("seen", JSONArray(step.seen)).put("meals", JSONArray(meals.map { it.id })))
+        totals.put(key, JSONObject().put("seen", JSONArray(step.seen)).put("meals", JSONArray(meals.map { it.id })).put("changed", changed))
         saveDayTotals(totals)
         return outcome
     }
