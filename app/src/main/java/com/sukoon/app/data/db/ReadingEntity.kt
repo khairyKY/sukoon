@@ -41,6 +41,9 @@ interface ReadingDao {
     @Query("SELECT * FROM readings WHERE timestampMillis >= :sinceMillis ORDER BY timestampMillis ASC")
     fun since(sinceMillis: Long): Flow<List<ReadingEntity>>
 
+    @Query("SELECT * FROM readings WHERE timestampMillis >= :fromMillis AND timestampMillis < :toMillis ORDER BY timestampMillis ASC")
+    fun between(fromMillis: Long, toMillis: Long): Flow<List<ReadingEntity>>
+
     // Most-recent [limit] readings, newest first. Callers that want chronological order reverse it.
     @Query("SELECT * FROM readings ORDER BY timestampMillis DESC LIMIT :limit")
     fun latestN(limit: Int): Flow<List<ReadingEntity>>

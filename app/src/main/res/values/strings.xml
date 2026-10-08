@@ -1516,4 +1516,25 @@
     <string name="you_clock_12">12-hour</string>
     <string name="you_clock_24">24-hour</string>
     <string name="you_clock_phone">Follows your phone</string>
+    <string name="day_today">Today</string>
+    <string name="day_yesterday">Yesterday</string>
+    <string name="day_previous">Day before</string>
+    <string name="day_next">Day after</string>
+    <string name="logbook_day_totals">%1$s g · %2$s u</string>
+    <string name="logbook_day_empty">Nothing logged this day.</string>
+    <plurals name="carb_ai_photos_added">
+        <item quantity="one">%1$d photo added</item>
+        <item quantity="other">%1$d photos added</item>
+    </plurals>
+    <string name="food_home_dishes">Home dishes</string>
+    <string name="food_ask_ai">Ask the AI about “%1$s”</string>
+    <string name="cloud_title">Back up to your cloud, every day</string>
+    <string name="cloud_body">Off. Choose a place in any cloud app on this phone (Google Drive, OneDrive, Dropbox…) and Sukoon saves everything there once a day: readings, logbook, photos and settings, including your AI key. Only that one file; you can stop any time.</string>
+    <string name="cloud_choose">Choose where</string>
+    <string name="cloud_where">Daily to %1$s</string>
+    <string name="cloud_last">Last backed up %1$s</string>
+    <string name="cloud_busy">Backing up…</string>
+    <string name="cloud_error">The last backup didn\'t go through: %1$s</string>
+    <string name="cloud_now">Back up now</string>
+    <string name="cloud_stop">Stop</string>
 </resources>

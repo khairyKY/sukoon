@@ -24,6 +24,10 @@ data class Food(
     val own: Boolean = false,
     /** Yours: how much you had last time (grams, or portions for [own]). */
     val lastAmount: Double? = null,
+    /** The product's photo (Open Food Facts), shown beside it. */
+    val imageUrl: String? = null,
+    /** A home dish's usual portion ("bowl", "طبق"), [servingGrams] of it. */
+    val servingLabel: String? = null,
 ) {
     /** What [amount] (grams, or portions for [own]) of it holds, in [per100]'s order. */
     fun of(amount: Double): List<Double> = per100.map { it * (if (own) amount else amount / 100) }
@@ -47,7 +51,7 @@ data class PlateItem(val food: Food, val amount: Double) {
  * only the fields used, and answers kept for the session, so a second look is instant.
  */
 object OpenFoodFacts {
-    private const val FIELDS = "code,product_name,product_name_en,product_name_ar,brands,nutriments,serving_quantity,product_quantity"
+    private const val FIELDS = "code,product_name,product_name_en,product_name_ar,brands,nutriments,serving_quantity,product_quantity,image_front_small_url"
     private const val AGENT = "Sukoon/0.7 (Android; github.com/khairyKY/sukoon)"
     private val searches = mutableMapOf<String, List<Food>>()
     private val barcodes = mutableMapOf<String, Food?>()
@@ -56,7 +60,8 @@ object OpenFoodFacts {
         val q = query.trim() + if (egyptOnly) " countries_tags:\"en:egypt\"" else ""
         searches[q]?.let { return it }
         val hits = runCatching {
-            get("https://search.openfoodfacts.org/search?page_size=25&fields=$FIELDS&q=${enc(q)}").optJSONArray("hits")
+            // Arabic and English names alike: "فول" finds as much as "foul".
+            get("https://search.openfoodfacts.org/search?page_size=25&langs=ar,en&fields=$FIELDS&q=${enc(q)}").optJSONArray("hits")
         }.getOrElse {
             // ponytail: the older search (slower) when the new index is down; the Egypt filter is dropped there.
             get("https://world.openfoodfacts.org/cgi/search.pl?search_simple=1&json=1&page_size=25&fields=$FIELDS&search_terms=${enc(query.trim())}").optJSONArray("products")
@@ -90,6 +95,7 @@ object OpenFoodFacts {
             per100 = listOf(carbs, num("fiber_100g") ?: 0.0, num("sugars_100g") ?: 0.0, num("proteins_100g") ?: 0.0, num("fat_100g") ?: 0.0, kcal),
             servingGrams = p.optDouble("serving_quantity").takeIf { !it.isNaN() && it > 0 },
             packageGrams = p.optDouble("product_quantity").takeIf { !it.isNaN() && it > 0 },
+            imageUrl = p.optString("image_front_small_url").ifEmpty { null },
         )
     }
 
@@ -131,6 +137,7 @@ class MyFoods private constructor(context: Context) {
 
     private fun write(f: Food) = JSONObject().put("name", f.name).put("brand", f.brand).put("code", f.code).put("per100", JSONArray(f.per100))
         .put("serving", f.servingGrams).put("package", f.packageGrams).put("own", f.own).put("last", f.lastAmount)
+        .put("image", f.imageUrl).put("servingLabel", f.servingLabel)
 
     private fun read(o: JSONObject): Food? = runCatching {
         val per = o.getJSONArray("per100")
@@ -144,6 +151,8 @@ class MyFoods private constructor(context: Context) {
             packageGrams = opt("package"),
             own = o.optBoolean("own"),
             lastAmount = opt("last"),
+            imageUrl = o.optString("image").ifEmpty { null }.takeUnless { o.isNull("image") },
+            servingLabel = o.optString("servingLabel").ifEmpty { null }.takeUnless { o.isNull("servingLabel") },
         )
     }.getOrNull()
 
@@ -157,8 +166,48 @@ class MyFoods private constructor(context: Context) {
 /** The quick amounts for a food: its package parts and serving, else common gram amounts; portions for yours. */
 fun portions(food: Food): List<Pair<String?, Double>> = when {
     food.own -> listOf(null to 0.5, null to 1.0, null to 1.5, null to 2.0)
+    food.servingLabel != null && food.servingGrams != null -> listOf(0.5, 1.0, 1.5, 2.0).map { "dish" to food.servingGrams * it }
     food.packageGrams != null -> listOf("¼" to food.packageGrams / 4, "½" to food.packageGrams / 2, "1" to food.packageGrams) +
         listOfNotNull(food.servingGrams?.takeIf { it < food.packageGrams / 4 || it > food.packageGrams }?.let { "serving" to it })
     food.servingGrams != null -> listOf("serving" to food.servingGrams, null to 100.0, null to 200.0)
     else -> listOf(null to 50.0, null to 100.0, null to 150.0, null to 200.0)
+}
+
+/**
+ * Home dishes and staples (Egyptian and wider Middle-Eastern), in Arabic and English, with sources:
+ * assets/dishes.json. Offline and instant: what Open Food Facts (packaged foods) doesn't have.
+ */
+object Dishes {
+    private var all: List<Pair<Food, String>>? = null // the food, and every name it answers to
+
+    fun search(context: Context, query: String, arabic: Boolean): List<Food> {
+        val q = normalize(query)
+        if (q.length < 2) return emptyList()
+        // Every word somewhere in its names: "ملوخية و ارانب" finds molokhia and rabbit both.
+        val words = q.split(' ').filter { it.length >= 2 && it != "و" && it != "and" && it != "with" && it != "ب" }
+        return load(context, arabic).filter { (_, names) -> words.any { it in names } }.map { it.first }.take(15)
+    }
+
+    private fun load(context: Context, arabic: Boolean): List<Pair<Food, String>> = all ?: runCatching {
+        val array = JSONArray(context.assets.open("dishes.json").bufferedReader().readText())
+        List(array.length()) { i ->
+            val o = array.getJSONObject(i)
+            val per = o.getJSONArray("per100")
+            val portion = o.optJSONObject("portion")
+            val names = (listOf(o.optString("en"), o.optString("ar")) + o.optJSONArray("aliases").let { a -> if (a == null) emptyList() else List(a.length()) { a.getString(it) } })
+            Food(
+                name = if (arabic) o.optString("ar").ifEmpty { o.getString("en") } else o.getString("en"),
+                brand = null,
+                per100 = List(6) { per.optDouble(it, 0.0) },
+                servingGrams = portion?.optDouble("grams")?.takeIf { !it.isNaN() && it > 0 },
+                servingLabel = portion?.optString(if (arabic) "ar" else "en")?.ifEmpty { null }?.removePrefix("1 ")?.trim(),
+            ) to normalize(names.joinToString(" | "))
+        }
+    }.getOrDefault(emptyList()).also { all = it }
+
+    /** Lower case, no Arabic marks, and its look-alike letters as one (ة/ه, أ/إ/آ/ا, ى/ي). */
+    internal fun normalize(s: String): String = s.lowercase()
+        .replace(Regex("[\u064B-\u0652\u0640]"), "")
+        .replace('ة', 'ه').replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا').replace('ى', 'ي')
+        .replace(Regex("\\s+"), " ").trim()
 }

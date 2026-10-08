@@ -74,6 +74,10 @@ class GlucoseRepository(
     fun readingsSince(sinceMillis: Long): Flow<List<GlucoseReading>> =
         combine(readingDao.since(sinceMillis), calibration) { rows, _ -> rows.map { adjust(it.toGlucoseReading()) } }
 
+    /** Readings in [fromMillis, toMillis), chronological: a past day. */
+    fun readingsBetween(fromMillis: Long, toMillis: Long): Flow<List<GlucoseReading>> =
+        combine(readingDao.between(fromMillis, toMillis), calibration) { rows, _ -> rows.map { adjust(it.toGlucoseReading()) } }
+
     /** As stored, before calibration: what the calibration itself is fitted on. */
     fun rawReadingsSince(sinceMillis: Long): Flow<List<GlucoseReading>> =
         readingDao.since(sinceMillis).map { rows -> rows.map { it.toGlucoseReading() } }

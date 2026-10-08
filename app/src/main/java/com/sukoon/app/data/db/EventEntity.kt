@@ -69,4 +69,7 @@ interface EventDao {
 
     @Query("SELECT * FROM events WHERE timestampMillis >= :sinceMillis ORDER BY timestampMillis ASC")
     fun since(sinceMillis: Long): Flow<List<EventEntity>>
+
+    @Query("SELECT * FROM events WHERE timestampMillis >= :fromMillis AND timestampMillis < :toMillis ORDER BY timestampMillis ASC")
+    fun between(fromMillis: Long, toMillis: Long): Flow<List<EventEntity>>
 }

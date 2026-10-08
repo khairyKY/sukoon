@@ -1628,4 +1628,25 @@
     <string name="you_clock_12">١٢ ساعة</string>
     <string name="you_clock_24">٢٤ ساعة</string>
     <string name="you_clock_phone">زي الموبايل</string>
+    <string name="day_today">النهارده</string>
+    <string name="day_yesterday">امبارح</string>
+    <string name="day_previous">اليوم اللي قبله</string>
+    <string name="day_next">اليوم اللي بعده</string>
+    <string name="logbook_day_totals">%1$s جم · %2$s وحدة</string>
+    <string name="logbook_day_empty">مفيش حاجة متسجّلة اليوم ده.</string>
+    <plurals name="carb_ai_photos_added">
+        <item quantity="one">اتضافت صورة</item>
+        <item quantity="other">اتضاف %1$d صور</item>
+    </plurals>
+    <string name="food_home_dishes">أكل بيتي</string>
+    <string name="food_ask_ai">اسأل الذكاء الاصطناعي عن “%1$s”</string>
+    <string name="cloud_title">نسخة احتياطية على السحابة كل يوم</string>
+    <string name="cloud_body">مقفولة. اختار مكان في أي تطبيق سحابة على الموبايل (Google Drive أو OneDrive أو Dropbox…) وسكون هيحفظ كل حاجة هناك مرة في اليوم: القراءات والسجل والصور والإعدادات، ومعاها مفتاح الذكاء الاصطناعي. ملف واحد بس، وتقدر توقفها في أي وقت.</string>
+    <string name="cloud_choose">اختار المكان</string>
+    <string name="cloud_where">كل يوم على %1$s</string>
+    <string name="cloud_last">آخر نسخة %1$s</string>
+    <string name="cloud_busy">بيعمل نسخة…</string>
+    <string name="cloud_error">آخر نسخة ما اتعملتش: %1$s</string>
+    <string name="cloud_now">اعمل نسخة دلوقتي</string>
+    <string name="cloud_stop">وقّف</string>
 </resources>

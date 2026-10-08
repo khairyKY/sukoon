@@ -27,7 +27,7 @@ data class EntryDraft(
     val amount: Double?,
     val note: String?,
     val at: Instant,
-    val photo: ByteArray? = null,
+    val photos: List<ByteArray> = emptyList(),
     /** A meal's rapid insulin, taken [preBolusMinutes] before [at]. */
     val insulin: Double? = null,
     val preBolusMinutes: Int = 0,

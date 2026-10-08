@@ -68,8 +68,8 @@ fun TrendsHub(
     onUndoEntry: (List<Long>) -> Unit,
     onUpdateEvent: (EventEntity) -> Unit,
     onDeleteEvent: (EventEntity) -> Unit,
-    onEstimateCarbs: suspend (String, ByteArray?) -> CarbEstimate,
-    onEntryPhoto: (Long, ByteArray?) -> Unit,
+    onEstimateCarbs: suspend (String, List<ByteArray>) -> CarbEstimate,
+    onEntryPhoto: (Long, List<ByteArray>) -> Unit,
     askState: AskUiState,
     hasAiKey: Boolean,
     onAsk: (String) -> Unit,
@@ -88,6 +88,8 @@ fun TrendsHub(
     pendingMealInsulin: Long? = null,
     onPendingMealInsulinHandled: () -> Unit = {},
     mealRecord: suspend (Long) -> HealthConnectSync.MealRecord? = { null },
+    onGraphDay: (java.time.LocalDate?) -> Unit = {},
+    onLogbookDay: (java.time.LocalDate?) -> Unit = {},
 ) {
     var subTab by rememberSaveable { mutableStateOf(TrendsSubTab.GRAPH) }
     if (pendingEntry != null || pendingMealInsulin != null) subTab = TrendsSubTab.LOGBOOK
@@ -104,12 +106,13 @@ fun TrendsHub(
             SubTabChip(stringResource(R.string.ask_tab), subTab == TrendsSubTab.ASK) { subTab = TrendsSubTab.ASK }
         }
         when (subTab) {
-            TrendsSubTab.GRAPH -> GraphScreen(state = graphState, onSelectRange = onSelectRange, modifier = Modifier.weight(1f))
+            TrendsSubTab.GRAPH -> GraphScreen(state = graphState, onSelectRange = onSelectRange, modifier = Modifier.weight(1f), onDay = onGraphDay)
             TrendsSubTab.LOGBOOK -> LogbookScreen(
                 state = logbookState,
                 onSaveEntry = onSaveEntry,
                 onUndoEntry = onUndoEntry,
                 onUpdateEvent = onUpdateEvent,
+                onDay = onLogbookDay,
                 onDeleteEvent = onDeleteEvent,
                 modifier = Modifier.weight(1f),
                 onEstimateCarbs = onEstimateCarbs,

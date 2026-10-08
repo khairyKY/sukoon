@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.logbook
 
+import androidx.compose.foundation.horizontalScroll
 import com.sukoon.app.platform.TimeFormat
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
@@ -220,6 +221,8 @@ internal fun NutrientGrid(meal: EventEntity) {
 internal fun MealDetailSheet(
     meal: EventEntity,
     insulin: List<EventEntity>,
+    /** Its photos, in the order taken. */
+    photos: List<java.io.File> = emptyList(),
     readings: List<GlucoseReading>,
     onAddInsulin: () -> Unit,
     onEditInsulin: (EventEntity) -> Unit,
@@ -265,6 +268,11 @@ internal fun MealDetailSheet(
                             color = SageDeep,
                         )
                     }
+                }
+            }
+            if (photos.isNotEmpty()) {
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    photos.forEach { PhotoThumb(it, Modifier.size(120.dp).clip(RoundedCornerShape(14.dp))) }
                 }
             }
             if (imported) EatenAt(meal, app.label, onSetTime)

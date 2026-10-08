@@ -1,5 +1,10 @@
 package com.sukoon.app.ui.logbook
 
+import android.graphics.BitmapFactory
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.ImageBitmap
+import com.sukoon.app.ai.CarbEstimate
+import com.sukoon.app.food.Dishes
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
@@ -92,7 +97,13 @@ private enum class FoodFilter { ALL, YOURS, EGYPT }
  * Open Food Facts as you type; a barcode straight to its amount; anything missing made yours by hand.
  */
 @Composable
-internal fun FoodPicker(scanFirst: Boolean, onAdd: (PlateItem) -> Unit, onDismiss: () -> Unit) {
+internal fun FoodPicker(
+    scanFirst: Boolean,
+    onAdd: (PlateItem) -> Unit,
+    onDismiss: () -> Unit,
+    /** The AI's carb estimate, for anything not found (null without an AI key). */
+    estimate: (suspend (String, List<ByteArray>) -> CarbEstimate)? = null,
+) {
     val context = LocalContext.current
     val mine = remember { MyFoods.get(context) }
     val scope = rememberCoroutineScope()
@@ -105,6 +116,29 @@ internal fun FoodPicker(scanFirst: Boolean, onAdd: (PlateItem) -> Unit, onDismis
     var making by remember { mutableStateOf<Pair<String, String?>?>(null) } // a food of yours: its name, and the barcode it was scanned with
     var scanning by remember { mutableStateOf(scanFirst) }
     var notFound by remember { mutableStateOf<String?>(null) }
+    var asking by remember { mutableStateOf(false) }
+    var askError by remember { mutableStateOf<String?>(null) }
+    val arabic = java.util.Locale.getDefault().language == "ar"
+
+    /** "Ask the AI": its estimate becomes one of yours, a portion as it described. */
+    fun ask(text: String) {
+        val run = estimate ?: return
+        asking = true
+        askError = null
+        scope.launch {
+            runCatching { run(text, emptyList()) }
+                .onSuccess { r ->
+                    picked = Food(
+                        name = r.title.ifBlank { text },
+                        brand = listOf(r.items.joinToString(", ") { it.first }, r.confidence).filter { it.isNotBlank() }.joinToString(" · "),
+                        per100 = listOf(r.carbsGrams.toDouble(), 0.0, 0.0, 0.0, 0.0, 0.0),
+                        own = true,
+                    )
+                }
+                .onFailure { askError = it.message }
+            asking = false
+        }
+    }
 
     fun add(item: PlateItem) {
         mine.remember(item)
@@ -188,6 +222,7 @@ internal fun FoodPicker(scanFirst: Boolean, onAdd: (PlateItem) -> Unit, onDismis
                     }
                     if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 10.dp), color = Sage) else Spacer(Modifier.padding(top = 14.dp))
                     val yours = if (query.isBlank()) mine.all().take(30) else mine.search(query)
+                    val dishes = remember(query) { Dishes.search(context, query, arabic) }.filter { d -> yours.none { it.key == d.key } }
                     val theirs = found.filter { f -> yours.none { it.key == f.key } }
                     LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(0.dp)) {
                         notFound?.let { code ->
@@ -196,9 +231,24 @@ internal fun FoodPicker(scanFirst: Boolean, onAdd: (PlateItem) -> Unit, onDismis
                         }
                         if (yours.isNotEmpty()) item { Eyebrow(stringResource(if (query.isBlank()) R.string.food_your_usual else R.string.food_filter_yours), Modifier.padding(vertical = 8.dp)) }
                         items(yours, key = { "y" + it.key }) { f -> FoodRow(f, yours = true) { picked = f } }
+                        if (filter != FoodFilter.YOURS && dishes.isNotEmpty()) item { Eyebrow(stringResource(R.string.food_home_dishes), Modifier.padding(top = 14.dp, bottom = 8.dp)) }
+                        if (filter != FoodFilter.YOURS) items(dishes, key = { "d" + it.key }) { f -> FoodRow(f, yours = false) { picked = f } }
                         if (filter != FoodFilter.YOURS && theirs.isNotEmpty()) item { Eyebrow(stringResource(R.string.food_from_off), Modifier.padding(top = 14.dp, bottom = 8.dp)) }
                         if (filter != FoodFilter.YOURS) items(theirs, key = { "o" + it.key }) { f -> FoodRow(f, yours = false) { picked = f } }
                         if (failed) item { Text(stringResource(R.string.food_offline), fontSize = 13.5.sp, color = StateLow, modifier = Modifier.padding(vertical = 10.dp)) }
+                        if (query.isNotBlank() && estimate != null) item {
+                            Row(Modifier.fillMaxWidth().clickable(enabled = !asking) { ask(query.trim()) }.padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(painterResource(R.drawable.ic_sparkle), contentDescription = null, tint = SageDeep, modifier = Modifier.size(20.dp))
+                                Text(
+                                    stringResource(if (asking) R.string.carb_ai_busy else R.string.food_ask_ai, query.trim()),
+                                    fontSize = 14.5.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = SageDeep,
+                                    modifier = Modifier.padding(start = 10.dp),
+                                )
+                            }
+                        }
+                        askError?.let { item { Text(it, fontSize = 13.sp, color = StateLow) } }
                         if (query.isNotBlank()) item { LinkRow(stringResource(R.string.food_make_own, query.trim())) { making = query.trim() to null } }
                         item { Text(stringResource(R.string.food_off_note), fontSize = 12.sp, color = CaptionMuted, modifier = Modifier.padding(vertical = 14.dp)) }
                     }
@@ -211,10 +261,12 @@ internal fun FoodPicker(scanFirst: Boolean, onAdd: (PlateItem) -> Unit, onDismis
 @Composable
 private fun FoodRow(food: Food, yours: Boolean, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable(onClick = onClick).padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
+        FoodImage(food, 48.dp)
+        Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
             Text(listOfNotNull(food.name, food.brand).joinToString(", "), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 2)
             Text(
                 if (yours && food.lastAmount != null) amountText(food, food.lastAmount) + " · " + gramsText(food.of(food.lastAmount)[Food.CARBS]) + " " + stringResource(R.string.food_carbs_word)
+                else if (food.servingLabel != null && food.servingGrams != null) "1 " + food.servingLabel + " · " + gramsText(food.of(food.servingGrams)[Food.CARBS]) + " " + stringResource(R.string.food_carbs_word)
                 else if (food.own) stringResource(R.string.food_per_portion, gramsText(food.per100[Food.CARBS]))
                 else stringResource(R.string.food_per_100, gramsText(food.per100[Food.CARBS])),
                 fontSize = 13.sp,
@@ -242,6 +294,7 @@ private fun AmountView(food: Food, onBack: () -> Unit, onAdd: (PlateItem) -> Uni
     Column(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 18.dp).padding(top = 10.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             RoundIconButton(R.drawable.ic_back, stringResource(R.string.entry_close), onBack)
+            FoodImage(food, 56.dp)
             Column(Modifier.weight(1f)) {
                 Text(food.name, fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground, maxLines = 2)
                 Text(
@@ -407,6 +460,7 @@ private fun BarcodeScanner(onCode: (String) -> Unit, onClose: () -> Unit) {
 @Composable
 private fun portionLabel(food: Food, label: String?, value: Double): String = when {
     food.own -> amountText(food, value)
+    label == "dish" -> formatAmountLocalized(value / (food.servingGrams ?: value)) + " " + food.servingLabel.orEmpty()
     label == "serving" -> stringResource(R.string.food_serving)
     label != null -> stringResource(R.string.food_pack, label)
     else -> gramsText(value) + " " + stringResource(R.string.food_grams_unit)
@@ -418,3 +472,26 @@ internal fun amountText(food: Food, amount: Double): String =
     if (food.own) stringResource(R.string.food_portions, formatAmountLocalized(amount)) else gramsText(amount) + " " + stringResource(R.string.food_grams_unit)
 
 internal fun gramsText(x: Double): String = formatAmountLocalized(if (x >= 10) Math.round(x).toDouble() else Math.round(x * 10) / 10.0)
+
+private val foodImages = android.util.LruCache<String, ImageBitmap>(120)
+
+/** The product's photo (fetched once, then kept for the session), else a plate. */
+@Composable
+internal fun FoodImage(food: Food, size: androidx.compose.ui.unit.Dp) {
+    val url = food.imageUrl
+    val image by androidx.compose.runtime.produceState<ImageBitmap?>(url?.let { foodImages.get(it) }, url) {
+        if (url != null && value == null) {
+            value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                runCatching { java.net.URL(url).openStream().use { BitmapFactory.decodeStream(it) }?.asImageBitmap() }.getOrNull()
+            }?.also { foodImages.put(url, it) }
+        }
+    }
+    Box(Modifier.size(size).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f)), contentAlignment = Alignment.Center) {
+        val shown = image
+        if (shown != null) {
+            androidx.compose.foundation.Image(shown, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+        } else {
+            Icon(painterResource(R.drawable.ic_food), contentDescription = null, tint = CaptionMuted, modifier = Modifier.size(size / 2))
+        }
+    }
+}

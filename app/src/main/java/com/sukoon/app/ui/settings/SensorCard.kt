@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import android.Manifest
 import android.app.Activity
 import android.content.Context
@@ -91,8 +92,6 @@ fun SensorCard(
     pairing: SensorPairing?,
     sensorSelected: Boolean,
     status: SourceStatus,
-    /** The newest reading's time: what "Live" and "No signal" are judged by. */
-    lastReadingAt: Instant? = null,
     onPaired: (LibreNfc.SensorRead, Long) -> Unit,
     onForget: () -> Unit,
 ) {
@@ -164,6 +163,9 @@ fun SensorCard(
     }
 
     val bluetooth = rememberBluetoothOn()
+    // The newest reading's time is what "Live" and "No signal" are judged by (here, in onboarding and on You → Sensor alike).
+    val latest by (context.applicationContext as com.sukoon.app.SukoonApp).container.glucoseRepository.latestReading.collectAsStateWithLifecycle(null)
+    val lastReadingAt = latest?.timestamp
     val now by produceState(Instant.now()) {
         while (true) {
             delay(30_000)

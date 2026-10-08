@@ -229,18 +229,19 @@ internal fun EntryEditor(
     glucoseNow: GlucoseReading?,
     insulinOnBoard: Double,
     appMeals: List<EventEntity>,
-    photoFile: File?,
+    photoFiles: List<File>,
     siteHistory: List<EventEntity>,
     doseSettings: DoseSettings,
-    onEstimateCarbs: (suspend (String, ByteArray?) -> CarbEstimate)?,
+    onEstimateCarbs: (suspend (String, List<ByteArray>) -> CarbEstimate)?,
     onSave: (EntryDraft) -> Unit,
-    onUpdate: (EventEntity, ByteArray?, Boolean) -> Unit,
+    /** The entry, and its photos when they changed (null: as they were). */
+    onUpdate: (EventEntity, List<ByteArray>?) -> Unit,
     onDelete: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            EditorContent(request, glucoseNow, insulinOnBoard, appMeals, photoFile, siteHistory, doseSettings, onEstimateCarbs, onSave, onUpdate, onDelete, onDismiss)
+            EditorContent(request, glucoseNow, insulinOnBoard, appMeals, photoFiles, siteHistory, doseSettings, onEstimateCarbs, onSave, onUpdate, onDelete, onDismiss)
         }
     }
 }
@@ -252,12 +253,12 @@ private fun EditorContent(
     glucoseNow: GlucoseReading?,
     insulinOnBoard: Double,
     appMeals: List<EventEntity>,
-    photoFile: File?,
+    photoFiles: List<File>,
     siteHistory: List<EventEntity>,
     doseSettings: DoseSettings,
-    onEstimateCarbs: (suspend (String, ByteArray?) -> CarbEstimate)?,
+    onEstimateCarbs: (suspend (String, List<ByteArray>) -> CarbEstimate)?,
     onSave: (EntryDraft) -> Unit,
-    onUpdate: (EventEntity, ByteArray?, Boolean) -> Unit,
+    onUpdate: (EventEntity, List<ByteArray>?) -> Unit,
     onDelete: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) {
@@ -291,8 +292,9 @@ private fun EditorContent(
     var preBolus by remember { mutableIntStateOf(0) }
     var minutesAgo by remember { mutableIntStateOf(if (existing == null) 0 else -1) }
     var pickedAt by remember { mutableStateOf(existing?.let { Instant.ofEpochMilli(it.timestampMillis) } ?: Instant.now()) }
-    var photo by remember { mutableStateOf<ByteArray?>(null) }
-    var photoRemoved by remember { mutableStateOf(false) }
+    // Every photo of the meal, as many as you like (the ones it had first); the AI estimate reads them all.
+    val photos = remember { mutableStateListOf<ByteArray>().apply { addAll(photoFiles.mapNotNull { runCatching { it.readBytes() }.getOrNull() }) } }
+    var photosChanged by remember { mutableStateOf(false) }
     var showMore by remember { mutableStateOf(existing?.let { it.fiber != null || it.protein != null || it.fat != null || it.kcal != null } ?: false) }
     var showAppMeals by remember { mutableStateOf(false) }
     var showEstimate by remember { mutableStateOf(false) }
@@ -363,8 +365,7 @@ private fun EditorContent(
                     kcal = value(AmountField.KCAL),
                     site = if (siteType != null) site?.name else existing.site,
                 ),
-                photo,
-                photoRemoved,
+                photos.toList().takeIf { photosChanged },
             )
             return
         }
@@ -379,7 +380,7 @@ private fun EditorContent(
                 amount = if (type == LogEventType.NOTE) null else amount,
                 note = note.ifBlank { null },
                 at = at(),
-                photo = photo.takeIf { isMeal },
+                photos = if (isMeal) photos.toList() else emptyList(),
                 insulin = rapid.takeIf { isMeal },
                 preBolusMinutes = preBolus,
                 nutrients = nutrients.takeIf { isMeal && it != Nutrients() },
@@ -493,11 +494,11 @@ private fun EditorContent(
                     start = starting,
                     onFood = { picking = false },
                     onJustCarbs = { active = AmountField.CARBS },
-                    hasPhoto = photo != null || (photoFile != null && !photoRemoved),
+                    photos = photos,
                     canEstimate = onEstimateCarbs != null,
                     appMeals = appMeals,
-                    onPhoto = { photo = it; photoRemoved = false },
-                    onRemovePhoto = { photo = null; photoRemoved = photoFile != null },
+                    onPhoto = { photos += it; photosChanged = true },
+                    onRemovePhoto = { photos.removeAt(it); photosChanged = true },
                     onEstimate = { showEstimate = true },
                     onAppMeals = { showAppMeals = true },
                     onMore = { showMore = !showMore },
@@ -533,7 +534,7 @@ private fun EditorContent(
     }
 
     picking?.let { scan ->
-        FoodPicker(scanFirst = scan, onAdd = { item ->
+        FoodPicker(scanFirst = scan, estimate = onEstimateCarbs, onAdd = { item ->
             plate += item
             platePut()
             picking = null
@@ -550,7 +551,7 @@ private fun EditorContent(
     if (showEstimate && onEstimateCarbs != null) {
         ModalBottomSheet(onDismissRequest = { showEstimate = false }, containerColor = MaterialTheme.colorScheme.background) {
             Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
-                CarbEstimator(onEstimateCarbs, photo, onUse = { grams, title ->
+                CarbEstimator(onEstimateCarbs, photos.toList(), onUse = { grams, title ->
                     values[AmountField.CARBS] = grams.toString()
                     if (note.isBlank()) note = title
                     active = AmountField.CARBS
@@ -772,11 +773,11 @@ private fun MealActions(
     start: Boolean,
     onFood: () -> Unit,
     onJustCarbs: () -> Unit,
-    hasPhoto: Boolean,
+    photos: List<ByteArray>,
     canEstimate: Boolean,
     appMeals: List<EventEntity>,
     onPhoto: (ByteArray) -> Unit,
-    onRemovePhoto: () -> Unit,
+    onRemovePhoto: (Int) -> Unit,
     onEstimate: () -> Unit,
     onAppMeals: () -> Unit,
     onMore: () -> Unit,
@@ -792,7 +793,9 @@ private fun MealActions(
     }
     val captureUri = remember { FileProvider.getUriForFile(context, "${context.packageName}.files", MealPhoto.newCaptureFile(context)) }
     val takePhoto = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved -> if (saved) load(captureUri) }
-    val pickPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> uri?.let(load) }
+    // No limit: pick as many as you like at once.
+    val pickPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris -> uris.forEach(load) }
+    val hasPhoto = photos.isNotEmpty()
     var photoMenu by remember { mutableStateOf(false) }
     val mfp = rememberSourceApp(HealthConnectSync.MFP)
     val app = appMeals.firstOrNull()?.let { rememberSourceApp(it.source.orEmpty()) } ?: mfp.takeIf { it.installed }
@@ -809,7 +812,20 @@ private fun MealActions(
                 photoMenu = false
                 pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             })
-            if (hasPhoto) DropdownMenuItem(text = { Text(stringResource(R.string.logbook_photo_remove), color = StateLow) }, onClick = { photoMenu = false; onRemovePhoto() })
+        }
+    }
+    if (hasPhoto) {
+        // Every photo, each removable: as many as you took.
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            photos.forEachIndexed { i, bytes ->
+                Box {
+                    PhotoThumb(bytes, Modifier.size(72.dp).clip(RoundedCornerShape(12.dp)))
+                    Box(
+                        Modifier.align(Alignment.TopEnd).size(28.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.55f)).clickable { onRemovePhoto(i) },
+                        contentAlignment = Alignment.Center,
+                    ) { Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.logbook_photo_remove), tint = Color.White, modifier = Modifier.size(14.dp)) }
+                }
+            }
         }
     }
     if (start) {
@@ -876,7 +892,8 @@ private fun MealStart(onSearch: () -> Unit, onScan: () -> Unit, onUsual: (PlateI
                 usual.forEach { food ->
                     val amount = food.lastAmount ?: if (food.own) 1.0 else 100.0
                     Row(Modifier.fillMaxWidth().clickable { onUsual(PlateItem(food, amount)) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
+                        FoodImage(food, 40.dp)
+                        Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
                             Text(food.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1)
                             Text(amountText(food, amount), fontSize = 13.sp, color = CaptionMuted)
                         }
@@ -900,7 +917,8 @@ private fun PlateCard(plate: List<PlateItem>, onRemove: (PlateItem) -> Unit, onA
         Eyebrow(stringResource(R.string.food_on_plate), Modifier.padding(vertical = 8.dp))
         plate.forEach { item ->
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
+                FoodImage(item.food, 40.dp)
+                Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
                     Text(item.food.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1)
                     Text(amountText(item.food, item.amount), fontSize = 13.sp, color = CaptionMuted)
                 }
@@ -987,7 +1005,7 @@ private fun AppMealCard(meal: EventEntity) {
 
 /** AI carb estimate (Gemini): describe the meal and/or use its photo; "Use" fills the carbs, nothing is logged. */
 @Composable
-private fun CarbEstimator(estimate: suspend (String, ByteArray?) -> CarbEstimate, photo: ByteArray?, onUse: (Int, String) -> Unit) {
+private fun CarbEstimator(estimate: suspend (String, List<ByteArray>) -> CarbEstimate, photos: List<ByteArray>, onUse: (Int, String) -> Unit) {
     val scope = rememberCoroutineScope()
     var description by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
@@ -996,8 +1014,8 @@ private fun CarbEstimator(estimate: suspend (String, ByteArray?) -> CarbEstimate
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(stringResource(R.string.carb_ai_estimate), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
         OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text(stringResource(R.string.carb_ai_describe)) }, modifier = Modifier.fillMaxWidth())
-        if (photo != null) Text(stringResource(R.string.carb_ai_photo_added), fontSize = 12.sp, color = SageDeep)
-        val canEstimate = !busy && (description.isNotBlank() || photo != null)
+        if (photos.isNotEmpty()) Text(pluralStringResource(R.plurals.carb_ai_photos_added, photos.size, photos.size), fontSize = 12.sp, color = SageDeep)
+        val canEstimate = !busy && (description.isNotBlank() || photos.isNotEmpty())
         Box(
             Modifier
                 .fillMaxWidth()
@@ -1008,7 +1026,7 @@ private fun CarbEstimator(estimate: suspend (String, ByteArray?) -> CarbEstimate
                     scope.launch {
                         busy = true
                         error = null
-                        runCatching { estimate(description, photo) }.onSuccess { result = it }.onFailure { error = it.message }
+                        runCatching { estimate(description, photos) }.onSuccess { result = it }.onFailure { error = it.message }
                         busy = false
                     }
                 },

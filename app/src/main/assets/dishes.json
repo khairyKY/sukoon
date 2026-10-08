@@ -1,0 +1,2244 @@
+[
+ {
+  "en": "Baladi bread (Egyptian flatbread)",
+  "ar": "عيش بلدي",
+  "aliases": [
+   "eish baladi",
+   "aish baladi",
+   "baladi bread",
+   "عيش",
+   "خبز بلدي",
+   "العيش البلدي"
+  ],
+  "per100": [
+   46.3,
+   0,
+   0,
+   10.4,
+   1.0,
+   236
+  ],
+  "portion": {
+   "en": "1 loaf (subsidised)",
+   "ar": "رغيف تمويني",
+   "grams": 90
+  },
+  "source": "Soliman et al., Production of balady bread (Benha Univ.): 82% extraction flour, moisture 38.9%, total CHO 75.8% dry; loaf 90 g per Ministry of Supply 2020. Carbs are total by difference (fibre not separated), so slightly high"
+ },
+ {
+  "en": "Shami bread (white pita)",
+  "ar": "عيش شامي",
+  "aliases": [
+   "shami bread",
+   "pita",
+   "eish shami",
+   "خبز شامي",
+   "عيش شامى"
+  ],
+  "per100": [
+   53.5,
+   2.2,
+   1.3,
+   9.1,
+   1.2,
+   275
+  ],
+  "portion": {
+   "en": "1 loaf",
+   "ar": "رغيف",
+   "grams": 60
+  },
+  "source": "USDA FoodData Central SR Legacy 174915 (pita, white)"
+ },
+ {
+  "en": "Fino bread (white roll)",
+  "ar": "عيش فينو",
+  "aliases": [
+   "fino",
+   "eish fino",
+   "فينو",
+   "عيش فينو صغير"
+  ],
+  "per100": [
+   49.7,
+   2.2,
+   4.6,
+   10.8,
+   2.4,
+   272
+  ],
+  "portion": {
+   "en": "1 roll",
+   "ar": "رغيف فينو",
+   "grams": 60
+  },
+  "source": "USDA FoodData Central SR Legacy 172675 (french/vienna bread) as analogue"
+ },
+ {
+  "en": "White rice, Egyptian (cooked with ghee)",
+  "ar": "رز أبيض",
+  "aliases": [
+   "rice",
+   "roz",
+   "ruz",
+   "egyptian rice",
+   "رز",
+   "أرز",
+   "ارز",
+   "رز مصري",
+   "رز ابيض"
+  ],
+  "per100": [
+   27.6,
+   0.3,
+   0.0,
+   2.3,
+   2.5,
+   147
+  ],
+  "portion": {
+   "en": "1 cup",
+   "ar": "كوباية",
+   "grams": 186
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: SR 168880 medium-grain rice + 2.3% ghee"
+ },
+ {
+  "en": "Rice with vermicelli",
+  "ar": "رز بالشعرية",
+  "aliases": [
+   "roz bel shareya",
+   "vermicelli rice",
+   "رز بشعرية",
+   "أرز بالشعرية",
+   "ارز بالشعريه",
+   "رز بالشعريه"
+  ],
+  "per100": [
+   27.8,
+   0.5,
+   0.1,
+   2.7,
+   2.2,
+   148
+  ],
+  "portion": {
+   "en": "1 cup",
+   "ar": "كوباية",
+   "grams": 186
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: 400 g rice + 60 g vermicelli + 25 g ghee, cooked (SR 168880, 169737)"
+ },
+ {
+  "en": "Pasta, boiled",
+  "ar": "مكرونة مسلوقة",
+  "aliases": [
+   "macarona",
+   "pasta",
+   "macaroni",
+   "مكرونة",
+   "مكرونه",
+   "معكرونة"
+  ],
+  "per100": [
+   29.1,
+   1.8,
+   0.6,
+   5.8,
+   0.9,
+   158
+  ],
+  "portion": {
+   "en": "1 cup",
+   "ar": "كوباية",
+   "grams": 140
+  },
+  "source": "USDA FoodData Central SR Legacy 169737"
+ },
+ {
+  "en": "Koshari",
+  "ar": "كشري",
+  "aliases": [
+   "koshary",
+   "kushari",
+   "koshari",
+   "كشرى",
+   "كُشري"
+  ],
+  "per100": [
+   20.2,
+   2.6,
+   1.9,
+   4.3,
+   3.8,
+   142
+  ],
+  "portion": {
+   "en": "1 medium plate",
+   "ar": "طبق وسط",
+   "grams": 350
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: 30% rice, 25% pasta, 15% lentils, 5% chickpeas, 20% tomato-vinegar sauce, 5% fried onion"
+ },
+ {
+  "en": "Macarona bechamel",
+  "ar": "مكرونة بشاميل",
+  "aliases": [
+   "macarona bechamel",
+   "bechamel pasta",
+   "مكرونه بشاميل",
+   "مكرونة بالبشاميل",
+   "بشاميل"
+  ],
+  "per100": [
+   18.4,
+   1.0,
+   2.5,
+   8.3,
+   7.5,
+   180
+  ],
+  "portion": {
+   "en": "1 square",
+   "ar": "قطعة",
+   "grams": 250
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: 500 g penne, 500 g minced beef, bechamel of 1 L milk/100 g flour/100 g butter, ~10% baking loss"
+ },
+ {
+  "en": "Fattah (bread, rice, broth, garlic-tomato sauce; meat not included)",
+  "ar": "فتة",
+  "aliases": [
+   "fatta",
+   "fattah",
+   "فته",
+   "فتة باللحمة",
+   "فتة عيد"
+  ],
+  "per100": [
+   22.0,
+   0.3,
+   0.7,
+   3.7,
+   3.1,
+   133
+  ],
+  "portion": {
+   "en": "1 plate",
+   "ar": "طبق",
+   "grams": 300
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: 18% baladi bread, 45% rice, 28% broth, garlic-vinegar tomato sauce; log meat separately"
+ },
+ {
+  "en": "Feteer meshaltet (plain)",
+  "ar": "فطير مشلتت",
+  "aliases": [
+   "feteer",
+   "fiteer",
+   "feteer meshaltet",
+   "فطير",
+   "فطيرة مشلتتة",
+   "مشلتت"
+  ],
+  "per100": [
+   43.8,
+   1.6,
+   0.2,
+   6.2,
+   18.3,
+   373
+  ],
+  "portion": {
+   "en": "1 quarter of a medium pie",
+   "ar": "ربع فطيرة",
+   "grams": 100
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: 500 g flour, 300 g water, 150 g ghee, ~12% baking loss; cross-checks with SR puff pastry (44 g/100 g available)"
+ },
+ {
+  "en": "Hawawshi",
+  "ar": "حواوشي",
+  "aliases": [
+   "hawawshi",
+   "hawawshy",
+   "حواوشى"
+  ],
+  "per100": [
+   21.5,
+   0.2,
+   0.4,
+   16.7,
+   9.1,
+   238
+  ],
+  "portion": {
+   "en": "1 loaf",
+   "ar": "رغيف",
+   "grams": 200
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: 45% baladi bread (Soliman et al.), 55% spiced minced beef with onion and pepper"
+ },
+ {
+  "en": "Foul medames (stewed fava beans, with oil)",
+  "ar": "فول مدمس",
+  "aliases": [
+   "foul",
+   "ful",
+   "ful medames",
+   "foul medames",
+   "فول",
+   "فول بالزيت",
+   "فول مدمّس"
+  ],
+  "per100": [
+   10.7,
+   3.5,
+   0,
+   5.3,
+   4.2,
+   116
+  ],
+  "portion": {
+   "en": "1 plate",
+   "ar": "طبق",
+   "grams": 200
+  },
+  "source": "Hoteit & Zoghbi, Lebanese University Food Composition Data (2021), lab-analysed (foul moudamas); NDSS: 1/2 cup plain cooked fava = 15 g carbs"
+ },
+ {
+  "en": "Ta'ameya (Egyptian falafel)",
+  "ar": "طعمية",
+  "aliases": [
+   "taameya",
+   "ta'meya",
+   "tamiya",
+   "falafel",
+   "طعميه",
+   "فلافل",
+   "طعمية بالسمسم"
+  ],
+  "per100": [
+   27.8,
+   8.7,
+   0,
+   13.3,
+   15.6,
+   339
+  ],
+  "portion": {
+   "en": "3 pieces",
+   "ar": "٣ أقراص",
+   "grams": 90
+  },
+  "source": "Hoteit & Zoghbi, Lebanese University Food Composition Data (2021), lab-analysed (falafel, fava + chickpea); SR 172455 falafel 31.8 g total carbs"
+ },
+ {
+  "en": "Foul sandwich (baladi bread)",
+  "ar": "سندوتش فول",
+  "aliases": [
+   "foul sandwich",
+   "ful sandwich",
+   "ساندوتش فول",
+   "سندويتش فول",
+   "سندوتش فول بلدي"
+  ],
+  "per100": [
+   27.8,
+   1.6,
+   0.2,
+   7.6,
+   3.0,
+   175
+  ],
+  "portion": {
+   "en": "1 sandwich",
+   "ar": "سندوتش",
+   "grams": 170
+  },
+  "source": "computed: 50% baladi bread (Soliman et al.), 40% foul (Hoteit & Zoghbi, Lebanese University Food Composition Data (2021), lab-analysed), salad and tahini (USDA)"
+ },
+ {
+  "en": "Ta'ameya sandwich (baladi bread)",
+  "ar": "سندوتش طعمية",
+  "aliases": [
+   "taameya sandwich",
+   "falafel sandwich",
+   "ساندوتش طعمية",
+   "سندويتش طعميه",
+   "سندوتش طعميه"
+  ],
+  "per100": [
+   31.4,
+   3.5,
+   0.3,
+   10.0,
+   8.0,
+   250
+  ],
+  "portion": {
+   "en": "1 sandwich",
+   "ar": "سندوتش",
+   "grams": 170
+  },
+  "source": "computed: 45% baladi bread (Soliman et al.), 35% falafel (Hoteit & Zoghbi, Lebanese University Food Composition Data (2021), lab-analysed), salad and tahini (USDA)"
+ },
+ {
+  "en": "Hummus with tahini",
+  "ar": "حمص بالطحينة",
+  "aliases": [
+   "hummus",
+   "hommos",
+   "حمص",
+   "حمص بطحينة",
+   "حمّص"
+  ],
+  "per100": [
+   11.5,
+   5.7,
+   0,
+   7.5,
+   5.2,
+   146
+  ],
+  "portion": {
+   "en": "1/4 cup",
+   "ar": "ربع كوباية",
+   "grams": 60
+  },
+  "source": "Hoteit & Zoghbi, Lebanese University Food Composition Data (2021), lab-analysed (hommos bi tahini)"
+ },
+ {
+  "en": "Lentil soup (Egyptian, blended)",
+  "ar": "شوربة عدس",
+  "aliases": [
+   "lentil soup",
+   "shorbet ads",
+   "شوربه عدس",
+   "عدس",
+   "شوربة العدس",
+   "عدس أصفر"
+  ],
+  "per100": [
+   7.3,
+   1.6,
+   0.6,
+   3.1,
+   1.9,
+   63
+  ],
+  "portion": {
+   "en": "1 bowl",
+   "ar": "طبق شوربة",
+   "grams": 250
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: 200 g red lentils, onion, carrot, tomato, 1.4 L water, ~15% evaporation (FNDDS lentil soup: 6.5 g)"
+ },
+ {
+  "en": "Lupini beans (termes), salted",
+  "ar": "ترمس",
+  "aliases": [
+   "termes",
+   "tirmis",
+   "lupini",
+   "lupin",
+   "ترمس مملح"
+  ],
+  "per100": [
+   6.5,
+   2.8,
+   0,
+   15.6,
+   2.9,
+   116
+  ],
+  "portion": {
+   "en": "1 cup",
+   "ar": "كوباية",
+   "grams": 100
+  },
+  "source": "USDA FoodData Central SR Legacy 173804 (lupins, boiled, with salt)"
+ },
+ {
+  "en": "Molokhia (with broth)",
+  "ar": "ملوخية",
+  "aliases": [
+   "molokhia",
+   "mulukhiyah",
+   "molokheya",
+   "ملوخيه",
+   "ملوخية خضرا",
+   "ملوخيا"
+  ],
+  "per100": [
+   4.5,
+   0.6,
+   1.4,
+   2.9,
+   2.7,
+   54
+  ],
+  "portion": {
+   "en": "1 bowl",
+   "ar": "طبق",
+   "grams": 250
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: 400 g jute leaves (SR 168420), 1 L chicken stock (SR 172884), garlic and ghee ta'leya"
+ },
+ {
+  "en": "Okra stew with meat (bamya)",
+  "ar": "بامية",
+  "aliases": [
+   "bamya",
+   "bamia",
+   "okra stew",
+   "باميه",
+   "بامية باللحمة",
+   "طاجن بامية"
+  ],
+  "per100": [
+   3.2,
+   1.8,
+   2.7,
+   6.3,
+   3.2,
+   69
+  ],
+  "portion": {
+   "en": "1 plate",
+   "ar": "طبق",
+   "grams": 200
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: 45% okra, 15% beef, tomato sauce; rice not included"
+ },
+ {
+  "en": "Peas and carrots stew with meat",
+  "ar": "بسلة",
+  "aliases": [
+   "bisella",
+   "peas stew",
+   "بسله",
+   "بسلة بالجزر",
+   "بازلاء",
+   "بسلة باللحمة"
+  ],
+  "per100": [
+   5.2,
+   2.1,
+   3.6,
+   6.9,
+   3.3,
+   80
+  ],
+  "portion": {
+   "en": "1 plate",
+   "ar": "طبق",
+   "grams": 200
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: 50% peas and carrots (SR 170018), 15% beef, tomato sauce; rice not included"
+ },
+ {
+  "en": "Green beans stew with meat",
+  "ar": "فاصوليا خضرا",
+  "aliases": [
+   "fasolia",
+   "green beans stew",
+   "فاصوليا خضراء",
+   "فاصوليه خضرا",
+   "فاصوليا",
+   "فاصوليا باللحمة"
+  ],
+  "per100": [
+   4.1,
+   2.2,
+   3.3,
+   6.3,
+   3.3,
+   74
+  ],
+  "portion": {
+   "en": "1 plate",
+   "ar": "طبق",
+   "grams": 200
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: 50% green beans, 15% beef, tomato sauce; rice not included"
+ },
+ {
+  "en": "Potato stew with meat (tomato sauce)",
+  "ar": "بطاطس بالصلصة",
+  "aliases": [
+   "potato stew",
+   "batates",
+   "بطاطس",
+   "صينية بطاطس",
+   "طاجن بطاطس",
+   "بطاطس باللحمة"
+  ],
+  "per100": [
+   10.8,
+   1.5,
+   1.9,
+   6.2,
+   3.2,
+   100
+  ],
+  "portion": {
+   "en": "1 plate",
+   "ar": "طبق",
+   "grams": 200
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: 50% potato, 15% beef, tomato sauce"
+ },
+ {
+  "en": "Taro with chard (qolqas)",
+  "ar": "قلقاس",
+  "aliases": [
+   "qolqas",
+   "colcas",
+   "taro",
+   "قلقاس بالسلق",
+   "قلقاس أخضر",
+   "قلقاص"
+  ],
+  "per100": [
+   15.8,
+   2.6,
+   1.0,
+   1.5,
+   2.6,
+   103
+  ],
+  "portion": {
+   "en": "1 plate",
+   "ar": "طبق",
+   "grams": 250
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: 45% taro (SR 168486), chard, broth; meat not included"
+ },
+ {
+  "en": "Moussaka, Egyptian (fried eggplant in tomato sauce)",
+  "ar": "مسقعة",
+  "aliases": [
+   "mesa'a'a",
+   "moussaka",
+   "musaqa",
+   "مسقعه",
+   "مسقعة باللحمة",
+   "مسقّعة"
+  ],
+  "per100": [
+   3.5,
+   2.1,
+   3.3,
+   3.8,
+   6.9,
+   96
+  ],
+  "portion": {
+   "en": "1 plate",
+   "ar": "طبق",
+   "grams": 200
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: fried eggplant, tomato sauce, 10% minced beef"
+ },
+ {
+  "en": "Mahshi vine leaves (warak enab)",
+  "ar": "محشي ورق عنب",
+  "aliases": [
+   "warak enab",
+   "wara2 3enab",
+   "stuffed vine leaves",
+   "dolma",
+   "ورق عنب",
+   "محشى ورق عنب",
+   "ورق العنب"
+  ],
+  "per100": [
+   14.7,
+   3.0,
+   0,
+   4.4,
+   1.5,
+   102
+  ],
+  "portion": {
+   "en": "10 rolls",
+   "ar": "١٠ صوابع",
+   "grams": 150
+  },
+  "source": "Hoteit & Zoghbi, Lebanese University Food Composition Data (2021), lab-analysed (warak enab); USDA FNDDS grape leaves with rice 10.8 g available"
+ },
+ {
+  "en": "Mahshi cabbage (malfouf)",
+  "ar": "محشي كرنب",
+  "aliases": [
+   "mahshi cabbage",
+   "stuffed cabbage",
+   "كرنب",
+   "محشى كرنب",
+   "كرنب محشي",
+   "ملفوف محشي"
+  ],
+  "per100": [
+   10.8,
+   1.3,
+   0,
+   3.8,
+   1.3,
+   75
+  ],
+  "portion": {
+   "en": "10 rolls",
+   "ar": "١٠ صوابع",
+   "grams": 150
+  },
+  "source": "Hoteit & Zoghbi, Lebanese University Food Composition Data (2021), lab-analysed (malfouf mahchi)"
+ },
+ {
+  "en": "Mahshi zucchini, peppers, eggplant (mixed)",
+  "ar": "محشي مشكل",
+  "aliases": [
+   "mahshi",
+   "stuffed zucchini",
+   "stuffed peppers",
+   "محشي",
+   "محشى",
+   "كوسة محشية",
+   "فلفل محشي",
+   "باذنجان محشي",
+   "محشي كوسة"
+  ],
+  "per100": [
+   19.3,
+   1.0,
+   0,
+   3.8,
+   2.9,
+   123
+  ],
+  "portion": {
+   "en": "2 pieces",
+   "ar": "قطعتين",
+   "grams": 200
+  },
+  "source": "Hoteit & Zoghbi, Lebanese University Food Composition Data (2021), lab-analysed (koussa mahchi, rice and meat stuffing)"
+ },
+ {
+  "en": "French fries (home-fried)",
+  "ar": "بطاطس محمرة",
+  "aliases": [
+   "fries",
+   "chips",
+   "batates mehamara",
+   "بطاطس مقلية",
+   "بطاطس محمّرة",
+   "بطاطس صوابع"
+  ],
+  "per100": [
+   16.9,
+   1.6,
+   1.2,
+   1.9,
+   13.1,
+   198
+  ],
+  "portion": {
+   "en": "1 portion",
+   "ar": "طبق صغير",
+   "grams": 100
+  },
+  "source": "USDA FoodData Central FNDDS 2021-2023 2709458 (french fries from fresh, fried)"
+ },
+ {
+  "en": "Sweet potato, roasted",
+  "ar": "بطاطا مشوية",
+  "aliases": [
+   "sweet potato",
+   "batata",
+   "بطاطا",
+   "بطاطا بالفرن"
+  ],
+  "per100": [
+   17.4,
+   3.3,
+   6.5,
+   2.0,
+   0.1,
+   90
+  ],
+  "portion": {
+   "en": "1 medium",
+   "ar": "واحدة وسط",
+   "grams": 150
+  },
+  "source": "USDA FoodData Central SR Legacy 168483 (baked in skin, flesh)"
+ },
+ {
+  "en": "Corn on the cob, grilled/boiled",
+  "ar": "درة مشوي",
+  "aliases": [
+   "dora",
+   "corn",
+   "ذرة",
+   "درة",
+   "ذرة مشوية",
+   "كوز درة"
+  ],
+  "per100": [
+   18.6,
+   2.4,
+   4.5,
+   3.4,
+   1.5,
+   96
+  ],
+  "portion": {
+   "en": "1 cob (kernels)",
+   "ar": "كوز",
+   "grams": 100
+  },
+  "source": "USDA FoodData Central SR Legacy 169999 (sweet corn, boiled)"
+ },
+ {
+  "en": "Rabbit, cooked",
+  "ar": "أرانب",
+  "aliases": [
+   "rabbit",
+   "araneb",
+   "arnab",
+   "ارانب",
+   "أرنب",
+   "ارنب",
+   "أرانب مسلوقة"
+  ],
+  "per100": [
+   0,
+   0,
+   0,
+   30.4,
+   8.4,
+   206
+  ],
+  "portion": {
+   "en": "1 quarter rabbit",
+   "ar": "ربع أرنب",
+   "grams": 150
+  },
+  "source": "USDA FoodData Central SR Legacy 174346 (rabbit, domesticated, stewed)"
+ },
+ {
+  "en": "Chicken, roasted (with skin)",
+  "ar": "فراخ مشوية",
+  "aliases": [
+   "chicken",
+   "grilled chicken",
+   "فراخ",
+   "دجاج",
+   "فرخة",
+   "فراخ بالفرن",
+   "دجاج مشوي"
+  ],
+  "per100": [
+   0,
+   0,
+   0,
+   27.3,
+   13.6,
+   239
+  ],
+  "portion": {
+   "en": "1 quarter chicken",
+   "ar": "ربع فرخة",
+   "grams": 150
+  },
+  "source": "USDA FoodData Central SR Legacy 171450"
+ },
+ {
+  "en": "Chicken pane (breaded escalope)",
+  "ar": "فراخ بانيه",
+  "aliases": [
+   "pane",
+   "panee",
+   "chicken pane",
+   "بانيه",
+   "فراخ بانية",
+   "بانيه فراخ"
+  ],
+  "per100": [
+   13.2,
+   1.7,
+   0.6,
+   14.6,
+   13.6,
+   240
+  ],
+  "portion": {
+   "en": "1 piece",
+   "ar": "قطعة",
+   "grams": 100
+  },
+  "source": "USDA FoodData Central FNDDS 2021-2023 2706089 (chicken fillet, breaded)"
+ },
+ {
+  "en": "Beef, boiled/stewed",
+  "ar": "لحمة مسلوقة",
+  "aliases": [
+   "beef",
+   "lahma",
+   "meat",
+   "لحمة",
+   "لحمه",
+   "لحم بقري",
+   "لحمة بتلو"
+  ],
+  "per100": [
+   0,
+   0,
+   0,
+   32.4,
+   6.8,
+   191
+  ],
+  "portion": {
+   "en": "1 piece",
+   "ar": "قطعة",
+   "grams": 100
+  },
+  "source": "USDA FoodData Central SR Legacy 171203 (beef chuck for stew, braised)"
+ },
+ {
+  "en": "Lamb, cooked",
+  "ar": "لحم ضاني",
+  "aliases": [
+   "lamb",
+   "mutton",
+   "dani",
+   "ضاني",
+   "لحمة ضاني",
+   "لحم خروف",
+   "كباب ضاني"
+  ],
+  "per100": [
+   0,
+   0,
+   0,
+   24.5,
+   20.9,
+   294
+  ],
+  "portion": {
+   "en": "1 piece",
+   "ar": "قطعة",
+   "grams": 100
+  },
+  "source": "USDA FoodData Central SR Legacy 172480 (lamb composite cuts, lean and fat, cooked)"
+ },
+ {
+  "en": "Kofta, grilled",
+  "ar": "كفتة",
+  "aliases": [
+   "kofta",
+   "kufta",
+   "kafta",
+   "كفته",
+   "كفتة مشوية",
+   "كفتة حاتي"
+  ],
+  "per100": [
+   2.3,
+   0.2,
+   0.7,
+   24.5,
+   13.4,
+   235
+  ],
+  "portion": {
+   "en": "3 fingers",
+   "ar": "٣ صوابع",
+   "grams": 120
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: minced beef with onion and a little soaked bread"
+ },
+ {
+  "en": "Liver, Alexandrian (pan-fried)",
+  "ar": "كبدة إسكندراني",
+  "aliases": [
+   "kebda",
+   "liver",
+   "كبدة",
+   "كبده",
+   "كبدة اسكندراني",
+   "كبدة إسكندرانى"
+  ],
+  "per100": [
+   5.2,
+   0,
+   0,
+   26.5,
+   4.7,
+   175
+  ],
+  "portion": {
+   "en": "1 portion",
+   "ar": "طبق صغير",
+   "grams": 100
+  },
+  "source": "USDA FoodData Central SR Legacy 168627 (beef liver, pan-fried); liver itself carries ~5% carbs"
+ },
+ {
+  "en": "Fish, fried (flour-coated tilapia)",
+  "ar": "سمك مقلي",
+  "aliases": [
+   "fried fish",
+   "bolti",
+   "samak",
+   "سمك",
+   "سمك بلطي مقلي",
+   "بلطي"
+  ],
+  "per100": [
+   11.2,
+   0.5,
+   0.2,
+   17.2,
+   13.5,
+   237
+  ],
+  "portion": {
+   "en": "1 fish (edible part)",
+   "ar": "سمكة",
+   "grams": 150
+  },
+  "source": "USDA FoodData Central FNDDS 2021-2023 2706322 (tilapia, fried)"
+ },
+ {
+  "en": "Fish, grilled",
+  "ar": "سمك مشوي",
+  "aliases": [
+   "grilled fish",
+   "samak mashwi",
+   "سمك مشوى",
+   "بلطي مشوي",
+   "سمك سنجاري"
+  ],
+  "per100": [
+   0,
+   0,
+   0,
+   26.1,
+   2.6,
+   128
+  ],
+  "portion": {
+   "en": "1 fish (edible part)",
+   "ar": "سمكة",
+   "grams": 150
+  },
+  "source": "USDA FoodData Central SR Legacy 175177 (tilapia, cooked, dry heat); coated or sauced fish has carbs"
+ },
+ {
+  "en": "Chicken shawarma (meat only)",
+  "ar": "شاورما فراخ",
+  "aliases": [
+   "shawarma",
+   "shawerma",
+   "شاورمة فراخ",
+   "شاورما",
+   "شورما"
+  ],
+  "per100": [
+   1.1,
+   0,
+   0,
+   29.7,
+   8.2,
+   197
+  ],
+  "portion": {
+   "en": "1 portion",
+   "ar": "طبق صغير",
+   "grams": 100
+  },
+  "source": "Hoteit & Zoghbi, Lebanese University Food Composition Data (2021), lab-analysed (shawarma dajaj)"
+ },
+ {
+  "en": "Duck, roasted (with skin)",
+  "ar": "بط",
+  "aliases": [
+   "duck",
+   "batt",
+   "بطة",
+   "بط بالفرن",
+   "بط مشوي"
+  ],
+  "per100": [
+   0,
+   0,
+   0,
+   19.0,
+   28.4,
+   337
+  ],
+  "portion": {
+   "en": "1 quarter duck",
+   "ar": "ربع بطة",
+   "grams": 150
+  },
+  "source": "USDA FoodData Central SR Legacy 172409"
+ },
+ {
+  "en": "Stuffed pigeon (rice stuffing)",
+  "ar": "حمام محشي",
+  "aliases": [
+   "hamam mahshi",
+   "pigeon",
+   "squab",
+   "حمام",
+   "حمامة محشية",
+   "حمام محشى"
+  ],
+  "per100": [
+   12.7,
+   0.2,
+   0.1,
+   13.0,
+   10.1,
+   196
+  ],
+  "portion": {
+   "en": "1 pigeon",
+   "ar": "حمامة",
+   "grams": 250
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: half pigeon meat (SR 169905), half rice stuffing; freekeh stuffing is similar"
+ },
+ {
+  "en": "Egg, boiled",
+  "ar": "بيض مسلوق",
+  "aliases": [
+   "boiled egg",
+   "egg",
+   "بيض",
+   "بيضة",
+   "بيضه مسلوقة"
+  ],
+  "per100": [
+   1.1,
+   0,
+   1.1,
+   12.6,
+   10.6,
+   155
+  ],
+  "portion": {
+   "en": "1 egg",
+   "ar": "بيضة",
+   "grams": 50
+  },
+  "source": "USDA FoodData Central SR Legacy 173424"
+ },
+ {
+  "en": "Egg, fried",
+  "ar": "بيض مقلي",
+  "aliases": [
+   "fried egg",
+   "بيض عيون",
+   "بيضة مقلية",
+   "بيض بالسمنة"
+  ],
+  "per100": [
+   0.8,
+   0,
+   0.4,
+   13.6,
+   14.8,
+   196
+  ],
+  "portion": {
+   "en": "1 egg",
+   "ar": "بيضة",
+   "grams": 46
+  },
+  "source": "USDA FoodData Central SR Legacy 173423"
+ },
+ {
+  "en": "Shakshuka (eggs in tomato)",
+  "ar": "شكشوكة",
+  "aliases": [
+   "shakshuka",
+   "shakshouka",
+   "شكشوكه",
+   "بيض بالطماطم",
+   "بيض بالقوطة"
+  ],
+  "per100": [
+   4.7,
+   1.6,
+   3.9,
+   6.0,
+   10.1,
+   137
+  ],
+  "portion": {
+   "en": "1 pan (2 eggs)",
+   "ar": "طاسة (بيضتين)",
+   "grams": 260
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: 2 eggs, 200 g tomato, pepper, onion, oil"
+ },
+ {
+  "en": "White cheese (gibna beyda, Domiati)",
+  "ar": "جبنة بيضا",
+  "aliases": [
+   "gibna beyda",
+   "domiati",
+   "white cheese",
+   "feta",
+   "جبنه بيضا",
+   "جبنة بيضاء",
+   "جبنة دمياطي",
+   "جبنة"
+  ],
+  "per100": [
+   3.9,
+   0,
+   0,
+   14.2,
+   21.5,
+   265
+  ],
+  "portion": {
+   "en": "1 slice / 2 tbsp",
+   "ar": "قطعة",
+   "grams": 30
+  },
+  "source": "USDA FoodData Central SR Legacy 173420 (feta) as the closest analogue of Domiati"
+ },
+ {
+  "en": "Roumi cheese",
+  "ar": "جبنة رومي",
+  "aliases": [
+   "roumi",
+   "rumi",
+   "gibna roumi",
+   "جبنه رومي",
+   "رومي",
+   "جبنة رومى"
+  ],
+  "per100": [
+   3.6,
+   0,
+   0.7,
+   31.8,
+   26.9,
+   387
+  ],
+  "portion": {
+   "en": "2 slices",
+   "ar": "شريحتين",
+   "grams": 30
+  },
+  "source": "USDA FoodData Central SR Legacy 171249 (romano) as analogue"
+ },
+ {
+  "en": "Areesh cheese (cottage)",
+  "ar": "جبنة قريش",
+  "aliases": [
+   "areesh",
+   "qareesh",
+   "cottage cheese",
+   "جبنه قريش",
+   "قريش"
+  ],
+  "per100": [
+   2.7,
+   0,
+   2.7,
+   12.4,
+   1.0,
+   72
+  ],
+  "portion": {
+   "en": "2 tablespoons",
+   "ar": "معلقتين كبار",
+   "grams": 60
+  },
+  "source": "USDA FoodData Central SR Legacy 173417 (cottage cheese 1%) as analogue"
+ },
+ {
+  "en": "Yogurt, plain",
+  "ar": "زبادي",
+  "aliases": [
+   "zabadi",
+   "yogurt",
+   "yoghurt",
+   "زبادى",
+   "لبن زبادي"
+  ],
+  "per100": [
+   4.7,
+   0,
+   4.7,
+   3.5,
+   3.2,
+   61
+  ],
+  "portion": {
+   "en": "1 pot",
+   "ar": "علبة",
+   "grams": 100
+  },
+  "source": "USDA FoodData Central SR Legacy 171284 (whole milk)"
+ },
+ {
+  "en": "Milk, whole",
+  "ar": "لبن",
+  "aliases": [
+   "milk",
+   "laban",
+   "حليب",
+   "لبن حليب",
+   "لبن كامل الدسم"
+  ],
+  "per100": [
+   4.8,
+   0,
+   5.0,
+   3.1,
+   3.2,
+   61
+  ],
+  "portion": {
+   "en": "1 cup",
+   "ar": "كوباية",
+   "grams": 245
+  },
+  "source": "USDA FoodData Central SR Legacy 171265"
+ },
+ {
+  "en": "Tahini salad",
+  "ar": "سلطة طحينة",
+  "aliases": [
+   "tahina",
+   "tahini sauce",
+   "طحينة",
+   "طحينه",
+   "سلطة طحينه"
+  ],
+  "per100": [
+   6.0,
+   3.8,
+   0.5,
+   7.0,
+   21.5,
+   243
+  ],
+  "portion": {
+   "en": "2 tablespoons",
+   "ar": "معلقتين كبار",
+   "grams": 30
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: 40% tahini (SR 170189), water, lemon, garlic"
+ },
+ {
+  "en": "Baba ghanoug",
+  "ar": "بابا غنوج",
+  "aliases": [
+   "baba ghanoug",
+   "baba ghanoush",
+   "baba ghanouj",
+   "بابا غنوچ",
+   "بابا غنوش",
+   "متبل"
+  ],
+  "per100": [
+   1.4,
+   3.1,
+   0,
+   1.1,
+   1.8,
+   39
+  ],
+  "portion": {
+   "en": "1/4 cup",
+   "ar": "ربع كوباية",
+   "grams": 60
+  },
+  "source": "Hoteit & Zoghbi, Lebanese University Food Composition Data (2021), lab-analysed (baba ghanouj)"
+ },
+ {
+  "en": "Salata baladi (tomato-cucumber salad)",
+  "ar": "سلطة بلدي",
+  "aliases": [
+   "salata baladi",
+   "green salad",
+   "سلطة خضرا",
+   "سلطه",
+   "سلطة",
+   "سلطه بلدي"
+  ],
+  "per100": [
+   3.3,
+   1.0,
+   2.3,
+   0.8,
+   3.2,
+   45
+  ],
+  "portion": {
+   "en": "1 bowl",
+   "ar": "طبق",
+   "grams": 150
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: tomato, cucumber, onion, pepper, oil, lemon"
+ },
+ {
+  "en": "Pickles (torshi)",
+  "ar": "طرشي",
+  "aliases": [
+   "torshi",
+   "pickles",
+   "مخلل",
+   "مخللات",
+   "طرشى",
+   "خيار مخلل"
+  ],
+  "per100": [
+   1.4,
+   1.0,
+   1.1,
+   0.5,
+   0.3,
+   12
+  ],
+  "portion": {
+   "en": "a few pieces",
+   "ar": "شوية",
+   "grams": 30
+  },
+  "source": "USDA FoodData Central SR Legacy 168558 (dill cucumber pickles)"
+ },
+ {
+  "en": "Tahini (plain sesame paste)",
+  "ar": "طحينة سادة",
+  "aliases": [
+   "tahini",
+   "sesame paste",
+   "طحينه خام",
+   "طحينة خام"
+  ],
+  "per100": [
+   11.9,
+   9.3,
+   0.5,
+   17.0,
+   53.8,
+   595
+  ],
+  "portion": {
+   "en": "1 tablespoon",
+   "ar": "معلقة كبيرة",
+   "grams": 15
+  },
+  "source": "USDA FoodData Central SR Legacy 170189"
+ },
+ {
+  "en": "Dates (dried/semi-dry)",
+  "ar": "بلح",
+  "aliases": [
+   "dates",
+   "tamr",
+   "balah",
+   "تمر",
+   "بلح",
+   "عجوة",
+   "بلح سيوي"
+  ],
+  "per100": [
+   67.0,
+   8.0,
+   63.4,
+   2.5,
+   0.4,
+   282
+  ],
+  "portion": {
+   "en": "3 dates",
+   "ar": "٣ بلحات",
+   "grams": 24
+  },
+  "source": "USDA FoodData Central SR Legacy 171726 (deglet noor); fresh soft dates (rutab) are lower"
+ },
+ {
+  "en": "Mango",
+  "ar": "مانجو",
+  "aliases": [
+   "mango",
+   "manga",
+   "مانجا",
+   "منجة",
+   "مانجه"
+  ],
+  "per100": [
+   13.4,
+   1.6,
+   13.7,
+   0.8,
+   0.4,
+   60
+  ],
+  "portion": {
+   "en": "1 cup sliced",
+   "ar": "كوباية مقطعة",
+   "grams": 165
+  },
+  "source": "USDA FoodData Central SR Legacy 169910"
+ },
+ {
+  "en": "Guava",
+  "ar": "جوافة",
+  "aliases": [
+   "guava",
+   "gawafa",
+   "جوافه"
+  ],
+  "per100": [
+   8.9,
+   5.4,
+   8.9,
+   2.5,
+   0.9,
+   68
+  ],
+  "portion": {
+   "en": "1 medium",
+   "ar": "واحدة وسط",
+   "grams": 100
+  },
+  "source": "USDA FoodData Central SR Legacy 173044"
+ },
+ {
+  "en": "Orange",
+  "ar": "برتقال",
+  "aliases": [
+   "orange",
+   "borto2an",
+   "برتقانة",
+   "برتقالة",
+   "يوسفي"
+  ],
+  "per100": [
+   9.3,
+   2.4,
+   9.3,
+   0.9,
+   0.1,
+   47
+  ],
+  "portion": {
+   "en": "1 medium",
+   "ar": "واحدة وسط",
+   "grams": 131
+  },
+  "source": "USDA FoodData Central SR Legacy 169097"
+ },
+ {
+  "en": "Banana",
+  "ar": "موز",
+  "aliases": [
+   "banana",
+   "moz",
+   "موزة",
+   "موزه"
+  ],
+  "per100": [
+   20.2,
+   2.6,
+   12.2,
+   1.1,
+   0.3,
+   89
+  ],
+  "portion": {
+   "en": "1 medium",
+   "ar": "واحدة وسط",
+   "grams": 118
+  },
+  "source": "USDA FoodData Central SR Legacy 173944"
+ },
+ {
+  "en": "Watermelon",
+  "ar": "بطيخ",
+  "aliases": [
+   "watermelon",
+   "batikh",
+   "بطيخة",
+   "بطيخ أحمر"
+  ],
+  "per100": [
+   7.1,
+   0.4,
+   6.2,
+   0.6,
+   0.1,
+   30
+  ],
+  "portion": {
+   "en": "1 slice",
+   "ar": "شقة",
+   "grams": 280
+  },
+  "source": "USDA FoodData Central SR Legacy 167765"
+ },
+ {
+  "en": "Apple",
+  "ar": "تفاح",
+  "aliases": [
+   "apple",
+   "tofa7",
+   "تفاحة",
+   "تفاحه"
+  ],
+  "per100": [
+   11.4,
+   2.4,
+   10.4,
+   0.3,
+   0.2,
+   52
+  ],
+  "portion": {
+   "en": "1 medium",
+   "ar": "واحدة وسط",
+   "grams": 182
+  },
+  "source": "USDA FoodData Central SR Legacy 171688"
+ },
+ {
+  "en": "Grapes",
+  "ar": "عنب",
+  "aliases": [
+   "grapes",
+   "3enab",
+   "enab",
+   "عنب بناتي"
+  ],
+  "per100": [
+   17.2,
+   0.9,
+   15.5,
+   0.7,
+   0.2,
+   69
+  ],
+  "portion": {
+   "en": "1 cup",
+   "ar": "كوباية",
+   "grams": 151
+  },
+  "source": "USDA FoodData Central SR Legacy 174683"
+ },
+ {
+  "en": "Figs, fresh",
+  "ar": "تين",
+  "aliases": [
+   "figs",
+   "teen",
+   "تين طازج",
+   "تينة"
+  ],
+  "per100": [
+   16.3,
+   2.9,
+   16.3,
+   0.8,
+   0.3,
+   74
+  ],
+  "portion": {
+   "en": "2 medium",
+   "ar": "تينتين",
+   "grams": 100
+  },
+  "source": "USDA FoodData Central SR Legacy 173021"
+ },
+ {
+  "en": "Pomegranate",
+  "ar": "رمان",
+  "aliases": [
+   "pomegranate",
+   "romman",
+   "رمانة",
+   "رمانه"
+  ],
+  "per100": [
+   14.7,
+   4.0,
+   13.7,
+   1.7,
+   1.2,
+   83
+  ],
+  "portion": {
+   "en": "1/2 cup seeds",
+   "ar": "نص كوباية حبات",
+   "grams": 87
+  },
+  "source": "USDA FoodData Central SR Legacy 169134"
+ },
+ {
+  "en": "Cantaloupe",
+  "ar": "كانتلوب",
+  "aliases": [
+   "cantaloupe",
+   "melon",
+   "shammam",
+   "شمام",
+   "كنتالوب"
+  ],
+  "per100": [
+   7.3,
+   0.9,
+   7.9,
+   0.8,
+   0.2,
+   34
+  ],
+  "portion": {
+   "en": "1 cup diced",
+   "ar": "كوباية مقطعة",
+   "grams": 160
+  },
+  "source": "USDA FoodData Central SR Legacy 169092"
+ },
+ {
+  "en": "Basbousa",
+  "ar": "بسبوسة",
+  "aliases": [
+   "basbousa",
+   "basbosa",
+   "hareesa",
+   "بسبوسه",
+   "هريسة",
+   "هريسه"
+  ],
+  "per100": [
+   43.0,
+   0.8,
+   29.8,
+   4.8,
+   9.9,
+   282
+  ],
+  "portion": {
+   "en": "1 piece",
+   "ar": "قطعة",
+   "grams": 60
+  },
+  "source": "USDA FoodData Central FNDDS 2021-2023 2708045 (basbousa)"
+ },
+ {
+  "en": "Konafa with nuts (syrup)",
+  "ar": "كنافة",
+  "aliases": [
+   "konafa",
+   "kunafa",
+   "knafeh",
+   "kenafa",
+   "كنافه",
+   "كنافة بالمكسرات"
+  ],
+  "per100": [
+   55.0,
+   1.7,
+   36.2,
+   4.6,
+   22.1,
+   435
+  ],
+  "portion": {
+   "en": "1 piece",
+   "ar": "قطعة",
+   "grams": 80
+  },
+  "source": "computed from USDA ingredients (phyllo dough as konafa-dough proxy): 500 g dough, 200 g ghee, 150 g nuts, syrup of 500 g sugar; cross-check Hoteit & Zoghbi, Lebanese University Food Composition Data (2021), lab-analysed Ish el bulbul 55.8 g available"
+ },
+ {
+  "en": "Qatayef (filled, with syrup)",
+  "ar": "قطايف",
+  "aliases": [
+   "qatayef",
+   "atayef",
+   "katayef",
+   "قطايف بالمكسرات",
+   "قطايف بالقشطة"
+  ],
+  "per100": [
+   38.6,
+   1.9,
+   0,
+   6.0,
+   10.5,
+   260
+  ],
+  "portion": {
+   "en": "2 pieces",
+   "ar": "قطعتين",
+   "grams": 100
+  },
+  "source": "Hoteit & Zoghbi, Lebanese University Food Composition Data (2021), lab-analysed (katayef kashta); nut-filled fried version computes to about the same"
+ },
+ {
+  "en": "Rice pudding (roz bel laban)",
+  "ar": "رز بلبن",
+  "aliases": [
+   "roz bel laban",
+   "rice pudding",
+   "رز باللبن",
+   "أرز باللبن",
+   "ارز بلبن",
+   "رز بالبن"
+  ],
+  "per100": [
+   24.4,
+   0.5,
+   15.3,
+   3.2,
+   3.7,
+   146
+  ],
+  "portion": {
+   "en": "1 bowl",
+   "ar": "سلطانية",
+   "grams": 150
+  },
+  "source": "USDA FoodData Central SR Legacy 168063 (arroz con leche, analysed); Egyptian recipe (1 L milk, 100 g rice, 100 g sugar) computes 23.5"
+ },
+ {
+  "en": "Om Ali",
+  "ar": "أم علي",
+  "aliases": [
+   "om ali",
+   "umm ali",
+   "ام علي",
+   "أم على",
+   "ام على"
+  ],
+  "per100": [
+   23.3,
+   1.1,
+   12.0,
+   4.7,
+   16.3,
+   258
+  ],
+  "portion": {
+   "en": "1 bowl",
+   "ar": "سلطانية",
+   "grams": 200
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: 25% baked puff pastry, 55% milk, 7% sugar, cream, nuts, raisins, coconut"
+ },
+ {
+  "en": "Zalabya (lo'met el adi)",
+  "ar": "زلابية",
+  "aliases": [
+   "zalabya",
+   "zalabia",
+   "lokmet el adi",
+   "luqaimat",
+   "زلابيه",
+   "لقمة القاضي",
+   "لقمه القاضي"
+  ],
+  "per100": [
+   52.9,
+   1.0,
+   22.6,
+   3.9,
+   9.4,
+   315
+  ],
+  "portion": {
+   "en": "5 pieces",
+   "ar": "٥ حبات",
+   "grams": 60
+  },
+  "source": "computed from USDA ingredients: yeast dough of 250 g flour fried (~30% water loss, 60 g oil taken up), 200 g syrup absorbed"
+ },
+ {
+  "en": "Ghorayeba",
+  "ar": "غريبة",
+  "aliases": [
+   "ghorayeba",
+   "ghoriba",
+   "ghraybeh",
+   "غريبه",
+   "غُريبة"
+  ],
+  "per100": [
+   60.8,
+   2.1,
+   0,
+   6.8,
+   32.9,
+   510
+  ],
+  "portion": {
+   "en": "1 piece",
+   "ar": "قطعة",
+   "grams": 20
+  },
+  "source": "Hoteit & Zoghbi, Lebanese University Food Composition Data (2021), lab-analysed (ghourayba)"
+ },
+ {
+  "en": "Mahalabeya (milk pudding)",
+  "ar": "مهلبية",
+  "aliases": [
+   "mahalabeya",
+   "muhallabia",
+   "mehalabia",
+   "مهلبيه",
+   "مهلبيّة",
+   "مهلبية باللبن"
+  ],
+  "per100": [
+   18.3,
+   0.0,
+   13.6,
+   2.9,
+   3.0,
+   111
+  ],
+  "portion": {
+   "en": "1 bowl",
+   "ar": "سلطانية",
+   "grams": 150
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: 1 L milk, 100 g sugar, 60 g cornstarch"
+ },
+ {
+  "en": "Baklava",
+  "ar": "بقلاوة",
+  "aliases": [
+   "baklava",
+   "baklawa",
+   "بقلاوه",
+   "بقلاوة بالفستق"
+  ],
+  "per100": [
+   35.0,
+   2.5,
+   12.8,
+   6.6,
+   29.3,
+   440
+  ],
+  "portion": {
+   "en": "1 piece",
+   "ar": "قطعة",
+   "grams": 30
+  },
+  "source": "USDA FoodData Central FNDDS 2021-2023 2708044 (baklava)"
+ },
+ {
+  "en": "Sugar (1 teaspoon)",
+  "ar": "سكر",
+  "aliases": [
+   "sugar",
+   "sukkar",
+   "معلقة سكر",
+   "سكر أبيض",
+   "سكر ابيض"
+  ],
+  "per100": [
+   100.0,
+   0,
+   99.8,
+   0,
+   0,
+   387
+  ],
+  "portion": {
+   "en": "1 level teaspoon",
+   "ar": "معلقة صغيرة",
+   "grams": 4.2
+  },
+  "source": "USDA FoodData Central SR Legacy 169655; a heaped Egyptian teaspoon can be 6-8 g"
+ },
+ {
+  "en": "Honey",
+  "ar": "عسل نحل",
+  "aliases": [
+   "honey",
+   "asal",
+   "عسل",
+   "عسل النحل"
+  ],
+  "per100": [
+   82.2,
+   0.2,
+   82.1,
+   0.3,
+   0,
+   304
+  ],
+  "portion": {
+   "en": "1 tablespoon",
+   "ar": "معلقة كبيرة",
+   "grams": 21
+  },
+  "source": "USDA FoodData Central SR Legacy 169640"
+ },
+ {
+  "en": "Molasses (black honey)",
+  "ar": "عسل أسود",
+  "aliases": [
+   "asal eswed",
+   "molasses",
+   "black honey",
+   "عسل اسود",
+   "عسل قصب",
+   "العسل الأسود"
+  ],
+  "per100": [
+   74.7,
+   0,
+   74.7,
+   0,
+   0.1,
+   290
+  ],
+  "portion": {
+   "en": "1 tablespoon",
+   "ar": "معلقة كبيرة",
+   "grams": 20
+  },
+  "source": "USDA FoodData Central SR Legacy 168820 (molasses)"
+ },
+ {
+  "en": "Molasses with tahini",
+  "ar": "عسل أسود وطحينة",
+  "aliases": [
+   "asal eswed w tahina",
+   "molasses tahini",
+   "عسل اسود وطحينة",
+   "عسل أسود بالطحينة",
+   "عسل اسود بالطحينه"
+  ],
+  "per100": [
+   57.6,
+   2.5,
+   54.5,
+   4.6,
+   14.7,
+   373
+  ],
+  "portion": {
+   "en": "2 tbsp molasses + 1 tbsp tahini",
+   "ar": "معلقتين عسل + معلقة طحينة",
+   "grams": 55
+  },
+  "source": "computed from USDA FoodData Central SR Legacy 168820 molasses and 170189 tahini, 40 g + 15 g"
+ },
+ {
+  "en": "Tea with 1 teaspoon sugar",
+  "ar": "شاي بسكر",
+  "aliases": [
+   "tea",
+   "shai",
+   "chai",
+   "شاى",
+   "شاي",
+   "شاي بمعلقة سكر"
+  ],
+  "per100": [
+   2.4,
+   0.0,
+   2.1,
+   0.0,
+   0.0,
+   9
+  ],
+  "portion": {
+   "en": "1 cup (1 tsp sugar)",
+   "ar": "كوباية (معلقة سكر)",
+   "grams": 204
+  },
+  "source": "computed: USDA FoodData Central SR Legacy 173227 tea + 4.2 g sugar (SR 169655); add one \"Sugar (1 teaspoon)\" per extra spoon"
+ },
+ {
+  "en": "Tea with milk and 2 teaspoons sugar",
+  "ar": "شاي بلبن",
+  "aliases": [
+   "shai bel laban",
+   "milk tea",
+   "شاي باللبن",
+   "شاى بلبن"
+  ],
+  "per100": [
+   5.8,
+   0.0,
+   5.8,
+   1.5,
+   1.6,
+   43
+  ],
+  "portion": {
+   "en": "1 cup",
+   "ar": "كوباية",
+   "grams": 248
+  },
+  "source": "computed from USDA FoodData Central SR Legacy tea, whole milk, 2 level tsp sugar"
+ },
+ {
+  "en": "Karkade (hibiscus), sweetened",
+  "ar": "كركديه",
+  "aliases": [
+   "karkade",
+   "karkadeh",
+   "hibiscus",
+   "كركدية",
+   "كركديه ساقع",
+   "كركدي"
+  ],
+  "per100": [
+   3.4,
+   0.0,
+   3.4,
+   0.0,
+   0.0,
+   13
+  ],
+  "portion": {
+   "en": "1 glass (2 tsp sugar)",
+   "ar": "كوباية (معلقتين سكر)",
+   "grams": 248
+  },
+  "source": "computed: USDA FoodData Central SR Legacy 171946 hibiscus tea (0 g) + 2 level tsp sugar; shop/Ramadan karkade is often much sweeter"
+ },
+ {
+  "en": "Sugarcane juice",
+  "ar": "عصير قصب",
+  "aliases": [
+   "asab",
+   "qasab",
+   "sugarcane juice",
+   "cane juice",
+   "قصب",
+   "عصير القصب"
+  ],
+  "per100": [
+   20.2,
+   0,
+   20.2,
+   0,
+   0,
+   74
+  ],
+  "portion": {
+   "en": "1 glass",
+   "ar": "كوباية",
+   "grams": 250
+  },
+  "source": "USDA FoodData Central FNDDS 2021-2023 2710606 (sugar cane beverage); fresh pressed juice is ~18-22 °Brix, mostly sucrose, so ice-diluted glasses run lower"
+ },
+ {
+  "en": "Sobia",
+  "ar": "سوبيا",
+  "aliases": [
+   "sobia",
+   "sobya",
+   "سوبيه",
+   "سوبيا بجوز الهند"
+  ],
+  "per100": [
+   16.5,
+   0.4,
+   15.0,
+   2.7,
+   5.8,
+   128
+  ],
+  "portion": {
+   "en": "1 glass",
+   "ar": "كوباية",
+   "grams": 250
+  },
+  "source": "computed from USDA FoodData Central ingredients, standard Egyptian home recipe: 1 L milk, 200 g coconut milk, 150 g sugar, 30 g rice flour; sugar varies by maker"
+ },
+ {
+  "en": "Tamarind drink (tamr hindi)",
+  "ar": "تمر هندي",
+  "aliases": [
+   "tamr hindi",
+   "tamarind",
+   "تمرهندي",
+   "عصير تمر هندي"
+  ],
+  "per100": [
+   14.2,
+   0.5,
+   12.7,
+   0.1,
+   0.1,
+   57
+  ],
+  "portion": {
+   "en": "1 glass",
+   "ar": "كوباية",
+   "grams": 250
+  },
+  "source": "USDA FoodData Central SR Legacy 167786 (tamarind nectar) as analogue"
+ },
+ {
+  "en": "Orange juice, fresh",
+  "ar": "عصير برتقال",
+  "aliases": [
+   "orange juice",
+   "عصير برتقان",
+   "برتقال فريش"
+  ],
+  "per100": [
+   10.2,
+   0.2,
+   8.4,
+   0.7,
+   0.2,
+   45
+  ],
+  "portion": {
+   "en": "1 glass",
+   "ar": "كوباية",
+   "grams": 250
+  },
+  "source": "USDA FoodData Central SR Legacy 169098 (orange juice, raw)"
+ },
+ {
+  "en": "Turkish coffee, medium sugar (mazboot)",
+  "ar": "قهوة مظبوط",
+  "aliases": [
+   "ahwa",
+   "turkish coffee",
+   "mazboot",
+   "قهوه",
+   "قهوة تركي",
+   "قهوة مضبوط",
+   "قهوة"
+  ],
+  "per100": [
+   6.5,
+   0,
+   6.5,
+   0.1,
+   0.0,
+   27
+  ],
+  "portion": {
+   "en": "1 small cup",
+   "ar": "فنجان",
+   "grams": 60
+  },
+  "source": "USDA FoodData Central FNDDS 2021-2023 2710377 (coffee, Turkish)"
+ }
+]

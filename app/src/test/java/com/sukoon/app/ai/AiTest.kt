@@ -68,7 +68,7 @@ class AiTest {
         val body = GeminiClient.requestBody(
             systemPrompt = "sys",
             turns = listOf(ChatTurn(true, "q1"), ChatTurn(false, "a1"), ChatTurn(true, "q2")),
-            imageJpeg = byteArrayOf(1, 2, 3),
+            images = listOf(byteArrayOf(1, 2, 3)),
             jsonOutput = true,
         )
         val contents = body.getJSONArray("contents")

@@ -188,8 +188,6 @@ fun SettingsScreen(
     onParentPin: (String?) -> Unit = {},
     /** Each new count opens You on that page (null: the hub): the You tab, Troubleshoot → Sensor. */
     openPage: Pair<Int, YouPage?> = 0 to null,
-    /** The newest reading's time, for You → Sensor. */
-    lastReadingAt: java.time.Instant? = null,
     /** Home's learning notice: open You → Insulin with the Learning screen up. */
     openLearning: Boolean = false,
     onOpenedLearning: () -> Unit = {},
@@ -249,7 +247,6 @@ fun SettingsScreen(
                             pairing = pairing,
                             sensorSelected = sourceKind == SourceKind.LIBRE_BLE,
                             status = status,
-                            lastReadingAt = lastReadingAt,
                             onPaired = onPaired,
                             onForget = {
                                 onForgetSensor()

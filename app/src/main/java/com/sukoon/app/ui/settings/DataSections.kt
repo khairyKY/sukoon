@@ -1,5 +1,8 @@
 package com.sukoon.app.ui.settings
 
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sukoon.app.platform.TimeFormat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -202,6 +205,54 @@ private fun Pill(label: String, filled: Boolean = true, onClick: () -> Unit) {
  * Everything in one file (readings, logbook, settings, sensor pairing, photos), and back. Restoring
  * replaces what's here and closes Sukoon; it starts with the backup the next time it's opened.
  */
+/**
+ * Opt-in: every day, the same backup to one file in a cloud app of yours (Google Drive, OneDrive,
+ * Dropbox…), chosen with Android's own "save to" picker; Back up now and Stop from here.
+ */
+@Composable
+private fun CloudBackupCard() {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val cloud = (context.applicationContext as com.sukoon.app.SukoonApp).container.cloudBackup
+    val state by cloud.state.collectAsStateWithLifecycle()
+    var busy by remember { mutableStateOf(false) }
+    fun run(block: suspend () -> Unit) {
+        busy = true
+        scope.launch {
+            block()
+            busy = false
+        }
+    }
+    val choose = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+        if (uri != null) run { cloud.choose(uri) }
+    }
+    SectionCard {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.cloud_title), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+            if (state.target == null) {
+                Text(stringResource(R.string.cloud_body), fontSize = 13.sp, color = CaptionMuted)
+                Pill(stringResource(R.string.cloud_choose)) { choose.launch("sukoon-backup.zip") }
+            } else {
+                Text(stringResource(R.string.cloud_where, state.where ?: "…"), fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onBackground)
+                Text(
+                    when {
+                        busy -> stringResource(R.string.cloud_busy)
+                        state.error != null -> stringResource(R.string.cloud_error, state.error!!)
+                        state.lastAt != null -> stringResource(R.string.cloud_last, TimeFormat.of("EEE d MMM, HH:mm").format(state.lastAt))
+                        else -> stringResource(R.string.cloud_busy)
+                    },
+                    fontSize = 13.sp,
+                    color = if (state.error != null && !busy) StateLow else CaptionMuted,
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Pill(stringResource(R.string.cloud_now)) { if (!busy) run { cloud.backUp() } }
+                    Pill(stringResource(R.string.cloud_stop), filled = false) { cloud.stop() }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun BackupSection() {
     val context = LocalContext.current
@@ -226,6 +277,8 @@ fun BackupSection() {
             Pill(stringResource(R.string.backup_restore), filled = false) { open.launch(arrayOf("application/zip", "application/octet-stream")) }
         }
     }
+    Spacer(Modifier.height(10.dp))
+    CloudBackupCard()
     confirm?.let { uri ->
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { confirm = null },

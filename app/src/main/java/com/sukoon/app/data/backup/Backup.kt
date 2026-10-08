@@ -19,7 +19,7 @@ object Backup {
 
     private const val MARKER = "sukoon-backup.txt"
     private const val STAGED = "restore_staged"
-    private val PHOTO_NAME = Regex("""\d+\.jpg""")
+    private val PHOTO_NAME = Regex("""\d+(-\d+)?\.jpg""") // a meal's first photo, then its others
     private val PREFS_NAME = Regex("""[A-Za-z0-9_.-]+\.xml""")
 
     fun write(context: Context, database: AppDatabase, out: OutputStream) {
