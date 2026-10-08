@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.home
 
+import androidx.compose.runtime.mutableIntStateOf
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -318,6 +319,23 @@ private fun NobodyYet(onAddPerson: () -> Unit) {
 fun FollowingTrends(sharing: Sharing, modifier: Modifier = Modifier) {
     val people = rememberFollowing(sharing)
     val person = people?.firstOrNull() ?: return Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+    var tab by rememberSaveable { mutableIntStateOf(0) } // graph, insights, report
+    Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(R.string.graph_title, R.string.insights_tab, R.string.report_tab).forEachIndexed { i, label ->
+                com.sukoon.app.ui.navigation.SubTabChip(stringResource(label), tab == i) { tab = i }
+            }
+        }
+        when (tab) {
+            0 -> FollowedGraph(sharing, person, Modifier.weight(1f))
+            1 -> FollowedInsights(sharing, person, Modifier.weight(1f))
+            else -> FollowedReport(sharing, person, Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun FollowedGraph(sharing: Sharing, person: Followed, modifier: Modifier) {
     var range by rememberSaveable { mutableStateOf(GraphRange.H6) }
     val readings by produceState(emptyList<GlucoseReading>(), person.id, range) {
         while (true) {
@@ -327,6 +345,45 @@ fun FollowingTrends(sharing: Sharing, modifier: Modifier = Modifier) {
     }
     val summary = remember(readings) { InsightEngine.summary(readings, Instant.now()) }
     GraphScreen(state = GraphUiState(range, readings, emptyList(), summary), onSelectRange = { range = it }, modifier = modifier, title = person.name.ifBlank { null })
+}
+
+/**
+ * Their insights, from their shared readings (the last 14 days): time in range, variability, recurring
+ * lows and highs, the dawn rise. Meals and insulin stay on their phone, so those insights don't show here.
+ */
+@Composable
+private fun FollowedInsights(sharing: Sharing, person: Followed, modifier: Modifier) {
+    val settings = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.settings
+    var acknowledged by remember { mutableStateOf(settings.insightsAcknowledged) }
+    val insights by produceState<List<com.sukoon.app.insights.Insight>?>(null, person.id) {
+        while (true) {
+            runCatching {
+                val readings = sharing.readingsOf(person.id, System.currentTimeMillis() - Duration.ofDays(com.sukoon.app.insights.InsightEngine.WINDOW_DAYS).toMillis())
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { InsightEngine.analyze(readings, emptyList(), Instant.now(), java.time.ZoneId.systemDefault()) }
+            }.onSuccess { value = it }
+            delay(Duration.ofMinutes(15).toMillis())
+        }
+    }
+    com.sukoon.app.ui.insights.InsightsScreen(
+        com.sukoon.app.ui.insights.InsightsUiState(acknowledged, insights),
+        onAcknowledge = { settings.insightsAcknowledged = true; acknowledged = true },
+        modifier = modifier,
+    )
+}
+
+/** Their doctor report (AGP) over 7, 14 or 30 days of shared readings, as a PDF like their own. */
+@Composable
+private fun FollowedReport(sharing: Sharing, person: Followed, modifier: Modifier) {
+    var days by rememberSaveable { mutableIntStateOf(14) }
+    val state by produceState(com.sukoon.app.ui.reports.ReportUiState(days), person.id, days) {
+        value = com.sukoon.app.ui.reports.ReportUiState(days)
+        runCatching {
+            val readings = sharing.readingsOf(person.id, System.currentTimeMillis() - Duration.ofDays(days.toLong()).toMillis())
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { com.sukoon.app.reports.Agp.build(readings, Instant.now(), java.time.ZoneId.systemDefault(), days) }
+        }.onSuccess { value = com.sukoon.app.ui.reports.ReportUiState(days, it, loading = false) }
+            .onFailure { value = com.sukoon.app.ui.reports.ReportUiState(days, null, loading = false) }
+    }
+    com.sukoon.app.ui.reports.ReportScreen(state, person.name, onSelectDays = { days = it }, modifier = modifier)
 }
 
 /** On a wearer's Home who also follows someone: each person's latest, one tap to their view. */

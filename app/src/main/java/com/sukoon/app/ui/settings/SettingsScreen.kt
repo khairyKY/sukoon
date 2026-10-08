@@ -602,10 +602,11 @@ private fun themeLabel(mode: ThemeMode): String = stringResource(
 @Composable
 private fun languageLabel(): String {
     if (Build.VERSION.SDK_INT < 33) return stringResource(R.string.you_language_auto)
-    val chosen = LocalContext.current.getSystemService(LocaleManager::class.java).applicationLocales.takeIf { !it.isEmpty }?.get(0)?.language
+    val chosen = LocalContext.current.getSystemService(LocaleManager::class.java).applicationLocales.takeIf { !it.isEmpty }?.get(0)?.toLanguageTag()
     return when (chosen) {
         "en" -> "English"
-        "ar" -> "العربية"
+        "ar" -> "العربية الفصحى"
+        "ar-EG" -> "العربية المصرية"
         else -> stringResource(R.string.you_language_auto)
     }
 }
@@ -753,7 +754,7 @@ private fun LanguageChoice() {
     }
     val context = LocalContext.current
     val manager = context.getSystemService(LocaleManager::class.java)
-    val current = manager.applicationLocales.takeIf { !it.isEmpty }?.get(0)?.language
+    val current = manager.applicationLocales.takeIf { !it.isEmpty }?.get(0)?.toLanguageTag()
     Column(
         Modifier
             .fillMaxWidth()
@@ -764,7 +765,8 @@ private fun LanguageChoice() {
         listOf(
             null to stringResource(R.string.theme_auto),
             "en" to "English",
-            "ar" to "العربية المصرية",
+            "ar" to "العربية الفصحى",
+            "ar-EG" to "العربية المصرية",
         ).forEach { (tag, label) ->
             val on = tag == current
             Row(
