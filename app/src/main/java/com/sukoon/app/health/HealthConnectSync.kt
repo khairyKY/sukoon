@@ -216,8 +216,8 @@ class HealthConnectSync(
     private suspend fun importRecords(types: Set<KClass<out Record>>): Pair<Int, Int> {
         // A new kind of record, or entries imported before nutrients were kept: read the last 7 days again, onto the same entries.
         val kinds = types.mapNotNull { it.simpleName }.sorted().joinToString(",")
-        if (prefs.getInt(KEY_IMPORT_VERSION, 1) < 6) {
-            // Before 6, each of MyFitnessPal's day totals was kept as one meal: those go, and its meals start from here.
+        if (prefs.getInt(KEY_IMPORT_VERSION, 1) < 8) {
+            // Before 6, each of MyFitnessPal's day totals was kept as one meal: those go, and its meals start from here (8: again, to keep today so far).
             val gone = logbook.eventsSince(0).first().filter { it.source == MFP && it.logType == LogEventType.CARB }.map { it.id }.toSet()
             gone.forEach { logbook.deleteById(it) }
             saveMealIds(mealIds().filterValues { it !in gone })
@@ -330,10 +330,17 @@ class HealthConnectSync(
         val now = listOf(g(record.totalCarbohydrate), g(record.dietaryFiber), g(record.sugar), g(record.protein), g(record.totalFat), record.energy?.inKilocalories ?: 0.0)
         val prior = totals.optJSONObject(key)
         if (prior == null) {
-            // First seen: what's in it already stays out (it can't be told apart into meals any more).
-            totals.put(key, JSONObject().put("seen", JSONArray(now)).put("meals", JSONArray()).put("changed", changed))
+            // First seen: what today held so far is one entry (it can't be told apart into meals); earlier days are left out.
+            val today = record.startTime.atZone(zone).toLocalDate() == java.time.LocalDate.now(zone)
+            val sofar = if (today && (now[DayTotals.CARBS] >= 1 || now[DayTotals.KCAL] >= 20)) {
+                val at = minOf(record.metadata.lastModifiedTime, Instant.now())
+                EventEntity(timestampMillis = at.toEpochMilli(), type = LogEventType.CARB.name, source = MFP, summary = true).withSums(now).let { it.copy(id = logbook.insert(it)) }
+            } else {
+                null
+            }
+            totals.put(key, JSONObject().put("seen", JSONArray(now)).put("meals", JSONArray(listOfNotNull(sofar?.id))).put("changed", changed))
             saveDayTotals(totals)
-            return null
+            return if (sofar != null) true else null
         }
         // An older copy of the day read after a newer one (before its deletion arrives) changes nothing.
         if (changed < prior.optLong("changed")) return null
@@ -506,7 +513,7 @@ class HealthConnectSync(
         private const val KEY_TOKEN = "hc_nutrition_token"
         private const val KEY_MEAL_IDS = "hc_meal_ids"
         private const val KEY_IMPORT_VERSION = "hc_import_version"
-        private const val IMPORT_VERSION = 7 // 2: nutrients, meal type and source app; 3: workouts; 4: copies from other apps left out; 5: your own meal times kept; 6: MyFitnessPal's day totals split into meals; 7: its days followed by date
+        private const val IMPORT_VERSION = 8 // 2: nutrients, meal type and source app; 3: workouts; 4: copies from other apps left out; 5: your own meal times kept; 6: MyFitnessPal's day totals split into meals; 7: its days followed by date; 8: today so far kept
         private val COPY_WINDOW: Duration = Duration.ofMinutes(10)
         private val DAY_TOTAL: Duration = Duration.ofHours(6)
         private const val KEY_DAY_TOTALS = "hc_day_totals"

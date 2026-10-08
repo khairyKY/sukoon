@@ -251,7 +251,7 @@ fun MainScaffold() {
                 // Beta: a meal in the last hour with no insulin logged and none working.
                 val mealDose = latest?.let { r ->
                     val now = Instant.now()
-                    recentEvents.lastOrNull { it.logType == LogEventType.CARB && (it.value ?: 0.0) >= 10 }?.let { meal ->
+                    recentEvents.lastOrNull { it.logType == LogEventType.CARB && (it.value ?: 0.0) >= 10 }?.takeUnless { it.summary }?.let { meal ->
                         val mealAt = Instant.ofEpochMilli(meal.timestampMillis)
                         // A meal from another app is timed when it was logged, which can be hours after you ate (and dosed): look further back.
                         val lookBack = Duration.ofHours(if (meal.source != null && !meal.timeSet) 3 else 1).toMillis()

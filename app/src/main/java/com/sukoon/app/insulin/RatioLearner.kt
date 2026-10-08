@@ -72,7 +72,7 @@ object RatioLearner {
                 sorted.none { it.logType == LogEventType.INSULIN && it !== dose && (mealId == null || it.mealId != mealId) && it.timestampMillis in (t + 30 * 60_000L + 1)..(t + 4 * hour) }
         data class Point(val slot: MealSlot?, val carbs: Double, val insulin: Double, val change: Double)
         val results = InsightEngine.mealResults(r, sorted, zone).associateBy { it.atMillis }
-        val meals = sorted.filter { it.logType == LogEventType.CARB && (it.value ?: 0.0) >= MIN_CARBS }.mapNotNull { meal ->
+        val meals = sorted.filter { it.logType == LogEventType.CARB && !it.summary && (it.value ?: 0.0) >= MIN_CARBS }.mapNotNull { meal ->
             val t = meal.timestampMillis
             val res = results[t] ?: return@mapNotNull null
             val change = res.change4h ?: return@mapNotNull null
@@ -133,7 +133,7 @@ object RatioLearner {
         val sorted = events.sortedBy { it.timestampMillis }
         val results = InsightEngine.mealResults(readings.sortedBy { it.timestamp }, sorted, zone).associateBy { it.atMillis }
         val hour = Duration.ofHours(1).toMillis()
-        return sorted.filter { it.logType == LogEventType.CARB && (it.value ?: 0.0) > 0 }.map { meal ->
+        return sorted.filter { it.logType == LogEventType.CARB && !it.summary && (it.value ?: 0.0) > 0 }.map { meal ->
             val t = meal.timestampMillis
             val r = results[t]
             val carbs = meal.value ?: 0.0

@@ -418,7 +418,7 @@ object InsightEngine {
     }
 
     internal fun mealResults(r: List<GlucoseReading>, events: List<EventEntity>, zone: ZoneId): List<MealResult> =
-        events.filter { it.logType == LogEventType.CARB && (it.value ?: 0.0) > 0 }.mapNotNull { meal ->
+        events.filter { it.logType == LogEventType.CARB && !it.summary && (it.value ?: 0.0) > 0 }.mapNotNull { meal ->
             val t = Instant.ofEpochMilli(meal.timestampMillis)
             fun nearest(at: Instant, tolerance: Duration) = r.filter { abs(Duration.between(it.timestamp, at).seconds) <= tolerance.seconds }
                 .minByOrNull { abs(Duration.between(it.timestamp, at).seconds) }

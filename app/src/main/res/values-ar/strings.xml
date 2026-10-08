@@ -1538,6 +1538,7 @@
     <string name="meal_detail_rich">وجبة تقيلة: ممكن تفضل تعلّي ٣–٥ ساعات بعدها</string>
     <string name="meal_detail_whats_in">فيها إيه</string>
     <string name="meal_detail_foods_stay">الأكلات نفسها بتفضل في %1$s.</string>
+    <string name="meal_summary_title">بدري في اليوم</string>
     <string name="meal_detail_mg">مج</string>
     <string name="nutrient_saturated">دهون مشبعة</string>
     <string name="nutrient_trans">دهون متحولة</string>

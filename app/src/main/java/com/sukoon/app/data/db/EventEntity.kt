@@ -38,6 +38,8 @@ data class EventEntity(
     val mealId: Long? = null,
     /** You said when you ate it: an imported meal keeps this time when its app sends it again. */
     @ColumnInfo(defaultValue = "0") val timeSet: Boolean = false,
+    /** Several meals in one (what another app's day held before Sukoon followed it): no dose suggestion, nothing learned from it. */
+    @ColumnInfo(defaultValue = "0") val summary: Boolean = false,
 )
 
 /** INSULIN = rapid-acting (bolus, e.g. Apidra); BASAL = long-acting (e.g. Toujeo). Stored by name, so adding one needs no migration. */

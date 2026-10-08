@@ -160,7 +160,7 @@ internal fun SourceLine(app: SourceApp, details: List<String>) {
 
 /** A meal's name: its meal type when an app gave one, else what it was called, else "Meal". */
 @Composable
-internal fun mealTitle(meal: EventEntity): String = when (meal.mealType) {
+internal fun mealTitle(meal: EventEntity): String = if (meal.summary) stringResource(R.string.meal_summary_title) else when (meal.mealType) {
     MealType.MEAL_TYPE_BREAKFAST -> stringResource(R.string.hc_meal_breakfast)
     MealType.MEAL_TYPE_LUNCH -> stringResource(R.string.hc_meal_lunch)
     MealType.MEAL_TYPE_DINNER -> stringResource(R.string.hc_meal_dinner)

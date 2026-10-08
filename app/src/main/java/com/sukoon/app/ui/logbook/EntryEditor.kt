@@ -302,7 +302,7 @@ private fun EditorContent(
     }
     // Beta: what the carbs, the glucose now and the insulin still working add up to (new rapid doses only).
     val advice = if (doseSettings.enabled && existing == null && (meal != null || isMeal || type == LogEventType.INSULIN)) {
-        val carbs = if (meal != null) meal.value else if (isMeal) value(AmountField.CARBS) else null
+        val carbs = if (meal != null) meal.value.takeUnless { meal.summary } else if (isMeal) value(AmountField.CARBS) else null
         val hour = (if (meal != null) Instant.ofEpochMilli(meal.timestampMillis) else at()).atZone(ZoneId.systemDefault()).hour
         Dose.advise(doseSettings, InsightEngine.slotFor(hour), carbs, glucoseNow?.glucoseMgDl, glucoseNow?.trend, insulinOnBoard)
     } else {

@@ -1426,6 +1426,7 @@
     <string name="meal_detail_rich">Rich meal: can keep rising 3–5 hours later</string>
     <string name="meal_detail_whats_in">What\'s in it</string>
     <string name="meal_detail_foods_stay">The foods themselves stay in %1$s.</string>
+    <string name="meal_summary_title">Earlier in the day</string>
     <string name="meal_detail_mg">mg</string>
     <string name="nutrient_saturated">Saturated fat</string>
     <string name="nutrient_trans">Trans fat</string>
