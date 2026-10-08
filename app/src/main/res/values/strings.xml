@@ -987,12 +987,12 @@
     <string name="follow_heading_low">%1$s is heading low.</string>
     <string name="home_last_3_hours">Last 3 hours</string>
     <string name="reminder_channel">Reminders</string>
-    <string name="reminder_basal_title">Long-acting insulin</string>
-    <string name="reminder_basal_body">Not logged in the last 12 hours. Tap to log it.</string>
-    <string name="reminder_basal_body_dose">Not logged in the last 12 hours. Your last dose was %1$s U.</string>
-    <string name="reminder_basal_took">Took it · %1$s U</string>
-    <string name="reminder_basal_log">Log it</string>
-    <string name="reminder_basal_later">In 30 min</string>
+    <string name="reminder_basal_title">Time for your long-acting 💉</string>
+    <string name="reminder_basal_body">Nothing logged in the last 12 hours. Took it already? Tap to log it.</string>
+    <string name="reminder_basal_body_dose">Your usual %1$s U. Nothing logged in the last 12 hours, so here\'s your nudge.</string>
+    <string name="reminder_basal_took">✓ Took it · %1$s U</string>
+    <string name="reminder_basal_log">✓ Log it</string>
+    <string name="reminder_basal_later">⏰ In 30 min</string>
     <string name="reminder_basal_section">Reminder</string>
     <string name="reminder_basal_setting">Remind me about long-acting</string>
     <string name="reminder_basal_on">Every day at %1$s, unless you\'ve logged it in the 12 hours before. Again every 30 min, 3 times.</string>
@@ -1560,4 +1560,5 @@
     <string name="consent_ai_title">Sending data to Google\'s AI</string>
     <string name="consent_ai_body">With your key, what you ask goes to Google Gemini: summaries of your readings and logbook, your profile and dose settings, meal photos and the dishes you ask about. Google\'s terms apply, and on the free tier Google may use it to improve its products. Nothing is sent until you ask.</string>
     <string name="privacy_link">Privacy policy</string>
+    <string name="reminder_basal_title_again">Still waiting on your long-acting 💉</string>
 </resources>

@@ -995,12 +995,12 @@
     <string name="follow_heading_low">سكر %1$s نازل ناحية الهبوط.</string>
     <string name="home_last_3_hours">آخر ٣ ساعات</string>
     <string name="reminder_channel">تذكيرات</string>
-    <string name="reminder_basal_title">الأنسولين طويل المفعول</string>
-    <string name="reminder_basal_body">مش متسجّل في آخر ١٢ ساعة. دوس علشان تسجّله.</string>
-    <string name="reminder_basal_body_dose">مش متسجّل في آخر ١٢ ساعة. آخر جرعة كانت %1$s وحدة.</string>
-    <string name="reminder_basal_took">أخدتها · %1$s وحدة</string>
-    <string name="reminder_basal_log">سجّلها</string>
-    <string name="reminder_basal_later">بعد ٣٠ دقيقة</string>
+    <string name="reminder_basal_title">ميعاد الأنسولين طويل المفعول 💉</string>
+    <string name="reminder_basal_body">مفيش جرعة متسجّلة في آخر ١٢ ساعة. خدتها؟ دوس سجّلها.</string>
+    <string name="reminder_basal_body_dose">جرعتك المعتادة %1$s وحدة. مفيش حاجة متسجّلة في آخر ١٢ ساعة، فبفكّرك.</string>
+    <string name="reminder_basal_took">✓ خدتها · %1$s وحدة</string>
+    <string name="reminder_basal_log">✓ سجّلها</string>
+    <string name="reminder_basal_later">⏰ بعد نص ساعة</string>
     <string name="reminder_basal_section">تذكير</string>
     <string name="reminder_basal_setting">فكّرني بالأنسولين طويل المفعول</string>
     <string name="reminder_basal_on">كل يوم الساعة %1$s، إلا لو سجّلتها في الـ١٢ ساعة اللي قبلها. وبيفكّرك تاني كل ٣٠ دقيقة، ٣ مرات.</string>
@@ -1672,4 +1672,5 @@
     <string name="consent_ai_title">بعت بيانات للذكاء الاصطناعي بتاع جوجل</string>
     <string name="consent_ai_body">بمفتاحك، اللي بتسأل عنه بيروح لـ Google Gemini: ملخصات قراياتك وسجلك، بياناتك وإعدادات الجرعة، صور الوجبات والأكلات اللي بتسأل عنها. شروط جوجل بتنطبق، وفي النسخة المجانية جوجل ممكن تستخدمها في تحسين منتجاتها. مفيش حاجة بتتبعت غير لما تسأل.</string>
     <string name="privacy_link">سياسة الخصوصية</string>
+    <string name="reminder_basal_title_again">لسه مستنيين الأنسولين طويل المفعول 💉</string>
 </resources>

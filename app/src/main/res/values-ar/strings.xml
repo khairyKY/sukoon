@@ -995,12 +995,12 @@
     <string name="follow_heading_low">سكر %1$s يتجه نحو الهبوط.</string>
     <string name="home_last_3_hours">آخر ٣ ساعات</string>
     <string name="reminder_channel">التذكيرات</string>
-    <string name="reminder_basal_title">الأنسولين طويل المفعول</string>
-    <string name="reminder_basal_body">لم يُسجَّل خلال آخر ١٢ ساعة. انقر لتسجيله.</string>
-    <string name="reminder_basal_body_dose">لم يُسجَّل خلال آخر ١٢ ساعة. كانت جرعتك الأخيرة %1$s وحدة.</string>
-    <string name="reminder_basal_took">أخذتها · %1$s وحدة</string>
-    <string name="reminder_basal_log">تسجيلها</string>
-    <string name="reminder_basal_later">بعد ٣٠ دقيقة</string>
+    <string name="reminder_basal_title">حان موعد الأنسولين طويل المفعول 💉</string>
+    <string name="reminder_basal_body">لا توجد جرعة مسجّلة في آخر ١٢ ساعة. هل أخذتها؟ اضغط لتسجيلها.</string>
+    <string name="reminder_basal_body_dose">جرعتك المعتادة %1$s وحدة. لا شيء مسجّل في آخر ١٢ ساعة، فهذا تذكير.</string>
+    <string name="reminder_basal_took">✓ أخذتها · %1$s وحدة</string>
+    <string name="reminder_basal_log">✓ سجّلها</string>
+    <string name="reminder_basal_later">⏰ بعد ٣٠ دقيقة</string>
     <string name="reminder_basal_section">التذكير</string>
     <string name="reminder_basal_setting">ذكّرني بالأنسولين طويل المفعول</string>
     <string name="reminder_basal_on">كل يوم الساعة %1$s، ما لم تكن قد سجّلته خلال الـ ١٢ ساعة السابقة. ويتكرر التذكير كل ٣٠ دقيقة، ٣ مرات.</string>
@@ -1676,4 +1676,5 @@
     <string name="consent_ai_title">إرسال البيانات إلى ذكاء Google الاصطناعي</string>
     <string name="consent_ai_body">بمفتاحك، يُرسَل ما تسأل عنه إلى Google Gemini: ملخصات قراءاتك وسجلك، وملفك وإعدادات الجرعة، وصور الوجبات والأطباق التي تسأل عنها. تنطبق شروط Google، وفي الفئة المجانية قد تستخدمها Google لتحسين منتجاتها. لا يُرسَل شيء حتى تسأل.</string>
     <string name="privacy_link">سياسة الخصوصية</string>
+    <string name="reminder_basal_title_again">ما زلنا بانتظار الأنسولين طويل المفعول 💉</string>
 </resources>
