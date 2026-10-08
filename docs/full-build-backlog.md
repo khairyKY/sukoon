@@ -92,6 +92,8 @@ Behaviour: docs/behaviour.md §11–14.
 - ✅ Sensor page redone (state from the last reading, problems on top, life bar), Bluetooth-off warnings, 3-day notice; You opens on its hub, Troubleshoot on Sensor.
 - ✅ Any day in the logbook and graph; unlimited meal photos read together by the AI; daily backup to a cloud app (opt-in); 12-hour clock; R8 on release builds.
 - ✅ v0.8.0.
+- ✅ v0.8.1: following-only You tab, insights and report for followers, role-aware setup checklist with the battery state, Standard Arabic, delete account, privacy page, iPhone install steps on the follow page, Google Play readiness (play flavor, target 36), long-acting reminder restyled.
+- 🗓 Guide redesign (canvas Round 8), waiting on Kai.
 - 🗓 Check the home-dish values against the Egyptian National Nutrition Institute tables or «افهم سكر» when a copy is available.
 
 Rules: no APK builds or installs unless Kai asks (compile + unit tests only); no AI attribution in commits or PRs.
