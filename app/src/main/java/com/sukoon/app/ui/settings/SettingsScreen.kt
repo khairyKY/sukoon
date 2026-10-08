@@ -113,7 +113,7 @@ import com.sukoon.app.insulin.DoseSettings
 import com.sukoon.app.insulin.RatioLearner
 
 /** The You tab's sections (design "You, divided"): each opens its own page from the hub. */
-private enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
+enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
     SENSOR(R.string.you_sensor, R.drawable.ic_sensor),
     ALARMS(R.string.you_alarms, R.drawable.ic_bell),
     PEOPLE(R.string.you_people, R.drawable.ic_people),
@@ -185,6 +185,10 @@ fun SettingsScreen(
     onTargetHigh: (Int) -> Unit = {},
     parentPin: String? = null,
     onParentPin: (String?) -> Unit = {},
+    /** Each new count opens You on that page (null: the hub): the You tab, Troubleshoot → Sensor. */
+    openPage: Pair<Int, YouPage?> = 0 to null,
+    /** The newest reading's time, for You → Sensor. */
+    lastReadingAt: java.time.Instant? = null,
     /** Home's learning notice: open You → Insulin with the Learning screen up. */
     openLearning: Boolean = false,
     onOpenedLearning: () -> Unit = {},
@@ -197,6 +201,7 @@ fun SettingsScreen(
     if (askingPin) PinDialog(setting = false, stored = parentPin, onDone = { unlocked = true; askingPin = false }, onDismiss = { askingPin = false })
     val context = LocalContext.current
     var page by rememberSaveable { mutableStateOf<YouPage?>(null) }
+    LaunchedEffect(openPage.first) { if (openPage.first > 0) page = openPage.second }
     LaunchedEffect(openLearning) { if (openLearning) page = YouPage.INSULIN }
     BackHandler(enabled = page != null) { page = null }
     val missing = rememberMissingSetup()
@@ -243,6 +248,7 @@ fun SettingsScreen(
                             pairing = pairing,
                             sensorSelected = sourceKind == SourceKind.LIBRE_BLE,
                             status = status,
+                            lastReadingAt = lastReadingAt,
                             onPaired = onPaired,
                             onForget = {
                                 onForgetSensor()

@@ -286,6 +286,11 @@ fun LogbookScreen(
                 onUpdateEvent(moved)
                 detail = moved
             },
+            onRename = { name ->
+                val named = meal.copy(note = name.ifBlank { null })
+                onUpdateEvent(named)
+                detail = named
+            },
             meal = meal,
             insulin = groups.firstOrNull { it.main.id == meal.id }?.insulin.orEmpty(),
             readings = state.readings,

@@ -75,6 +75,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.sukoon.app.data.source.libre.SensorLife
 import com.sukoon.app.ui.home.SensorEndingBanner
+import com.sukoon.app.ui.home.BluetoothOffBanner
+import com.sukoon.app.ui.components.rememberBluetoothOn
+import com.sukoon.app.ui.components.turnOnBluetooth
+import com.sukoon.app.ui.settings.YouPage
 import java.time.Duration
 import java.time.Instant
 import com.sukoon.app.ui.reports.ReportViewModel
@@ -154,8 +158,14 @@ fun MainScaffold() {
         navController.navigateToTab(SukoonTab.TRENDS)
         appContainer.requestedEntry.value = null
     }
+    // You opens on its hub, or on the page asked for (Troubleshoot → Sensor); the counter makes each ask count.
+    var youOpen by remember { mutableStateOf(0 to (null as YouPage?)) }
+    fun openYou(page: YouPage? = null) {
+        youOpen = youOpen.first + 1 to page
+        openYou()
+    }
     Scaffold(
-        bottomBar = { SukoonBottomBar(navController) },
+        bottomBar = { SukoonBottomBar(navController, onYou = { openYou() }) },
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -173,8 +183,8 @@ fun MainScaffold() {
                     Column {
                         val missing = rememberMissingSetup().filter { it in FOLLOWER_SETUP }
                         var later by rememberSaveable { mutableStateOf(false) }
-                        if (missing.isNotEmpty() && !later) SetupBanner(missing, onFix = { navController.navigateToTab(SukoonTab.YOU) }, onLater = { later = true })
-                        FollowingHome(home.sharing, home.settings, onAddPerson = { navController.navigateToTab(SukoonTab.YOU) }, modifier = Modifier.weight(1f))
+                        if (missing.isNotEmpty() && !later) SetupBanner(missing, onFix = { openYou() }, onLater = { later = true })
+                        FollowingHome(home.sharing, home.settings, onAddPerson = { openYou() }, modifier = Modifier.weight(1f))
                     }
                     return@composable
                 }
@@ -204,7 +214,8 @@ fun MainScaffold() {
                 }
                 val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
                 val brief by homeViewModel.brief.collectAsStateWithLifecycle()
-                val toYou = { navController.navigateToTab(SukoonTab.YOU) }
+                val toYou = { openYou() }
+                val toSensor = { openYou(YouPage.SENSOR) }
                 val alarms = (LocalContext.current.applicationContext as SukoonApp).container.alarms
                 val settings = (LocalContext.current.applicationContext as SukoonApp).container.settings
                 val scope = rememberCoroutineScope()
@@ -302,9 +313,11 @@ fun MainScaffold() {
                         )
                     }
                     val life by homeViewModel.sensorLife.collectAsStateWithLifecycle()
+                    val source by home.sourceKind.collectAsStateWithLifecycle()
+                    if (source == SourceKind.LIBRE_BLE && !rememberBluetoothOn()) BluetoothOffBanner { turnOnBluetooth(context) }
                     (life as? SensorLife.Running)
                         ?.takeIf { Duration.between(Instant.now(), it.endsAt) <= Duration.ofHours(24) }
-                        ?.let { SensorEndingBanner(it, onClick = toYou) }
+                        ?.let { SensorEndingBanner(it, onClick = toSensor) }
                     UpdateBanner(home.updates, onBackUp = toYou)
                     HomeScreen(
                         state = homeState,
@@ -313,7 +326,7 @@ fun MainScaffold() {
                         modifier = Modifier.weight(1f),
                         onPairSensor = toYou,
                         onEnterCodeManually = toYou,
-                        onTroubleshoot = toYou,
+                        onTroubleshoot = toSensor,
                         onTreated = { scope.launch { alarms.treated() } },
                         onSnooze = { scope.launch { alarms.acknowledge(AlarmType.LOW, 15) } },
                         onAlertEmergencyContact = {
@@ -336,7 +349,7 @@ fun MainScaffold() {
                         nudge = nudgeText,
                         onNudge = {
                             home.requestedLearning.value = true
-                            navController.navigateToTab(SukoonTab.YOU)
+                            openYou(YouPage.INSULIN)
                         },
                         onNudgeDismiss = {
                             home.settings.nudgeDismissed = nudge?.key
@@ -386,7 +399,7 @@ fun MainScaffold() {
                     hasAiKey = askViewModel.hasKey,
                     onAsk = askViewModel::ask,
                     onClearAsk = askViewModel::clear,
-                    onOpenSettings = { navController.navigateToTab(SukoonTab.YOU) },
+                    onOpenSettings = { openYou() },
                     insightsState = insightsState,
                     onAcknowledgeInsights = insightsViewModel::acknowledge,
                     pendingEntry = pendingEntry,
@@ -485,6 +498,8 @@ fun MainScaffold() {
                     doseStartingPoints = {
                         InsightEngine.formulas(container.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofDays(14).toMillis()).first(), ZoneId.systemDefault())
                     },
+                    openPage = youOpen,
+                    lastReadingAt = container.glucoseRepository.latestReading.collectAsStateWithLifecycle(null).value?.timestamp,
                     openLearning = container.requestedLearning.collectAsStateWithLifecycle().value,
                     onOpenedLearning = { container.requestedLearning.value = false },
                     parentPin = parentPin,
@@ -548,7 +563,7 @@ fun MainScaffold() {
 }
 
 @Composable
-private fun SukoonBottomBar(navController: NavHostController) {
+private fun SukoonBottomBar(navController: NavHostController, onYou: () -> Unit) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
@@ -570,7 +585,8 @@ private fun SukoonBottomBar(navController: NavHostController) {
                     label = stringResource(tab.labelRes),
                     selected = selected,
                     onClick = {
-                        if (!selected) navController.navigateToTab(tab)
+                        // You always opens on its hub, even when it's the tab already open.
+                        if (tab == SukoonTab.YOU) onYou() else if (!selected) navController.navigateToTab(tab)
                     },
                 )
             }

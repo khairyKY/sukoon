@@ -43,6 +43,7 @@ class SensorLifeNotices(private val context: Context, private val current: () ->
         }
         val (title, body) = when (notice) {
             SensorNotice.WARMED_UP -> context.getString(R.string.life_warmed_title) to context.getString(R.string.life_warmed_body)
+            SensorNotice.DAYS_LEFT -> context.getString(R.string.life_days_title) to context.getString(R.string.life_days_body, ends)
             SensorNotice.DAY_LEFT -> context.getString(R.string.life_day_title) to context.getString(R.string.life_day_body, ends)
             SensorNotice.HOUR_LEFT -> context.getString(R.string.life_hour_title) to context.getString(R.string.life_hour_body, ends)
             SensorNotice.ENDED -> context.getString(R.string.life_ended_title) to context.getString(R.string.life_ended_body)

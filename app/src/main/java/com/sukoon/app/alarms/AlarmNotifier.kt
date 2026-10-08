@@ -44,7 +44,8 @@ internal fun alarmBody(context: Context, type: AlarmType, minutesSinceReading: L
         AlarmType.LOW -> context.getString(R.string.alarm_low_body)
         AlarmType.GOING_LOW -> context.getString(R.string.alarm_going_low_body)
         AlarmType.HIGH -> context.getString(R.string.alarm_high_body)
-        AlarmType.SIGNAL_LOSS -> context.resources.getQuantityString(R.plurals.alarm_signal_body, (minutesSinceReading ?: 0).toInt(), minutesSinceReading ?: 0)
+        AlarmType.SIGNAL_LOSS -> if (!com.sukoon.app.ui.components.bluetoothOn(context)) context.getString(R.string.alarm_signal_bt_off)
+        else context.resources.getQuantityString(R.plurals.alarm_signal_body, (minutesSinceReading ?: 0).toInt(), minutesSinceReading ?: 0)
     }
 }
 

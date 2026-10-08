@@ -19,6 +19,8 @@ import com.sukoon.app.data.source.libre.SensorLife
 import com.sukoon.app.ui.components.durationText
 import com.sukoon.app.ui.components.sensorTime
 import com.sukoon.app.ui.theme.PillHighBg
+import com.sukoon.app.ui.theme.PillLowBg
+import com.sukoon.app.ui.theme.PillLowText
 import com.sukoon.app.ui.theme.PillHighText
 import java.time.Duration
 import java.time.Instant
@@ -39,5 +41,23 @@ fun SensorEndingBanner(life: SensorLife.Running, onClick: () -> Unit) {
         fontSize = 13.sp,
         fontWeight = FontWeight.Medium,
         color = PillHighText,
+    )
+}
+
+/** Home, while Bluetooth is off and the sensor is the source: nothing can arrive. Tap → Android's "Turn on Bluetooth?". */
+@Composable
+fun BluetoothOffBanner(onClick: () -> Unit) {
+    Text(
+        stringResource(R.string.home_bt_off),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(PillLowBg)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        fontSize = 14.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = PillLowText,
     )
 }

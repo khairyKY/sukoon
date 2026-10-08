@@ -1,5 +1,10 @@
 package com.sukoon.app.ui.logbook
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.AlertDialog
 import java.time.ZonedDateTime
 import java.time.ZoneId
 import com.sukoon.app.ui.theme.SageDeep
@@ -223,7 +228,11 @@ internal fun MealDetailSheet(
     loadRecord: suspend () -> HealthConnectSync.MealRecord? = { null },
     /** "When did you eat?": the time you picked; kept when the other app sends the meal again. */
     onSetTime: (Instant) -> Unit = {},
+    /** "What was it?": your name for it (the other app doesn't share the foods). */
+    onRename: (String) -> Unit = {},
 ) {
+    var naming by remember { mutableStateOf(false) }
+    if (naming) NameDialog(meal.note.orEmpty(), onSave = { onRename(it); naming = false }, onDismiss = { naming = false })
     val context = LocalContext.current
     val app = rememberSourceApp(meal.source.orEmpty())
     val record by produceState<HealthConnectSync.MealRecord?>(null, meal.id) { value = loadRecord() }
@@ -232,8 +241,25 @@ internal fun MealDetailSheet(
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.background) {
         Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 18.dp).padding(bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(mealTitle(meal), fontFamily = HeadlineSerifFontFamily, fontSize = 30.sp, color = MaterialTheme.colorScheme.onBackground)
-                SourceLine(app, emptyList())
+                Text(
+                    mealTitle(meal),
+                    fontFamily = HeadlineSerifFontFamily,
+                    fontSize = 30.sp,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = if (meal.summary) Modifier else Modifier.clip(RoundedCornerShape(8.dp)).clickable { naming = true },
+                )
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SourceLine(app, emptyList())
+                    if (!meal.summary && meal.note == null) {
+                        Text(
+                            stringResource(R.string.meal_name_add),
+                            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable { naming = true }.padding(vertical = 10.dp, horizontal = 4.dp),
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = SageDeep,
+                        )
+                    }
+                }
             }
             EatenAt(meal, app.label, onSetTime)
             DoseCard(meal, insulin, onAddInsulin, onEditInsulin)
@@ -489,4 +515,19 @@ private fun ResponseChart(readings: List<GlucoseReading>, mealAt: Instant, now: 
         clipRect(top = y(180), bottom = y(70)) { drawPath(path, Sage, style = stroke) }
         clipRect(top = y(70)) { drawPath(path, StateLow, style = stroke) }
     }
+}
+
+/** "What did you eat?": a name for a meal whose foods stayed in the other app. */
+@Composable
+private fun NameDialog(current: String, onSave: (String) -> Unit, onDismiss: () -> Unit) {
+    var text by remember { mutableStateOf(current) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.meal_name_title)) },
+        text = {
+            OutlinedTextField(text, { text = it }, placeholder = { Text(stringResource(R.string.meal_name_hint)) }, singleLine = true)
+        },
+        confirmButton = { TextButton(onClick = { onSave(text.trim()) }) { Text(stringResource(R.string.meal_name_save)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.sensor_cancel)) } },
+    )
 }
