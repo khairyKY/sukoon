@@ -1649,4 +1649,8 @@
     <string name="cloud_error">آخر نسخة ما اتعملتش: %1$s</string>
     <string name="cloud_now">اعمل نسخة دلوقتي</string>
     <string name="cloud_stop">وقّف</string>
+    <string name="food_type_amount">أو اكتب الكمية</string>
+    <string name="food_portions_unit">حصة</string>
+    <string name="food_serving_unit">حصة</string>
+    <string name="food_pack_unit">عبوة</string>
 </resources>

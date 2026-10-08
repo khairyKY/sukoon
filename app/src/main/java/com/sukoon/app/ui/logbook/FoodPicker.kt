@@ -291,6 +291,17 @@ private fun AmountView(food: Food, onBack: () -> Unit, onAdd: (PlateItem) -> Uni
     var amount by remember(food) { mutableDoubleStateOf(food.lastAmount ?: options.getOrNull(if (food.own) 1 else 0)?.second ?: 100.0) }
     val sums = food.of(amount)
     val step = if (food.own) 0.5 else if (amount <= 50) 5.0 else 10.0
+    // Typing it: grams, or the food's own portion (a bowl, a serving, a pack); yours are counted in portions already.
+    val unitGrams: Double? = if (food.own) null else food.servingGrams ?: food.packageGrams
+    val unitName: String? = when {
+        food.own -> null
+        food.servingLabel != null -> food.servingLabel
+        food.servingGrams != null -> stringResource(R.string.food_serving_unit)
+        food.packageGrams != null -> stringResource(R.string.food_pack_unit)
+        else -> null
+    }
+    var inUnits by remember(food) { mutableStateOf(false) }
+    var typed by remember(food) { mutableStateOf("") }
     Column(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 18.dp).padding(top = 10.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             RoundIconButton(R.drawable.ic_back, stringResource(R.string.entry_close), onBack)
@@ -312,7 +323,7 @@ private fun AmountView(food: Food, onBack: () -> Unit, onAdd: (PlateItem) -> Uni
                     Modifier.weight(1f).heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp))
                         .background(if (on) Sage.copy(alpha = 0.10f) else MaterialTheme.colorScheme.surface)
                         .border(if (on) 2.dp else 1.dp, if (on) Sage else outline(), RoundedCornerShape(12.dp))
-                        .clickable { amount = value },
+                        .clickable { amount = value; typed = "" },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(portionLabel(food, label, value), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = if (on) SageDeep else MaterialTheme.colorScheme.onBackground, maxLines = 2)
@@ -320,9 +331,38 @@ private fun AmountView(food: Food, onBack: () -> Unit, onAdd: (PlateItem) -> Uni
             }
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-            Stepper(R.drawable.ic_minus, stringResource(R.string.food_less)) { amount = (amount - step).coerceAtLeast(step) }
+            Stepper(R.drawable.ic_minus, stringResource(R.string.food_less)) { amount = (amount - step).coerceAtLeast(step); typed = "" }
             Text(amountText(food, amount), fontFamily = HeadlineSerifFontFamily, fontWeight = FontWeight.Light, fontSize = 44.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(horizontal = 22.dp))
-            Stepper(R.drawable.ic_plus, stringResource(R.string.food_more)) { amount += step }
+            Stepper(R.drawable.ic_plus, stringResource(R.string.food_more)) { amount += step; typed = "" }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                typed,
+                { t ->
+                    typed = t.filter { it.isDigit() || it == '.' }.take(6)
+                    typed.toDoubleOrNull()?.takeIf { it > 0 }?.let { n -> amount = if (inUnits && unitGrams != null) n * unitGrams else n }
+                },
+                label = { Text(stringResource(R.string.food_type_amount)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                suffix = if (unitName == null) {
+                    { Text(stringResource(if (food.own) R.string.food_portions_unit else R.string.food_grams_unit)) }
+                } else null,
+                modifier = Modifier.weight(1f),
+            )
+            unitName?.let { name ->
+                listOf(stringResource(R.string.food_grams_unit), name).forEachIndexed { i, label ->
+                    val on = inUnits == (i == 1)
+                    Box(
+                        Modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp))
+                            .background(if (on) Sage.copy(alpha = 0.10f) else MaterialTheme.colorScheme.surface)
+                            .border(if (on) 2.dp else 1.dp, if (on) Sage else outline(), RoundedCornerShape(12.dp))
+                            .clickable { inUnits = i == 1; typed = "" }
+                            .padding(horizontal = 14.dp),
+                        contentAlignment = Alignment.Center,
+                    ) { Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (on) SageDeep else MaterialTheme.colorScheme.onBackground, maxLines = 1) }
+                }
+            }
         }
         Row(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, outline(), RoundedCornerShape(16.dp)).padding(14.dp),

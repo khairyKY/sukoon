@@ -1537,4 +1537,8 @@
     <string name="cloud_error">The last backup didn\'t go through: %1$s</string>
     <string name="cloud_now">Back up now</string>
     <string name="cloud_stop">Stop</string>
+    <string name="food_type_amount">Or type how much</string>
+    <string name="food_portions_unit">portions</string>
+    <string name="food_serving_unit">serving</string>
+    <string name="food_pack_unit">pack</string>
 </resources>
