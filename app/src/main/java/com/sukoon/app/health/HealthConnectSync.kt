@@ -506,7 +506,7 @@ class HealthConnectSync(
         private const val KEY_TOKEN = "hc_nutrition_token"
         private const val KEY_MEAL_IDS = "hc_meal_ids"
         private const val KEY_IMPORT_VERSION = "hc_import_version"
-        private const val IMPORT_VERSION = 6 // 2: nutrients, meal type and source app; 3: workouts; 4: copies from other apps left out; 5: your own meal times kept; 6: MyFitnessPal's day totals split into meals
+        private const val IMPORT_VERSION = 7 // 2: nutrients, meal type and source app; 3: workouts; 4: copies from other apps left out; 5: your own meal times kept; 6: MyFitnessPal's day totals split into meals; 7: its days followed by date
         private val COPY_WINDOW: Duration = Duration.ofMinutes(10)
         private val DAY_TOTAL: Duration = Duration.ofHours(6)
         private const val KEY_DAY_TOTALS = "hc_day_totals"
