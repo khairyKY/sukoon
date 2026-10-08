@@ -11,7 +11,7 @@ marked *verify* in the Console when you get there.
 | Target API | `targetSdk 36` / `compileSdk 36` (required since 31 Aug 2026) | — |
 | 16 KB pages | CameraX 1.4.2; every native library checked at 16 KB alignment | — |
 | Self-update | Off in the Play build (`SELF_UPDATE=false`, no `REQUEST_INSTALL_PACKAGES`); Play updates it | — |
-| Dose suggestions | Off in the Play build (`DOSE_BETA=false`): Play and Health Connect treat dose calculators as regulated medical devices | — |
+| Dose suggestions | **Kept in the Play build too** (Kai's call, 2026-10-09). Off by default, a beta. Risk: Play's health policy and Health Connect's terms treat dose calculators as medical-device software; a reviewer may reject the app or Health Connect access, or ask for clearance. If that happens, the fallback is a Play build without them | Accepts the risk |
 | Exact alarms | Play build drops `USE_EXACT_ALARM` and asks for *Alarms & reminders* in the setup checklist | — |
 | Account deletion | In the app (You → People → *Delete my account*) and on the follow page | Run `supabase/migrations/20261009000000_delete_account.sql` in the Supabase SQL editor |
 | Privacy policy | https://khairyky.github.io/sukoon/privacy.html (EN + AR), linked in You → Help and from Health Connect | Live once `web/` is merged |
@@ -104,8 +104,10 @@ skip pairing, then You → Sensor → *Demo data*. Following: invite code from a
 
 **Health apps declaration** ([form](https://support.google.com/googleplay/android-developer/answer/14738291)):
 tick *Diseases & conditions management*, *Nutrition & weight management*, *Medication & treatment
-management*, *Activity & fitness*. **Do not** tick *Medical device apps* (Sukoon isn't cleared as one;
-that's why the Play build has no dose suggestions).
+management*, *Activity & fitness*. *Medical device apps* is for regulated (cleared) apps; Sukoon isn't
+cleared. Describe the dose suggestions plainly where the form asks (a beta, off by default, the user
+enters their own ratios, never applied by itself, nothing when low) and keep the not-a-medical-device
+disclaimer in the listing and in the app. This is the part most likely to draw a rejection.
 
 **Health Connect** (same form): READ_NUTRITION (meals from MyFitnessPal into the logbook),
 READ_EXERCISE (workouts for insights on lows after activity), READ_STEPS and READ_HYDRATION (Home

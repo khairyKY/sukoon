@@ -358,7 +358,7 @@ git clone https://github.com/khairyKY/sukoon.git
 | Unit tests | `./gradlew :app:testGithubDebugUnitTest` |
 | Debug APK | `./gradlew :app:assembleGithubDebug` |
 | Release APK (GitHub), signed with Sukoon's key | `./gradlew :app:assembleGithubRelease` |
-| Google Play bundle (no self-update, no dose suggestions, its own package name) | `./gradlew :app:bundlePlayRelease`, see [`docs/play-store.md`](docs/play-store.md) |
+| Google Play bundle (updated by Play, its own package name) | `./gradlew :app:bundlePlayRelease`, see [`docs/play-store.md`](docs/play-store.md) |
 | Release APK, debug-signed (updates 0.6-era installs in place) | `./gradlew :app:assembleGithubRelease -PdebugSigned` |
 
 On the emulator, pick **Demo** as the source to try every screen without a sensor. Followers need a Supabase project: run [`supabase/migrations/`](supabase/migrations/) in its SQL editor and put the project URL and *publishable* key in `local.properties` (gitignored). Never put the service-role key in the app. The release key and its passwords live only on the build machine ([`docs/signing.md`](docs/signing.md)).

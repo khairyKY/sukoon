@@ -357,8 +357,8 @@ fun SettingsScreen(
                         InjectionSitesCard(injectionSites)
                         Gap()
                         InsulinSection(insulinAction, onInsulinAction, doseSettings.step) { onDoseSettings(doseSettings.copy(step = it)) }
-                        if (com.sukoon.app.BuildConfig.DOSE_BETA) Gap()
-                        if (com.sukoon.app.BuildConfig.DOSE_BETA) DoseCard(doseSettings, guarded(onDoseSettings), doseStartingPoints, learningReport, insulinAction.durationMinutes / 60, profile, guarded(onProfile), locked, { askingPin = true }, parentPin, onParentPin, openLearning, onOpenedLearning)
+                        Gap()
+                        DoseCard(doseSettings, guarded(onDoseSettings), doseStartingPoints, learningReport, insulinAction.durationMinutes / 60, profile, guarded(onProfile), locked, { askingPin = true }, parentPin, onParentPin, openLearning, onOpenedLearning)
                     }
                     YouPage.APPS -> {
                         HealthConnectSection(healthConnect)

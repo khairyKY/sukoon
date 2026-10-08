@@ -152,8 +152,7 @@ class SettingsPrefs(context: Context) {
         get() {
             fun number(key: String) = if (prefs.contains(key)) prefs.getFloat(key, 0f).toDouble() else null
             return DoseSettings(
-                // The Play build has no dose suggestions (Play would treat them as a regulated medical device).
-                enabled = com.sukoon.app.BuildConfig.DOSE_BETA && prefs.getBoolean(KEY_DOSE_ON, false),
+                enabled = prefs.getBoolean(KEY_DOSE_ON, false),
                 carbRatio = MealSlot.entries.mapNotNull { slot -> number(KEY_DOSE_RATIO + slot.name)?.let { slot to it } }.toMap(),
                 correctionFactor = number(KEY_DOSE_FACTOR),
                 target = prefs.getInt(KEY_DOSE_TARGET, 110).coerceIn(80, 180),

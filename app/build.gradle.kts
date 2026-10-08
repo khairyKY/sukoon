@@ -31,21 +31,18 @@ android {
         buildConfigField("String", "SUPABASE_KEY", "\"${localProps.getProperty("supabase.publishableKey", "")}\"")
     }
 
-    // Two builds of the same app: GitHub releases (as before: self-updates, dose suggestions beta) and
-    // Google Play (Play updates it; no dose suggestions, which Play would treat as a regulated medical
-    // device; its own package name, since com.sukoon.app is taken on Play). docs/play-store.md.
+    // Two builds of the same app: GitHub releases (self-updates from GitHub) and Google Play (Play
+    // updates it; its own package name, since com.sukoon.app is taken on Play). docs/play-store.md.
     flavorDimensions += "store"
     productFlavors {
         create("github") {
             dimension = "store"
             buildConfigField("boolean", "SELF_UPDATE", "true")
-            buildConfigField("boolean", "DOSE_BETA", "true")
         }
         create("play") {
             dimension = "store"
             applicationId = "io.github.khairyky.sukoon"
             buildConfigField("boolean", "SELF_UPDATE", "false")
-            buildConfigField("boolean", "DOSE_BETA", "false")
         }
     }
 
