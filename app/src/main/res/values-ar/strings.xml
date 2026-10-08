@@ -1529,8 +1529,7 @@
     <string name="nudge_factor">بياناتك بتقول الوحدة بتنزّل %1$s مج/دل</string>
     <string name="nudge_look">بُص عليه</string>
     <string name="nudge_not_now">مش دلوقتي</string>
-    <string name="meal_detail_app_says">%1$s بيقول</string>
-    <string name="meal_detail_app_said">%1$s قال %2$s</string>
+    <string name="meal_detail_app_says">اتسجّلت في %1$s الساعة</string>
     <string name="meal_detail_when">أكلت إمتى؟</string>
     <string name="meal_detail_ate_at">أكلت الساعة</string>
     <string name="meal_detail_no_insulin_yet">لسه مفيش أنسولين متسجّل</string>

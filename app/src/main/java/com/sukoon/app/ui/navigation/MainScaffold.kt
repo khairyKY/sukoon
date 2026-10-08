@@ -253,7 +253,9 @@ fun MainScaffold() {
                     val now = Instant.now()
                     recentEvents.lastOrNull { it.logType == LogEventType.CARB && (it.value ?: 0.0) >= 10 }?.let { meal ->
                         val mealAt = Instant.ofEpochMilli(meal.timestampMillis)
-                        val insulinSince = recentEvents.any { it.logType == LogEventType.INSULIN && (it.mealId == meal.id || it.timestampMillis >= meal.timestampMillis - Duration.ofHours(1).toMillis()) }
+                        // A meal from another app is timed when it was logged, which can be hours after you ate (and dosed): look further back.
+                        val lookBack = Duration.ofHours(if (meal.source != null && !meal.timeSet) 3 else 1).toMillis()
+                        val insulinSince = recentEvents.any { it.logType == LogEventType.INSULIN && (it.mealId == meal.id || it.timestampMillis >= meal.timestampMillis - lookBack) }
                         Dose.mealDose(
                             settings = home.settings.doseSettings,
                             carbs = meal.value ?: 0.0,

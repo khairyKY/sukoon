@@ -1417,8 +1417,7 @@
     <string name="nudge_factor">Your data suggests 1 unit lowers %1$s mg/dL</string>
     <string name="nudge_look">Take a look</string>
     <string name="nudge_not_now">Not now</string>
-    <string name="meal_detail_app_says">%1$s says</string>
-    <string name="meal_detail_app_said">%1$s said %2$s</string>
+    <string name="meal_detail_app_says">Logged in %1$s at</string>
     <string name="meal_detail_when">When did you eat?</string>
     <string name="meal_detail_ate_at">Ate at</string>
     <string name="meal_detail_no_insulin_yet">No insulin logged yet</string>

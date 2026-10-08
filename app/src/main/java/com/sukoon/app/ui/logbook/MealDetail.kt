@@ -235,7 +235,7 @@ internal fun MealDetailSheet(
                 Text(mealTitle(meal), fontFamily = HeadlineSerifFontFamily, fontSize = 30.sp, color = MaterialTheme.colorScheme.onBackground)
                 SourceLine(app, emptyList())
             }
-            EatenAt(meal, app.label, record?.start, onSetTime)
+            EatenAt(meal, app.label, onSetTime)
             DoseCard(meal, insulin, onAddInsulin, onEditInsulin)
             if (slowMeal(meal.fat, meal.protein)) {
                 Text(
@@ -272,11 +272,11 @@ internal fun MealDetailSheet(
 }
 
 /**
- * The meal's time, stated honestly: the other app sets its own (it can be hours off), so "When did
- * you eat?" until you've said; then "Ate at 13:50 · MyFitnessPal said 10:00 · Change".
+ * The meal's time, stated honestly: when it was logged in the other app (which can be later than you
+ * ate), so "When did you eat?" until you've said; then "Ate at 13:50 · Change".
  */
 @Composable
-private fun EatenAt(meal: EventEntity, appName: String, appTime: Instant?, onSetTime: (Instant) -> Unit) {
+private fun EatenAt(meal: EventEntity, appName: String, onSetTime: (Instant) -> Unit) {
     val context = LocalContext.current
     val at = Instant.ofEpochMilli(meal.timestampMillis)
     fun pick() {
@@ -302,7 +302,6 @@ private fun EatenAt(meal: EventEntity, appName: String, appTime: Instant?, onSet
                 if (meal.timeSet) {
                     withStyle(SpanStyle(color = CaptionMuted)) { append(stringResource(R.string.meal_detail_ate_at) + " ") }
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(hmFormatter.format(at)) }
-                    appTime?.takeIf { it != at }?.let { withStyle(SpanStyle(color = CaptionMuted)) { append(" · " + stringResource(R.string.meal_detail_app_said, appName, hmFormatter.format(it))) } }
                 } else {
                     withStyle(SpanStyle(color = CaptionMuted)) { append(stringResource(R.string.meal_detail_app_says, appName) + " ") }
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(hmFormatter.format(at)) }

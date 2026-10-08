@@ -282,11 +282,17 @@ only for half-unit pens, and suggestions round down to the pen.
 
 ## 11. Meals from other apps
 
-- MyFitnessPal sends each meal's totals to Health Connect, not the foods in it, and sets the meal's
-  time itself (it can be hours from when you ate). Sukoon logs each record's times as it reads it.
-- Tapping an imported meal shows what it brought, what it did to glucose, its insulin, and *From
-  MyFitnessPal*: the time it was logged for and every other nutrient it sent (saturated fat,
-  cholesterol, sodium…). Calories are whole numbers.
+- MyFitnessPal doesn't send meals: it keeps **one record per day** in Health Connect (10:00–22:00),
+  the day's running total, rewritten each time food is added. Sukoon splits it back into meals: each
+  rise of at least 1 g carbs or 20 kcal is a meal, timed when it was logged (checked every 15
+  minutes); food taken off comes off that day's newest meals. What a day held when Sukoon first saw
+  it stays out, since it can't be told apart into meals. The foods themselves never reach Health
+  Connect. Other apps' day-long records are left out.
+- Tapping an imported meal shows, in order: when it was logged with *When did you eat?* (the time you
+  pick is kept), its carbs and insulin (or *Add insulin*), a *Rich meal* chip, what it did to glucose,
+  and one list of what's in it. Calories are whole numbers.
+- On Home, a meal from another app whose time you haven't set only gets a dose suggestion when no
+  rapid insulin was logged in the 3 hours before it (it may have been logged after you ate and dosed).
 - Insulin added for a meal is **linked to that meal** and stamped when you took it (*now* unless you
   change it), so two meals at the same time can't swap doses. Insulin without a link is matched to
   the nearest meal by time, as before.
