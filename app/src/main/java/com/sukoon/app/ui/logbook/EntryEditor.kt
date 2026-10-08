@@ -1,5 +1,10 @@
 package com.sukoon.app.ui.logbook
 
+import com.sukoon.app.ui.theme.SageMist
+import androidx.compose.runtime.mutableStateListOf
+import com.sukoon.app.food.PlateItem
+import com.sukoon.app.food.MyFoods
+import com.sukoon.app.food.Food
 import android.app.TimePickerDialog
 import android.net.Uri
 import android.text.format.DateFormat
@@ -273,7 +278,13 @@ private fun EditorContent(
             }
         }
     }
-    var active by remember { mutableStateOf(if (request.forMeal != null) AmountField.RAPID else if (repeatedDose) null else mainField(request.type)) }
+    // A new meal starts from its foods (design "Meal · start from foods"): no pad until you want one.
+    val freshMeal = request.type == LogEventType.CARB && existing == null && request.forMeal == null && request.prefill?.value == null
+    var active by remember { mutableStateOf(if (request.forMeal != null) AmountField.RAPID else if (repeatedDose || freshMeal) null else mainField(request.type)) }
+    val plate = remember { mutableStateListOf<PlateItem>() }
+    val myFoods = MyFoods.get(LocalContext.current)
+    var picking by remember { mutableStateOf<Boolean?>(null) } // the food picker: false = search, true = scan first
+    var plateNote by remember { mutableStateOf("") }
     var site by remember { mutableStateOf(existing?.injectionSite) }
     var siteOpen by remember { mutableStateOf(repeatedDose) }
     var note by remember { mutableStateOf(base?.note ?: "") }
@@ -287,6 +298,20 @@ private fun EditorContent(
     var showEstimate by remember { mutableStateOf(false) }
 
     fun value(field: AmountField) = values[field]?.toDoubleOrNull()?.takeIf { it > 0 }
+
+    /** The plate's sums into the amounts, and its foods as the meal's name (unless you named it). */
+    fun platePut() {
+        val sums = plate.fold(List(6) { 0.0 }) { acc, item -> acc.zip(item.sums, Double::plus) }
+        fun put(field: AmountField, x: Double) { values[field] = if (x > 0) Math.round(x).toString() else "" }
+        put(AmountField.CARBS, sums[Food.CARBS])
+        put(AmountField.FIBER, sums[1])
+        put(AmountField.PROTEIN, sums[3])
+        put(AmountField.FAT, sums[4])
+        put(AmountField.KCAL, sums[Food.KCAL])
+        val names = plate.joinToString(", ") { it.food.name }
+        if (note.isBlank() || note == plateNote) note = names
+        plateNote = names
+    }
     fun at(): Instant = if (minutesAgo >= 0) Instant.now().minusSeconds(minutesAgo * 60L) else pickedAt
     val meal = forMeal
     val isMeal = type == LogEventType.CARB && meal == null
@@ -378,7 +403,13 @@ private fun EditorContent(
 
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             ContextPills(glucoseNow.takeIf { existing == null }, if (type == LogEventType.INSULIN || isMeal || meal != null) insulinOnBoard else 0.0)
+            val starting = isMeal && existing == null && plate.isEmpty() && values[AmountField.CARBS].isNullOrEmpty() && active == null
             when {
+                starting -> MealStart(
+                    onSearch = { picking = false },
+                    onScan = { picking = true },
+                    onUsual = { item -> plate += item; myFoods.remember(item); platePut() },
+                )
                 meal != null -> {
                     AppMealCard(meal)
                     ValueCard(stringResource(R.string.logbook_type_insulin), values[AmountField.RAPID].orEmpty(), units, active == AmountField.RAPID, Modifier.fillMaxWidth()) { active = AmountField.RAPID }
@@ -445,6 +476,9 @@ private fun EditorContent(
                     },
                 )
             }
+            if (isMeal && plate.isNotEmpty()) {
+                PlateCard(plate, onRemove = { plate.remove(it); platePut() }, onAdd = { picking = false })
+            }
             if (isMeal) {
                 if (showMore) {
                     OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text(stringResource(R.string.entry_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
@@ -456,6 +490,9 @@ private fun EditorContent(
                     }
                 }
                 MealActions(
+                    start = starting,
+                    onFood = { picking = false },
+                    onJustCarbs = { active = AmountField.CARBS },
                     hasPhoto = photo != null || (photoFile != null && !photoRemoved),
                     canEstimate = onEstimateCarbs != null,
                     appMeals = appMeals,
@@ -495,6 +532,13 @@ private fun EditorContent(
         }
     }
 
+    picking?.let { scan ->
+        FoodPicker(scanFirst = scan, onAdd = { item ->
+            plate += item
+            platePut()
+            picking = null
+        }, onDismiss = { picking = null })
+    }
     if (showAppMeals) {
         AppMealPicker(appMeals, onPick = { picked ->
             forMeal = picked
@@ -725,6 +769,9 @@ private fun WhenButton(minutesAgo: Int, pickedAt: Instant, onAgo: (Int) -> Unit,
 /** A meal's extras: its photo, the AI estimate, a meal from MyFitnessPal, and more details. */
 @Composable
 private fun MealActions(
+    start: Boolean,
+    onFood: () -> Unit,
+    onJustCarbs: () -> Unit,
     hasPhoto: Boolean,
     canEstimate: Boolean,
     appMeals: List<EventEntity>,
@@ -747,28 +794,41 @@ private fun MealActions(
     val takePhoto = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved -> if (saved) load(captureUri) }
     val pickPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> uri?.let(load) }
     var photoMenu by remember { mutableStateOf(false) }
+    val mfp = rememberSourceApp(HealthConnectSync.MFP)
+    val app = appMeals.firstOrNull()?.let { rememberSourceApp(it.source.orEmpty()) } ?: mfp.takeIf { it.installed }
+    // Today's meals from the other app to pick from; with none yet, open it to log the meal there (it comes back through Health Connect).
+    val openApp: () -> Unit = {
+        if (appMeals.isNotEmpty()) onAppMeals()
+        else context.packageManager.getLaunchIntentForPackage(HealthConnectSync.MFP)?.let { runCatching { context.startActivity(it) } }
+    }
+    val photoChoices: @Composable () -> Unit = {
+        DropdownMenu(expanded = photoMenu, onDismissRequest = { photoMenu = false }) {
+            if (canEstimate) DropdownMenuItem(text = { Text(stringResource(R.string.carb_ai_estimate)) }, onClick = { photoMenu = false; onEstimate() })
+            DropdownMenuItem(text = { Text(stringResource(R.string.carb_ai_camera)) }, onClick = { photoMenu = false; takePhoto.launch(captureUri) })
+            DropdownMenuItem(text = { Text(stringResource(R.string.carb_ai_gallery)) }, onClick = {
+                photoMenu = false
+                pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            })
+            if (hasPhoto) DropdownMenuItem(text = { Text(stringResource(R.string.logbook_photo_remove), color = StateLow) }, onClick = { photoMenu = false; onRemovePhoto() })
+        }
+    }
+    if (start) {
+        // Three even tiles (design "Meal · start from foods"), so nothing is squeezed.
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box(Modifier.weight(1f)) {
+                StartTile(if (hasPhoto) R.drawable.ic_check else R.drawable.ic_camera, null, stringResource(R.string.entry_photo), Modifier.fillMaxWidth()) { photoMenu = true }
+                photoChoices()
+            }
+            app?.let { StartTile(null, it, it.label, Modifier.weight(1f), onClick = openApp) }
+            StartTile(R.drawable.ic_keypad, null, stringResource(R.string.food_just_carbs), Modifier.weight(1f), onClick = onJustCarbs)
+        }
+        return
+    }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        ActionButton(R.drawable.ic_plus, stringResource(R.string.food_add), Modifier.weight(1f), onClick = onFood)
         Box(Modifier.weight(1f)) {
             ActionButton(if (hasPhoto) R.drawable.ic_check else R.drawable.ic_camera, stringResource(R.string.entry_photo), Modifier.fillMaxWidth()) { photoMenu = true }
-            DropdownMenu(expanded = photoMenu, onDismissRequest = { photoMenu = false }) {
-                DropdownMenuItem(text = { Text(stringResource(R.string.carb_ai_camera)) }, onClick = { photoMenu = false; takePhoto.launch(captureUri) })
-                DropdownMenuItem(text = { Text(stringResource(R.string.carb_ai_gallery)) }, onClick = {
-                    photoMenu = false
-                    pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                })
-                if (hasPhoto) DropdownMenuItem(text = { Text(stringResource(R.string.logbook_photo_remove), color = StateLow) }, onClick = { photoMenu = false; onRemovePhoto() })
-            }
-        }
-        if (canEstimate) ActionButton(R.drawable.ic_sparkle, stringResource(R.string.carb_ai_estimate), Modifier.weight(1f), onClick = onEstimate)
-        val mfp = rememberSourceApp(HealthConnectSync.MFP)
-        if (appMeals.isNotEmpty()) {
-            val app = rememberSourceApp(appMeals.first().source.orEmpty())
-            ActionButton(null, app.label, Modifier.weight(1.3f), appIcon = app, onClick = onAppMeals)
-        } else if (mfp.installed) {
-            // Nothing from MyFitnessPal today yet: open it to log the meal there; it comes back through Health Connect.
-            ActionButton(null, mfp.label, Modifier.weight(1.3f), appIcon = mfp) {
-                context.packageManager.getLaunchIntentForPackage(HealthConnectSync.MFP)?.let { runCatching { context.startActivity(it) } }
-            }
+            photoChoices()
         }
         Box(
             Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f)).clickable(onClick = onMore),
@@ -776,6 +836,81 @@ private fun MealActions(
         ) {
             Icon(painterResource(R.drawable.ic_more), contentDescription = stringResource(R.string.entry_more), tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(20.dp))
         }
+    }
+}
+
+@Composable
+private fun StartTile(icon: Int?, app: SourceApp?, label: String, modifier: Modifier, onClick: () -> Unit) {
+    Column(
+        modifier.heightIn(min = 76.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f)).clickable(onClick = onClick).padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
+    ) {
+        if (app != null) AppIcon(app, 22.dp) else if (icon != null) Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(22.dp))
+        Text(label, fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, softWrap = false)
+    }
+}
+
+/** A new meal: search (with the barcode inside), and your usual foods one tap away at the amount you last had. */
+@Composable
+private fun MealStart(onSearch: () -> Unit, onScan: () -> Unit, onUsual: (PlateItem) -> Unit) {
+    val context = LocalContext.current
+    val usual = remember { MyFoods.get(context).all().take(5) }
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(
+            Modifier.fillMaxWidth().heightIn(min = 54.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface)
+                .border(1.dp, outline(), RoundedCornerShape(16.dp)).clickable(onClick = onSearch).padding(start = 14.dp, end = 5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(painterResource(R.drawable.ic_search), contentDescription = null, tint = CaptionMuted, modifier = Modifier.size(20.dp))
+            Text(stringResource(R.string.food_search_hint), fontSize = 15.5.sp, color = CaptionMuted, modifier = Modifier.weight(1f).padding(start = 10.dp))
+            Box(Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).background(SageMist).clickable(onClick = onScan), contentAlignment = Alignment.Center) {
+                Icon(painterResource(R.drawable.ic_barcode), contentDescription = stringResource(R.string.food_scan), tint = SageDeep, modifier = Modifier.size(22.dp))
+            }
+        }
+        if (usual.isNotEmpty()) {
+            Column(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, outline(), RoundedCornerShape(18.dp)).padding(horizontal = 14.dp, vertical = 6.dp),
+            ) {
+                Eyebrow(stringResource(R.string.food_your_usual), Modifier.padding(vertical = 8.dp))
+                usual.forEach { food ->
+                    val amount = food.lastAmount ?: if (food.own) 1.0 else 100.0
+                    Row(Modifier.fillMaxWidth().clickable { onUsual(PlateItem(food, amount)) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(food.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1)
+                            Text(amountText(food, amount), fontSize = 13.sp, color = CaptionMuted)
+                        }
+                        Text(gramsText(food.of(amount)[Food.CARBS]) + " " + stringResource(R.string.logbook_unit_grams).trim(), fontSize = 13.5.sp, color = CaptionMuted, modifier = Modifier.padding(end = 10.dp))
+                        Box(Modifier.size(40.dp).clip(CircleShape).background(SageMist), contentAlignment = Alignment.Center) {
+                            Icon(painterResource(R.drawable.ic_plus), contentDescription = stringResource(R.string.food_add_named, food.name), tint = SageDeep, modifier = Modifier.size(18.dp))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** What's on the plate: each food and its carbs, removable; and another. */
+@Composable
+private fun PlateCard(plate: List<PlateItem>, onRemove: (PlateItem) -> Unit, onAdd: () -> Unit) {
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, outline(), RoundedCornerShape(18.dp)).padding(horizontal = 14.dp, vertical = 6.dp),
+    ) {
+        Eyebrow(stringResource(R.string.food_on_plate), Modifier.padding(vertical = 8.dp))
+        plate.forEach { item ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(item.food.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1)
+                    Text(amountText(item.food, item.amount), fontSize = 13.sp, color = CaptionMuted)
+                }
+                Text(gramsText(item.sums[Food.CARBS]) + " " + stringResource(R.string.logbook_unit_grams).trim(), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                Box(Modifier.size(44.dp).clip(CircleShape).clickable { onRemove(item) }, contentAlignment = Alignment.Center) {
+                    Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.food_remove, item.food.name), tint = CaptionMuted, modifier = Modifier.size(16.dp))
+                }
+            }
+        }
+        Text(stringResource(R.string.food_add_another), modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onAdd).padding(vertical = 10.dp), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = SageDeep)
     }
 }
 

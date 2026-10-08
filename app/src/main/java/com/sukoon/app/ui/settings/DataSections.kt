@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.settings
 
+import com.sukoon.app.platform.TimeFormat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -130,7 +131,7 @@ fun NightscoutSection(
 
 /** The last upload as one line (null when uploads are off): shown under the card and toasted after Upload now. */
 private fun uploadText(context: Context, status: UploadStatus): String? {
-    val time = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+    val time = TimeFormat.of()
     return when (status) {
         UploadStatus.Off -> null
         is UploadStatus.Ok -> context.getString(R.string.ns_status_ok, time.format(status.at), status.count)

@@ -1,5 +1,6 @@
 package com.sukoon.app.reports
 
+import com.sukoon.app.platform.TimeFormat
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
@@ -60,7 +61,7 @@ object AgpPdf {
         val period = "${day.format(report.from)} – ${day.format(report.to)} · ${context.resources.getQuantityString(R.plurals.report_days, report.days.toInt(), report.days)}"
         c.drawText(listOfNotNull(name.trim().takeIf { it.isNotEmpty() }, period).joinToString(" · "), MARGIN, y, body)
         y += 14f
-        c.drawText(context.getString(R.string.report_pdf_generated, DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm").format(LocalDateTime.now())), MARGIN, y, small)
+        c.drawText(context.getString(R.string.report_pdf_generated, TimeFormat.of("d MMM yyyy, HH:mm").format(LocalDateTime.now())), MARGIN, y, small)
         y += 28f
 
         val metrics = listOf(

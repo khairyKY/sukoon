@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.settings
 
+import com.sukoon.app.platform.TimeFormat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -198,7 +199,7 @@ private fun SlotCard(s: MealSlot, report: RatioLearner.Report, settings: DoseSet
 /** "Tue 6 Oct · 60 g · 5 u · +50 at 4 h · 1 : 10" (the ratio only for a clean meal with a factor). */
 @Composable
 private fun MealRow(m: RatioLearner.Meal, reason: String? = null) {
-    val day = remember { DateTimeFormatter.ofPattern("EEE d MMM HH:mm", Locale.getDefault()).withZone(ZoneId.systemDefault()) }
+    val day = TimeFormat.of("EEE d MMM HH:mm")
     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(day.format(Instant.ofEpochMilli(m.atMillis)), fontSize = 12.5.sp, color = CaptionMuted, modifier = Modifier.width(104.dp))
         Column(Modifier.weight(1f)) {

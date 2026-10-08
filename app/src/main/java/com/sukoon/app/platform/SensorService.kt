@@ -139,6 +139,6 @@ class SensorService : Service() {
             else -> 0xFF3E7A63.toInt()
         }
 
-        private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+        private val TIME: DateTimeFormatter get() = TimeFormat.of()
     }
 }

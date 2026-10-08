@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.home
 
+import com.sukoon.app.platform.TimeFormat
 import com.sukoon.app.data.db.EventEntity
 import com.sukoon.app.ui.theme.SageDeep
 import androidx.compose.material3.TextButton
@@ -724,7 +725,7 @@ private fun MealDoseCard(meal: EventEntity, dose: DoseAdvice.Suggestion, onLog: 
             )
         }
         Text(
-            stringResource(R.string.home_meal_body, formatAmountLocalized(meal.value ?: 0.0), java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(java.time.ZoneId.systemDefault()).format(java.time.Instant.ofEpochMilli(meal.timestampMillis))),
+            stringResource(R.string.home_meal_body, formatAmountLocalized(meal.value ?: 0.0), TimeFormat.of().format(java.time.Instant.ofEpochMilli(meal.timestampMillis))),
             fontSize = 13.sp,
             color = CaptionMuted,
         )
@@ -887,7 +888,7 @@ private val STEADY = listOf(
     R.string.home_brief_steady_3_title to R.string.home_brief_steady_3_body,
 )
 
-private val HM: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+private val HM: DateTimeFormatter get() = TimeFormat.of()
 
 // ---------------------------------------------------------------------------------------------
 // Warm-up — screen 8g

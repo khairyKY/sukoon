@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.logbook
 
+import com.sukoon.app.platform.TimeFormat
 import com.sukoon.app.health.HealthConnectSync
 import android.graphics.BitmapFactory
 import android.os.Build
@@ -98,7 +99,7 @@ import com.sukoon.app.ui.components.PullToSync
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 
-internal val hmFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+internal val hmFormatter: DateTimeFormatter get() = TimeFormat.of()
 
 /**
  * Logbook (design A1–A3 and "Logbook with MyFitnessPal meals"): today's timeline, newest first,
@@ -164,7 +165,8 @@ fun LogbookScreen(
         state.events.filter { it.source != null && it.logType == LogEventType.CARB && Instant.ofEpochMilli(it.timestampMillis).atZone(zone).toLocalDate() == Instant.now().atZone(zone).toLocalDate() }
     }
     fun open(event: EventEntity) {
-        if (event.source != null && event.logType == LogEventType.CARB) detail = event else editor = EditorRequest(event.logType, existing = event)
+        // Every meal opens on what it did; yours have Edit meal there.
+        if (event.logType == LogEventType.CARB) detail = event else editor = EditorRequest(event.logType, existing = event)
     }
     fun announce(message: String, undo: List<Long>? = null) {
         scope.launch {
@@ -306,6 +308,10 @@ fun LogbookScreen(
                 detail = null
                 onDeleteEvent(meal)
                 announce(context.getString(R.string.toast_meal_hidden))
+            },
+            onEdit = {
+                detail = null
+                editor = EditorRequest(LogEventType.CARB, existing = meal)
             },
             onDismiss = { detail = null },
         )

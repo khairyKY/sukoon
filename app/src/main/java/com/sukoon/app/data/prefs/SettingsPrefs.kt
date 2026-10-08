@@ -1,5 +1,6 @@
 package com.sukoon.app.data.prefs
 
+import com.sukoon.app.platform.TimeFormat
 import com.sukoon.app.domain.metrics.TargetRange
 import android.content.Context
 import com.sukoon.app.alarms.AlarmSettings
@@ -170,6 +171,11 @@ class SettingsPrefs(context: Context) {
         }.apply()
 
     /** You → Appearance. */
+    /** 12- or 24-hour times, or the phone's (You → Appearance). */
+    var timeFormat: TimeFormat.Mode
+        get() = TimeFormat.Mode.entries.firstOrNull { it.name == prefs.getString(KEY_TIME_FORMAT, null) } ?: TimeFormat.Mode.PHONE
+        set(value) = prefs.edit().putString(KEY_TIME_FORMAT, value.name).apply()
+
     var themeMode: ThemeMode
         get() = ThemeMode.entries.firstOrNull { it.name == prefs.getString(KEY_THEME, null) } ?: ThemeMode.AUTO
         set(value) = prefs.edit().putString(KEY_THEME, value.name).apply()
@@ -254,6 +260,7 @@ class SettingsPrefs(context: Context) {
         private const val KEY_QUIET_TO = "alarm_quiet_highs_to"
         private const val KEY_SOUND_PACK = "alarm_sound_pack"
         private const val KEY_THEME = "theme_mode"
+        private const val KEY_TIME_FORMAT = "time_format"
         private const val KEY_INSULIN_DURATION = "insulin_duration_minutes"
         private const val KEY_EMERGENCY_NAME = "emergency_your_name"
         private const val KEY_EMERGENCY_AFTER = "emergency_after_minutes"

@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.logbook
 
+import com.sukoon.app.platform.TimeFormat
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
@@ -230,7 +231,10 @@ internal fun MealDetailSheet(
     onSetTime: (Instant) -> Unit = {},
     /** "What was it?": your name for it (the other app doesn't share the foods). */
     onRename: (String) -> Unit = {},
+    /** A meal logged in Sukoon: back to its editor. */
+    onEdit: () -> Unit = {},
 ) {
+    val imported = meal.source != null
     var naming by remember { mutableStateOf(false) }
     if (naming) NameDialog(meal.note.orEmpty(), onSave = { onRename(it); naming = false }, onDismiss = { naming = false })
     val context = LocalContext.current
@@ -246,9 +250,11 @@ internal fun MealDetailSheet(
                     fontFamily = HeadlineSerifFontFamily,
                     fontSize = 30.sp,
                     color = MaterialTheme.colorScheme.onBackground,
-                    modifier = if (meal.summary) Modifier else Modifier.clip(RoundedCornerShape(8.dp)).clickable { naming = true },
+                    modifier = if (meal.summary || !imported) Modifier else Modifier.clip(RoundedCornerShape(8.dp)).clickable { naming = true },
                 )
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (!imported) {
+                    Text(hmFormatter.format(mealAt), fontSize = 14.sp, color = CaptionMuted)
+                } else Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     SourceLine(app, emptyList())
                     if (!meal.summary && meal.note == null) {
                         Text(
@@ -261,7 +267,7 @@ internal fun MealDetailSheet(
                     }
                 }
             }
-            EatenAt(meal, app.label, onSetTime)
+            if (imported) EatenAt(meal, app.label, onSetTime)
             DoseCard(meal, insulin, onAddInsulin, onEditInsulin)
             if (slowMeal(meal.fat, meal.protein)) {
                 Text(
@@ -278,6 +284,12 @@ internal fun MealDetailSheet(
                 Text(responseText(mealResponse(readings, mealAt, now)), fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground)
             }
             WhatsInIt(meal, record)
+            if (!imported) {
+                TextButton(onClick = onEdit, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.meal_detail_edit), color = SageDeep, fontWeight = FontWeight.SemiBold)
+                }
+                return@Column
+            }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.meal_detail_foods_stay, app.label), fontSize = 13.sp, color = CaptionMuted, modifier = Modifier.weight(1f))
                 context.packageManager.getLaunchIntentForPackage(app.packageName)?.let { launch ->
@@ -311,7 +323,7 @@ private fun EatenAt(meal: EventEntity, appName: String, onSetTime: (Instant) -> 
             val picked = start.withHour(hour).withMinute(minute).withSecond(0).withNano(0)
             val now = ZonedDateTime.now()
             onSetTime((if (picked.isAfter(now)) picked.minusDays(1) else picked).toInstant()) // later than now: the day before
-        }, start.hour, start.minute, DateFormat.is24HourFormat(context)).show()
+        }, start.hour, start.minute, !TimeFormat.twelve).show()
     }
     Row(
         Modifier

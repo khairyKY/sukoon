@@ -49,7 +49,9 @@ android {
             // (the one build that updates a debug-signed install in place, to back up before moving keys).
             signingConfig = if (project.hasProperty("debugSigned")) signingConfigs.getByName("debug")
             else signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
-            isMinifyEnabled = false
+            // R8: smaller, optimised code starts and scrolls faster. Alarm sounds are kept by res/raw/keep.xml.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -93,6 +95,12 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     // Home-screen widgets (ui/widget/): Compose-style RemoteViews that know their exact resized size.
     implementation(libs.androidx.glance.appwidget)
+    // Barcodes on the meal screen: Sukoon's own camera and ML Kit's model inside the app (opens at once, reads offline).
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.mlkit.barcode)
+    implementation(libs.guava) // already in the app through another library; CameraX hands its camera over as a ListenableFuture
     implementation(libs.androidx.health.connect) // MyFitnessPal meals in, glucose out (health/)
 
     implementation(libs.androidx.room.runtime)

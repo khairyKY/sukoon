@@ -1,5 +1,6 @@
 package com.sukoon.app.alarms
 
+import com.sukoon.app.platform.TimeFormat
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -304,7 +305,7 @@ class AlarmNotifier(private val context: Context, private val log: AlarmLog) {
         private const val PREVIEW_MS = 5_000L
         private const val COUNTDOWN_ID = 2000
         private const val SENT_ID = 2001
-        private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+        private val TIME: DateTimeFormatter get() = TimeFormat.of()
         private val URGENT_VIBRATION = longArrayOf(0, 800, 400, 800, 400, 800, 400, 1600)
         private val LOW_VIBRATION = longArrayOf(0, 600, 300, 600)
         private val LEGACY_CHANNELS = listOf("alarm_urgent", "alarm_urgent_dnd", "alarm_low", "alarm_low_dnd", "alarm_high", "alarm_signal", "alarm2_signal")

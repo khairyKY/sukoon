@@ -1,5 +1,6 @@
 package com.sukoon.app.alarms
 
+import com.sukoon.app.platform.TimeFormat
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -190,7 +191,7 @@ class AlarmActivity : ComponentActivity() {
         private const val EXTRA_WHO = "who"
         private const val EXTRA_PERSON = "person"
         private const val EXTRA_TEST = "test"
-        private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+        private val TIME: DateTimeFormatter get() = TimeFormat.of()
 
         private fun secondsUntil(at: Instant) = ((Duration.between(Instant.now(), at).toMillis() + 999) / 1000).coerceAtLeast(0).toInt()
 

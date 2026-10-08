@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.graph
 
+import com.sukoon.app.platform.TimeFormat
 import com.sukoon.app.ui.theme.SageDeep
 import com.sukoon.app.domain.metrics.TargetRange
 import androidx.compose.foundation.Canvas
@@ -108,7 +109,7 @@ private val READINGS_HEIGHT = 420.dp // the readings box; it scrolls inside, the
 private const val BUCKET_MS = 15 * 60_000L // 7/14-day charts draw 15-minute means
 private const val GAP_MS = 15 * 60_000L // a longer silence breaks the line instead of bridging it
 
-private val hm = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+private val hm: DateTimeFormatter get() = TimeFormat.of()
 
 /**
  * Trends → Graph (design 8j, overhauled 2026-10-03): the current value and trend, a chart colored by

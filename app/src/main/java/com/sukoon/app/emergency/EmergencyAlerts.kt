@@ -1,5 +1,6 @@
 package com.sukoon.app.emergency
 
+import com.sukoon.app.platform.TimeFormat
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
@@ -32,7 +33,7 @@ import java.util.Locale
  */
 class EmergencyAlerts(private val context: Context, private val settings: SettingsPrefs) {
 
-    private val time = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+    private val time: DateTimeFormatter get() = TimeFormat.of()
 
     @Volatile private var freshFix: Location? = null
 

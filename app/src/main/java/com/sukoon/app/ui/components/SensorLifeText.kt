@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.components
 
+import com.sukoon.app.platform.TimeFormat
 import android.content.Context
 import com.sukoon.app.R
 import com.sukoon.app.data.source.libre.SensorLife
@@ -9,7 +10,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 /** "Tue 14 Oct, 14:30": when a sensor stops. */
-fun sensorTime(at: Instant): String = DateTimeFormatter.ofPattern("EEE d MMM, HH:mm").withZone(ZoneId.systemDefault()).format(at)
+fun sensorTime(at: Instant): String = TimeFormat.of("EEE d MMM, HH:mm").format(at)
 
 /** "2 d 5 h", "5 h", "40 min". */
 fun durationText(context: Context, minutes: Long): String = when {

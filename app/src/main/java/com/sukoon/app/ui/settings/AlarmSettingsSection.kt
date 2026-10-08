@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.settings
 
+import com.sukoon.app.platform.TimeFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -576,7 +577,7 @@ private fun LogRow(e: AlarmLog.Entry) {
 private fun logTime(at: Instant): String {
     val zone = ZoneId.systemDefault()
     val today = at.atZone(zone).toLocalDate() == LocalDate.now(zone)
-    return DateTimeFormatter.ofPattern(if (today) "HH:mm" else "EEE HH:mm", Locale.getDefault()).format(at.atZone(zone))
+    return TimeFormat.of(if (today) "HH:mm" else "EEE HH:mm").format(at.atZone(zone))
 }
 
 @Composable

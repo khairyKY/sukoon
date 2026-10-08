@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.widget
 
+import com.sukoon.app.platform.TimeFormat
 import com.sukoon.app.domain.metrics.TargetRange
 import android.content.Context
 import android.content.res.Configuration
@@ -186,7 +187,7 @@ class WidgetStripReceiver : GlanceAppWidgetReceiver() { override val glanceAppWi
 class WidgetLargeReceiver : GlanceAppWidgetReceiver() { override val glanceAppWidget: GlanceAppWidget = GlucoseWidget() }
 
 private val WIDGET_CAPTION = Color(0xFF5E6B64) // CaptionMuted's light tone: widgets draw outside the app theme
-private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+private val TIME: DateTimeFormatter get() = TimeFormat.of()
 
 /** Resolved colors for one background choice; [darkGraph] picks the bitmap's line/band shade. */
 private class Palette(val background: ColorProvider, val text: ColorProvider, val muted: ColorProvider, val darkGraph: Boolean) {
