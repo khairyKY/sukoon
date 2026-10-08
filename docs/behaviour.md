@@ -299,3 +299,46 @@ only for half-unit pens, and suggestions round down to the pen.
   the nearest meal by time, as before.
 - A meal another app posts again (Samsung Health passing on MyFitnessPal's) within 10 minutes of a
   MyFitnessPal meal with the same carbs is left out.
+- *What was it?* names an imported meal (the name becomes its title). Every meal, imported or
+  logged in Sukoon, opens on this screen; yours have *Edit meal* at the bottom.
+
+## 12. Meals from foods
+
+- A new meal starts from its foods: a search box with the barcode button inside it, three tiles
+  (Photo, MyFitnessPal, Just carbs) and your usual foods. *Just carbs* is the number pad, as before.
+- Search shows **yours** first (everything you've put on a plate, the most recent first, offline),
+  then **home dishes** (88 Egyptian and Middle-Eastern dishes in `assets/dishes.json`, each with its
+  source; Arabic matches however it's spelt: ة/ه, أ/ا, marks), then **Open Food Facts** after a 0.3 s
+  pause, in Arabic and English, with *Sold in Egypt* as a filter. A product without carbs is left
+  out: it couldn't be dosed from.
+- Dish carbs exclude fibre (as Open Food Facts counts them); stews (molokhia, bamya, besella…) are
+  without rice, which is its own food. Portions are typical; the per-100 g values are the sourced part.
+- A barcode is read by Sukoon's own camera (ML Kit inside the app): yours first, then Open Food
+  Facts. Not there: *Add it as your own*, and the next scan finds it.
+- *Ask the AI about "…"* estimates any dish (Gemini, your key); the estimate becomes one of yours,
+  counted in portions.
+- *How much?*: package parts or the serving, a dish's portion (½, 1, 1½, 2 bowls), −/+, or type it
+  in grams or portions. The plate adds carbs, fibre, protein, fat and calories into the meal, names
+  it after its foods (unless you named it), and the dose suggestion works from the total.
+- Photos: as many as you like per meal; the AI estimate reads them all as one meal.
+
+## 13. Your sensor (You → Sensor)
+
+- The state comes from the newest reading, not the Bluetooth link (the sensor drops it after every
+  reading): **Live** under 6 minutes old, **Reconnecting** under 20, else **No signal**; **Warming
+  up**, **Ended**, **Bluetooth off** and **Not in use** (another source chosen) override it.
+- What needs you is listed first: Bluetooth off (red, *Turn on*), no readings for 10 minutes or
+  more (red), ending within 3 days (amber; red on the last day), ended (red).
+- Its life is a bar, *Day 12 of 15 · ends …*, amber in the last 3 days and red on the last.
+- Notices: 3 days, 1 day and 1 hour before the end, and when it ends. Bluetooth off shows on Home,
+  and the no-readings alarm says Bluetooth is off when it is.
+
+## 14. Days, backup, clock
+
+- The logbook and the graph show the last 24 hours (or the chosen range) up to now; the *‹ Today ›*
+  bar goes to any earlier day (its entries, totals and the whole day's graph).
+- Cloud backup (opt-in, You → Reports): the full backup zip, written to one file you chose in a
+  cloud app, on choosing and then once a day (checked hourly while Sukoon runs). Sukoon keeps
+  permission to that file only. *Stop* releases it.
+- Times follow You → Appearance → Clock: the phone's, 12-hour or 24-hour, everywhere (alarms,
+  notifications and widgets included).

@@ -41,3 +41,23 @@ MIT License — Copyright (c) 2026 Guido Soranzio. (Same permission notice and w
 ## LibreTools — https://github.com/ivalkou/LibreTools
 
 MIT License — Copyright (c) 2020 Ivan Valkou. (Same permission notice and warranty disclaimer as above.)
+
+## Open Food Facts — https://world.openfoodfacts.org
+
+Packaged-food search and barcodes use Open Food Facts data, made available under the
+[Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/1-0/); product photos under
+[CC BY-SA](https://creativecommons.org/licenses/by-sa/3.0/). Fetched live when you search or scan;
+nothing is bundled.
+
+## Home dishes — `app/src/main/assets/dishes.json`
+
+Carbohydrate values compiled for Sukoon from: USDA FoodData Central (SR Legacy and FNDDS, public
+domain), cited by fdcId per dish; Hoteit & Zoghbi, *Food Composition Data: Traditional Dishes,
+Arabic Sweets and Market Foods* (Lebanese University, 2021); Soliman et al., *Production of balady
+bread* (Benha University). Mixed dishes not measured anywhere are computed from USDA ingredients
+with a standard Egyptian recipe, and say so in their `source` field.
+
+## AndroidX CameraX and Google ML Kit barcode scanning
+
+CameraX (Apache License 2.0) and ML Kit barcode scanning (the model bundled in the app; Google's
+ML Kit terms: https://developers.google.com/ml-kit/terms) read barcodes on the phone.
