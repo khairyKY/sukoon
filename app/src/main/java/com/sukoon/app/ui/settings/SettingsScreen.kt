@@ -357,8 +357,8 @@ fun SettingsScreen(
                         InjectionSitesCard(injectionSites)
                         Gap()
                         InsulinSection(insulinAction, onInsulinAction, doseSettings.step) { onDoseSettings(doseSettings.copy(step = it)) }
-                        Gap()
-                        DoseCard(doseSettings, guarded(onDoseSettings), doseStartingPoints, learningReport, insulinAction.durationMinutes / 60, profile, guarded(onProfile), locked, { askingPin = true }, parentPin, onParentPin, openLearning, onOpenedLearning)
+                        if (com.sukoon.app.BuildConfig.DOSE_BETA) Gap()
+                        if (com.sukoon.app.BuildConfig.DOSE_BETA) DoseCard(doseSettings, guarded(onDoseSettings), doseStartingPoints, learningReport, insulinAction.durationMinutes / 60, profile, guarded(onProfile), locked, { askingPin = true }, parentPin, onParentPin, openLearning, onOpenedLearning)
                     }
                     YouPage.APPS -> {
                         HealthConnectSection(healthConnect)
@@ -421,11 +421,20 @@ fun SettingsScreen(
                             fontWeight = FontWeight.SemiBold,
                             color = SageDeep,
                         )
+                        Text(
+                            stringResource(R.string.privacy_link),
+                            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable {
+                                runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(com.sukoon.app.PRIVACY_URL))) }
+                            }.padding(vertical = 10.dp),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = SageDeep,
+                        )
                         Gap()
                         SectionLabel(stringResource(R.string.setup_title))
                         SetupChecklist(only = if (wears) null else FOLLOWER_SETUP_ITEMS)
                         Gap()
-                        updates?.let {
+                        updates?.takeIf { com.sukoon.app.BuildConfig.SELF_UPDATE }?.let {
                             SectionLabel(stringResource(R.string.updates_title))
                             UpdatesSection(it, onBackUp = { page = YouPage.REPORTS })
                             Gap()
@@ -651,9 +660,13 @@ private fun AiKey(geminiKey: String, onSave: (String) -> Unit) {
         modifier = Modifier.fillMaxWidth(),
     )
     Spacer(Modifier.height(8.dp))
+    val consent = com.sukoon.app.ui.components.rememberConsent("ai", R.string.consent_ai_title, R.string.consent_ai_body)
     PrimaryButton(stringResource(if (geminiKey.isBlank()) R.string.settings_save else R.string.settings_update)) {
-        onSave(keyInput)
-        context.toast(context.getString(if (keyInput.isBlank()) R.string.toast_ai_key_removed else R.string.settings_ai_saved))
+        val save = {
+            onSave(keyInput)
+            context.toast(context.getString(if (keyInput.isBlank()) R.string.toast_ai_key_removed else R.string.settings_ai_saved))
+        }
+        if (keyInput.isBlank()) save() else consent(save)
     }
     if (geminiKey.isNotBlank()) Text(stringResource(R.string.settings_ai_saved), fontSize = 11.5.sp, color = Sage, modifier = Modifier.padding(top = 6.dp))
 }

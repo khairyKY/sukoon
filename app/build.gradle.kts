@@ -14,20 +14,39 @@ plugins {
 
 android {
     namespace = "com.sukoon.app"
-    compileSdk = 35
+    // 36: Google Play requires targeting Android 16 (API 36) from 31 Aug 2026.
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.sukoon.app"
         // 26+: notification channels are required for the alarm-severity channels (PLAN.md §6)
         // and foreground-service behavior we need for continuous BLE collection anyway.
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 12
         versionName = "0.8.0"
 
         // Followers backend (Supabase): URL + publishable key from the gitignored local.properties.
         buildConfigField("String", "SUPABASE_URL", "\"${localProps.getProperty("supabase.url", "")}\"")
         buildConfigField("String", "SUPABASE_KEY", "\"${localProps.getProperty("supabase.publishableKey", "")}\"")
+    }
+
+    // Two builds of the same app: GitHub releases (as before: self-updates, dose suggestions beta) and
+    // Google Play (Play updates it; no dose suggestions, which Play would treat as a regulated medical
+    // device; its own package name, since com.sukoon.app is taken on Play). docs/play-store.md.
+    flavorDimensions += "store"
+    productFlavors {
+        create("github") {
+            dimension = "store"
+            buildConfigField("boolean", "SELF_UPDATE", "true")
+            buildConfigField("boolean", "DOSE_BETA", "true")
+        }
+        create("play") {
+            dimension = "store"
+            applicationId = "io.github.khairyky.sukoon"
+            buildConfigField("boolean", "SELF_UPDATE", "false")
+            buildConfigField("boolean", "DOSE_BETA", "false")
+        }
     }
 
     signingConfigs {

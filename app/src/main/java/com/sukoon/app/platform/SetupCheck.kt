@@ -26,17 +26,38 @@ enum class SetupItem(val titleRes: Int, val whyRes: Int) {
     OVERLAY(R.string.setup_overlay, R.string.setup_overlay_why),
     DND(R.string.setup_dnd, R.string.setup_dnd_why),
     EMERGENCY(R.string.setup_emergency, R.string.setup_emergency_why),
+    EXACT_ALARMS(R.string.setup_exact, R.string.setup_exact_why),
 }
+
+/** Android's three battery settings for an app: only Unrestricted lets Sukoon keep the sensor and alarms going. */
+enum class BatteryState { UNRESTRICTED, OPTIMIZED, RESTRICTED }
 
 object SetupCheck {
 
-    /** Items that apply here: full-screen intent only needs granting on 14+; emergency texts once there's a contact. */
-    fun applicable(context: Context): List<SetupItem> = SetupItem.entries.filter {
-        when (it) {
-            SetupItem.FULL_SCREEN -> Build.VERSION.SDK_INT >= 34
-            SetupItem.EMERGENCY -> SettingsPrefs(context).emergency.contacts.isNotEmpty()
-            else -> true
+    /**
+     * Items that apply to this person on this phone: Bluetooth only to someone wearing a sensor read over
+     * Bluetooth (not to a follower, nor to a LibreLinkUp source); emergency texts only to the wearer with a
+     * contact; full-screen alarms on 14+; exact alarms where Android makes the app ask (12+, when not granted).
+     */
+    fun applicable(context: Context): List<SetupItem> {
+        val settings = SettingsPrefs(context)
+        val wears = settings.role.wears
+        return SetupItem.entries.filter {
+            when (it) {
+                SetupItem.BLUETOOTH -> wears && settings.sourceKind == com.sukoon.app.data.source.SourceKind.LIBRE_BLE
+                SetupItem.EMERGENCY -> wears && settings.emergency.contacts.isNotEmpty()
+                SetupItem.FULL_SCREEN -> Build.VERSION.SDK_INT >= 34
+                SetupItem.EXACT_ALARMS -> Build.VERSION.SDK_INT >= 31
+                else -> true
+            }
         }
+    }
+
+    /** Unrestricted (exempt from battery optimization), Optimized, or Restricted (stopped in the background). */
+    fun battery(context: Context): BatteryState = when {
+        Build.VERSION.SDK_INT >= 28 && context.getSystemService(android.app.ActivityManager::class.java).isBackgroundRestricted -> BatteryState.RESTRICTED
+        BatteryOptimization.isIgnoringBatteryOptimizations(context) -> BatteryState.UNRESTRICTED
+        else -> BatteryState.OPTIMIZED
     }
 
     fun missing(context: Context): List<SetupItem> = applicable(context).filterNot { isDone(context, it) }
@@ -46,11 +67,12 @@ object SetupCheck {
         return when (item) {
             SetupItem.NOTIFICATIONS -> NotificationManagerCompat.from(context).areNotificationsEnabled() && !AlarmNotifier.alarmChannelBlocked(context)
             SetupItem.BLUETOOTH -> bluetoothPermissions().all { granted(context, it) }
-            SetupItem.BATTERY -> BatteryOptimization.isIgnoringBatteryOptimizations(context)
+            SetupItem.BATTERY -> battery(context) == BatteryState.UNRESTRICTED
             SetupItem.FULL_SCREEN -> Build.VERSION.SDK_INT < 34 || notifications.canUseFullScreenIntent()
             SetupItem.OVERLAY -> Settings.canDrawOverlays(context)
             SetupItem.DND -> notifications.isNotificationPolicyAccessGranted
             SetupItem.EMERGENCY -> EMERGENCY_PERMISSIONS.all { granted(context, it) }
+            SetupItem.EXACT_ALARMS -> Build.VERSION.SDK_INT < 31 || context.getSystemService(android.app.AlarmManager::class.java).canScheduleExactAlarms()
         }
     }
 
@@ -68,7 +90,10 @@ object SetupCheck {
         return when (item) {
             SetupItem.NOTIFICATIONS -> Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
             SetupItem.BLUETOOTH -> Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, pkg)
-            SetupItem.BATTERY -> Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, pkg)
+            // Restricted is undone on the app's own page (Battery → Unrestricted); Optimized by Android's ask.
+            SetupItem.BATTERY -> if (battery(context) == BatteryState.RESTRICTED) Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, pkg)
+            else Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, pkg)
+            SetupItem.EXACT_ALARMS -> if (Build.VERSION.SDK_INT >= 31) Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, pkg) else Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, pkg)
             SetupItem.FULL_SCREEN -> Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, pkg)
             SetupItem.OVERLAY -> Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, pkg)
             SetupItem.DND -> Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)

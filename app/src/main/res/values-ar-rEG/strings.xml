@@ -206,7 +206,7 @@
     <string name="setup_notifications_why">التنبيهات إشعارات — من غير ده مفيش تنبيه هيوصلك.</string>
     <string name="setup_bluetooth">البلوتوث</string>
     <string name="setup_bluetooth_why">علشان تستلم قراية من الحساس كل دقيقة.</string>
-    <string name="setup_battery">تجاهل توفير البطارية</string>
+    <string name="setup_battery">البطارية: بدون قيود</string>
     <string name="setup_battery_why">علشان أندرويد ما يوقفش سكون في الخلفية ويفوّت قرايات أو تنبيهات.</string>
     <string name="setup_full_screen">تنبيهات ملء الشاشة</string>
     <string name="setup_full_screen_why">بتخلّي الهبوط الخطير يظهر على شاشة القفل ويصحّي الشاشة.</string>
@@ -1660,4 +1660,16 @@
     <string name="account_delete_body">حسابك في سكون هيتمسح، ومعاه القرايات اللي اتشاركت وكل المتابعات من الناحيتين. اللي على الموبايل ده هيفضل. مفيش رجوع.</string>
     <string name="account_delete_go">امسح</string>
     <string name="account_deleted">حسابك اتمسح.</string>
+    <string name="setup_battery_unrestricted">شغّال: بدون قيود</string>
+    <string name="setup_battery_optimized">مقفول: محسّنة (أندرويد ممكن يوقّف سكون)</string>
+    <string name="setup_battery_restricted">مقفول: مقيّدة (سكون بيتوقف في الخلفية)</string>
+    <string name="setup_exact">المنبّهات والتذكيرات</string>
+    <string name="setup_exact_why">علشان المنبّه يرن في دقيقته، وسكون يصحّي نفسه لو الموبايل وقّفه.</string>
+    <string name="consent_agree">موافق</string>
+    <string name="consent_not_now">مش دلوقتي</string>
+    <string name="consent_emergency_title">رسايل ومكالمات لجهات الطوارئ</string>
+    <string name="consent_emergency_body">لو منبّه هبوط خطير محدش رد عليه، سكون هيبعت رسالة ويتصل بجهات الطوارئ بتاعتك، حتى وهو في الخلفية. الرسالة فيها سكرك، بقاله قد إيه واطي، ومكانك. غير كده مفيش حاجة بتتبعت.</string>
+    <string name="consent_ai_title">بعت بيانات للذكاء الاصطناعي بتاع جوجل</string>
+    <string name="consent_ai_body">بمفتاحك، اللي بتسأل عنه بيروح لـ Google Gemini: ملخصات قراياتك وسجلك، بياناتك وإعدادات الجرعة، صور الوجبات والأكلات اللي بتسأل عنها. شروط جوجل بتنطبق، وفي النسخة المجانية جوجل ممكن تستخدمها في تحسين منتجاتها. مفيش حاجة بتتبعت غير لما تسأل.</string>
+    <string name="privacy_link">سياسة الخصوصية</string>
 </resources>

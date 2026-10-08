@@ -112,7 +112,7 @@ private fun path(role: UserRole): List<Step> = buildList {
     add(Step.WELCOME)
     add(Step.ROLE)
     add(Step.ACCOUNT)
-    if (role.wears) addAll(listOf(Step.SENSOR, Step.PERMISSIONS, Step.ALARMS, Step.EMERGENCY, Step.EXTRAS, Step.DOSE))
+    if (role.wears) addAll(listOf(Step.SENSOR, Step.PERMISSIONS, Step.ALARMS, Step.EMERGENCY, Step.EXTRAS) + listOfNotNull(Step.DOSE.takeIf { com.sukoon.app.BuildConfig.DOSE_BETA }))
     if (role.follows) addAll(listOf(Step.CODE, Step.FOLLOW_ALERTS))
     if (role.wears) add(Step.READY)
 }

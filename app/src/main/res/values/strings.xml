@@ -206,7 +206,7 @@
     <string name="setup_notifications_why">Alarms are notifications — without this, no alarm can reach you.</string>
     <string name="setup_bluetooth">Bluetooth</string>
     <string name="setup_bluetooth_why">To receive a reading from your sensor every minute.</string>
-    <string name="setup_battery">Ignore battery optimization</string>
+    <string name="setup_battery">Battery: Unrestricted</string>
     <string name="setup_battery_why">So Android doesn\'t pause Sukoon in the background and miss readings or alarms.</string>
     <string name="setup_full_screen">Full-screen alerts</string>
     <string name="setup_full_screen_why">Lets an urgent low take over the lock screen and wake the display.</string>
@@ -1548,4 +1548,16 @@
     <string name="account_delete_body">Your Sukoon account goes, with the readings it shared and every follow both ways. What is on this phone stays. This can\'t be undone.</string>
     <string name="account_delete_go">Delete</string>
     <string name="account_deleted">Your account is deleted.</string>
+    <string name="setup_battery_unrestricted">On: Unrestricted</string>
+    <string name="setup_battery_optimized">Off: Optimized (Android may pause Sukoon)</string>
+    <string name="setup_battery_restricted">Off: Restricted (Sukoon is stopped in the background)</string>
+    <string name="setup_exact">Alarms &amp; reminders</string>
+    <string name="setup_exact_why">So an alarm goes off on the minute, and Sukoon wakes itself if the phone stops it.</string>
+    <string name="consent_agree">I agree</string>
+    <string name="consent_not_now">Not now</string>
+    <string name="consent_emergency_title">Texts and calls to your contacts</string>
+    <string name="consent_emergency_body">When an urgent low alarm goes unanswered, Sukoon texts and then calls your emergency contacts, even while it\'s in the background. The text says your glucose, how long it has been low and where you are (your phone\'s location). Nothing is sent otherwise.</string>
+    <string name="consent_ai_title">Sending data to Google\'s AI</string>
+    <string name="consent_ai_body">With your key, what you ask goes to Google Gemini: summaries of your readings and logbook, your profile and dose settings, meal photos and the dishes you ask about. Google\'s terms apply, and on the free tier Google may use it to improve its products. Nothing is sent until you ask.</string>
+    <string name="privacy_link">Privacy policy</string>
 </resources>

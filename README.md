@@ -155,7 +155,7 @@ Someone who only follows sees a simpler app: no sensor, insulin or dose settings
 ### Everything else
 
 - ✅ **Your sensor at a glance.** You → Sensor says *Live*, *Reconnecting* or *No signal* from the last reading, puts what needs you on top in red or amber (Bluetooth off, no readings, sensor ending, ended) with the fix one tap away, and shows the sensor's life as a bar that turns amber 3 days before the end. Bluetooth off also shows on Home, and a notice comes 3 days, 1 day and 1 hour before the sensor stops.
-- ✅ **English and Egyptian Arabic**, right to left, with the language picked inside the app (1,385 strings in each, checked for parity), and a **12- or 24-hour clock** (or the phone's).
+- ✅ **English, Standard Arabic and Egyptian Arabic**, right to left, with the language picked inside the app (1,404 strings in each, checked for parity; Arabic phones in Egypt get Egyptian, elsewhere Standard), and a **12- or 24-hour clock** (or the phone's).
 - ✅ **Light, dark or like the phone**, with motion from the design spec that turns off when the phone's *Remove animations* is on.
 - ✅ **A built-in guide** (You → Guide) and a getting-started card on Home.
 - ✅ **Starts after a reboot or update**, and a watchdog wakes it if the phone kills it.
@@ -354,11 +354,12 @@ git clone https://github.com/khairyKY/sukoon.git
 
 | Task | Command |
 | :-- | :-- |
-| Compile | `./gradlew :app:compileDebugKotlin` |
-| Unit tests | `./gradlew :app:testDebugUnitTest` |
-| Debug APK | `./gradlew :app:assembleDebug` |
-| Release APK, signed with Sukoon's key | `./gradlew :app:assembleRelease` |
-| Release APK, debug-signed (updates 0.6-era installs in place) | `./gradlew :app:assembleRelease -PdebugSigned` |
+| Compile | `./gradlew :app:compileGithubDebugKotlin` |
+| Unit tests | `./gradlew :app:testGithubDebugUnitTest` |
+| Debug APK | `./gradlew :app:assembleGithubDebug` |
+| Release APK (GitHub), signed with Sukoon's key | `./gradlew :app:assembleGithubRelease` |
+| Google Play bundle (no self-update, no dose suggestions, its own package name) | `./gradlew :app:bundlePlayRelease`, see [`docs/play-store.md`](docs/play-store.md) |
+| Release APK, debug-signed (updates 0.6-era installs in place) | `./gradlew :app:assembleGithubRelease -PdebugSigned` |
 
 On the emulator, pick **Demo** as the source to try every screen without a sensor. Followers need a Supabase project: run [`supabase/migrations/`](supabase/migrations/) in its SQL editor and put the project URL and *publishable* key in `local.properties` (gitignored). Never put the service-role key in the app. The release key and its passwords live only on the build machine ([`docs/signing.md`](docs/signing.md)).
 

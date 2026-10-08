@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.settings
 
+import com.sukoon.app.platform.BatteryState
 import android.content.ActivityNotFoundException
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -87,6 +88,22 @@ fun SetupChecklist(only: Set<SetupItem>? = null) {
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(item.titleRes), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                    // The battery setting says where it stands, on or off: Unrestricted, Optimized or Restricted.
+                    if (item == SetupItem.BATTERY) {
+                        val state = remember(missing) { SetupCheck.battery(context) }
+                        Text(
+                            stringResource(
+                                when (state) {
+                                    BatteryState.UNRESTRICTED -> R.string.setup_battery_unrestricted
+                                    BatteryState.OPTIMIZED -> R.string.setup_battery_optimized
+                                    BatteryState.RESTRICTED -> R.string.setup_battery_restricted
+                                },
+                            ),
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (done) Sage else StateHigh,
+                        )
+                    }
                     if (!done) Text(stringResource(item.whyRes), fontSize = 12.sp, color = CaptionMuted) // what's done needs no reason
                 }
                 if (!done) {
