@@ -342,3 +342,17 @@ only for half-unit pens, and suggestions round down to the pen.
   permission to that file only. *Stop* releases it.
 - Times follow You → Appearance → Clock: the phone's, 12-hour or 24-hour, everywhere (alarms,
   notifications and widgets included).
+
+## 15. Following only, and what the phone needs
+
+- Someone who only follows (role *I follow someone*) sees Home and Trends of the person they follow
+  (graph, insights and report from the shared readings; meals and insulin stay on the wearer's
+  phone), and a You tab with People (who they follow), Alarms (can they reach you, what they did),
+  Appearance and Help. *I wear a sensor too* switches to both roles and brings back the rest.
+- The setup checklist (Home's banner, You → Help, onboarding) lists only what applies: Bluetooth
+  only to a wearer whose source is the sensor; emergency texts only to a wearer with a contact;
+  full-screen alarms on Android 14+; *Alarms & reminders* (exact alarms) where Android makes the app
+  ask. Battery shows where it stands: **Unrestricted** (on), **Optimized** or **Restricted** (off),
+  read from Android itself, with the page that fixes each.
+- Before an emergency contact is added, and before an AI key is saved, a one-time screen says what
+  will be sent where; nothing happens until *I agree*.

@@ -90,6 +90,12 @@ I have type 1 diabetes and I live in Egypt, on EU-bought Libre 2 sensors. The of
 >
 > **Coming from 0.6 or earlier?** Those builds were signed with a debug key; later ones are signed with Sukoon's own key, and Android won't update across keys. Once: **You → Reports → Backup → Back up everything**, uninstall, install the new build, then **Restore**. Readings, logbook, settings, alarms, the sensor pairing and meal photos all come back ([`docs/signing.md`](docs/signing.md)).
 
+### On iPhone, or without the app
+
+Sukoon isn't in the App Store: an iPhone can't pair a Libre with a free Apple account. **Following works on any phone**: the person wearing the sensor sends an invite from You → People, and the follower opens the [**follow page**](https://khairyky.github.io/sukoon/) in Safari → Share → **Add to Home Screen**, then signs in and types the code. The page walks through it, in English or Arabic. Alarms there sound only while it's open, so keep emergency contacts set. Step by step: [`docs/iphone-and-web.md`](docs/iphone-and-web.md).
+
+Someone who only follows sees a simpler app: no sensor, insulin or dose settings, just who they follow, those alarms, the look and help (*I wear a sensor too* brings the rest back).
+
 ### Pairing a sensor
 
 **You → Sensor → Connect**, then hold the phone to the sensor. Sukoon reads it over NFC, checks that it can decode it, and only then switches on its Bluetooth stream. From there a reading arrives every minute, a new sensor counts down its 60-minute warm-up on Home, and Sukoon reminds you 3 days, a day and an hour before the sensor ends.
@@ -149,7 +155,7 @@ I have type 1 diabetes and I live in Egypt, on EU-bought Libre 2 sensors. The of
 ### Everything else
 
 - ✅ **Your sensor at a glance.** You → Sensor says *Live*, *Reconnecting* or *No signal* from the last reading, puts what needs you on top in red or amber (Bluetooth off, no readings, sensor ending, ended) with the fix one tap away, and shows the sensor's life as a bar that turns amber 3 days before the end. Bluetooth off also shows on Home, and a notice comes 3 days, 1 day and 1 hour before the sensor stops.
-- ✅ **English and Egyptian Arabic**, right to left, with the language picked inside the app (1,385 strings in each, checked for parity), and a **12- or 24-hour clock** (or the phone's).
+- ✅ **English, Standard Arabic and Egyptian Arabic**, right to left, with the language picked inside the app (1,404 strings in each, checked for parity; Arabic phones in Egypt get Egyptian, elsewhere Standard), and a **12- or 24-hour clock** (or the phone's).
 - ✅ **Light, dark or like the phone**, with motion from the design spec that turns off when the phone's *Remove animations* is on.
 - ✅ **A built-in guide** (You → Guide) and a getting-started card on Home.
 - ✅ **Starts after a reboot or update**, and a watchdog wakes it if the phone kills it.
@@ -348,11 +354,12 @@ git clone https://github.com/khairyKY/sukoon.git
 
 | Task | Command |
 | :-- | :-- |
-| Compile | `./gradlew :app:compileDebugKotlin` |
-| Unit tests | `./gradlew :app:testDebugUnitTest` |
-| Debug APK | `./gradlew :app:assembleDebug` |
-| Release APK, signed with Sukoon's key | `./gradlew :app:assembleRelease` |
-| Release APK, debug-signed (updates 0.6-era installs in place) | `./gradlew :app:assembleRelease -PdebugSigned` |
+| Compile | `./gradlew :app:compileGithubDebugKotlin` |
+| Unit tests | `./gradlew :app:testGithubDebugUnitTest` |
+| Debug APK | `./gradlew :app:assembleGithubDebug` |
+| Release APK (GitHub), signed with Sukoon's key | `./gradlew :app:assembleGithubRelease` |
+| Google Play bundle (updated by Play, its own package name) | `./gradlew :app:bundlePlayRelease`, see [`docs/play-store.md`](docs/play-store.md) |
+| Release APK, debug-signed (updates 0.6-era installs in place) | `./gradlew :app:assembleGithubRelease -PdebugSigned` |
 
 On the emulator, pick **Demo** as the source to try every screen without a sensor. Followers need a Supabase project: run [`supabase/migrations/`](supabase/migrations/) in its SQL editor and put the project URL and *publishable* key in `local.properties` (gitignored). Never put the service-role key in the app. The release key and its passwords live only on the build machine ([`docs/signing.md`](docs/signing.md)).
 

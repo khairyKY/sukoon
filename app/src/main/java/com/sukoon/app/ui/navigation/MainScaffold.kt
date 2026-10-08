@@ -318,7 +318,7 @@ fun MainScaffold() {
                     (life as? SensorLife.Running)
                         ?.takeIf { Duration.between(Instant.now(), it.endsAt) <= Duration.ofHours(24) }
                         ?.let { SensorEndingBanner(it, onClick = toSensor) }
-                    UpdateBanner(home.updates, onBackUp = toYou)
+                    if (com.sukoon.app.BuildConfig.SELF_UPDATE) UpdateBanner(home.updates, onBackUp = toYou)
                     HomeScreen(
                         state = homeState,
                         brief = brief,

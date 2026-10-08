@@ -203,7 +203,10 @@ fun SettingsScreen(
     LaunchedEffect(openPage.first) { if (openPage.first > 0) page = openPage.second }
     LaunchedEffect(openLearning) { if (openLearning) page = YouPage.INSULIN }
     BackHandler(enabled = page != null) { page = null }
-    val missing = rememberMissingSetup()
+    // Someone who only follows sees what's theirs: who they follow, those alarms, the look, help. Not a sensor's settings.
+    val role by (context.applicationContext as com.sukoon.app.SukoonApp).container.role.collectAsStateWithLifecycle()
+    val wears = role.wears
+    val missing = rememberMissingSetup().let { all -> if (wears) all else all.filter { it in FOLLOWER_SETUP_ITEMS } }
 
     Column(
         modifier
@@ -232,11 +235,13 @@ fun SettingsScreen(
                     YouPage.APPEARANCE to "${themeLabel(themeMode)} · ${languageLabel()}",
                     YouPage.HELP to stringResource(R.string.you_help_summary),
                 )
-                YouPage.entries.chunked(2).forEach { row ->
+                (if (wears) YouPage.entries else FOLLOWER_PAGES).chunked(2).forEach { row ->
                     Row(Modifier.padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         row.forEach { p -> SectionCard(p, summaries.getValue(p), Modifier.weight(1f)) { page = p } }
+                        if (row.size == 1) Spacer(Modifier.weight(1f))
                     }
                 }
+                if (!wears) WearToo { page = YouPage.SENSOR }
             }
             else -> {
                 PageHeader(stringResource(open.title)) { page = null }
@@ -298,7 +303,14 @@ fun SettingsScreen(
                         SectionLabel(stringResource(R.string.calibration_title))
                         CalibrationSection(calibration)
                     }
-                    YouPage.ALARMS -> {
+                    YouPage.ALARMS -> if (!wears) {
+                        // Following only: their alarms reach you through these; nothing here is about a sensor of yours.
+                        SectionLabel(stringResource(R.string.alarms_reach_title))
+                        AlarmReach(sensorIsSource = true)
+                        Gap()
+                        SectionLabel(stringResource(R.string.alarms_history_title))
+                        AlarmHistory(alarmLog)
+                    } else {
                         // Whether alarms can reach you goes first while something stops them, else after the alarms (design "You · Alarms").
                         val blocked = !sourceKind.real || missing.any { it in ALARM_SETUP }
                         if (blocked) {
@@ -323,9 +335,11 @@ fun SettingsScreen(
                         AlarmHistory(alarmLog)
                     }
                     YouPage.PEOPLE -> {
-                        SectionLabel(stringResource(R.string.emergency_title))
-                        EmergencySection(emergency, emergencyAlerts, onEmergency)
-                        Gap()
+                        if (wears) {
+                            SectionLabel(stringResource(R.string.emergency_title))
+                            EmergencySection(emergency, emergencyAlerts, onEmergency)
+                            Gap()
+                        }
                         SectionLabel(stringResource(R.string.sharing_title))
                         SharingSection(sharing, followerWatch)
                         Gap()
@@ -407,11 +421,20 @@ fun SettingsScreen(
                             fontWeight = FontWeight.SemiBold,
                             color = SageDeep,
                         )
+                        Text(
+                            stringResource(R.string.privacy_link),
+                            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable {
+                                runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(com.sukoon.app.PRIVACY_URL))) }
+                            }.padding(vertical = 10.dp),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = SageDeep,
+                        )
                         Gap()
                         SectionLabel(stringResource(R.string.setup_title))
-                        SetupChecklist()
+                        SetupChecklist(only = if (wears) null else FOLLOWER_SETUP_ITEMS)
                         Gap()
-                        updates?.let {
+                        updates?.takeIf { com.sukoon.app.BuildConfig.SELF_UPDATE }?.let {
                             SectionLabel(stringResource(R.string.updates_title))
                             UpdatesSection(it, onBackUp = { page = YouPage.REPORTS })
                             Gap()
@@ -422,6 +445,31 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+}
+
+private val FOLLOWER_PAGES = listOf(YouPage.PEOPLE, YouPage.ALARMS, YouPage.APPEARANCE, YouPage.HELP)
+
+/** Following only: "I wear a sensor too" brings back everything for a sensor of your own (and opens it). */
+@Composable
+private fun WearToo(onDone: () -> Unit) {
+    val container = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(top = 6.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .border(1.dp, outline(), RoundedCornerShape(18.dp))
+            .clickable {
+                container.settings.role = com.sukoon.app.data.prefs.UserRole.BOTH
+                container.role.value = com.sukoon.app.data.prefs.UserRole.BOTH
+                onDone()
+            }
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(stringResource(R.string.you_follower_note), fontSize = 13.sp, color = CaptionMuted)
+        Text(stringResource(R.string.you_wear_too), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = SageDeep)
     }
 }
 
@@ -563,10 +611,11 @@ private fun themeLabel(mode: ThemeMode): String = stringResource(
 @Composable
 private fun languageLabel(): String {
     if (Build.VERSION.SDK_INT < 33) return stringResource(R.string.you_language_auto)
-    val chosen = LocalContext.current.getSystemService(LocaleManager::class.java).applicationLocales.takeIf { !it.isEmpty }?.get(0)?.language
+    val chosen = LocalContext.current.getSystemService(LocaleManager::class.java).applicationLocales.takeIf { !it.isEmpty }?.get(0)?.toLanguageTag()
     return when (chosen) {
         "en" -> "English"
-        "ar" -> "العربية"
+        "ar" -> "العربية الفصحى"
+        "ar-EG" -> "العربية المصرية"
         else -> stringResource(R.string.you_language_auto)
     }
 }
@@ -611,9 +660,13 @@ private fun AiKey(geminiKey: String, onSave: (String) -> Unit) {
         modifier = Modifier.fillMaxWidth(),
     )
     Spacer(Modifier.height(8.dp))
+    val consent = com.sukoon.app.ui.components.rememberConsent("ai", R.string.consent_ai_title, R.string.consent_ai_body)
     PrimaryButton(stringResource(if (geminiKey.isBlank()) R.string.settings_save else R.string.settings_update)) {
-        onSave(keyInput)
-        context.toast(context.getString(if (keyInput.isBlank()) R.string.toast_ai_key_removed else R.string.settings_ai_saved))
+        val save = {
+            onSave(keyInput)
+            context.toast(context.getString(if (keyInput.isBlank()) R.string.toast_ai_key_removed else R.string.settings_ai_saved))
+        }
+        if (keyInput.isBlank()) save() else consent(save)
     }
     if (geminiKey.isNotBlank()) Text(stringResource(R.string.settings_ai_saved), fontSize = 11.5.sp, color = Sage, modifier = Modifier.padding(top = 6.dp))
 }
@@ -714,7 +767,7 @@ private fun LanguageChoice() {
     }
     val context = LocalContext.current
     val manager = context.getSystemService(LocaleManager::class.java)
-    val current = manager.applicationLocales.takeIf { !it.isEmpty }?.get(0)?.language
+    val current = manager.applicationLocales.takeIf { !it.isEmpty }?.get(0)?.toLanguageTag()
     Column(
         Modifier
             .fillMaxWidth()
@@ -725,7 +778,8 @@ private fun LanguageChoice() {
         listOf(
             null to stringResource(R.string.theme_auto),
             "en" to "English",
-            "ar" to "العربية المصرية",
+            "ar" to "العربية الفصحى",
+            "ar-EG" to "العربية المصرية",
         ).forEach { (tag, label) ->
             val on = tag == current
             Row(

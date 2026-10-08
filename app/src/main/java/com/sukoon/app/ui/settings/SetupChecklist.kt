@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.settings
 
+import com.sukoon.app.platform.BatteryState
 import android.content.ActivityNotFoundException
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -57,6 +58,9 @@ fun rememberMissingSetup(): List<SetupItem> {
     return missing
 }
 
+/** What someone who only follows needs: their phone has to be able to wake them, nothing about a sensor. */
+internal val FOLLOWER_SETUP_ITEMS = setOf(SetupItem.NOTIFICATIONS, SetupItem.FULL_SCREEN, SetupItem.OVERLAY, SetupItem.BATTERY)
+
 /** You → Setup: every OS permission/setting Sukoon relies on, each with why and a one-tap fix ([only]: a subset, as onboarding asks it). */
 @Composable
 fun SetupChecklist(only: Set<SetupItem>? = null) {
@@ -84,6 +88,22 @@ fun SetupChecklist(only: Set<SetupItem>? = null) {
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(item.titleRes), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                    // The battery setting says where it stands, on or off: Unrestricted, Optimized or Restricted.
+                    if (item == SetupItem.BATTERY) {
+                        val state = remember(missing) { SetupCheck.battery(context) }
+                        Text(
+                            stringResource(
+                                when (state) {
+                                    BatteryState.UNRESTRICTED -> R.string.setup_battery_unrestricted
+                                    BatteryState.OPTIMIZED -> R.string.setup_battery_optimized
+                                    BatteryState.RESTRICTED -> R.string.setup_battery_restricted
+                                },
+                            ),
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (done) Sage else StateHigh,
+                        )
+                    }
                     if (!done) Text(stringResource(item.whyRes), fontSize = 12.sp, color = CaptionMuted) // what's done needs no reason
                 }
                 if (!done) {

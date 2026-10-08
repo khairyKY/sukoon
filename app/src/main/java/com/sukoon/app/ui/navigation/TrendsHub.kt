@@ -140,7 +140,7 @@ fun TrendsHub(
 }
 
 @Composable
-private fun SubTabChip(label: String, selected: Boolean, onClick: () -> Unit) {
+internal fun SubTabChip(label: String, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))

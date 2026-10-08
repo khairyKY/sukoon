@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.settings
 
+import com.sukoon.app.ui.components.rememberConsent
 import android.Manifest
 import android.content.Intent
 import android.provider.ContactsContract.CommonDataKinds.Phone
@@ -62,10 +63,11 @@ fun EmergencySection(settings: EmergencySettings, alerts: EmergencyAlerts, onCha
     val canText = remember(permissionChecks) { alerts.canText() }
     val canCall = remember(permissionChecks) { alerts.canCall() }
 
+    val consent = rememberConsent("emergency", R.string.consent_emergency_title, R.string.consent_emergency_body)
     fun add(contact: EmergencyContact) {
         when {
             contact.phone.isBlank() -> context.toast(context.getString(R.string.toast_emergency_no_number))
-            settings.contacts.none { it.phone == contact.phone } -> {
+            settings.contacts.none { it.phone == contact.phone } -> consent {
                 onChange(settings.copy(contacts = settings.contacts + contact))
                 context.toast(context.getString(R.string.toast_emergency_added, contact.name))
             }

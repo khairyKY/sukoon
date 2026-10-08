@@ -59,6 +59,7 @@ class Updates(private val context: Context, private val scope: CoroutineScope) {
 
     /** At start: a quiet check when the last was over a day ago. */
     fun checkIfDue() {
+        if (!com.sukoon.app.BuildConfig.SELF_UPDATE) return // the Play build is updated by Play
         if (System.currentTimeMillis() - prefs.getLong(KEY_LAST_CHECK, 0) < TimeUnit.HOURS.toMillis(20)) return
         scope.launch { check(quiet = true) }
     }

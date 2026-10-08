@@ -25,6 +25,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Health Connect's "why this app wants access" link: Sukoon's privacy policy, which says exactly that.
+        if (intent?.action == "androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" || intent?.action == Intent.ACTION_VIEW_PERMISSION_USAGE) {
+            runCatching { startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(PRIVACY_URL))) }
+            finish()
+            return
+        }
         val container = (application as SukoonApp).container
         takeEntry(intent)
         val themeMode = container.themeMode
@@ -63,3 +69,6 @@ class MainActivity : ComponentActivity() {
         const val EXTRA_ENTRY = "entry"
     }
 }
+
+/** The privacy policy (web/privacy.html on GitHub Pages): You → Help, Health Connect's rationale, Play. */
+const val PRIVACY_URL = "https://khairyky.github.io/sukoon/privacy.html"

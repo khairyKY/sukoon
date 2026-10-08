@@ -12,7 +12,7 @@ kotlinxCoroutines = "1.9.0"
 junit = "4.13.2"
 json = "20240303"
 glance = "1.1.1"
-camerax = "1.3.4"
+camerax = "1.4.2" # 1.4: native libraries aligned for 16 KB pages (Play)
 mlkitBarcode = "17.3.0"
 # ponytail: newest that builds with compileSdk 35 / AGP 8.6; 1.1.0 final needs compileSdk 36 + AGP 8.9.1.
 healthConnect = "1.1.0-beta01"

@@ -161,10 +161,15 @@ class BasalReminder : BroadcastReceiver() {
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
+            val body = context.getString(if (units != null) R.string.reminder_basal_body_dose else R.string.reminder_basal_body, units)
+            // Like the alarms: its own picture (the syringe), Sukoon's sage, and the whole message when expanded.
             val builder = NotificationCompat.Builder(context, channelId)
-                .setSmallIcon(R.drawable.ic_stat_sukoon)
-                .setContentTitle(context.getString(R.string.reminder_basal_title))
-                .setContentText(context.getString(if (units != null) R.string.reminder_basal_body_dose else R.string.reminder_basal_body, units))
+                .setSmallIcon(R.drawable.ic_stat_insulin)
+                .setLargeIcon(badge(context))
+                .setColor(0xFF3E7A63.toInt())
+                .setContentTitle(context.getString(if (nag > 0) R.string.reminder_basal_title_again else R.string.reminder_basal_title))
+                .setContentText(body)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(body))
                 .setCategory(NotificationCompat.CATEGORY_REMINDER)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(open)
@@ -174,6 +179,21 @@ class BasalReminder : BroadcastReceiver() {
             else builder.addAction(0, context.getString(R.string.reminder_basal_log), open)
             builder.addAction(0, context.getString(R.string.reminder_basal_later), pending(context, 3, Intent(context, BasalReminder::class.java).setAction(ACTION_LATER).putExtra(EXTRA_NAG, nag)))
             runCatching { manager.notify(NOTIFICATION_ID, builder.build()) }
+        }
+
+        /** The syringe, white on a sage disc: the reminder's picture in the shade. */
+        private fun badge(context: Context): android.graphics.Bitmap {
+            val px = (64 * context.resources.displayMetrics.density).toInt()
+            val bitmap = android.graphics.Bitmap.createBitmap(px, px, android.graphics.Bitmap.Config.ARGB_8888)
+            val canvas = android.graphics.Canvas(bitmap)
+            canvas.drawCircle(px / 2f, px / 2f, px / 2f, android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = 0xFF3E7A63.toInt() })
+            androidx.core.content.ContextCompat.getDrawable(context, R.drawable.ic_insulin)?.mutate()?.apply {
+                setTint(android.graphics.Color.WHITE)
+                val inset = px / 4
+                setBounds(inset, inset, px - inset, px - inset)
+                draw(canvas)
+            }
+            return bitmap
         }
     }
 }
