@@ -162,7 +162,7 @@ fun MainScaffold() {
     var youOpen by remember { mutableStateOf(0 to (null as YouPage?)) }
     fun openYou(page: YouPage? = null) {
         youOpen = youOpen.first + 1 to page
-        openYou()
+        navController.navigateToTab(SukoonTab.YOU)
     }
     Scaffold(
         bottomBar = { SukoonBottomBar(navController, onYou = { openYou() }) },
