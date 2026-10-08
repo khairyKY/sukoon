@@ -317,6 +317,7 @@ private fun EditorContent(
     val units = stringResource(R.string.logbook_unit_units)
     val saveLabel = when {
         existing != null -> stringResource(R.string.entry_save_changes)
+        !valid && type != LogEventType.NOTE -> stringResource(R.string.entry_type_amount)
         meal != null -> stringResource(R.string.entry_add_to_meal, formatAmountLocalized(rapid ?: 0.0), mealTitle(meal))
         isMeal && rapid != null -> stringResource(R.string.entry_save_meal_insulin, formatAmountLocalized(amount ?: 0.0), formatAmountLocalized(rapid))
         type == LogEventType.NOTE -> stringResource(R.string.entry_save)
@@ -343,7 +344,7 @@ private fun EditorContent(
             return
         }
         if (meal != null) {
-            onSave(EntryDraft(LogEventType.INSULIN, rapid, null, Instant.ofEpochMilli(meal.timestampMillis).minusSeconds(preBolus * 60L), site = site))
+            onSave(EntryDraft(LogEventType.INSULIN, rapid, null, at(), site = site, mealId = meal.id))
             return
         }
         val nutrients = Nutrients(fiber = value(AmountField.FIBER), protein = value(AmountField.PROTEIN), fat = value(AmountField.FAT), kcal = value(AmountField.KCAL))
@@ -372,7 +373,7 @@ private fun EditorContent(
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.weight(1f),
             )
-            if (meal == null) WhenButton(minutesAgo, pickedAt, onAgo = { minutesAgo = it }, onPicked = { pickedAt = it; minutesAgo = -1 })
+            WhenButton(minutesAgo, pickedAt, onAgo = { minutesAgo = it }, onPicked = { pickedAt = it; minutesAgo = -1 })
         }
 
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -401,7 +402,7 @@ private fun EditorContent(
                     active = AmountField.RAPID
                 }
             }
-            if ((isMeal && (rapid != null || active == AmountField.RAPID)) || meal != null) {
+            if (isMeal && (rapid != null || active == AmountField.RAPID)) {
                 ChoiceRow(
                     listOf(stringResource(R.string.logbook_prebolus_with), stringResource(R.string.logbook_prebolus_min, 10), stringResource(R.string.logbook_prebolus_min, 20)),
                     selected = listOf(0, 10, 20).indexOf(preBolus),
@@ -431,10 +432,11 @@ private fun EditorContent(
                     site = site,
                     suggested = remember(history, siteType) { InjectionSites.next(history, siteType) },
                     lastUsed = { InjectionSites.lastUsed(history, siteType, it) },
-                    open = siteOpen && active == null,
+                    open = siteOpen,
                     onOpen = {
                         siteOpen = true
-                        active = null
+                        // With no amount yet the pad stays: the amount comes first.
+                        if ((if (meal != null || isMeal) rapid else amount) != null) active = null
                     },
                     onPick = { site = it },
                     onSkip = {

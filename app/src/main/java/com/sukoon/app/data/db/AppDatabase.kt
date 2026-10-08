@@ -14,7 +14,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         EventEntity::class,
         CalibrationEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -32,7 +32,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "sukoon.db",
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build().also { instance = it }
             }
 
         // v2: unique index on readings.timestampMillis (see ReadingEntity). Keep the first copy
@@ -50,6 +50,13 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE events ADD COLUMN source TEXT")
                 db.execSQL("ALTER TABLE events ADD COLUMN mealType INTEGER")
                 listOf("fiber", "sugar", "protein", "fat", "kcal").forEach { db.execSQL("ALTER TABLE events ADD COLUMN $it REAL") }
+            }
+        }
+
+        // v5: a rapid dose knows its meal, so two meals at the same time (MyFitnessPal stamps its own) can't swap doses.
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE events ADD COLUMN mealId INTEGER")
             }
         }
 

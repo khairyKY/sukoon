@@ -427,7 +427,10 @@ object InsightEngine {
             if (after3h.size < 3) return@mapNotNull null
             val after4h = r.filter { it.timestamp > t && it.timestamp <= t.plus(Duration.ofHours(4)) }
             val doses = events.filter { e ->
-                e.logType == LogEventType.INSULIN && Instant.ofEpochMilli(e.timestampMillis).let { it >= t.minus(Duration.ofMinutes(60)) && it <= t.plus(Duration.ofMinutes(30)) }
+                e.logType == LogEventType.INSULIN && (
+                    e.mealId == meal.id ||
+                        (e.mealId == null && Instant.ofEpochMilli(e.timestampMillis).let { it >= t.minus(Duration.ofMinutes(60)) && it <= t.plus(Duration.ofMinutes(30)) })
+                    )
             }
             MealResult(
                 slot = slotFor(t.atZone(zone).hour),

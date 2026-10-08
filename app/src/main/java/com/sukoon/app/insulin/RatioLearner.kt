@@ -66,10 +66,10 @@ object RatioLearner {
         val sorted = events.sortedBy { it.timestampMillis }
         val hour = Duration.ofHours(1).toMillis()
         fun near(at: Long, toleranceMin: Long) = r.filter { kotlin.math.abs(it.timestamp.toEpochMilli() - at) <= toleranceMin * 60_000 }.minByOrNull { kotlin.math.abs(it.timestamp.toEpochMilli() - at) }
-        fun quiet(t: Long, dose: EventEntity?) =
+        fun quiet(t: Long, dose: EventEntity?, mealId: Long? = null) =
             sorted.none { it.logType == LogEventType.ACTIVITY && it.timestampMillis in (t - 2 * hour)..(t + 4 * hour) } &&
                 InsulinOnBoard.total(sorted.filter { it.timestampMillis < t - hour }, Instant.ofEpochMilli(t), action) < 0.5 &&
-                sorted.none { it.logType == LogEventType.INSULIN && it !== dose && it.timestampMillis in (t + 30 * 60_000L + 1)..(t + 4 * hour) }
+                sorted.none { it.logType == LogEventType.INSULIN && it !== dose && (mealId == null || it.mealId != mealId) && it.timestampMillis in (t + 30 * 60_000L + 1)..(t + 4 * hour) }
         data class Point(val slot: MealSlot?, val carbs: Double, val insulin: Double, val change: Double)
         val results = InsightEngine.mealResults(r, sorted, zone).associateBy { it.atMillis }
         val meals = sorted.filter { it.logType == LogEventType.CARB && (it.value ?: 0.0) >= MIN_CARBS }.mapNotNull { meal ->
@@ -78,7 +78,7 @@ object RatioLearner {
             val change = res.change4h ?: return@mapNotNull null
             val alone = sorted.count { it.logType == LogEventType.CARB && (it.value ?: 0.0) > 0 && it.timestampMillis in (t - hour)..(t + 4 * hour) } == 1
             val rich = (meal.fat ?: 0.0) >= RICH_GRAMS || (meal.protein ?: 0.0) >= RICH_GRAMS
-            if (res.start !in 70..300 || !alone || rich || !quiet(t, null)) return@mapNotNull null
+            if (res.start !in 70..300 || !alone || rich || !quiet(t, null, meal.id)) return@mapNotNull null
             Point(res.slot, res.carbs, res.insulin, change.toDouble())
         }
         val corrections = sorted.filter { it.logType == LogEventType.INSULIN && (it.value ?: 0.0) > 0 }.mapNotNull { dose ->
@@ -145,7 +145,7 @@ object RatioLearner {
                 r == null || change == null -> Verdict.NO_READINGS
                 r.start !in 70..250 -> Verdict.OUT_OF_RANGE
                 sorted.count { it.logType == LogEventType.CARB && (it.value ?: 0.0) > 0 && it.timestampMillis in (t - hour)..(t + 4 * hour) } > 1 -> Verdict.ATE_AGAIN
-                sorted.any { it.logType == LogEventType.INSULIN && it.timestampMillis in (t + 30 * 60_000L + 1)..(t + 4 * hour) } -> Verdict.MORE_INSULIN
+                sorted.any { it.logType == LogEventType.INSULIN && it.mealId != meal.id && it.timestampMillis in (t + 30 * 60_000L + 1)..(t + 4 * hour) } -> Verdict.MORE_INSULIN
                 InsulinOnBoard.total(sorted.filter { it.timestampMillis < t - hour }, Instant.ofEpochMilli(t), action) >= 0.5 -> Verdict.STILL_WORKING
                 sorted.any { it.logType == LogEventType.ACTIVITY && it.timestampMillis in (t - 2 * hour)..(t + 4 * hour) } -> Verdict.ACTIVE
                 (meal.fat ?: 0.0) >= RICH_GRAMS || (meal.protein ?: 0.0) >= RICH_GRAMS -> Verdict.RICH

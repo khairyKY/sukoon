@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.navigation
 
+import com.sukoon.app.health.HealthConnectSync
 import com.sukoon.app.insulin.DoseSettings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -84,9 +85,12 @@ fun TrendsHub(
     reportName: String,
     modifier: Modifier = Modifier,
     doseSettings: () -> DoseSettings = { DoseSettings() },
+    pendingMealInsulin: Long? = null,
+    onPendingMealInsulinHandled: () -> Unit = {},
+    mealRecord: suspend (Long) -> HealthConnectSync.MealRecord? = { null },
 ) {
     var subTab by rememberSaveable { mutableStateOf(TrendsSubTab.GRAPH) }
-    if (pendingEntry != null) subTab = TrendsSubTab.LOGBOOK
+    if (pendingEntry != null || pendingMealInsulin != null) subTab = TrendsSubTab.LOGBOOK
 
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Row(
@@ -114,6 +118,9 @@ fun TrendsHub(
                 openNewEntry = pendingEntry,
                 onOpenedEntry = onPendingEntryHandled,
                 doseSettings = doseSettings,
+                openInsulinForMeal = pendingMealInsulin,
+                onOpenedInsulinForMeal = onPendingMealInsulinHandled,
+                mealRecord = mealRecord,
             )
             TrendsSubTab.INSIGHTS -> InsightsScreen(insightsState, onAcknowledgeInsights, Modifier.weight(1f))
             TrendsSubTab.REPORT -> ReportScreen(reportState, reportName, onSelectReportDays, Modifier.weight(1f))

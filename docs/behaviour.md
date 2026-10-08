@@ -249,6 +249,14 @@ clean-meal lesson first, then what everything logged says (a ratio, then the fac
 your meals suggest 1 : 11". *Take a look* opens You → Insulin → Learning; *Not now* hides that
 suggestion until a different one appears. It never changes a number itself.
 
+**Meal without insulin, on Home**: with suggestions on, a meal of 10 g or more in the last hour with
+no insulin logged for it (linked, or from an hour before it), under 0.5 u still working, and a fresh
+reading that isn't low: Home shows the meal's dose with *Log it*, which opens insulin for that meal.
+After an hour it stops (a full meal dose that late risks a low); the correction covers a high.
+
+**When you're low**: no dose is suggested under 70, or under 100 and dropping. With a meal, the low
+card adds what the meal itself needs (carbs ÷ ratio, rounded down) for once you're back over 70.
+
 **Correction on Home**: with suggestions on and a correction factor set, Home shows "Correction · beta"
 when the reading is fresh and above your range, nothing with carbs was logged in the last 2 hours,
 and under 0.5 u is still working (otherwise Home's message already says to give it time). It shows
@@ -271,3 +279,16 @@ only for half-unit pens, and suggestions round down to the pen.
 
 - Snoozes, answers, "treated at" and texts already sent are kept across a restart. A countdown cut off by one starts again from 60 seconds (with its screen and sound) if the alarm is still unanswered.
 - If the phone kills the app, nothing inside it can sound. A watchdog covers that: every reading pushes a system alarm to just past your no-readings line (20 min + 2 by default). If readings stop because the app was killed, Android wakes Sukoon there; the sensor and alarms restart, and *No readings* goes off if the sensor is still quiet. It checks again every 5 minutes until readings return. The battery items in the check above still matter: they keep it from coming to that.
+
+## 11. Meals from other apps
+
+- MyFitnessPal sends each meal's totals to Health Connect, not the foods in it, and sets the meal's
+  time itself (it can be hours from when you ate). Sukoon logs each record's times as it reads it.
+- Tapping an imported meal shows what it brought, what it did to glucose, its insulin, and *From
+  MyFitnessPal*: the time it was logged for and every other nutrient it sent (saturated fat,
+  cholesterol, sodium…). Calories are whole numbers.
+- Insulin added for a meal is **linked to that meal** and stamped when you took it (*now* unless you
+  change it), so two meals at the same time can't swap doses. Insulin without a link is matched to
+  the nearest meal by time, as before.
+- A meal another app posts again (Samsung Health passing on MyFitnessPal's) within 10 minutes of a
+  MyFitnessPal meal with the same carbs is left out.

@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.logbook
 
+import com.sukoon.app.health.HealthConnectSync
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.view.HapticFeedbackConstants
@@ -126,6 +127,11 @@ fun LogbookScreen(
     onSync: (suspend () -> String)? = null,
     /** Beta dose suggestions, read when an entry opens. */
     doseSettings: () -> DoseSettings = { DoseSettings() },
+    /** Set by Home's "meal without insulin": open insulin for this meal once, then [onOpenedInsulinForMeal]. */
+    openInsulinForMeal: Long? = null,
+    onOpenedInsulinForMeal: () -> Unit = {},
+    /** An imported meal's Health Connect record, for its detail. */
+    mealRecord: suspend (Long) -> HealthConnectSync.MealRecord? = { null },
 ) {
     val context = LocalContext.current
     val view = LocalView.current
@@ -144,6 +150,11 @@ fun LogbookScreen(
             editor = EditorRequest(openNewEntry)
             onOpenedEntry()
         }
+    }
+    LaunchedEffect(openInsulinForMeal, state.events) {
+        val meal = openInsulinForMeal?.let { id -> state.events.firstOrNull { it.id == id } } ?: return@LaunchedEffect
+        editor = EditorRequest(LogEventType.INSULIN, forMeal = meal)
+        onOpenedInsulinForMeal()
     }
     val zone = remember { ZoneId.systemDefault() }
     val now = Instant.now()
@@ -269,6 +280,7 @@ fun LogbookScreen(
     }
     detail?.let { meal ->
         MealDetailSheet(
+            loadRecord = { mealRecord(meal.id) },
             meal = meal,
             insulin = groups.firstOrNull { it.main.id == meal.id }?.insulin.orEmpty(),
             readings = state.readings,
@@ -332,7 +344,7 @@ private fun EntryRow(
                         rememberSourceApp(event.source),
                         listOfNotNull(
                             event.note?.takeIf { it != title },
-                            event.kcal?.let { "${formatAmountLocalized(it)} ${stringResource(R.string.entry_unit_kcal)}" },
+                            event.kcal?.let { "${formatAmountLocalized(Math.round(it).toDouble())} ${stringResource(R.string.entry_unit_kcal)}" },
                         ),
                     )
                     check != null -> Text(
@@ -373,7 +385,7 @@ private fun EntryRow(
                     color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.weight(1f).padding(start = 12.dp),
                 )
-                Text("${formatAmountLocalized(dose.value ?: 0.0)}${unitLabel(LogEventType.INSULIN)}", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground)
+                Text("${formatAmountLocalized(dose.value ?: 0.0)}${unitLabel(LogEventType.INSULIN)}", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(start = 8.dp))
                 Text(hmFormatter.format(Instant.ofEpochMilli(dose.timestampMillis)), fontSize = 13.sp, color = CaptionMuted, textAlign = TextAlign.End, modifier = Modifier.width(48.dp))
             }
         }

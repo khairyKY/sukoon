@@ -1418,4 +1418,24 @@
     <string name="nudge_factor">Your data suggests 1 unit lowers %1$s mg/dL</string>
     <string name="nudge_look">Take a look</string>
     <string name="nudge_not_now">Not now</string>
+    <string name="meal_detail_from">From %1$s</string>
+    <string name="meal_detail_logged_for">Logged for</string>
+    <string name="meal_detail_name">Name</string>
+    <string name="meal_detail_mg">mg</string>
+    <string name="meal_detail_no_foods">%1$s shares each meal\'s totals with Health Connect, not the foods in it: those stay in %1$s.</string>
+    <string name="nutrient_saturated">Saturated fat</string>
+    <string name="nutrient_trans">Trans fat</string>
+    <string name="nutrient_mono">Monounsaturated fat</string>
+    <string name="nutrient_poly">Polyunsaturated fat</string>
+    <string name="nutrient_cholesterol">Cholesterol</string>
+    <string name="nutrient_sodium">Sodium</string>
+    <string name="nutrient_potassium">Potassium</string>
+    <string name="nutrient_calcium">Calcium</string>
+    <string name="nutrient_iron">Iron</string>
+    <string name="nutrient_vitamin_c">Vitamin C</string>
+    <string name="nutrient_caffeine">Caffeine</string>
+    <string name="dose_low_meal">For the meal, once you\'re back over 70: about %1$s u.</string>
+    <string name="entry_type_amount">Type an amount</string>
+    <string name="home_meal_eyebrow">Meal without insulin · beta</string>
+    <string name="home_meal_body">%1$s g at %2$s, with no insulin logged and none still working.</string>
 </resources>

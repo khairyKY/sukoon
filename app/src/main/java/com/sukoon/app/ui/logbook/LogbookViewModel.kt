@@ -81,10 +81,6 @@ class LogbookViewModel(
      */
     fun save(draft: EntryDraft): Deferred<List<Long>> = viewModelScope.async {
         val ids = mutableListOf<Long>()
-        draft.insulin?.takeIf { it > 0 }?.let { units ->
-            val at = draft.at.minusSeconds(draft.preBolusMinutes * 60L)
-            ids += repository.insert(EventEntity(timestampMillis = at.toEpochMilli(), type = LogEventType.INSULIN.name, value = units, site = draft.site?.name))
-        }
         val n = draft.nutrients
         val id = repository.insert(
             EventEntity(
@@ -93,6 +89,7 @@ class LogbookViewModel(
                 value = draft.amount,
                 note = draft.note,
                 site = draft.site?.name?.takeIf { draft.type == LogEventType.INSULIN || draft.type == LogEventType.BASAL },
+                mealId = draft.mealId,
                 fiber = n?.fiber,
                 sugar = n?.sugar,
                 protein = n?.protein,
@@ -101,6 +98,11 @@ class LogbookViewModel(
             ),
         )
         ids += id
+        // A meal saved with its rapid insulin: the dose is linked to it (and stamped its pre-bolus minutes before).
+        draft.insulin?.takeIf { it > 0 }?.let { units ->
+            val at = draft.at.minusSeconds(draft.preBolusMinutes * 60L)
+            ids += repository.insert(EventEntity(timestampMillis = at.toEpochMilli(), type = LogEventType.INSULIN.name, value = units, site = draft.site?.name, mealId = id))
+        }
         if (draft.photo != null) setPhotoNow(id, draft.photo)
         ids
     }

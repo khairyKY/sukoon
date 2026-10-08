@@ -44,6 +44,9 @@ internal fun DoseLine(advice: DoseAdvice, onUse: (Double) -> Unit) {
         ) {
             Text(stringResource(R.string.dose_low_title), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = PillLowText)
             Text(stringResource(R.string.dose_low_body, advice.glucose), fontSize = 13.5.sp, lineHeight = 19.sp, color = PillLowText)
+            advice.mealUnits?.let {
+                Text(stringResource(R.string.dose_low_meal, formatAmountLocalized(it)), fontSize = 13.5.sp, lineHeight = 19.sp, fontWeight = FontWeight.SemiBold, color = PillLowText)
+            }
         }
         is DoseAdvice.Suggestion -> Column(
             Modifier

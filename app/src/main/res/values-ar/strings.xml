@@ -1530,4 +1530,24 @@
     <string name="nudge_factor">بياناتك بتقول الوحدة بتنزّل %1$s مج/دل</string>
     <string name="nudge_look">بُص عليه</string>
     <string name="nudge_not_now">مش دلوقتي</string>
+    <string name="meal_detail_from">من %1$s</string>
+    <string name="meal_detail_logged_for">متسجّلة للوقت</string>
+    <string name="meal_detail_name">الاسم</string>
+    <string name="meal_detail_mg">مج</string>
+    <string name="meal_detail_no_foods">%1$s بيبعت لـHealth Connect إجمالي كل وجبة، مش الأكلات اللي فيها: دي بتفضل في %1$s.</string>
+    <string name="nutrient_saturated">دهون مشبعة</string>
+    <string name="nutrient_trans">دهون متحولة</string>
+    <string name="nutrient_mono">دهون أحادية</string>
+    <string name="nutrient_poly">دهون متعددة</string>
+    <string name="nutrient_cholesterol">كوليسترول</string>
+    <string name="nutrient_sodium">صوديوم</string>
+    <string name="nutrient_potassium">بوتاسيوم</string>
+    <string name="nutrient_calcium">كالسيوم</string>
+    <string name="nutrient_iron">حديد</string>
+    <string name="nutrient_vitamin_c">فيتامين سي</string>
+    <string name="nutrient_caffeine">كافيين</string>
+    <string name="dose_low_meal">للوجبة، أول ما ترجع فوق ٧٠: حوالي %1$s وحدة.</string>
+    <string name="entry_type_amount">اكتب الكمية</string>
+    <string name="home_meal_eyebrow">وجبة من غير إنسولين · تجريبي</string>
+    <string name="home_meal_body">%1$s جم الساعة %2$s، ومفيش إنسولين متسجّل ولا لسه شغال.</string>
 </resources>

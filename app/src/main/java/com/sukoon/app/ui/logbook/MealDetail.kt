@@ -1,5 +1,8 @@
 package com.sukoon.app.ui.logbook
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import com.sukoon.app.health.HealthConnectSync
 import android.content.Intent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -161,7 +164,7 @@ internal fun NutrientGrid(meal: EventEntity) {
         meal.sugar?.let { Triple(stringResource(R.string.entry_sugar), it, grams) },
         meal.protein?.let { Triple(stringResource(R.string.entry_protein), it, grams) },
         meal.fat?.let { Triple(stringResource(R.string.entry_fat), it, grams) },
-        meal.kcal?.let { Triple(stringResource(R.string.entry_energy), it, stringResource(R.string.entry_unit_kcal)) },
+        meal.kcal?.let { Triple(stringResource(R.string.entry_energy), Math.round(it).toDouble(), stringResource(R.string.entry_unit_kcal)) },
     )
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         cells.chunked(3).forEachIndexed { row, chunk ->
@@ -177,8 +180,8 @@ internal fun NutrientGrid(meal: EventEntity) {
                     ) {
                         Text(label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = if (lead) Color.White else CaptionMuted, maxLines = 1)
                         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                            Text(formatAmountLocalized(amount), fontFamily = HeadlineSerifFontFamily, fontSize = 23.sp, color = if (lead) Color.White else MaterialTheme.colorScheme.onBackground)
-                            Text(unit.trim(), fontSize = 12.sp, color = if (lead) Color.White else CaptionMuted, modifier = Modifier.padding(bottom = 3.dp))
+                            Text(formatAmountLocalized(amount), fontFamily = HeadlineSerifFontFamily, fontSize = 23.sp, maxLines = 1, softWrap = false, color = if (lead) Color.White else MaterialTheme.colorScheme.onBackground)
+                            Text(unit.trim(), fontSize = 12.sp, color = if (lead) Color.White else CaptionMuted, maxLines = 1, softWrap = false, modifier = Modifier.padding(bottom = 3.dp))
                         }
                     }
                 }
@@ -202,9 +205,12 @@ internal fun MealDetailSheet(
     onEditInsulin: (EventEntity) -> Unit,
     onHide: () -> Unit,
     onDismiss: () -> Unit,
+    /** The Health Connect record behind it: its times and every nutrient the other app sent. */
+    loadRecord: suspend () -> HealthConnectSync.MealRecord? = { null },
 ) {
     val context = LocalContext.current
     val app = rememberSourceApp(meal.source.orEmpty())
+    val record by produceState<HealthConnectSync.MealRecord?>(null, meal.id) { value = loadRecord() }
     val mealAt = Instant.ofEpochMilli(meal.timestampMillis)
     val now = Instant.now()
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.background) {
@@ -240,6 +246,23 @@ internal fun MealDetailSheet(
                 }
             }
 
+            Card {
+                Eyebrow(stringResource(R.string.meal_detail_from, app.label))
+                record?.let { r ->
+                    val span = java.time.Duration.between(r.start, r.end)
+                    if (span.toMinutes() >= 1) DetailRow(stringResource(R.string.meal_detail_logged_for), hmFormatter.format(r.start) + "–" + hmFormatter.format(r.end))
+                    r.nutrients.forEach { (n, amount) ->
+                        DetailRow(
+                            stringResource(n.labelRes),
+                            formatAmountLocalized(if (amount >= 10) Math.round(amount).toDouble() else Math.round(amount * 10) / 10.0) + " " +
+                                stringResource(if (n.milligrams) R.string.meal_detail_mg else R.string.logbook_unit_grams).trim(),
+                        )
+                    }
+                }
+                record?.name?.let { DetailRow(stringResource(R.string.meal_detail_name), it) }
+                // MyFitnessPal sends each meal's totals, not the foods in it.
+                if (record?.name == null) Text(stringResource(R.string.meal_detail_no_foods, app.label), fontSize = 13.sp, color = CaptionMuted)
+            }
             Text(stringResource(R.string.entry_app_stays, app.label), fontSize = 12.5.sp, color = CaptionMuted)
             context.packageManager.getLaunchIntentForPackage(app.packageName)?.let { launch ->
                 Box(
@@ -258,6 +281,14 @@ internal fun MealDetailSheet(
                 Text(stringResource(R.string.meal_detail_hide), color = StateLow, fontWeight = FontWeight.SemiBold)
             }
         }
+    }
+}
+
+@Composable
+private fun DetailRow(label: String, value: String) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
+        Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
     }
 }
 

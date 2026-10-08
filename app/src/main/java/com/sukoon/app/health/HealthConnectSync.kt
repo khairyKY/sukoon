@@ -238,7 +238,8 @@ class HealthConnectSync(
             // Take the token first so nothing written meanwhile is missed.
             token = client.getChangesToken(ChangesTokenRequest(types))
             val since = TimeRangeFilter.after(Instant.now().minus(Duration.ofDays(7)))
-            if (NutritionRecord::class in types) client.readRecords(ReadRecordsRequest(NutritionRecord::class, since)).records.forEach { importOne(it) }
+            // Oldest change first, so where one record replaced another the newer one lands last.
+            if (NutritionRecord::class in types) client.readRecords(ReadRecordsRequest(NutritionRecord::class, since)).records.sortedBy { it.metadata.lastModifiedTime }.forEach { importOne(it) }
             if (ExerciseSessionRecord::class in types) client.readRecords(ReadRecordsRequest(ExerciseSessionRecord::class, since)).records.forEach { importOne(it) }
         } else {
             while (true) {
@@ -264,12 +265,17 @@ class HealthConnectSync(
         return added to updated
     }
 
-    /** true = new logbook entry, false = updated, null = skipped (ours, or nothing in it). */
+    /** true = new logbook entry, false = updated, null = skipped (ours, a day's total, a copy, or nothing in it). */
     private suspend fun upsertMeal(record: NutritionRecord, ids: MutableMap<String, Long>): Boolean? {
-        if (record.metadata.dataOrigin.packageName == context.packageName) return null
+        val origin = record.metadata.dataOrigin.packageName
+        if (origin == context.packageName) return null
         val existing = ids[record.metadata.id]
         fun round1(x: Double?) = x?.takeIf { it > 0 }?.let { (it * 10).roundToInt() / 10.0 }
         val carbs = round1(record.totalCarbohydrate?.inGrams)
+        // What each record is, for working out an odd import (times and totals; never the food names).
+        Log.i(TAG, "Meal record ${record.metadata.id} from $origin: ${record.startTime}..${record.endTime}, changed ${record.metadata.lastModifiedTime}, type ${record.mealType}, named ${record.name != null}, ${carbs ?: 0} g, ${round1(record.energy?.inKilocalories) ?: 0} kcal")
+        // The same meal posted again by another app (Samsung Health passes MyFitnessPal's on): keep MyFitnessPal's.
+        if (origin != MFP && existing == null && carbs != null && isCopyOfMfp(record.startTime, carbs)) return null
         // A meal with no carbs (eggs and coffee) still counts: its calories, protein and fat.
         if (carbs == null && listOf(record.energy?.inKilocalories, record.protein?.inGrams, record.totalFat?.inGrams).all { (it ?: 0.0) <= 0 }) {
             // A meal emptied out: drop the entry it made.
@@ -298,6 +304,46 @@ class HealthConnectSync(
             true
         }
     }
+
+    /** An MyFitnessPal meal already in the logbook within 10 minutes of [at] with the same carbs (to 1 g). */
+    private suspend fun isCopyOfMfp(at: Instant, carbs: Double): Boolean =
+        logbook.eventsSince(at.minus(COPY_WINDOW).toEpochMilli()).first().any {
+            it.source == MFP && it.logType == LogEventType.CARB &&
+                kotlin.math.abs(it.timestampMillis - at.toEpochMilli()) <= COPY_WINDOW.toMillis() &&
+                kotlin.math.abs((it.value ?: 0.0) - carbs) <= 1.0
+        }
+
+    /** Everything Health Connect holds for an imported meal, read when its detail opens: its times and every nutrient sent. */
+    data class MealRecord(val start: Instant, val end: Instant, val name: String?, val mealType: Int, val origin: String, val nutrients: List<Pair<Nutrient, Double>>)
+
+    /** The nutrients beyond those kept on the entry; [milligrams] ones are shown in mg. */
+    enum class Nutrient(val labelRes: Int, val milligrams: Boolean, val of: (NutritionRecord) -> androidx.health.connect.client.units.Mass?) {
+        SATURATED_FAT(R.string.nutrient_saturated, false, { it.saturatedFat }),
+        TRANS_FAT(R.string.nutrient_trans, false, { it.transFat }),
+        MONO_FAT(R.string.nutrient_mono, false, { it.monounsaturatedFat }),
+        POLY_FAT(R.string.nutrient_poly, false, { it.polyunsaturatedFat }),
+        CHOLESTEROL(R.string.nutrient_cholesterol, true, { it.cholesterol }),
+        SODIUM(R.string.nutrient_sodium, true, { it.sodium }),
+        POTASSIUM(R.string.nutrient_potassium, true, { it.potassium }),
+        CALCIUM(R.string.nutrient_calcium, true, { it.calcium }),
+        IRON(R.string.nutrient_iron, true, { it.iron }),
+        VITAMIN_C(R.string.nutrient_vitamin_c, true, { it.vitaminC }),
+        CAFFEINE(R.string.nutrient_caffeine, true, { it.caffeine }),
+    }
+
+    /** The Health Connect record behind logbook entry [eventId] (null: not imported, gone, or not allowed). */
+    suspend fun mealRecord(eventId: Long): MealRecord? = runCatching {
+        val recordId = mealIds().entries.firstOrNull { it.value == eventId }?.key ?: return null
+        val r = client.readRecord(NutritionRecord::class, recordId).record
+        MealRecord(
+            start = r.startTime,
+            end = r.endTime,
+            name = r.name?.takeIf { it.isNotBlank() },
+            mealType = r.mealType,
+            origin = r.metadata.dataOrigin.packageName,
+            nutrients = Nutrient.entries.mapNotNull { n -> n.of(r)?.let { m -> (if (n.milligrams) m.inMilligrams else m.inGrams).takeIf { it > 0 }?.let { n to it } } },
+        )
+    }.getOrNull()
 
     /** true = new logbook entry, false = updated, null = skipped (ours, or under 10 minutes). */
     private suspend fun upsertActivity(record: ExerciseSessionRecord, ids: MutableMap<String, Long>): Boolean? {
@@ -389,7 +435,8 @@ class HealthConnectSync(
         private const val KEY_TOKEN = "hc_nutrition_token"
         private const val KEY_MEAL_IDS = "hc_meal_ids"
         private const val KEY_IMPORT_VERSION = "hc_import_version"
-        private const val IMPORT_VERSION = 3 // 2: nutrients, meal type and source app; 3: workouts
+        private const val IMPORT_VERSION = 4 // 2: nutrients, meal type and source app; 3: workouts; 4: copies from other apps left out
+        private val COPY_WINDOW: Duration = Duration.ofMinutes(10)
         private const val KEY_IMPORT_ACTIVITY = "hc_import_activity"
         private const val KEY_TOKEN_TYPES = "hc_token_types"
         private const val MIN_WORKOUT_MINUTES = 10

@@ -34,6 +34,8 @@ data class EntryDraft(
     val nutrients: Nutrients? = null,
     /** Where the insulin went: the dose itself, or a meal's rapid insulin. */
     val site: InjectionSite? = null,
+    /** Insulin for an imported meal: that meal's id, so the dose stays with it whatever the times say. */
+    val mealId: Long? = null,
 )
 
 /** The amount pad: digits, one decimal place where the unit allows it, delete. */
@@ -61,7 +63,9 @@ private val DOSE_AFTER_MEAL = Duration.ofMinutes(30)
 /** Groups [newestFirst] for the timeline: each rapid dose sits under the nearest meal whose window holds it. */
 internal fun groupEntries(newestFirst: List<EventEntity>): List<EntryGroup> {
     val meals = newestFirst.filter { it.logType == LogEventType.CARB }
+    val mealIds = meals.map { it.id }.toSet()
     val mealOf = newestFirst.filter { it.logType == LogEventType.INSULIN }.mapNotNull { dose ->
+        if (dose.mealId != null && dose.mealId in mealIds) return@mapNotNull dose to dose.mealId
         meals.filter { dose.timestampMillis - it.timestampMillis in -DOSE_BEFORE_MEAL.toMillis()..DOSE_AFTER_MEAL.toMillis() }
             .minByOrNull { abs(it.timestampMillis - dose.timestampMillis) }
             ?.let { dose to it.id }

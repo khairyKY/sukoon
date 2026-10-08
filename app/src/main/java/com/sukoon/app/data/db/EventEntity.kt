@@ -33,6 +33,8 @@ data class EventEntity(
     val kcal: Double? = null,
     /** Where an insulin dose went (InjectionSite.name); null = not given. */
     val site: String? = null,
+    /** The meal a rapid dose was taken for (its event id); null = matched to a meal by time. */
+    val mealId: Long? = null,
 )
 
 /** INSULIN = rapid-acting (bolus, e.g. Apidra); BASAL = long-acting (e.g. Toujeo). Stored by name, so adding one needs no migration. */

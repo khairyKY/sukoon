@@ -131,6 +131,8 @@ fun MainScaffold() {
     }
     // Home's food/insulin shortcuts: which new entry the Logbook should open on arrival.
     var pendingEntry by rememberSaveable { mutableStateOf<LogEventType?>(null) }
+    // Home's "meal without insulin": open insulin for this meal in the Logbook.
+    var pendingMealInsulin by rememberSaveable { mutableStateOf<Long?>(null) }
     // Pull down on Home or the Logbook: MyFitnessPal's latest through Health Connect, and what came in.
     val syncContext = LocalContext.current
     val syncMfp: suspend () -> String = {
@@ -246,6 +248,26 @@ fun MainScaffold() {
                         slot = InsightEngine.slotFor(now.atZone(ZoneId.systemDefault()).hour),
                     )
                 }
+                // Beta: a meal in the last hour with no insulin logged and none working.
+                val mealDose = latest?.let { r ->
+                    val now = Instant.now()
+                    recentEvents.lastOrNull { it.logType == LogEventType.CARB && (it.value ?: 0.0) >= 10 }?.let { meal ->
+                        val mealAt = Instant.ofEpochMilli(meal.timestampMillis)
+                        val insulinSince = recentEvents.any { it.logType == LogEventType.INSULIN && (it.mealId == meal.id || it.timestampMillis >= meal.timestampMillis - Duration.ofHours(1).toMillis()) }
+                        Dose.mealDose(
+                            settings = home.settings.doseSettings,
+                            carbs = meal.value ?: 0.0,
+                            mealAt = mealAt,
+                            insulinSince = insulinSince,
+                            glucose = r.glucoseMgDl,
+                            trend = r.trend,
+                            readingAt = r.timestamp,
+                            now = now,
+                            onBoard = insulinOnBoard,
+                            slot = InsightEngine.slotFor(mealAt.atZone(ZoneId.systemDefault()).hour),
+                        )?.let { meal to it }
+                    }
+                }
                 if (askingForHelp) EmergencyActionsDialog(emergencyAlerts, latest, onDismiss = { askingForHelp = false })
                 var viewing by remember { mutableStateOf<String?>(null) }
                 viewing?.let { id ->
@@ -304,6 +326,11 @@ fun MainScaffold() {
                         onAddInsulin = { pendingEntry = LogEventType.INSULIN; navController.navigateToTab(SukoonTab.TRENDS) },
                         insulinOnBoard = insulinOnBoard,
                         correction = correction,
+                        mealDose = mealDose,
+                        onMealDose = { meal ->
+                            pendingMealInsulin = meal.id
+                            navController.navigateToTab(SukoonTab.TRENDS)
+                        },
                         nudge = nudgeText,
                         onNudge = {
                             home.requestedLearning.value = true
@@ -367,6 +394,9 @@ fun MainScaffold() {
                     onSelectReportDays = reportViewModel::selectDays,
                     reportName = container.settings.emergency.yourName,
                     doseSettings = { container.settings.doseSettings },
+                    pendingMealInsulin = pendingMealInsulin,
+                    onPendingMealInsulinHandled = { pendingMealInsulin = null },
+                    mealRecord = container.healthConnect::mealRecord,
                 )
             }
             composable(SukoonTab.YOU.route) {
