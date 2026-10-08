@@ -203,7 +203,10 @@ fun SettingsScreen(
     LaunchedEffect(openPage.first) { if (openPage.first > 0) page = openPage.second }
     LaunchedEffect(openLearning) { if (openLearning) page = YouPage.INSULIN }
     BackHandler(enabled = page != null) { page = null }
-    val missing = rememberMissingSetup()
+    // Someone who only follows sees what's theirs: who they follow, those alarms, the look, help. Not a sensor's settings.
+    val role by (context.applicationContext as com.sukoon.app.SukoonApp).container.role.collectAsStateWithLifecycle()
+    val wears = role.wears
+    val missing = rememberMissingSetup().let { all -> if (wears) all else all.filter { it in FOLLOWER_SETUP_ITEMS } }
 
     Column(
         modifier
@@ -232,11 +235,13 @@ fun SettingsScreen(
                     YouPage.APPEARANCE to "${themeLabel(themeMode)} · ${languageLabel()}",
                     YouPage.HELP to stringResource(R.string.you_help_summary),
                 )
-                YouPage.entries.chunked(2).forEach { row ->
+                (if (wears) YouPage.entries else FOLLOWER_PAGES).chunked(2).forEach { row ->
                     Row(Modifier.padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         row.forEach { p -> SectionCard(p, summaries.getValue(p), Modifier.weight(1f)) { page = p } }
+                        if (row.size == 1) Spacer(Modifier.weight(1f))
                     }
                 }
+                if (!wears) WearToo { page = YouPage.SENSOR }
             }
             else -> {
                 PageHeader(stringResource(open.title)) { page = null }
@@ -298,7 +303,14 @@ fun SettingsScreen(
                         SectionLabel(stringResource(R.string.calibration_title))
                         CalibrationSection(calibration)
                     }
-                    YouPage.ALARMS -> {
+                    YouPage.ALARMS -> if (!wears) {
+                        // Following only: their alarms reach you through these; nothing here is about a sensor of yours.
+                        SectionLabel(stringResource(R.string.alarms_reach_title))
+                        AlarmReach(sensorIsSource = true)
+                        Gap()
+                        SectionLabel(stringResource(R.string.alarms_history_title))
+                        AlarmHistory(alarmLog)
+                    } else {
                         // Whether alarms can reach you goes first while something stops them, else after the alarms (design "You · Alarms").
                         val blocked = !sourceKind.real || missing.any { it in ALARM_SETUP }
                         if (blocked) {
@@ -323,9 +335,11 @@ fun SettingsScreen(
                         AlarmHistory(alarmLog)
                     }
                     YouPage.PEOPLE -> {
-                        SectionLabel(stringResource(R.string.emergency_title))
-                        EmergencySection(emergency, emergencyAlerts, onEmergency)
-                        Gap()
+                        if (wears) {
+                            SectionLabel(stringResource(R.string.emergency_title))
+                            EmergencySection(emergency, emergencyAlerts, onEmergency)
+                            Gap()
+                        }
                         SectionLabel(stringResource(R.string.sharing_title))
                         SharingSection(sharing, followerWatch)
                         Gap()
@@ -409,7 +423,7 @@ fun SettingsScreen(
                         )
                         Gap()
                         SectionLabel(stringResource(R.string.setup_title))
-                        SetupChecklist()
+                        SetupChecklist(only = if (wears) null else FOLLOWER_SETUP_ITEMS)
                         Gap()
                         updates?.let {
                             SectionLabel(stringResource(R.string.updates_title))
@@ -422,6 +436,31 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+}
+
+private val FOLLOWER_PAGES = listOf(YouPage.PEOPLE, YouPage.ALARMS, YouPage.APPEARANCE, YouPage.HELP)
+
+/** Following only: "I wear a sensor too" brings back everything for a sensor of your own (and opens it). */
+@Composable
+private fun WearToo(onDone: () -> Unit) {
+    val container = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(top = 6.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .border(1.dp, outline(), RoundedCornerShape(18.dp))
+            .clickable {
+                container.settings.role = com.sukoon.app.data.prefs.UserRole.BOTH
+                container.role.value = com.sukoon.app.data.prefs.UserRole.BOTH
+                onDone()
+            }
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(stringResource(R.string.you_follower_note), fontSize = 13.sp, color = CaptionMuted)
+        Text(stringResource(R.string.you_wear_too), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = SageDeep)
     }
 }
 

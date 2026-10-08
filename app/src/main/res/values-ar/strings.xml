@@ -1653,4 +1653,6 @@
     <string name="food_portions_unit">حصة</string>
     <string name="food_serving_unit">حصة</string>
     <string name="food_pack_unit">عبوة</string>
+    <string name="you_follower_note">انت بتتابع حد، فإعدادات الحساس بتاعك مستخبية.</string>
+    <string name="you_wear_too">أنا كمان لابس حساس</string>
 </resources>

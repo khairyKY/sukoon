@@ -1541,4 +1541,6 @@
     <string name="food_portions_unit">portions</string>
     <string name="food_serving_unit">serving</string>
     <string name="food_pack_unit">pack</string>
+    <string name="you_follower_note">You follow someone, so settings for a sensor of your own stay hidden.</string>
+    <string name="you_wear_too">I wear a sensor too</string>
 </resources>

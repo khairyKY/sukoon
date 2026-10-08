@@ -90,6 +90,12 @@ I have type 1 diabetes and I live in Egypt, on EU-bought Libre 2 sensors. The of
 >
 > **Coming from 0.6 or earlier?** Those builds were signed with a debug key; later ones are signed with Sukoon's own key, and Android won't update across keys. Once: **You → Reports → Backup → Back up everything**, uninstall, install the new build, then **Restore**. Readings, logbook, settings, alarms, the sensor pairing and meal photos all come back ([`docs/signing.md`](docs/signing.md)).
 
+### On iPhone, or without the app
+
+Sukoon isn't in the App Store: an iPhone can't pair a Libre with a free Apple account. **Following works on any phone**: the person wearing the sensor sends an invite from You → People, and the follower opens the [**follow page**](https://khairyky.github.io/sukoon/) in Safari → Share → **Add to Home Screen**, then signs in and types the code. The page walks through it, in English or Arabic. Alarms there sound only while it's open, so keep emergency contacts set. Step by step: [`docs/iphone-and-web.md`](docs/iphone-and-web.md).
+
+Someone who only follows sees a simpler app: no sensor, insulin or dose settings, just who they follow, those alarms, the look and help (*I wear a sensor too* brings the rest back).
+
 ### Pairing a sensor
 
 **You → Sensor → Connect**, then hold the phone to the sensor. Sukoon reads it over NFC, checks that it can decode it, and only then switches on its Bluetooth stream. From there a reading arrives every minute, a new sensor counts down its 60-minute warm-up on Home, and Sukoon reminds you 3 days, a day and an hour before the sensor ends.

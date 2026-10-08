@@ -57,6 +57,9 @@ fun rememberMissingSetup(): List<SetupItem> {
     return missing
 }
 
+/** What someone who only follows needs: their phone has to be able to wake them, nothing about a sensor. */
+internal val FOLLOWER_SETUP_ITEMS = setOf(SetupItem.NOTIFICATIONS, SetupItem.FULL_SCREEN, SetupItem.OVERLAY, SetupItem.BATTERY)
+
 /** You → Setup: every OS permission/setting Sukoon relies on, each with why and a one-tap fix ([only]: a subset, as onboarding asks it). */
 @Composable
 fun SetupChecklist(only: Set<SetupItem>? = null) {

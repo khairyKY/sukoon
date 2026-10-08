@@ -79,12 +79,22 @@ button { font: 600 16px var(--sans); cursor: pointer; }
 .people button[aria-pressed="true"] { background: var(--deep); color: #fff; border-color: transparent; }
 .foot { margin-top: 24px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; }
 .hidden { display: none !important; }
+#install ol { margin: 8px 0 4px; padding-inline-start: 20px; line-height: 1.6; }
+#install strong { font-size: 15px; }
 .mark { width: 56px; height: 56px; }
 [dir="rtl"] .arrow { transform: scaleX(-1); }
 </style>
 </head>
 <body>
 <main>
+
+  <!-- Not installed yet: how to put the page on the home screen, for this phone -->
+  <div class="card small hidden" id="install" role="note">
+    <strong data-t="installTitle"></strong>
+    <ol id="installSteps"></ol>
+    <button class="link" id="installGo" type="button" data-t="installNow"></button>
+    <button class="link" id="installLater" type="button" data-t="installLater"></button>
+  </div>
 
   <!-- Signed out: sign in or create an account -->
   <section id="auth" class="hidden">
@@ -163,6 +173,9 @@ const T = {
     trend: { '-2': 'falling fast', '-1': 'falling', '0': 'steady', '1': 'rising', '2': 'rising fast' },
     wrongLogin: "That email and password don't match.", confirmEmail: 'Check your email to confirm the account, then sign in.',
     badCode: 'That code is wrong, used or expired.', offline: "Can't reach Sukoon. Check the internet.", lang: 'العربية',
+    installTitle: 'Keep Sukoon on your home screen', installNow: 'Install', installLater: 'Not now',
+    iosSteps: ['Open this page in Safari.', 'Tap Share (the square with an arrow) at the bottom.', 'Tap Add to Home Screen, then Add.', 'Open Sukoon from the home screen and sign in there.'],
+    androidSteps: ['Tap Install below, or the ⋮ menu in Chrome → Add to Home screen.', 'Open Sukoon from the home screen.'],
   },
   ar: {
     authTitle: 'تابع مع سكون', authBody: 'شوف سكر حد بشكل مباشر من تطبيق سكون بتاعه. حط الصفحة دي على الشاشة الرئيسية علشان تستخدمها زي التطبيق.',
@@ -181,6 +194,9 @@ const T = {
     trend: { '-2': 'نازل بسرعة', '-1': 'نازل', '0': 'ثابت', '1': 'طالع', '2': 'طالع بسرعة' },
     wrongLogin: 'الإيميل والباسورد مش متطابقين.', confirmEmail: 'افتح إيميلك وأكّد الحساب، وبعدين ادخل.',
     badCode: 'الكود غلط أو اتستخدم أو انتهى.', offline: 'مش قادر أوصل لسكون. اتأكد من النت.', lang: 'English',
+    installTitle: 'خلّي سكون على الشاشة الرئيسية', installNow: 'ثبّت', installLater: 'مش دلوقتي',
+    iosSteps: ['افتح الصفحة دي في سفاري.', 'دوس على مشاركة (المربع اللي فيه سهم) تحت.', 'دوس على "إضافة إلى الشاشة الرئيسية" وبعدين إضافة.', 'افتح سكون من الشاشة الرئيسية وادخل من هناك.'],
+    androidSteps: ['دوس ثبّت تحت، أو قائمة ⋮ في كروم ← إضافة للشاشة الرئيسية.', 'افتح سكون من الشاشة الرئيسية.'],
   },
 };
 let lang = localStorage.getItem('lang') || ((navigator.language || 'en').startsWith('ar') ? 'ar' : 'en');
@@ -416,6 +432,23 @@ setInterval(() => { if (current) render(); }, 30000); // minutes-ago and the sta
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refresh(); });
 if ('serviceWorker' in navigator && !DEMO) navigator.serviceWorker.register('sw.js').catch(() => {});
 applyLanguage();
+
+// ------------------------------------------------------------------ install: iPhone has no prompt, so it gets the steps
+const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const installed = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+let installPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installPrompt = e; showInstall(); });
+function showInstall() {
+  if (installed || localStorage.getItem('installLater')) return;
+  $('installSteps').innerHTML = (ios ? t('iosSteps') : t('androidSteps')).map((x) => `<li>${x}</li>`).join('');
+  $('installGo').classList.toggle('hidden', !installPrompt);
+  $('install').classList.remove('hidden');
+}
+$('installGo').onclick = async () => { if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; $('install').classList.add('hidden'); };
+$('installLater').onclick = () => { localStorage.setItem('installLater', '1'); $('install').classList.add('hidden'); };
+const relabel = applyLanguage;
+applyLanguage = () => { relabel(); if (!$('install').classList.contains('hidden')) showInstall(); };
+if (ios) showInstall();
 start();
 </script>
 </body>
