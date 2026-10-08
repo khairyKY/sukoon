@@ -192,6 +192,28 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
             context.toast(context.getString(R.string.toast_sharing_signed_out))
         }) { Text(stringResource(R.string.sharing_sign_out), color = StateLow, fontSize = 12.sp) }
     }
+    // Deleting the account: it, its readings and every follow, both ways, gone for good (Play requires it in the app).
+    var deleting by remember { mutableStateOf(false) }
+    TextButton(onClick = { deleting = true }) { Text(stringResource(R.string.account_delete), color = StateLow, fontSize = 12.sp) }
+    if (deleting) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { deleting = false },
+            title = { Text(stringResource(R.string.account_delete_title)) },
+            text = { Text(stringResource(R.string.account_delete_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    deleting = false
+                    act {
+                        sharing.supabase.rpc("delete_my_account", org.json.JSONObject())
+                        sharing.supabase.signOut()
+                        watch.refreshNow()
+                        context.getString(R.string.account_deleted)
+                    }
+                }) { Text(stringResource(R.string.account_delete_go), color = StateLow) }
+            },
+            dismissButton = { TextButton(onClick = { deleting = false }) { Text(stringResource(R.string.sensor_cancel)) } },
+        )
+    }
     problem?.let { Text(it, fontSize = 12.sp, color = StateLow) }
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.sharing_your_name)) }, singleLine = true, modifier = Modifier.weight(1f))

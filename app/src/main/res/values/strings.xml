@@ -1543,4 +1543,9 @@
     <string name="food_pack_unit">pack</string>
     <string name="you_follower_note">You follow someone, so settings for a sensor of your own stay hidden.</string>
     <string name="you_wear_too">I wear a sensor too</string>
+    <string name="account_delete">Delete my account</string>
+    <string name="account_delete_title">Delete your account?</string>
+    <string name="account_delete_body">Your Sukoon account goes, with the readings it shared and every follow both ways. What is on this phone stays. This can\'t be undone.</string>
+    <string name="account_delete_go">Delete</string>
+    <string name="account_deleted">Your account is deleted.</string>
 </resources>

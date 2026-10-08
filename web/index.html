@@ -147,6 +147,7 @@ button { font: 600 16px var(--sans); cursor: pointer; }
       <button class="link" id="addPerson" type="button" data-t="addPerson"></button>
       <button class="link" id="lang" type="button"></button>
       <button class="link" data-act="signout" type="button" data-t="signOut"></button>
+      <button class="link" data-act="delete" type="button" data-t="deleteAccount"></button>
     </div>
     <p class="muted small" data-t="footNote"></p>
   </section>
@@ -162,6 +163,7 @@ const T = {
     toCreate: 'New here? Create an account', toSignIn: 'Have an account? Sign in',
     codeTitle: 'Enter their code', codeBody: 'In their Sukoon app: You → People → Invite. The code works once, for 24 hours.',
     code: 'Invite code', follow: 'Follow', back: 'Back', signOut: 'Sign out', live: 'LIVE',
+    deleteAccount: 'Delete my account', deleteConfirm: 'Delete your Sukoon account? Everyone you follow and everyone following you is removed, with your readings. This cannot be undone.', deleted: 'Your account is deleted.',
     chartCaption: 'Last 3 hours · the band is the 70–180 target', addPerson: 'Follow someone else',
     soundBody: 'Sound an alarm here when they go low.', soundOn: 'Turn on',
     footNote: "Alarms sound only while this page is open. Keep their Sukoon's emergency contacts set for when it isn't.",
@@ -183,6 +185,7 @@ const T = {
     toCreate: 'جديد؟ اعمل حساب', toSignIn: 'عندك حساب؟ ادخل',
     codeTitle: 'اكتب الكود بتاعهم', codeBody: 'في تطبيق سكون بتاعهم: حسابي ← الناس ← دعوة. الكود بيشتغل مرة واحدة، لمدة ٢٤ ساعة.',
     code: 'كود الدعوة', follow: 'تابع', back: 'رجوع', signOut: 'اخرج', live: 'مباشر',
+    deleteAccount: 'امسح حسابي', deleteConfirm: 'تمسح حسابك في سكون؟ كل اللي بتتابعهم واللي بيتابعوك هيتشالوا، ومعاهم قراياتك. مفيش رجوع.', deleted: 'حسابك اتمسح.',
     chartCaption: 'آخر ٣ ساعات · الشريط هو المعدل ٧٠–١٨٠', addPerson: 'تابع حد تاني',
     soundBody: 'يرن هنا لما السكر يوطى.', soundOn: 'شغّل',
     footNote: 'المنبّه بيرن بس والصفحة مفتوحة. خلّي جهات الطوارئ في سكون بتاعهم متظبطة للباقي.',
@@ -282,6 +285,11 @@ $('codeBack').onclick = () => (people.length ? show('home') : null);
 $('addPerson').onclick = () => show('code');
 $('lang').onclick = () => { lang = lang === 'ar' ? 'en' : 'ar'; localStorage.setItem('lang', lang); applyLanguage(); };
 document.querySelectorAll('[data-act="signout"]').forEach((b) => (b.onclick = signOut));
+document.querySelectorAll('[data-act="delete"]').forEach((b) => (b.onclick = async () => {
+  if (!session || !confirm(t('deleteConfirm'))) return;
+  try { await call('/rest/v1/rpc/delete_my_account', { method: 'POST', body: {} }); alert(t('deleted')); signOut(); }
+  catch (e) { alert(t('offline')); }
+}));
 
 // ------------------------------------------------------------------ following
 let people = [];      // [{id, name}]

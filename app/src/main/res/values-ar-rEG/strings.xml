@@ -1655,4 +1655,9 @@
     <string name="food_pack_unit">عبوة</string>
     <string name="you_follower_note">انت بتتابع حد، فإعدادات الحساس بتاعك مستخبية.</string>
     <string name="you_wear_too">أنا كمان لابس حساس</string>
+    <string name="account_delete">امسح حسابي</string>
+    <string name="account_delete_title">تمسح حسابك؟</string>
+    <string name="account_delete_body">حسابك في سكون هيتمسح، ومعاه القرايات اللي اتشاركت وكل المتابعات من الناحيتين. اللي على الموبايل ده هيفضل. مفيش رجوع.</string>
+    <string name="account_delete_go">امسح</string>
+    <string name="account_deleted">حسابك اتمسح.</string>
 </resources>

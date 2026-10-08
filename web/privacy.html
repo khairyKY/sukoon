@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sukoon · Privacy</title>
+<style>
+:root { --bg: #F4F1EA; --ink: #1E2B26; --muted: #5E6B64; --line: #E4DFD4; --sage: #3E7A63; }
+@media (prefers-color-scheme: dark) { :root { --bg: #10201B; --ink: #E4DFD4; --muted: #A6B1AA; --line: #2C3934; --sage: #82BBA0; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 system-ui, sans-serif; }
+main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-weight: 500; font-size: 30px; margin: 0 0 4px; }
+h2 { font-size: 19px; margin: 32px 0 8px; }
+p, li { color: var(--ink); }
+.muted { color: var(--muted); font-size: 14px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; display: block; overflow-x: auto; }
+th, td { text-align: start; vertical-align: top; padding: 8px; border-bottom: 1px solid var(--line); }
+a { color: var(--sage); }
+[lang="ar"] { direction: rtl; }
+</style>
+</head>
+<body>
+<main>
+<h1>Privacy</h1>
+<p class="muted">Sukoon, the glucose app · last updated 9 October 2026 · <a href="#ar">العربية</a></p>
+
+<p>Sukoon has no server of its own, no ads, no analytics and no tracking. What you enter stays on your phone unless you turn on a feature that sends it somewhere, and each of those is listed here.</p>
+
+<h2>What leaves your phone, and only when</h2>
+<table>
+<tr><th>What</th><th>Goes to</th><th>Only when</th></tr>
+<tr><td>Readings, logbook, photos, your profile and dose settings</td><td>Nowhere: stored in the app on your phone</td><td>Always</td></tr>
+<tr><td>Readings out; meals, workouts, steps and water in</td><td>Health Connect, on your phone</td><td>You allow Health Connect access</td></tr>
+<tr><td>Your email, name and live glucose readings</td><td>Sukoon's account service (Supabase), readable only by people you invited</td><td>You make an account and share with a follower</td></tr>
+<tr><td>Your LibreLinkUp or Dexcom sign-in</td><td>Abbott's or Dexcom's servers</td><td>You connect one of those accounts</td></tr>
+<tr><td>Readings and logbook entries</td><td>Your own Nightscout site</td><td>You add its address</td></tr>
+<tr><td>Summaries of your data, your profile and dose settings, meal photos, a dish you ask about</td><td>Google Gemini, with your own API key (Google's terms apply)</td><td>You add a key and ask a question or for an estimate</td></tr>
+<tr><td>What you type in food search, or a barcode you scan</td><td>Open Food Facts</td><td>You search or scan</td></tr>
+<tr><td>A full backup (everything above, your AI key included)</td><td>One file in the cloud app you choose</td><td>You turn on the daily cloud backup</td></tr>
+<tr><td>Your glucose, for how long, and your location</td><td>Your emergency contacts, by SMS and a phone call</td><td>An urgent low alarm goes unanswered and you set contacts</td></tr>
+</table>
+
+<h2>Camera, location and other permissions</h2>
+<p>The camera reads barcodes and takes meal photos; both stay on the phone. Bluetooth and NFC talk to your sensor. Location is asked only on Android 11 and older, where Bluetooth scanning needs it; Sukoon doesn't use or store where you are, except in an emergency text to your contacts.</p>
+
+<h2>How long, and deleting it</h2>
+<ul>
+<li>On your phone: until you delete it, or uninstall Sukoon.</li>
+<li>Your account and everything it shared: delete it any time in the app (You → People → <em>Delete my account</em>) or on the <a href="./">follow page</a> (sign in, then <em>Delete my account</em>). It is removed at once, with every follow both ways.</li>
+<li>Sukoon keeps no copies anywhere else.</li>
+</ul>
+
+<h2>Children</h2>
+<p>Sukoon can be used by children with diabetes under a parent's care. Dose settings can be locked with a parent's PIN. Sukoon doesn't knowingly collect anything from children beyond what the parent sets up, and it has no ads.</p>
+
+<h2>Not a medical device</h2>
+<p>Sukoon helps you see and log your glucose. Never make treatment decisions from it alone: check with a finger-prick meter and your care team.</p>
+
+<h2>Contact</h2>
+<p>Questions or requests: <a href="https://github.com/khairyKY/sukoon/issues">open an issue on GitHub</a>. The source code is public, so everything above can be checked.</p>
+
+<hr>
+
+<section id="ar" lang="ar">
+<h1>الخصوصية</h1>
+<p class="muted">سكون، تطبيق السكر · آخر تحديث ٩ أكتوبر ٢٠٢٦</p>
+<p>سكون ملوش سيرفر خاص بيه، ومفيهوش إعلانات ولا تتبّع. اللي بتدخله بيفضل على موبايلك، إلا لو شغّلت ميزة بتبعته لمكان، وكلهم مكتوبين هنا.</p>
+<ul>
+<li><strong>على موبايلك بس:</strong> القرايات والسجل والصور وإعداداتك.</li>
+<li><strong>Health Connect:</strong> لو سمحت بيه، القرايات بتطلع والوجبات والرياضة بتدخل، على الموبايل.</li>
+<li><strong>حساب سكون (Supabase):</strong> إيميلك واسمك وقراياتك المباشرة، واللي بتدعيهم بس هما اللي يشوفوها.</li>
+<li><strong>LibreLinkUp أو Dexcom أو Nightscout:</strong> لو ربطتهم بنفسك.</li>
+<li><strong>Gemini:</strong> ملخصات وصور الوجبات وأسئلتك، بمفتاحك انت، لو سألت.</li>
+<li><strong>Open Food Facts:</strong> اللي بتكتبه في البحث أو الباركود اللي بتمسحه.</li>
+<li><strong>السحابة بتاعتك:</strong> نسخة احتياطية كاملة، لو شغّلتها.</li>
+<li><strong>جهات الطوارئ:</strong> رسالة ومكالمة فيها سكرك ومكانك، لو هبوط خطير محدش رد عليه.</li>
+</ul>
+<p><strong>تمسح حسابك:</strong> في أي وقت من التطبيق (حسابي ← الناس ← امسح حسابي) أو من <a href="./">صفحة المتابعة</a>. بيتمسح فورًا مع كل المتابعات.</p>
+<p><strong>مش جهاز طبي:</strong> ماتاخدش قرار علاج منه لوحده، اتأكد بجهاز وخز الإصبع ومع دكتورك.</p>
+<p><strong>للتواصل:</strong> <a href="https://github.com/khairyKY/sukoon/issues">GitHub</a>.</p>
+</section>
+</main>
+</body>
+</html>
