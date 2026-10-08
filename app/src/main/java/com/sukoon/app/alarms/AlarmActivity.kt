@@ -57,6 +57,7 @@ import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
 import com.sukoon.app.ui.theme.Motion
 import com.sukoon.app.ui.theme.PillHighText
 import com.sukoon.app.ui.theme.StateUrgent
+import com.sukoon.app.ui.theme.SukoonTheme
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
@@ -92,7 +93,8 @@ class AlarmActivity : ComponentActivity() {
         }
         shown = Shown.of(intent)
         val container = (applicationContext as SukoonApp).container
-        setContent {
+        // The theme carries the app's fonts; its colours don't show here (every colour on this screen is explicit).
+        setContent { SukoonTheme {
             val phase by container.alarms.escalation.collectAsState()
             val names = container.emergency.contacts.joinToString { it.name }
             when (val p = phase) {
@@ -149,7 +151,7 @@ class AlarmActivity : ComponentActivity() {
                     }
                 }
             }
-        }
+        } }
     }
 
     override fun onNewIntent(intent: Intent) {

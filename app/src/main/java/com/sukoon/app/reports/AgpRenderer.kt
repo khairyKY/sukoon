@@ -39,9 +39,13 @@ object AgpRenderer {
             canvas.drawLine(plot.left, y(level), plot.right, y(level), if (level == 70 || level == 180) target else grid)
             canvas.drawText(String.format(Locale.getDefault(), "%d", level), area.left, y(level) + look.textSize / 3, text)
         }
+        // Labels every 3 h when they fit (the PDF), else every 6 or 12 h (a phone): nine "00:00"s
+        // don't fit in ~300 dp, and the end ones get pushed into their neighbours. Grid stays 3-hourly.
+        val every = listOf(1, 2, 4).first { it == 4 || plot.width() / 8 * it > text.measureText("00:00") * 1.5f }
         (0..8).forEach { i ->
             val minute = i * 180
             canvas.drawLine(x(minute), plot.top, x(minute), plot.bottom, grid)
+            if (i % every != 0) return@forEach
             val label = String.format(Locale.getDefault(), "%02d:00", (i * 3) % 24)
             val width = text.measureText(label)
             canvas.drawText(label, (x(minute) - width / 2).coerceIn(plot.left, area.right - width), area.bottom - look.textSize * 0.3f, text)
