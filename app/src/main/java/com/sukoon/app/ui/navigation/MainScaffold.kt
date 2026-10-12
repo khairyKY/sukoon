@@ -1,5 +1,13 @@
 package com.sukoon.app.ui.navigation
 
+import com.sukoon.app.ui.theme.SageDeep
+import com.sukoon.app.ui.theme.SageMist
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.animateColorAsState
+import androidx.annotation.DrawableRes
 import androidx.compose.runtime.produceState
 import com.sukoon.app.ui.logbook.formatAmountLocalized
 import com.sukoon.app.ui.insights.slot
@@ -116,10 +124,10 @@ import kotlinx.coroutines.withContext
  *
  * State is preserved per-tab via the standard popUpTo(saveState)/restoreState pattern.
  */
-enum class SukoonTab(val route: String, @StringRes val labelRes: Int) {
-    NOW("now", R.string.home_nav_now),
-    TRENDS("trends", R.string.home_nav_trends),
-    YOU("you", R.string.home_nav_you),
+enum class SukoonTab(val route: String, @StringRes val labelRes: Int, @DrawableRes val icon: Int, @DrawableRes val iconOn: Int) {
+    NOW("now", R.string.home_nav_now, R.drawable.ic_nav_now, R.drawable.ic_nav_now_on),
+    TRENDS("trends", R.string.home_nav_trends, R.drawable.ic_nav_trends, R.drawable.ic_nav_trends_on),
+    YOU("you", R.string.home_nav_you, R.drawable.ic_nav_you, R.drawable.ic_nav_you_on),
 }
 
 @Composable
@@ -577,13 +585,15 @@ private fun SukoonBottomBar(navController: NavHostController, onYou: () -> Unit)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 22.dp, vertical = 13.dp),
+                .padding(horizontal = 22.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceAround,
         ) {
             SukoonTab.entries.forEach { tab ->
                 val selected = currentRoute == tab.route
                 BottomBarItem(
                     label = stringResource(tab.labelRes),
+                    icon = tab.icon,
+                    iconOn = tab.iconOn,
                     selected = selected,
                     onClick = {
                         // You always opens on its hub, even when it's the tab already open.
@@ -605,34 +615,31 @@ private fun NavHostController.navigateToTab(tab: SukoonTab) {
 }
 
 @Composable
-private fun BottomBarItem(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun BottomBarItem(label: String, @DrawableRes icon: Int, @DrawableRes iconOn: Int, selected: Boolean, onClick: () -> Unit) {
+    val ink = MaterialTheme.colorScheme.onBackground
     Column(
         modifier = Modifier
-            .clip(CircleShape)
+            .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 2.dp),
+            .padding(horizontal = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(5.dp),
+        verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
-        if (selected) {
-            Box(Modifier.size(7.dp).clip(CircleShape).background(Sage))
-        } else {
-            Box(
-                Modifier
-                    .size(7.dp)
-                    .clip(CircleShape)
-                    .border(1.5.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f), CircleShape),
+        // The selected tab: a sage wash behind a filled icon; the others stay quiet outlines.
+        val wash by animateColorAsState(if (selected) SageMist else Color.Transparent, tween(Motion.BASE, easing = Motion.Standard), label = "navWash")
+        Box(Modifier.size(width = 56.dp, height = 30.dp).clip(CircleShape).background(wash), contentAlignment = Alignment.Center) {
+            Icon(
+                painterResource(if (selected) iconOn else icon),
+                contentDescription = null,
+                tint = if (selected) SageDeep else ink.copy(alpha = 0.6f),
+                modifier = Modifier.size(24.dp),
             )
         }
         Text(
             text = label,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-            fontSize = 9.5.sp,
-            color = if (selected) {
-                MaterialTheme.colorScheme.onBackground
-            } else {
-                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
-            },
+            fontSize = 11.sp,
+            color = if (selected) ink else ink.copy(alpha = 0.6f),
         )
     }
 }
