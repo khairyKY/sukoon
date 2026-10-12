@@ -1,5 +1,12 @@
 package com.sukoon.app.ui.sharing
 
+import com.sukoon.app.ui.settings.LockedNotice
+import com.sukoon.app.ui.theme.TextMuted
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.border
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -253,24 +260,41 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session, l
     // Which alarms followers' phones sound for you; urgent low always does.
     Label(stringResource(R.string.sharing_alarms_title))
     Text(stringResource(R.string.sharing_alarms_body), fontSize = 12.sp, color = CaptionMuted)
-    AlarmType.entries.forEach { type ->
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(type.titleRes), fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
-            Switch(
-                checked = type in sharedAlarms,
-                enabled = type != AlarmType.URGENT_LOW,
-                onCheckedChange = { on ->
-                    guard {
-                        sharedAlarms = if (on) sharedAlarms + type else sharedAlarms - type
-                        sharing.sharedAlarms = sharedAlarms
-                        act {
-                            sharing.publishSharedAlarms()
-                            context.getString(R.string.toast_sharing_alarms_saved)
+    if (locked) LockedNotice(onUnlock)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+            .padding(horizontal = 14.dp),
+    ) {
+        AlarmType.entries.forEachIndexed { i, type ->
+            if (i > 0) HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f))
+            val always = type == AlarmType.URGENT_LOW
+            Row(Modifier.heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                // The alarm's colour, as on Now: lows red, high amber, signal loss quiet.
+                Box(Modifier.size(9.dp).clip(CircleShape).background(if (type.loud) StateLow else if (type == AlarmType.HIGH) StateHigh else TextMuted))
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(type.titleRes), fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                    if (always) Text(stringResource(R.string.sharing_alarm_always), fontSize = 12.sp, color = CaptionMuted)
+                }
+                Switch(
+                    checked = type in sharedAlarms,
+                    enabled = !always,
+                    onCheckedChange = { on ->
+                        guard {
+                            sharedAlarms = if (on) sharedAlarms + type else sharedAlarms - type
+                            sharing.sharedAlarms = sharedAlarms
+                            act {
+                                sharing.publishSharedAlarms()
+                                context.getString(R.string.toast_sharing_alarms_saved)
+                            }
                         }
-                    }
-                },
-                colors = SwitchDefaults.colors(checkedTrackColor = Sage),
-            )
+                    },
+                    colors = SwitchDefaults.colors(checkedTrackColor = Sage),
+                )
+            }
         }
     }
     Label(stringResource(R.string.sharing_followers))

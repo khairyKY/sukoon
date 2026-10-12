@@ -1605,4 +1605,5 @@
     <string name="sensor_check_life">Life</string>
     <string name="sensor_check_reads_now">Reads now</string>
     <string name="sensor_check_fresh">This one is fresh. Start it below, or with the app it came with.</string>
+    <string name="sharing_alarm_always">Always sent to your followers</string>
 </resources>

@@ -1721,4 +1721,5 @@
     <string name="sensor_check_life">العمر</string>
     <string name="sensor_check_reads_now">يقرأ الآن</string>
     <string name="sensor_check_fresh">هذا مستشعر جديد. شغّله من الأسفل، أو بالتطبيق الذي جاء معه.</string>
+    <string name="sharing_alarm_always">يُرسل دائمًا إلى متابعيك</string>
 </resources>
