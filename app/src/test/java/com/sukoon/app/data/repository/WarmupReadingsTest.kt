@@ -25,6 +25,7 @@ class WarmupReadingsTest {
         val all = MutableStateFlow(rows.toList().sortedBy { it.timestampMillis })
         override suspend fun insert(reading: ReadingEntity) { all.value = (all.value + reading).sortedBy { it.timestampMillis } }
         override suspend fun deleteBySource(source: String) {}
+        override suspend fun deleteAt(timestamps: List<Long>) { all.value = all.value.filterNot { it.timestampMillis in timestamps } }
         override suspend fun countBetween(from: Long, to: Long) = all.value.count { it.timestampMillis in (from + 1) until to }
         override fun latest(): Flow<ReadingEntity?> = all.map { it.lastOrNull() }
         override fun since(sinceMillis: Long): Flow<List<ReadingEntity>> = all.map { rows -> rows.filter { it.timestampMillis >= sinceMillis } }
@@ -61,5 +62,13 @@ class WarmupReadingsTest {
         assertTrue(reading.toEntity().warmup)
         assertTrue(reading.toEntity().toGlucoseReading().warmup)
         assertEquals(false, GlucoseReading(Instant.EPOCH, 100, TrendDirection.STEADY, SourceKind.LIBRE_BLE).warmup)
+    }
+
+    @Test
+    fun `the one-time cleanup removes only readings no body produces`() = runBlocking {
+        val dao = FakeDao(row(100, 120, false), row(101, 122, false), row(102, 480, false), row(103, 125, false))
+        val repo = GlucoseRepository(MutableStateFlow(SimulatedSource(scope = CoroutineScope(Dispatchers.Unconfined))), dao, CoroutineScope(Dispatchers.Unconfined))
+        assertEquals(1, repo.removeSpikes(0))
+        assertEquals(listOf(120, 122, 125), dao.all.value.map { it.glucoseMgDl })
     }
 }

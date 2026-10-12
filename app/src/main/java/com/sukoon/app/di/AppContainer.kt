@@ -191,6 +191,12 @@ class AppContainer(private val context: Context) {
             }
         }
         notices.start()
+        // Once: the noise 0.8.1 saved from an unstarted sensor's memory (and any other impossible jump) goes.
+        val prefs = context.getSharedPreferences("sukoon_prefs", Context.MODE_PRIVATE)
+        if (!prefs.getBoolean(KEY_SPIKES_CLEANED, false)) appScope.launch {
+            runCatching { glucoseRepository.removeSpikes(System.currentTimeMillis() - Duration.ofDays(30).toMillis()) }
+                .onSuccess { android.util.Log.i("Sukoon", "Removed $it impossible readings"); prefs.edit().putBoolean(KEY_SPIKES_CLEANED, true).apply() }
+        }
         // Long-acting logged anywhere clears its reminder.
         appScope.launch {
             logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofHours(12).toMillis()).collect { events ->
@@ -285,6 +291,7 @@ class AppContainer(private val context: Context) {
     private companion object {
         const val MINUTE_MS = 60_000L
         const val WIDGET_MIN_INTERVAL_MS = 15_000L
+        const val KEY_SPIKES_CLEANED = "spikes_cleaned_v1"
     }
 
     private fun sourceFor(kind: SourceKind): GlucoseSource = when (kind) {

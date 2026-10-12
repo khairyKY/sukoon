@@ -36,7 +36,7 @@ class AiTest {
         val brief = AiPrompts.dataBrief(readings, events, now, zone)
 
         assertTrue(brief, brief.contains("LATEST: 100 mg/dL, trend steady, 0 min ago"))
-        assertTrue(brief, brief.contains("DATA SOURCE: LIBRE_BLE"))
+        assertTrue(brief, brief.contains("DATA SOURCE: REAL"))
         assertTrue(brief, brief.contains("LAST 24H: mean"))
         assertTrue(brief, brief.contains("lowest 60 at") && brief.contains("highest 250 at")) // exact extremes survive averaging
         assertTrue(brief, brief.contains("PER DAY"))

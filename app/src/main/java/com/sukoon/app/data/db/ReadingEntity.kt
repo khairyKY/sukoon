@@ -36,6 +36,9 @@ interface ReadingDao {
     @Query("SELECT COUNT(*) FROM readings WHERE timestampMillis > :from AND timestampMillis < :to")
     suspend fun countBetween(from: Long, to: Long): Int
 
+    @Query("DELETE FROM readings WHERE timestampMillis IN (:timestamps)")
+    suspend fun deleteAt(timestamps: List<Long>)
+
     @Query("SELECT * FROM readings ORDER BY timestampMillis DESC LIMIT 1")
     fun latest(): Flow<ReadingEntity?>
 

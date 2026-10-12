@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import com.sukoon.app.calibration.Calibration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 
 /**
  * The single source of truth for glucose data (A2, docs/track-a-plan.md). It runs a collector
@@ -88,6 +89,13 @@ class GlucoseRepository(
     /** As stored, before calibration: what the calibration itself is fitted on. */
     fun rawReadingsSince(sinceMillis: Long): Flow<List<GlucoseReading>> =
         readingDao.since(sinceMillis).map { rows -> rows.map { it.toGlucoseReading() }.trusted(false) }
+
+    /** Deletes readings no body produces ([Spikes]) since [sinceMillis]; returns how many. */
+    suspend fun removeSpikes(sinceMillis: Long): Int {
+        val spikes = com.sukoon.app.domain.metrics.Spikes.of(readingDao.since(sinceMillis).first().map { it.toGlucoseReading() })
+        if (spikes.isNotEmpty()) readingDao.deleteAt(spikes.map { it.timestamp.toEpochMilli() })
+        return spikes.size
+    }
 
     /** For readings that arrive outside the collector — the NFC pairing tap's 8-hour backfill. */
     suspend fun ingest(reading: GlucoseReading) = readingDao.insert(reading.toEntity())
