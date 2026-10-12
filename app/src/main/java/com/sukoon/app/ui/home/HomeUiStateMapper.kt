@@ -34,7 +34,7 @@ object HomeUiStateMapper {
         life: SensorLife? = null,
     ): HomeUiState = when (life) {
         is SensorLife.Ended -> HomeUiState.SensorEnded
-        is SensorLife.WarmingUp -> HomeUiState.WarmingUp(life.minutesLeft)
+        is SensorLife.WarmingUp -> HomeUiState.WarmingUp(life.minutesLeft, provisional(latest, now))
         else -> byStatus(status, latest, recent, now)
     }
 
@@ -42,7 +42,7 @@ object HomeUiStateMapper {
         SourceStatus.Disconnected -> HomeUiState.NoSensor
 
         // The countdown comes from the paired sensor's start (life, above); this is only a fallback.
-        SourceStatus.WarmingUp -> HomeUiState.WarmingUp(minutesRemaining = 0)
+        SourceStatus.WarmingUp -> HomeUiState.WarmingUp(minutesRemaining = 0, provisionalMgDl = provisional(latest, now))
 
         SourceStatus.Stale -> latest?.let { stale(it, recent, now) } ?: HomeUiState.NoSensor
 
@@ -57,6 +57,10 @@ object HomeUiStateMapper {
             else -> connected(latest, recent)
         }
     }
+
+    /** The newest reading while the sensor warms up, if it is fresh: shown in grey, never acted on. */
+    private fun provisional(latest: GlucoseReading?, now: Instant): Int? =
+        latest?.takeIf { Duration.between(it.timestamp, now) <= STALE_AFTER }?.glucoseMgDl
 
     private fun stale(latest: GlucoseReading, recent: List<GlucoseReading>, now: Instant) = HomeUiState.Stale(
         lastGlucoseMgDl = latest.glucoseMgDl,

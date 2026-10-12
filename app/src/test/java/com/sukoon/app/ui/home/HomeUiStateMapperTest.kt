@@ -27,6 +27,14 @@ class HomeUiStateMapperTest {
     }
 
     @Test
+    fun `warm-up shows the sensor's first-hour value while it is fresh, and nothing once it is old`() {
+        val fresh = HomeUiStateMapper.map(SourceStatus.WarmingUp, reading(230, now.minusSeconds(60)), emptyList(), now, SensorLife.WarmingUp(30))
+        assertEquals(HomeUiState.WarmingUp(30, provisionalMgDl = 230), fresh)
+        val old = HomeUiStateMapper.map(SourceStatus.WarmingUp, reading(230, now.minusSeconds(3600)), emptyList(), now, SensorLife.WarmingUp(30))
+        assertEquals(HomeUiState.WarmingUp(30, provisionalMgDl = null), old)
+    }
+
+    @Test
     fun `disconnected maps to NoSensor`() {
         assertEquals(HomeUiState.NoSensor, HomeUiStateMapper.map(SourceStatus.Disconnected, reading(110), recent, now))
     }

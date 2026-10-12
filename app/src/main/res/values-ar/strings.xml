@@ -70,6 +70,7 @@
     <string name="home_getting_ready">قيد التهيئة</string>
     <string name="home_first_reading_prefix">أول قراءة بعد نحو </string>
     <string name="home_first_reading_bold">%1$d دقيقة</string>
+    <string name="home_warmup_provisional_body">الرقم الرمادي قراءة الساعة الأولى من المستشعر. قد لا يكون دقيقًا، لذا لا يُستخدم في التنبيهات أو التقارير أو الذكاء الاصطناعي حتى تنتهي التهيئة.</string>
     <string name="home_warmup_body">المستشعر يستقر في مكانه. هذا طبيعي في المستشعر الجديد — لا يلزمك فعل شيء.</string>
 
     <!-- Home — stale / signal lost -->

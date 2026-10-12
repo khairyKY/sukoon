@@ -70,6 +70,7 @@
     <string name="home_getting_ready">بيجهّز</string>
     <string name="home_first_reading_prefix">أول قراية بعد حوالي </string>
     <string name="home_first_reading_bold">%1$d دقيقة</string>
+    <string name="home_warmup_provisional_body">الرقم الرمادي ده قراءة أول ساعة من الحساس. ممكن يبقى مش دقيق، فمش بيتحسب في التنبيهات ولا التقارير ولا الذكاء الاصطناعي لحد ما التهيئة تخلص.</string>
     <string name="home_warmup_body">الحساس لسه بيظبط نفسه. ده طبيعي في الحساس الجديد — مفيش حاجة تعملها.</string>
 
     <!-- Home — stale / signal lost -->

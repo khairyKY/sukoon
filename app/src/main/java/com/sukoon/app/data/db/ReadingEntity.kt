@@ -20,6 +20,7 @@ data class ReadingEntity(
     val glucoseMgDl: Int,
     val trend: String, // TrendDirection.name
     val source: String, // SourceKind.name
+    val warmup: Boolean = false, // first hour of a sensor: displayed, never analysed (GlucoseRepository filters it)
 )
 
 @Dao

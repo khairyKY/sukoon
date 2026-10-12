@@ -27,6 +27,13 @@ class LibreNfcTest {
     }
 
     @Test
+    fun `a sensor nobody started is refused, a warming or running one is taken`() {
+        assertTrue(LibreNfc.problemWith(Libre2.State.NOT_STARTED)!!.contains("hasn't been started"))
+        listOf(Libre2.State.EXPIRED, Libre2.State.SHUTDOWN, Libre2.State.FAILURE).forEach { assertTrue(LibreNfc.problemWith(it) != null) }
+        listOf(Libre2.State.STARTING, Libre2.State.READY, Libre2.State.UNKNOWN).forEach { assertEquals(null, LibreNfc.problemWith(it)) }
+    }
+
+    @Test
     fun `only Libre 2 EU patch infos are streamable`() {
         assertTrue(Libre2.isLibre2Eu(bytes(0x9D, 0x08, 0x30, 0x01, 0x76, 0x25)))
         assertTrue(Libre2.isLibre2Eu(bytes(0xC5, 0x09, 0x31, 0x01, 0x00, 0x00)))

@@ -337,7 +337,8 @@ private fun describe(context: Context, read: LibreNfc.SensorRead): String {
     if (!read.supported) return context.getString(R.string.sensor_unsupported, read.patchInfo.hex())
     val fram = read.fram ?: return context.getString(R.string.sensor_memory_bad)
     val info = Libre2.sensorInfo(fram)
-    val latest = Libre2.parseFram(FactoryCalibration.fromFram(fram), fram).maxByOrNull { it.minute }
+    val running = info.state == Libre2.State.STARTING || info.state == Libre2.State.READY
+    val latest = if (running) Libre2.parseFram(FactoryCalibration.fromFram(fram), fram).maxByOrNull { it.minute } else null // an unstarted sensor's memory is noise
     return context.getString(R.string.sensor_check_result, read.serial, days(info.ageMinutes), info.state.name.lowercase(), latest?.mgDl?.toString() ?: "-")
 }
 

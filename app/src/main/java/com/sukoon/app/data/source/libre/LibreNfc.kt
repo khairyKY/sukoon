@@ -41,6 +41,16 @@ object LibreNfc {
     class NfcException(message: String) : IOException(message)
 
     /**
+     * Why a sensor in [state] can't be taken over (null = it can). A sensor nobody has scanned to
+     * start hasn't begun warm-up and doesn't talk Bluetooth, and its memory holds noise, not glucose.
+     */
+    fun problemWith(state: Libre2.State): String? = when (state) {
+        Libre2.State.NOT_STARTED -> "This sensor hasn't been started yet. Scan it once with the Libre app (or DiaBox) to start it, then pair it here."
+        Libre2.State.EXPIRED, Libre2.State.SHUTDOWN, Libre2.State.FAILURE -> "This sensor has ended or failed. Put a new one on."
+        else -> null
+    }
+
+    /**
      * Reads patch info + FRAM and decrypts it; with [pair], then enables BLE streaming for this app
      * (taking the sensor's stream from any other reader). Blocking — call from the NFC reader
      * callback thread.
@@ -84,6 +94,7 @@ object LibreNfc {
 
             if (!read.supported) throw NfcException("Only Libre 2 EU sensors can stream to Sukoon (patch info ${patchInfo.hex()})")
             if (fram == null) throw NfcException("Sensor memory didn't decrypt cleanly, so Sukoon won't take it over")
+            problemWith(Libre2.sensorInfo(fram).state)?.let { throw NfcException(it) }
             val mac = send(CMD_PATCH_INFO + Libre2.enableStreamingParameters(uid, patchInfo))
             if (mac.size != 6) throw NfcException("Enable streaming failed (${mac.hex()})")
             // The sensor reports its MAC least-significant byte first.

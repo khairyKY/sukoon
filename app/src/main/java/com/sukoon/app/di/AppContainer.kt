@@ -263,7 +263,7 @@ class AppContainer(private val context: Context) {
             for (point in Libre2.parseFram(pairing.calibration, fram)) {
                 if (point.mgDl !in LibreBleSource.PLAUSIBLE_MG_DL) continue
                 val at = Instant.ofEpochMilli(pairing.startMillis + point.minute * LibreBleSource.MINUTE_MS)
-                glucoseRepository.ingest(GlucoseReading(at, point.mgDl, TrendDirection.STEADY, SourceKind.LIBRE_BLE))
+                glucoseRepository.ingest(GlucoseReading(at, point.mgDl, TrendDirection.STEADY, SourceKind.LIBRE_BLE, warmup = point.minute < LibreBleSource.WARMUP_MINUTES))
             }
         }
         selectSource(SourceKind.LIBRE_BLE)

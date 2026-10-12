@@ -70,6 +70,7 @@
     <string name="home_getting_ready">Getting ready</string>
     <string name="home_first_reading_prefix">First reading in about </string>
     <string name="home_first_reading_bold">%1$d min</string>
+    <string name="home_warmup_provisional_body">The grey number is the sensor\'s first-hour reading. It can be off, so it isn\'t used for alarms, reports or the AI until warm-up ends.</string>
     <string name="home_warmup_body">Your sensor is settling in. This is normal for a new sensor — no action needed.</string>
 
     <!-- Home — stale / signal lost -->

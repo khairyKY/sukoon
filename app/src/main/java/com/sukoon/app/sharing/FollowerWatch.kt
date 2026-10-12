@@ -103,12 +103,15 @@ class FollowerWatch(
         val now = Instant.now()
         val alarmSettings = settings.alarmSettings
         for (person in following) {
-            val recent = (sharing.readingsOf(person.id, now.minus(WINDOW).toEpochMilli()) + listOfNotNull(person.latest)).distinctBy { it.timestamp }
-            val result = AlarmEngine.evaluate(recent, now, alarmSettings, states[person.id] ?: AlarmState())
-            states[person.id] = result.state
-            publish() // before showing: the alert screen checks it as it opens
-            result.cleared.forEach { notifier.cancel(it, person.id) }
-            result.fire.forEach { notifier.show(it, alarmSettings, who = person.name.ifBlank { "…" }, person = person.id) }
+            // A person whose service is down (LibreLinkUp, Dexcom) is skipped this minute; the rest are still checked.
+            runCatching {
+                val recent = (sharing.readingsOf(person.id, now.minus(WINDOW).toEpochMilli()) + listOfNotNull(person.latest)).distinctBy { it.timestamp }
+                val result = AlarmEngine.evaluate(recent, now, alarmSettings, states[person.id] ?: AlarmState())
+                states[person.id] = result.state
+                publish() // before showing: the alert screen checks it as it opens
+                result.cleared.forEach { notifier.cancel(it, person.id) }
+                result.fire.forEach { notifier.show(it, alarmSettings, who = person.name.ifBlank { "…" }, person = person.id) }
+            }.onFailure { Log.w(TAG, "Check for ${person.name} failed", it) }
         }
         val followedIds = following.map { it.id }.toSet()
         (states.keys - followedIds).forEach { id -> states.remove(id)?.activeSince?.keys?.forEach { notifier.cancel(it, id) } }

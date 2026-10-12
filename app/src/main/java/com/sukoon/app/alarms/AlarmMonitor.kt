@@ -73,7 +73,7 @@ class AlarmMonitor(
         scope.launch {
             repository.readingsSince(System.currentTimeMillis() - WINDOW.toMillis()).first().forEach(::keep)
             // However old: after a restart with the sensor quiet for an hour, "no readings" must still go off.
-            repository.latestReading.first()?.let(::keep)
+            repository.latestReading.first()?.takeIf { !it.warmup }?.let(::keep)
             val minuteTicks = flow {
                 while (true) {
                     emit(null)

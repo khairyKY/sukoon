@@ -916,7 +916,7 @@ private fun ColumnScope.WarmingUpContent(state: HomeUiState.WarmingUp) {
                         style = androidx.compose.ui.graphics.drawscope.Stroke(width = 6.dp.toPx()),
                     )
                 }
-                Text(text = "- -", fontFamily = HeadlineSerifFontFamily, fontWeight = FontWeight.Light, fontSize = 52.sp, color = PlaceholderMuted)
+                Text(text = state.provisionalMgDl?.toString() ?: "- -", fontFamily = HeadlineSerifFontFamily, fontWeight = FontWeight.Light, fontSize = 52.sp, color = PlaceholderMuted)
             }
             Spacer(Modifier.height(28.dp))
             Text(
@@ -939,7 +939,7 @@ private fun ColumnScope.WarmingUpContent(state: HomeUiState.WarmingUp) {
             )
         }
         Box(Modifier.padding(horizontal = 20.dp, vertical = 0.dp)) {
-            MessageCard(title = null, body = stringResource(R.string.home_warmup_body))
+            MessageCard(title = null, body = stringResource(if (state.provisionalMgDl != null) R.string.home_warmup_provisional_body else R.string.home_warmup_body))
         }
         Spacer(Modifier.height(12.dp))
     }

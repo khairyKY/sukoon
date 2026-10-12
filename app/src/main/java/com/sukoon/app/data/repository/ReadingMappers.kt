@@ -20,6 +20,7 @@ fun GlucoseReading.toEntity(): ReadingEntity = ReadingEntity(
     glucoseMgDl = glucoseMgDl,
     trend = trend.name,
     source = source.name,
+    warmup = warmup,
 )
 
 fun ReadingEntity.toGlucoseReading(): GlucoseReading = GlucoseReading(
@@ -27,6 +28,7 @@ fun ReadingEntity.toGlucoseReading(): GlucoseReading = GlucoseReading(
     glucoseMgDl = glucoseMgDl,
     trend = safeEnum(trend, TrendDirection.STEADY),
     source = safeEnum(source, SourceKind.SIMULATED),
+    warmup = warmup,
 )
 
 private inline fun <reified T : Enum<T>> safeEnum(name: String, default: T): T =
