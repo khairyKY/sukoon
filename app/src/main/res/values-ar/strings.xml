@@ -68,8 +68,6 @@
 
     <!-- Home — warm-up -->
     <string name="home_getting_ready">قيد التهيئة</string>
-    <string name="home_first_reading_prefix">أول قراءة بعد نحو </string>
-    <string name="home_first_reading_bold">%1$d دقيقة</string>
     <string name="home_warmup_body">المستشعر يستقر في مكانه. هذا طبيعي في المستشعر الجديد — لا يلزمك فعل شيء.</string>
 
     <!-- Home — stale / signal lost -->
@@ -1677,4 +1675,17 @@
     <string name="consent_ai_body">بمفتاحك، يُرسَل ما تسأل عنه إلى Google Gemini: ملخصات قراءاتك وسجلك، وملفك وإعدادات الجرعة، وصور الوجبات والأطباق التي تسأل عنها. تنطبق شروط Google، وفي الفئة المجانية قد تستخدمها Google لتحسين منتجاتها. لا يُرسَل شيء حتى تسأل.</string>
     <string name="privacy_link">سياسة الخصوصية</string>
     <string name="reminder_basal_title_again">ما زلنا بانتظار الأنسولين طويل المفعول 💉</string>
+    <string name="finger_left_middle">الوسطى، يسار</string>
+    <string name="finger_right_middle">الوسطى، يمين</string>
+    <string name="finger_left_ring">البنصر، يسار</string>
+    <string name="finger_right_ring">البنصر، يمين</string>
+    <string name="finger_left_pinky">الخنصر، يسار</string>
+    <string name="finger_right_pinky">الخنصر، يمين</string>
+    <string name="finger_left_index">السبابة، يسار</string>
+    <string name="finger_right_index">السبابة، يمين</string>
+    <string name="finger_left_thumb">الإبهام، يسار</string>
+    <string name="finger_right_thumb">الإبهام، يمين</string>
+    <string name="finger_where">أي إصبع؟</string>
+    <string name="finger_dashed">الحلقة المتقطعة: طرف الإصبع الذي استراح أطول وقت.</string>
+    <string name="home_warmup_sub">ستبدأ القراءات من تلقاء نفسها.</string>
 </resources>

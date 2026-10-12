@@ -114,7 +114,11 @@ class LogbookViewModel(
                 type = draft.type.name,
                 value = draft.amount,
                 note = draft.note,
-                site = draft.site?.name?.takeIf { draft.type == LogEventType.INSULIN || draft.type == LogEventType.BASAL },
+                site = when (draft.type) {
+                    LogEventType.INSULIN, LogEventType.BASAL -> draft.site?.name
+                    LogEventType.FINGERSTICK -> draft.finger?.name
+                    else -> null
+                },
                 mealId = draft.mealId,
                 fiber = n?.fiber,
                 sugar = n?.sugar,
