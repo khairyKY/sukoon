@@ -273,9 +273,11 @@ class LibreBleSource(
 
         override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
             main.post {
-                val notify = g.getService(SERVICE)?.getCharacteristic(NOTIFY)
-                val cccd = notify?.getDescriptor(CCCD)
-                if (notify == null || cccd == null) {
+                val p = pairing ?: return@post
+                val service = g.getService(SERVICE)
+                val write = service?.getCharacteristic(WRITE)
+                val cccd = service?.getCharacteristic(NOTIFY)?.getDescriptor(CCCD)
+                if (write == null || cccd == null) {
                     // Usually Android's cached services from before (an update, a restart): clear the cache and look again, once.
                     if (!refreshedThisAttempt && refreshCache(g)) {
                         refreshedThisAttempt = true
@@ -287,25 +289,8 @@ class LibreBleSource(
                     g.disconnect()
                     return@post
                 }
-                g.setCharacteristicNotification(notify, true)
-                writeDescriptor(g, cccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
-            }
-        }
-
-        override fun onDescriptorWrite(g: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
-            main.post {
-                val p = pairing ?: return@post
-                if (status != BluetoothGatt.GATT_SUCCESS) {
-                    Log.w(TAG, "Enabling notifications failed ($status)")
-                    g.disconnect()
-                    return@post
-                }
-                val write = g.getService(SERVICE)?.getCharacteristic(WRITE)
-                if (write == null) {
-                    Log.w(TAG, "Login characteristic missing")
-                    g.disconnect()
-                    return@post
-                }
+                // Login first, notifications after it lands: the order DiaBLE and Juggluco use. The other
+                // way round, a Libre 2 Plus sent one packet and hung up.
                 val count = store.nextUnlockCount()
                 Log.i(TAG, "Logging in, unlock count $count")
                 writeCharacteristic(g, write, Libre2.streamingUnlockPayload(p.uid, p.patchInfo, Libre2.UNLOCK_CODE, count))
@@ -314,7 +299,23 @@ class LibreBleSource(
 
         override fun onCharacteristicWrite(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
             Log.i(TAG, "Login write status $status")
-            if (status != BluetoothGatt.GATT_SUCCESS) main.post { g.disconnect() }
+            main.post {
+                val notify = g.getService(SERVICE)?.getCharacteristic(NOTIFY)
+                val cccd = notify?.getDescriptor(CCCD)
+                if (status != BluetoothGatt.GATT_SUCCESS || notify == null || cccd == null) {
+                    g.disconnect()
+                    return@post
+                }
+                g.setCharacteristicNotification(notify, true)
+                writeDescriptor(g, cccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+            }
+        }
+
+        override fun onDescriptorWrite(g: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                Log.w(TAG, "Enabling notifications failed ($status)")
+                main.post { g.disconnect() }
+            }
         }
 
         override fun onCharacteristicChanged(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, value: ByteArray) {
