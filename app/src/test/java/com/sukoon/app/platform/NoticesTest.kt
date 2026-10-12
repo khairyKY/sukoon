@@ -41,6 +41,17 @@ class NoticesTest {
     }
 
     @Test
+    fun `notifies one at a time, the newest running one not yet seen`() {
+        val today = LocalDate.of(2026, 10, 12)
+        val ended = Notices.Notice("a", "Ended", "x", until = today.minusDays(1))
+        val older = Notices.Notice("b", "Older", "x")
+        val newer = Notices.Notice("c", "Newer", "x")
+        assertEquals(listOf("c"), Notices.toShow(listOf(ended, older, newer), seen = emptySet(), today = today).map { it.id })
+        assertEquals(listOf("b"), Notices.toShow(listOf(ended, older, newer), seen = setOf("c"), today = today).map { it.id })
+        assertEquals(emptyList<Notices.Notice>(), Notices.toShow(listOf(ended, older), seen = setOf("b"), today = today))
+    }
+
+    @Test
     fun `skips broken entries and anything that isn't an https link or a real date`() {
         val notices = Notices.parse(
             """

@@ -1468,7 +1468,7 @@
     <string name="sensor_last_none">No readings yet</string>
     <string name="sensor_last_now">Last reading just now</string>
     <string name="sensor_last_ago">Last reading %1$s ago</string>
-    <string name="sensor_serial">Libre 2 · serial %1$s</string>
+    <string name="sensor_serial">%1$s · serial %2$s</string>
     <string name="sensor_day_of">Day %1$d of %2$d</string>
     <string name="sensor_ends_at">ends %1$s</string>
     <string name="issue_bt_title">Bluetooth is off</string>
@@ -1728,4 +1728,19 @@
     <string name="start_card_title">Three steps, then you\'re safe</string>
     <string name="start_open_guide">Open the guide</string>
     <string name="start_not_now">Not now</string>
+    <string name="sensor_hold_where">The phone\'s NFC spot is usually in the middle of its back: hold that part flat on the sensor and keep still.</string>
+    <string name="conn_no_drops">No drops in the last 24 hours.</string>
+    <string name="conn_drop_line">%1$s · lasted %2$s · %3$s</string>
+    <string name="conn_back_after">Back after %1$s</string>
+    <string name="conn_not_back">Not back yet</string>
+    <string name="conn_show_all">Show all</string>
+    <string name="conn_reason_timeout">lost touch (too far, or a body or wall in between)</string>
+    <string name="conn_reason_sensor">the sensor ended it</string>
+    <string name="conn_reason_phone">the phone ended it</string>
+    <string name="conn_reason_stuck">nothing came for minutes, so Sukoon restarted it</string>
+    <string name="conn_reason_code">dropped (code %1$d)</string>
+    <plurals name="conn_drops">
+        <item quantity="one">%1$d drop in the last 24 hours</item>
+        <item quantity="other">%1$d drops in the last 24 hours</item>
+    </plurals>
 </resources>

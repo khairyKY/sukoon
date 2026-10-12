@@ -81,6 +81,9 @@ class AppContainer(private val context: Context) {
 
     val pairingStore = SensorPairingStore(context)
 
+    /** The sensor link's ups and downs, for You → Sensor → Connection. */
+    val connectionLog = com.sukoon.app.data.source.libre.ConnectionLog(java.io.File(context.filesDir, "connection.log"))
+
     /** You → Appearance, applied at once by MainActivity. */
     val themeMode = MutableStateFlow(settings.themeMode)
 
@@ -302,7 +305,7 @@ class AppContainer(private val context: Context) {
     }
 
     private fun sourceFor(kind: SourceKind): GlucoseSource = when (kind) {
-        SourceKind.LIBRE_BLE -> LibreBleSource(context, pairingStore)
+        SourceKind.LIBRE_BLE -> LibreBleSource(context, pairingStore, connectionLog)
         SourceKind.SIMULATED -> SimulatedSource(scope = appScope)
         // ponytail: shares the connected-device foreground service that keeps the process alive; a
         // data-sync service of its own if a phone ever refuses it without Bluetooth permission.

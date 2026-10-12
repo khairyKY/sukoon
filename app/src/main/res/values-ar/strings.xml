@@ -1580,7 +1580,7 @@
     <string name="sensor_last_none">لا توجد قراءات بعد</string>
     <string name="sensor_last_now">آخر قراءة الآن</string>
     <string name="sensor_last_ago">آخر قراءة قبل %1$s</string>
-    <string name="sensor_serial">Libre 2 · الرقم التسلسلي %1$s</string>
+    <string name="sensor_serial">%1$s · الرقم التسلسلي %2$s</string>
     <string name="sensor_day_of">اليوم %1$d من %2$d</string>
     <string name="sensor_ends_at">ينتهي %1$s</string>
     <string name="issue_bt_title">البلوتوث متوقف</string>
@@ -1848,4 +1848,23 @@
     <string name="start_card_title">ثلاث خطوات، ثم تكون في أمان</string>
     <string name="start_open_guide">افتح الدليل</string>
     <string name="start_not_now">ليس الآن</string>
+    <string name="sensor_hold_where">موضع NFC في الهاتف غالبًا في منتصف ظهره: ضع هذا الجزء مستويًا على المستشعر وأبقِه ثابتًا.</string>
+    <string name="conn_no_drops">لا انقطاعات خلال آخر ٢٤ ساعة.</string>
+    <string name="conn_drop_line">%1$s · استمر %2$s · %3$s</string>
+    <string name="conn_back_after">عاد بعد %1$s</string>
+    <string name="conn_not_back">لم يعد بعد</string>
+    <string name="conn_show_all">عرض الكل</string>
+    <string name="conn_reason_timeout">انقطع التواصل (بعيد جدًا، أو جسم أو جدار في الطريق)</string>
+    <string name="conn_reason_sensor">المستشعر أنهاه</string>
+    <string name="conn_reason_phone">الهاتف أنهاه</string>
+    <string name="conn_reason_stuck">لم يصل شيء لدقائق، فأعاد سكون الاتصال</string>
+    <string name="conn_reason_code">انقطع (رمز %1$d)</string>
+    <plurals name="conn_drops">
+        <item quantity="zero">لا انقطاعات خلال آخر ٢٤ ساعة</item>
+        <item quantity="one">انقطاع واحد خلال آخر ٢٤ ساعة</item>
+        <item quantity="two">انقطاعان خلال آخر ٢٤ ساعة</item>
+        <item quantity="few">%1$d انقطاعات خلال آخر ٢٤ ساعة</item>
+        <item quantity="many">%1$d انقطاعًا خلال آخر ٢٤ ساعة</item>
+        <item quantity="other">%1$d انقطاع خلال آخر ٢٤ ساعة</item>
+    </plurals>
 </resources>

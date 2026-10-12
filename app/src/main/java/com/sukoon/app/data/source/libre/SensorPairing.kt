@@ -15,6 +15,9 @@ class SensorPairing(
     val lifetimeMinutes: Int get() = Libre2.sensorInfo(fram).lifetimeMinutes
     val serial: String get() = Libre2.serial(uid, patchInfo)
 
+    /** "Libre 2 Plus" for a 15-day sensor, else "Libre 2" (the memory says how long it lasts). */
+    val model: String get() = if (lifetimeMinutes >= 15 * 1440 - 120) "Libre 2 Plus" else "Libre 2"
+
     /** False for a pairing 0.8.1 saved from a sensor nobody had started: its start time means nothing. */
     val started: Boolean get() = Libre2.sensorInfo(fram).state != Libre2.State.NOT_STARTED
 }

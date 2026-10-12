@@ -106,10 +106,11 @@ class Notices(private val context: Context, private val scope: CoroutineScope) {
         val manager = context.getSystemService(NotificationManager::class.java)
         if (!manager.areNotificationsEnabled()) return
         val seen = prefs.getStringSet(KEY_SEEN, null).orEmpty()
-        val fresh = toShow(all, seen, LocalDate.now())
+        val today = LocalDate.now()
+        val fresh = toShow(all, seen, today)
         if (fresh.isEmpty()) return
         fresh.forEach { notify(manager, it) }
-        prefs.edit().putStringSet(KEY_SEEN, seen + fresh.map { it.id }).apply()
+        prefs.edit().putStringSet(KEY_SEEN, seen + all.filter { it.liveOn(today) }.map { it.id }).apply()
     }
 
     private fun cached(): List<Notice> = prefs.getString(KEY_FILE, null)?.let { runCatching { parse(it) }.getOrNull() }.orEmpty()
@@ -193,11 +194,11 @@ class Notices(private val context: Context, private val scope: CoroutineScope) {
          * has already notified, so a notice never comes twice. [today]: the phone's date
          * ([Notice.liveOn] says whether a notice is still running).
          *
-         * TODO(Kai): this rule is yours to write (5-10 lines). Decide: a seen id is skipped; a notice
-         * that is no longer running is skipped; and how many come at once (a phone that was off for a
-         * week, or a brand-new install, shouldn't get a pile of notifications). Until then the card on
-         * Now still shows the newest notice, but no notification is sent.
+         * At most one at a time, the newest running one not yet seen: a phone that was off for a week,
+         * or a new install, gets one notification, not a pile. [check] marks the older running ones
+         * seen with it, so they don't trickle in on later checks; the card on Now still shows the newest.
          */
-        internal fun toShow(all: List<Notice>, seen: Set<String>, today: LocalDate): List<Notice> = emptyList()
+        internal fun toShow(all: List<Notice>, seen: Set<String>, today: LocalDate): List<Notice> =
+            listOfNotNull(all.lastOrNull { it.id !in seen && it.liveOn(today) })
     }
 }

@@ -1,5 +1,11 @@
 package com.sukoon.app.ui.settings
 
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.LocalContext
+import com.sukoon.app.data.source.libre.ConnectionLog
+import com.sukoon.app.ui.theme.SageDeep
+import com.sukoon.app.ui.components.durationText
+
 import com.sukoon.app.platform.TimeFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -69,7 +75,51 @@ fun ConnectionHealth(load: suspend () -> List<GlucoseReading>, saveEveryMinutes:
             color = MaterialTheme.colorScheme.onBackground,
         )
         if (g.gaps > 0) Text(stringResource(R.string.sensor_gaps_why), fontSize = 12.5.sp, lineHeight = 17.sp, color = CaptionMuted, modifier = Modifier.padding(top = 4.dp))
+        Drops()
     }
+}
+
+/** The link's drops in the last 24 hours, newest first: when, how long it had lasted, why, and how soon it was back. */
+@Composable
+private fun Drops() {
+    val log = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.connectionLog
+    var drops by remember { mutableStateOf<List<ConnectionLog.Drop>?>(null) }
+    LaunchedEffect(Unit) { drops = runCatching { log.dropsSince(Instant.now().minus(Duration.ofHours(24))) }.getOrNull() }
+    val list = drops ?: return
+    var all by remember { mutableStateOf(false) }
+    Text(
+        if (list.isEmpty()) stringResource(R.string.conn_no_drops) else pluralStringResource(R.plurals.conn_drops, list.size, list.size),
+        fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground,
+        modifier = Modifier.padding(top = 12.dp),
+    )
+    val context = LocalContext.current
+    (if (all) list else list.take(5)).forEach { d ->
+        Column(Modifier.fillMaxWidth().padding(top = 8.dp)) {
+            Text(
+                stringResource(R.string.conn_drop_line, TIME.format(d.at), durationText(context, (d.lastedSeconds + 59) / 60), dropReason(d.status)),
+                fontSize = 13.sp, lineHeight = 18.sp, color = MaterialTheme.colorScheme.onBackground,
+            )
+            Text(
+                d.backAfterSeconds?.let { stringResource(R.string.conn_back_after, durationText(context, (it + 59) / 60)) } ?: stringResource(R.string.conn_not_back),
+                fontSize = 12.sp, color = CaptionMuted,
+            )
+        }
+    }
+    if (list.size > 5) Text(
+        stringResource(if (all) R.string.in2_less else R.string.conn_show_all),
+        fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = SageDeep,
+        modifier = Modifier.padding(top = 8.dp).clickable { all = !all },
+    )
+}
+
+/** Android's reason for a drop, in words (the common GATT statuses; anything else by its code). */
+@Composable
+private fun dropReason(status: Int): String = when (status) {
+    8 -> stringResource(R.string.conn_reason_timeout)
+    19 -> stringResource(R.string.conn_reason_sensor)
+    22 -> stringResource(R.string.conn_reason_phone)
+    ConnectionLog.STATUS_WATCHDOG -> stringResource(R.string.conn_reason_stuck)
+    else -> stringResource(R.string.conn_reason_code, status)
 }
 
 private val TIME: DateTimeFormatter get() = TimeFormat.of()

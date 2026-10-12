@@ -51,6 +51,8 @@ import kotlinx.coroutines.flow.asStateFlow
 class LibreBleSource(
     private val context: Context,
     private val store: SensorPairingStore,
+    /** Every time the link comes up and goes down (You → Sensor → Connection). */
+    private val log: ConnectionLog? = null,
 ) : GlucoseSource {
 
     private val _readings = MutableSharedFlow<GlucoseReading>(extraBufferCapacity = 64)
@@ -232,6 +234,7 @@ class LibreBleSource(
         val slowBackground = backgroundAttempt && !connectedThisAttempt && now - attemptStartedAt > BACKGROUND_MS
         if (gatt != null && (stuckLink || slowBackground)) {
             Log.w(TAG, if (slowBackground && !stuckLink) "Background connect found nothing, back to direct tries" else if (lastPacketAt == 0L) "No packet since connecting, restarting the connection" else "No packet for ${(now - lastPacketAt) / 1000} s, restarting the connection")
+            if (connectedThisAttempt) log?.add(ConnectionLog.Event(Instant.now(), ConnectionLog.Kind.DOWN, ConnectionLog.STATUS_WATCHDOG, (now - connectedAt) / 1000))
             gatt?.close()
             gatt = null
             chunks.clear()
@@ -249,13 +252,14 @@ class LibreBleSource(
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
                     connectedThisAttempt = true
                     connectedAt = System.currentTimeMillis()
+                    log?.add(ConnectionLog.Event(Instant.now(), ConnectionLog.Kind.UP))
                     Log.i(TAG, "Connected, discovering services")
                     g.discoverServices()
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                     val sinceConnect = (System.currentTimeMillis() - connectedAt) / 1000
                     val sincePacket = if (lastPacketAt == 0L) "never" else "${(System.currentTimeMillis() - lastPacketAt) / 1000} s ago"
                     Log.i(TAG, "Disconnected (status $status)" + if (connectedThisAttempt) " after $sinceConnect s, last packet $sincePacket" else "")
-                    if (!connectedThisAttempt) directFailures++
+                    if (connectedThisAttempt) log?.add(ConnectionLog.Event(Instant.now(), ConnectionLog.Kind.DOWN, status, sinceConnect)) else directFailures++
                     g.close()
                     if (gatt === g) gatt = null
                     chunks.clear()

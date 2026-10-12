@@ -339,7 +339,7 @@ fun SensorCard(
                         color = CaptionMuted,
                     )
                 }
-                Text(stringResource(R.string.sensor_serial, pairing.serial), fontSize = 12.5.sp, color = CaptionMuted)
+                Text(stringResource(R.string.sensor_serial, pairing.model, pairing.serial), fontSize = 12.5.sp, color = CaptionMuted)
                 life?.let { LifeBar(it, now) }
                 (status as? SourceStatus.Error)?.let { Text(stringResource(R.string.sensor_status_error, it.message), fontSize = 12.5.sp, color = StateLow) }
             }
@@ -357,6 +357,7 @@ fun SensorCard(
                     } else {
                         Text(stringResource(R.string.sensor_hold), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
                     }
+                    Text(stringResource(R.string.sensor_hold_where), fontSize = 12.5.sp, lineHeight = 17.sp, color = CaptionMuted)
                     CardButton(stringResource(R.string.sensor_cancel), filled = false) { step = SensorStep.Idle }
                 }
                 notStarted -> {
