@@ -13,6 +13,16 @@ import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.StartOffset
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
+import com.sukoon.app.ui.theme.Motion
+import com.sukoon.app.ui.theme.SageMist
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -305,6 +315,7 @@ fun SensorCard(
                     CardButton(stringResource(R.string.sensor_nfc_settings)) { context.startActivity(Intent(Settings.ACTION_NFC_SETTINGS)) }
                 }
                 active != null -> {
+                    ScanTarget()
                     Text(stringResource(R.string.sensor_hold), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
                     if (step is SensorStep.Lost) Text(stringResource(R.string.sensor_hold_again), fontSize = 13.sp, color = CaptionMuted)
                     CardButton(stringResource(R.string.sensor_cancel), filled = false) { step = SensorStep.Idle }
@@ -353,6 +364,38 @@ fun SensorCard(
                 fontWeight = FontWeight.SemiBold,
                 color = StateLow,
             )
+        }
+    }
+}
+
+/** Waiting for a tap (motion spec "Scan ripple"): three Sage rings spread from the sensor, 800 ms apart; reduced, just the sensor. */
+@Composable
+private fun ScanTarget() {
+    val reduced = Motion.reduced()
+    Box(Modifier.fillMaxWidth().height(140.dp), contentAlignment = Alignment.Center) {
+        if (!reduced) {
+            val loop = rememberInfiniteTransition(label = "scan")
+            repeat(3) { i ->
+                val t by loop.animateFloat(
+                    0f,
+                    1f,
+                    infiniteRepeatable(tween(Motion.LOOP, easing = Motion.Out), initialStartOffset = StartOffset(i * Motion.LOOP / 3)),
+                    label = "ring",
+                )
+                Box(
+                    Modifier
+                        .size(120.dp)
+                        .graphicsLayer {
+                            scaleX = 0.3f + 1.2f * t
+                            scaleY = scaleX
+                            alpha = 0.65f * (1 - t)
+                        }
+                        .border(2.dp, Sage, CircleShape),
+                )
+            }
+        }
+        Box(Modifier.size(52.dp).clip(CircleShape).background(SageMist), contentAlignment = Alignment.Center) {
+            Icon(painterResource(R.drawable.ic_sensor), contentDescription = null, tint = Sage, modifier = Modifier.size(26.dp))
         }
     }
 }

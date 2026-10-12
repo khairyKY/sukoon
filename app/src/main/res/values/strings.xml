@@ -68,8 +68,6 @@
 
     <!-- Home — warm-up -->
     <string name="home_getting_ready">Getting ready</string>
-    <string name="home_first_reading_prefix">First reading in about </string>
-    <string name="home_first_reading_bold">%1$d min</string>
     <string name="home_warmup_provisional_body">The grey number is the sensor\'s first-hour reading. It can be off, so it isn\'t used for alarms, reports or the AI until warm-up ends.</string>
     <string name="home_warmup_body">Your sensor is settling in. This is normal for a new sensor — no action needed.</string>
 
@@ -1577,4 +1575,18 @@
     <string name="consent_ai_body">With your key, what you ask goes to Google Gemini: summaries of your readings and logbook, your profile and dose settings, meal photos and the dishes you ask about. Google\'s terms apply, and on the free tier Google may use it to improve its products. Nothing is sent until you ask.</string>
     <string name="privacy_link">Privacy policy</string>
     <string name="reminder_basal_title_again">Still waiting on your long-acting 💉</string>
+    <string name="finger_left_middle">Left middle</string>
+    <string name="finger_right_middle">Right middle</string>
+    <string name="finger_left_ring">Left ring</string>
+    <string name="finger_right_ring">Right ring</string>
+    <string name="finger_left_pinky">Left little</string>
+    <string name="finger_right_pinky">Right little</string>
+    <string name="finger_left_index">Left index</string>
+    <string name="finger_right_index">Right index</string>
+    <string name="finger_left_thumb">Left thumb</string>
+    <string name="finger_right_thumb">Right thumb</string>
+    <string name="finger_where">Which finger?</string>
+    <string name="finger_dashed">Dashed ring: the fingertip that has rested longest.</string>
+    <string name="home_warmup_sub">Readings start on their own.</string>
+    <string name="home_warmup_provisional">%1$d mg/dL so far (first hour)</string>
 </resources>

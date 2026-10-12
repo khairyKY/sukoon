@@ -230,14 +230,19 @@ private fun Figure(front: Boolean, selected: InjectionSite?, suggested: Injectio
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-internal fun WherePanel(
-    site: InjectionSite?,
-    suggested: InjectionSite?,
-    lastUsed: (InjectionSite) -> Instant?,
+internal fun <T> WherePanel(
+    site: T?,
+    suggested: T?,
+    lastUsed: (T) -> Instant?,
     open: Boolean,
     onOpen: () -> Unit,
-    onPick: (InjectionSite) -> Unit,
+    onPick: (T) -> Unit,
     onSkip: () -> Unit,
+    /** The spot's name; the picture (tap a spot to pick it); and the title and the dashed-ring hint (an insulin spot by default). */
+    name: @Composable (T) -> String,
+    picture: @Composable (selected: T?, suggested: T?, onPick: (T) -> Unit) -> Unit,
+    title: String = stringResource(R.string.site_where),
+    dashedHint: String = stringResource(R.string.site_dashed),
 ) {
     val wash = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f)
     if (!open) {
@@ -252,11 +257,11 @@ internal fun WherePanel(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Eyebrow(stringResource(R.string.site_where))
+            Eyebrow(title)
             Text(
                 when {
-                    site != null -> siteName(site)
-                    suggested != null -> stringResource(R.string.site_next, siteName(suggested))
+                    site != null -> name(site)
+                    suggested != null -> stringResource(R.string.site_next, name(suggested))
                     else -> stringResource(R.string.site_optional)
                 },
                 fontSize = 14.sp,
@@ -277,18 +282,13 @@ internal fun WherePanel(
     }
     Column(Modifier.bringIntoViewRequester(bring).fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(wash).padding(start = 12.dp, end = 12.dp, bottom = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Eyebrow(stringResource(R.string.site_where), Modifier.weight(1f))
+            Eyebrow(title, Modifier.weight(1f))
             TextButton(onClick = onSkip) { Text(stringResource(R.string.site_skip), color = SageDeep, fontWeight = FontWeight.SemiBold, fontSize = 13.sp) }
         }
-        BodyMap(
-            selected = site,
-            suggested = suggested,
-            onPick = {
-                view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                onPick(it)
-            },
-            modifier = Modifier.fillMaxWidth(),
-        )
+        picture(site, suggested) {
+            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            onPick(it)
+        }
         val shown = site ?: suggested
         if (shown != null) {
             Row(
@@ -303,11 +303,11 @@ internal fun WherePanel(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Box(Modifier.size(10.dp).clip(CircleShape).then(if (site != null) Modifier.background(Sage) else Modifier.border(1.5.dp, Sage, CircleShape)))
-                val name = if (site != null) siteName(site) else stringResource(R.string.site_next, siteName(shown))
+                val label = if (site != null) name(site) else stringResource(R.string.site_next, name(shown))
                 val last = lastUsedLabel(lastUsed(shown))
                 Text(
                     buildAnnotatedString {
-                        withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(name) }
+                        withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(label) }
                         withStyle(SpanStyle(color = CaptionMuted)) { append(" · $last") }
                     },
                     fontSize = 14.sp,
@@ -316,7 +316,7 @@ internal fun WherePanel(
             }
         }
         if (site == null && suggested != null) {
-            Text(stringResource(R.string.site_dashed), fontSize = 12.5.sp, color = CaptionMuted, modifier = Modifier.padding(top = 8.dp))
+            Text(dashedHint, fontSize = 12.5.sp, color = CaptionMuted, modifier = Modifier.padding(top = 8.dp))
         }
     }
 }

@@ -68,8 +68,6 @@
 
     <!-- Home — warm-up -->
     <string name="home_getting_ready">بيجهّز</string>
-    <string name="home_first_reading_prefix">أول قراية بعد حوالي </string>
-    <string name="home_first_reading_bold">%1$d دقيقة</string>
     <string name="home_warmup_provisional_body">الرقم الرمادي ده قراءة أول ساعة من الحساس. ممكن يبقى مش دقيق، فمش بيتحسب في التنبيهات ولا التقارير ولا الذكاء الاصطناعي لحد ما التهيئة تخلص.</string>
     <string name="home_warmup_body">الحساس لسه بيظبط نفسه. ده طبيعي في الحساس الجديد — مفيش حاجة تعملها.</string>
 
@@ -1689,4 +1687,18 @@
     <string name="consent_ai_body">بمفتاحك، اللي بتسأل عنه بيروح لـ Google Gemini: ملخصات قراياتك وسجلك، بياناتك وإعدادات الجرعة، صور الوجبات والأكلات اللي بتسأل عنها. شروط جوجل بتنطبق، وفي النسخة المجانية جوجل ممكن تستخدمها في تحسين منتجاتها. مفيش حاجة بتتبعت غير لما تسأل.</string>
     <string name="privacy_link">سياسة الخصوصية</string>
     <string name="reminder_basal_title_again">لسه مستنيين الأنسولين طويل المفعول 💉</string>
+    <string name="finger_left_middle">الوسطى، شمال</string>
+    <string name="finger_right_middle">الوسطى، يمين</string>
+    <string name="finger_left_ring">البنصر، شمال</string>
+    <string name="finger_right_ring">البنصر، يمين</string>
+    <string name="finger_left_pinky">الخنصر، شمال</string>
+    <string name="finger_right_pinky">الخنصر، يمين</string>
+    <string name="finger_left_index">السبابة، شمال</string>
+    <string name="finger_right_index">السبابة، يمين</string>
+    <string name="finger_left_thumb">الإبهام، شمال</string>
+    <string name="finger_right_thumb">الإبهام، يمين</string>
+    <string name="finger_where">أنهي صباع؟</string>
+    <string name="finger_dashed">الحلقة المتقطعة: طرف الصباع اللي ارتاح أطول وقت.</string>
+    <string name="home_warmup_sub">القرايات هتبدأ لوحدها.</string>
+    <string name="home_warmup_provisional">%1$d ملغم/دل لحد دلوقتي (أول ساعة)</string>
 </resources>

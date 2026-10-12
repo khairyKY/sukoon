@@ -46,7 +46,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import com.sukoon.app.ui.components.SukoonSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -105,6 +105,8 @@ import kotlinx.coroutines.withContext
 import com.sukoon.app.health.HealthConnectSync
 import androidx.compose.ui.res.pluralStringResource
 import com.sukoon.app.insulin.InjectionSites
+import com.sukoon.app.insulin.FingerSites
+import com.sukoon.app.insulin.finger
 import com.sukoon.app.insulin.Dose
 import com.sukoon.app.insulin.DoseSettings
 import com.sukoon.app.insights.InsightEngine
@@ -156,10 +158,9 @@ internal fun AddSheet(
     onPick: (LogEventType, EventEntity?) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    ModalBottomSheet(
+    SukoonSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = MaterialTheme.colorScheme.background,
     ) {
         Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
             Text(stringResource(R.string.logbook_sheet_title_new), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground)
@@ -288,6 +289,8 @@ private fun EditorContent(
     var plateNote by remember { mutableStateOf("") }
     var site by remember { mutableStateOf(existing?.injectionSite) }
     var siteOpen by remember { mutableStateOf(repeatedDose) }
+    var finger by remember { mutableStateOf(existing?.finger) }
+    var fingerOpen by remember { mutableStateOf(false) }
     var note by remember { mutableStateOf(base?.note ?: "") }
     var preBolus by remember { mutableIntStateOf(0) }
     var minutesAgo by remember { mutableIntStateOf(if (existing == null) 0 else -1) }
@@ -363,7 +366,11 @@ private fun EditorContent(
                     protein = value(AmountField.PROTEIN),
                     fat = value(AmountField.FAT),
                     kcal = value(AmountField.KCAL),
-                    site = if (siteType != null) site?.name else existing.site,
+                    site = when {
+                        siteType != null -> site?.name
+                        type == LogEventType.FINGERSTICK -> finger?.name
+                        else -> existing.site
+                    },
                 ),
                 photos.toList().takeIf { photosChanged },
             )
@@ -385,6 +392,7 @@ private fun EditorContent(
                 preBolusMinutes = preBolus,
                 nutrients = nutrients.takeIf { isMeal && it != Nutrients() },
                 site = site.takeIf { siteType != null },
+                finger = finger.takeIf { type == LogEventType.FINGERSTICK },
             ),
         )
     }
@@ -475,6 +483,30 @@ private fun EditorContent(
                         site = null
                         siteOpen = false
                     },
+                    name = { siteName(it) },
+                    picture = { selected, next, pick -> BodyMap(selected, next, pick, Modifier.fillMaxWidth()) },
+                )
+            }
+            if (type == LogEventType.FINGERSTICK) {
+                val history = remember(siteHistory, existing) { siteHistory.filter { it.id != existing?.id } }
+                WherePanel(
+                    site = finger,
+                    suggested = remember(history) { FingerSites.next(history) },
+                    lastUsed = { FingerSites.lastUsed(history, it) },
+                    open = fingerOpen,
+                    onOpen = {
+                        fingerOpen = true
+                        if (amount != null) active = null
+                    },
+                    onPick = { finger = it },
+                    onSkip = {
+                        finger = null
+                        fingerOpen = false
+                    },
+                    name = { fingerName(it) },
+                    picture = { selected, next, pick -> HandMap(selected, next, pick, Modifier.fillMaxWidth()) },
+                    title = stringResource(R.string.finger_where),
+                    dashedHint = stringResource(R.string.finger_dashed),
                 )
             }
             if (isMeal && plate.isNotEmpty()) {
@@ -549,7 +581,7 @@ private fun EditorContent(
         }, onDismiss = { showAppMeals = false })
     }
     if (showEstimate && onEstimateCarbs != null) {
-        ModalBottomSheet(onDismissRequest = { showEstimate = false }, containerColor = MaterialTheme.colorScheme.background) {
+        SukoonSheet(onDismissRequest = { showEstimate = false }) {
             Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
                 CarbEstimator(onEstimateCarbs, photos.toList(), onUse = { grams, title ->
                     values[AmountField.CARBS] = grams.toString()
@@ -955,7 +987,7 @@ private fun ActionButton(icon: Int?, label: String, modifier: Modifier, appIcon:
 @Composable
 private fun AppMealPicker(meals: List<EventEntity>, onPick: (EventEntity) -> Unit, onDismiss: () -> Unit) {
     val app = rememberSourceApp(meals.firstOrNull()?.source.orEmpty())
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.background) {
+    SukoonSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.entry_from_app, app.label), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
             Eyebrow(stringResource(R.string.entry_today_in_app, app.label), Modifier.padding(top = 6.dp))
