@@ -44,6 +44,14 @@ automatically; O, 0, I and 1 never appear in one, so they're ignored.
 
 Nothing here needs the service_role key or the database password.
 
+## Housekeeping
+
+`supabase/migrations/20261013000000_invite_cleanup.sql` (run it in the SQL editor like the others)
+deletes invites a week after they expired, used or not: the follows they made live in
+`public.follows`, so nothing is lost. It runs once straight away and then daily at 03:17 UTC through
+pg_cron. If pg_cron isn't on, it says so and only does the one-off clean-up: turn it on under
+Database → Extensions → pg_cron and run the file again. The app never shows expired invites anyway.
+
 ## New followers
 
 Every 15 minutes the app checks who follows the account and notifies about anyone new: *Reema now
