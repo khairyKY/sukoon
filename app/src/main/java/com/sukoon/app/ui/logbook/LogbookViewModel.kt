@@ -88,6 +88,11 @@ class LogbookViewModel(
             glucoseAt = events.mapNotNull { e -> readings.nearestTo(e.timestampMillis)?.let { e.id to it } }.toMap(),
             insulinOnBoard = InsulinOnBoard.total(events, Instant.now(), insulinAction()),
             photos = photos?.all().orEmpty(),
+            lowAt = com.sukoon.app.insulin.Dose.lowAt(
+                latest.map { it.timestamp to it.glucoseMgDl } +
+                    month.filter { it.logType == LogEventType.FINGERSTICK }.mapNotNull { e -> e.value?.let { Instant.ofEpochMilli(e.timestampMillis) to it.roundToInt() } },
+                Instant.now(),
+            ),
             glucoseNow = readings.lastOrNull()?.takeIf { Duration.between(it.timestamp, Instant.now()) <= HomeUiStateMapper.STALE_AFTER },
             readings = readings,
             day = past?.first,

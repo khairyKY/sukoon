@@ -38,9 +38,9 @@ class DoseTest {
 
     @Test
     fun `lows and drops come first, and empty numbers say nothing`() {
-        assertEquals(DoseAdvice.TreatLowFirst(65, 3.5), advise(45.0, 65)) // the meal's own dose for once you're over 70
-        assertEquals(DoseAdvice.TreatLowFirst(95, 3.5), advise(45.0, 95, TrendDirection.FALLING))
-        assertEquals(DoseAdvice.TreatLowFirst(65, null), advise(null, 65))
+        assertEquals(DoseAdvice.TreatLowFirst(65), advise(45.0, 65)) // no meal dose "for once you're over 70": that brings the low back
+        assertEquals(DoseAdvice.TreatLowFirst(95), advise(45.0, 95, TrendDirection.FALLING))
+        assertEquals(DoseAdvice.TreatLowFirst(65), advise(null, 65))
         assertNull(advise(45.0, 160, s = DoseSettings(enabled = true))) // no ratio, no factor
         assertNull(Dose.advise(settings, MealSlot.DINNER, 45.0, null, null, 0.0)) // no dinner ratio, no glucose
     }
@@ -95,5 +95,19 @@ class DoseTest {
         assertNull(meal(onBoard = 1.0))
         assertNull(meal(carbs = 5.0))
         assertNull(meal(g = 65)) // low: Home's low screen says what to do
+    }
+
+    @Test
+    fun `nothing is suggested for 2 hours after a low, even once back over 70`() {
+        val now = java.time.Instant.parse("2026-10-12T21:00:00Z")
+        val low = now.minusSeconds(20 * 60)
+        // Kai's evening: a meal eaten going low, 66 twenty minutes ago, steady at 76 now.
+        assertEquals(low, Dose.lowAt(listOf(now.minusSeconds(40 * 60) to 70, low to 66, now to 76), now))
+        assertNull(Dose.lowAt(listOf(now.minusSeconds(3 * 3600) to 55, now to 76), now)) // over 2 hours ago
+        assertEquals(DoseAdvice.AfterLow(low, low.plus(Dose.AFTER_LOW)), Dose.advise(settings, MealSlot.LUNCH, 30.0, 76, TrendDirection.STEADY, 0.0, low))
+        val s = settings.copy(step = 1.0)
+        assertNull(Dose.mealDose(s, 30.0, now.minusSeconds(30 * 60), false, 76, TrendDirection.STEADY, now, now, 0.0, MealSlot.LUNCH, low))
+        assertNull(Dose.correction(s, 220, TrendDirection.STEADY, now, now, 180, 0.0, null, MealSlot.LUNCH, low)) // a rebound: let it settle
+        assertEquals(DoseAdvice.TreatLowFirst(65), Dose.advise(settings, MealSlot.LUNCH, 30.0, 65, TrendDirection.STEADY, 0.0, low)) // still low: that first
     }
 }

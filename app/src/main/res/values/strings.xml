@@ -1277,6 +1277,8 @@
     <string name="dose_meals_say">Meals say 1 : %1$s · Why?</string>
     <string name="dose_low_title">Treat the low first</string>
     <string name="dose_low_body">You\'re at %1$d. Have 15 g of fast carbs and check again in 15 minutes. No insulin is suggested while you\'re low or dropping under 100.</string>
+    <string name="dose_after_low_title">Back from a low</string>
+    <string name="dose_after_low_body">You were under 70 at %1$s. The carbs you\'ve had since are bringing you up, and insulin for them could bring the low back, so no dose is suggested until %2$s. Check again then.</string>
     <string name="dose_r_meal">Meal</string>
     <string name="dose_r_meal_how">%1$s g ÷ %2$s (%3$s)</string>
     <string name="dose_r_corr">Correction</string>
@@ -1453,7 +1455,6 @@
     <string name="nutrient_iron">Iron</string>
     <string name="nutrient_vitamin_c">Vitamin C</string>
     <string name="nutrient_caffeine">Caffeine</string>
-    <string name="dose_low_meal">For the meal, once you\'re back over 70: about %1$s u.</string>
     <string name="entry_type_amount">Type an amount</string>
     <string name="home_meal_eyebrow">Meal without insulin · beta</string>
     <string name="home_meal_body">%1$s g at %2$s, with no insulin logged and none still working.</string>

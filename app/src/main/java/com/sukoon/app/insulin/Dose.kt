@@ -21,11 +21,14 @@ data class DoseSettings(
 )
 
 sealed interface DoseAdvice {
+    /** Under 70, or under 100 and dropping: treat that first. */
+    data class TreatLowFirst(val glucose: Int) : DoseAdvice
+
     /**
-     * Under 70, or under 100 and dropping: treat that first. [mealUnits]: what the meal itself needs
-     * (carbs ÷ ratio, rounded down, no correction), for once you're back over 70; null without a meal.
+     * Back over 70 within [Dose.AFTER_LOW] of a low ([lowAt]): the carbs since are bringing you up, and
+     * a dose for them would bring the low back. Nothing is suggested until [until].
      */
-    data class TreatLowFirst(val glucose: Int, val mealUnits: Double? = null) : DoseAdvice
+    data class AfterLow(val lowAt: java.time.Instant, val until: java.time.Instant) : DoseAdvice
 
     data class Suggestion(
         val units: Double,
@@ -47,6 +50,13 @@ sealed interface DoseAdvice {
 
 object Dose {
 
+    /** How long after a reading or finger-prick under 70 no dose is suggested. */
+    val AFTER_LOW: java.time.Duration = java.time.Duration.ofHours(2)
+
+    /** The newest of [values] (time, mg/dL: sensor readings and finger-pricks) under 70 within [AFTER_LOW] of [now]. */
+    fun lowAt(values: List<Pair<java.time.Instant, Int>>, now: java.time.Instant): java.time.Instant? =
+        values.filter { (at, mgDl) -> mgDl < 70 && !at.isAfter(now) && java.time.Duration.between(at, now) <= AFTER_LOW }.maxOfOrNull { it.first }
+
     /**
      * Home's correction (beta): above your range on a fresh reading, nothing eaten in the last 2 hours
      * (a rise after eating is expected, and that meal's insulin is on it), and under 0.5 u still working
@@ -62,11 +72,12 @@ object Dose {
         onBoard: Double,
         lastCarbsAt: java.time.Instant?,
         slot: MealSlot,
+        lowAt: java.time.Instant? = null,
     ): DoseAdvice.Suggestion? {
         if (!settings.enabled || settings.correctionFactor == null || glucose == null || readingAt == null) return null
         if (java.time.Duration.between(readingAt, now) > java.time.Duration.ofMinutes(10) || glucose <= top || onBoard >= 0.5) return null
         if (lastCarbsAt != null && java.time.Duration.between(lastCarbsAt, now) < java.time.Duration.ofHours(2)) return null
-        return (advise(settings, slot, null, glucose, trend, onBoard) as? DoseAdvice.Suggestion)?.takeIf { it.units >= settings.step }
+        return (advise(settings, slot, null, glucose, trend, onBoard, lowAt) as? DoseAdvice.Suggestion)?.takeIf { it.units >= settings.step }
     }
 
     /**
@@ -86,18 +97,21 @@ object Dose {
         now: java.time.Instant,
         onBoard: Double,
         slot: MealSlot,
+        lowAt: java.time.Instant? = null,
     ): DoseAdvice.Suggestion? {
         if (!settings.enabled || carbs < 10 || insulinSince || onBoard >= 0.5 || glucose == null || readingAt == null) return null
         val since = java.time.Duration.between(mealAt, now)
         if (since.isNegative || since > java.time.Duration.ofHours(1)) return null
         if (java.time.Duration.between(readingAt, now) > java.time.Duration.ofMinutes(10)) return null
-        return (advise(settings, slot, carbs, glucose, trend, onBoard) as? DoseAdvice.Suggestion)?.takeIf { it.mealUnits != null && it.units >= settings.step }
+        return (advise(settings, slot, carbs, glucose, trend, onBoard, lowAt) as? DoseAdvice.Suggestion)?.takeIf { it.mealUnits != null && it.units >= settings.step }
     }
 
     /**
      * The suggestion for [carbs] (null: a correction only) at [glucose]. Insulin still working
      * offsets the correction only, as pump bolus calculators do: earlier meal insulin is busy with
      * earlier food. Rounded down to the pen's step, capped at the maximum. Null with nothing to say.
+     * With [lowAt] (a value under 70 in the past [AFTER_LOW]) nothing is suggested: carbs eaten during
+     * or after a low are treating it.
      */
     fun advise(
         settings: DoseSettings,
@@ -106,13 +120,15 @@ object Dose {
         glucose: Int?,
         trend: TrendDirection?,
         onBoard: Double,
+        lowAt: java.time.Instant? = null,
     ): DoseAdvice? {
         val falling = trend == TrendDirection.FALLING || trend == TrendDirection.FALLING_FAST
         val ratio = settings.carbRatio[slot]?.takeIf { it > 0 }
         val meal = if (carbs != null && carbs > 0 && ratio != null) carbs / ratio else null
         if (glucose != null && (glucose < 70 || (glucose < 100 && falling))) {
-            return DoseAdvice.TreatLowFirst(glucose, meal?.let { minOf(floor(it / settings.step + 1e-9) * settings.step, settings.maxDose) }?.takeIf { it > 0 })
+            return DoseAdvice.TreatLowFirst(glucose)
         }
+        if (lowAt != null) return DoseAdvice.AfterLow(lowAt, lowAt.plus(AFTER_LOW))
         val factor = settings.correctionFactor?.takeIf { it > 0 }
         val raw = if (glucose != null && factor != null) (glucose - settings.target) / factor else null
         val correction = raw?.let { if (it > 0) maxOf(0.0, it - onBoard) else it }

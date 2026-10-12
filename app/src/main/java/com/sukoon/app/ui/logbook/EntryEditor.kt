@@ -233,6 +233,8 @@ internal fun EntryEditor(
     photoFiles: List<File>,
     siteHistory: List<EventEntity>,
     doseSettings: DoseSettings,
+    /** The last value under 70 in the past 2 hours: then no dose is suggested. */
+    lowAt: java.time.Instant?,
     onEstimateCarbs: (suspend (String, List<ByteArray>) -> CarbEstimate)?,
     onSave: (EntryDraft) -> Unit,
     /** The entry, and its photos when they changed (null: as they were). */
@@ -242,7 +244,7 @@ internal fun EntryEditor(
 ) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            EditorContent(request, glucoseNow, insulinOnBoard, appMeals, photoFiles, siteHistory, doseSettings, onEstimateCarbs, onSave, onUpdate, onDelete, onDismiss)
+            EditorContent(request, glucoseNow, insulinOnBoard, appMeals, photoFiles, siteHistory, doseSettings, lowAt, onEstimateCarbs, onSave, onUpdate, onDelete, onDismiss)
         }
     }
 }
@@ -257,6 +259,7 @@ private fun EditorContent(
     photoFiles: List<File>,
     siteHistory: List<EventEntity>,
     doseSettings: DoseSettings,
+    lowAt: java.time.Instant?,
     onEstimateCarbs: (suspend (String, List<ByteArray>) -> CarbEstimate)?,
     onSave: (EntryDraft) -> Unit,
     onUpdate: (EventEntity, List<ByteArray>?) -> Unit,
@@ -334,7 +337,7 @@ private fun EditorContent(
     val advice = if (doseSettings.enabled && existing == null && (meal != null || isMeal || type == LogEventType.INSULIN)) {
         val carbs = if (meal != null) meal.value.takeUnless { meal.summary } else if (isMeal) value(AmountField.CARBS) else null
         val hour = (if (meal != null) Instant.ofEpochMilli(meal.timestampMillis) else at()).atZone(ZoneId.systemDefault()).hour
-        Dose.advise(doseSettings, InsightEngine.slotFor(hour), carbs, glucoseNow?.glucoseMgDl, glucoseNow?.trend, insulinOnBoard)
+        Dose.advise(doseSettings, InsightEngine.slotFor(hour), carbs, glucoseNow?.glucoseMgDl, glucoseNow?.trend, insulinOnBoard, lowAt)
     } else {
         null
     }

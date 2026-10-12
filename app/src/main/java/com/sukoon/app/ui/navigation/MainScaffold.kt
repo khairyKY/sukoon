@@ -291,6 +291,14 @@ fun MainScaffold() {
                 }
                 // Beta: a correction when you're above your range and haven't eaten in 2 hours.
                 val recentEvents by remember { home.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofHours(6).toMillis()) }.collectAsStateWithLifecycle(initialValue = emptyList())
+                // ponytail: the newest 150 rows cover 2 hours at the 1-minute save interval (sparser saves cover more).
+                val lastReadings by remember { repository.recentReadings(150) }.collectAsStateWithLifecycle(initialValue = emptyList())
+                // A value under 70 in the last 2 hours: Home suggests no dose (the carbs since are treating it).
+                val lowAt = com.sukoon.app.insulin.Dose.lowAt(
+                    lastReadings.map { it.timestamp to it.glucoseMgDl } +
+                        recentEvents.filter { it.logType == LogEventType.FINGERSTICK }.mapNotNull { e -> e.value?.let { Instant.ofEpochMilli(e.timestampMillis) to kotlin.math.round(it).toInt() } },
+                    Instant.now(),
+                )
                 val correction = latest?.let { r ->
                     val now = Instant.now()
                     Dose.correction(
@@ -303,6 +311,7 @@ fun MainScaffold() {
                         onBoard = insulinOnBoard,
                         lastCarbsAt = recentEvents.lastOrNull { it.logType == LogEventType.CARB && (it.value ?: 0.0) > 0 }?.let { Instant.ofEpochMilli(it.timestampMillis) },
                         slot = InsightEngine.slotFor(now.atZone(ZoneId.systemDefault()).hour),
+                        lowAt = lowAt,
                     )
                 }
                 // Beta: a meal in the last hour with no insulin logged and none working.
@@ -324,6 +333,7 @@ fun MainScaffold() {
                             now = now,
                             onBoard = insulinOnBoard,
                             slot = InsightEngine.slotFor(mealAt.atZone(ZoneId.systemDefault()).hour),
+                            lowAt = lowAt,
                         )?.let { meal to it }
                     }
                 }

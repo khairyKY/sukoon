@@ -306,6 +306,7 @@ fun LogbookScreen(
             photoFiles = existing?.let { state.photos[it.id] }.orEmpty(),
             siteHistory = state.siteHistory,
             doseSettings = remember(request) { doseSettings() },
+            lowAt = state.lowAt,
             onEstimateCarbs = onEstimateCarbs,
             onSave = { draft ->
                 editor = null

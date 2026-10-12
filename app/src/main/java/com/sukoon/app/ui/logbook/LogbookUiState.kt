@@ -14,6 +14,8 @@ data class LogbookUiState(
     val glucoseAt: Map<Long, GlucoseReading> = emptyMap(),
     /** Rapid insulin still active right now, shown when logging another dose. */
     val insulinOnBoard: Double = 0.0,
+    /** The last reading or finger-prick under 70 in the past 2 hours: no dose is suggested then. */
+    val lowAt: java.time.Instant? = null,
     /** The current reading when fresh: shown on a new entry, which then carries it. */
     val glucoseNow: GlucoseReading? = null,
     /** Entry id → its attached photo. */

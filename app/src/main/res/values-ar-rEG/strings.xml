@@ -1365,6 +1365,8 @@
     <string name="dose_meals_say">الوجبات بتقول ١ : %1$s · ليه؟</string>
     <string name="dose_low_title">عالج الهبوط الأول</string>
     <string name="dose_low_body">إنت على %1$d. خد ١٥ جم سكريات سريعة وقيس تاني بعد ١٥ دقيقة. مفيش إنسولين مقترح وإنت واطي أو بتنزل تحت ١٠٠.</string>
+    <string name="dose_after_low_title">بعد الهبوط</string>
+    <string name="dose_after_low_body">كنت تحت ٧٠ الساعة %1$s. النشويات اللي أكلتها بعدها بترفعك، وإنسولين ليها ممكن يرجّع الهبوط، فمفيش جرعة مقترحة لحد %2$s. قيس تاني ساعتها.</string>
     <string name="dose_r_meal">الوجبة</string>
     <string name="dose_r_meal_how">%1$s جم ÷ %2$s (%3$s)</string>
     <string name="dose_r_corr">التصحيح</string>
@@ -1565,7 +1567,6 @@
     <string name="nutrient_iron">حديد</string>
     <string name="nutrient_vitamin_c">فيتامين سي</string>
     <string name="nutrient_caffeine">كافيين</string>
-    <string name="dose_low_meal">للوجبة، أول ما ترجع فوق ٧٠: حوالي %1$s وحدة.</string>
     <string name="entry_type_amount">اكتب الكمية</string>
     <string name="home_meal_eyebrow">وجبة من غير إنسولين · تجريبي</string>
     <string name="home_meal_body">%1$s جم الساعة %2$s، ومفيش إنسولين متسجّل ولا لسه شغال.</string>

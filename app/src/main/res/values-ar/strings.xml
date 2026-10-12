@@ -1365,6 +1365,8 @@
     <string name="dose_meals_say">تقول الوجبات ١ : %1$s · لماذا؟</string>
     <string name="dose_low_title">عالج الهبوط أولًا</string>
     <string name="dose_low_body">أنت عند %1$d. تناول ١٥ غرامًا من السكريات السريعة وافحص مجددًا بعد ١٥ دقيقة. لا يُقترح أي أنسولين ما دمت منخفضًا أو تنخفض إلى ما دون ١٠٠.</string>
+    <string name="dose_after_low_title">بعد الهبوط</string>
+    <string name="dose_after_low_body">كنت تحت ٧٠ عند %1$s. الكربوهيدرات التي تناولتها بعدها ترفعك، وأنسولين لها قد يعيد الهبوط، لذلك لا تُقترح أي جرعة حتى %2$s. افحص مجددًا حينها.</string>
     <string name="dose_r_meal">الوجبة</string>
     <string name="dose_r_meal_how">%1$s غ ÷ %2$s (%3$s)</string>
     <string name="dose_r_corr">التصحيح</string>
@@ -1565,7 +1567,6 @@
     <string name="nutrient_iron">الحديد</string>
     <string name="nutrient_vitamin_c">فيتامين C</string>
     <string name="nutrient_caffeine">الكافيين</string>
-    <string name="dose_low_meal">للوجبة، بعد أن تعود فوق ٧٠: نحو %1$s وحدة.</string>
     <string name="entry_type_amount">اكتب الكمية</string>
     <string name="home_meal_eyebrow">وجبة دون أنسولين · تجريبي</string>
     <string name="home_meal_body">%1$s غ الساعة %2$s، دون أنسولين مسجّل ولا أنسولين ما زال فعّالًا.</string>
