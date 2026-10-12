@@ -8,6 +8,19 @@ import com.sukoon.app.insulin.Profile
 import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
+import com.sukoon.app.ui.theme.Motion
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -195,7 +208,7 @@ fun SettingsScreen(
     // The parent lock: while it's on (and not unlocked on this visit), changes ask for the PIN first.
     var unlocked by rememberSaveable { mutableStateOf(false) }
     var askingPin by remember { mutableStateOf(false) }
-    val locked = parentPin != null && !unlocked
+    val locked = parentPin != null && !unlocked && com.sukoon.app.platform.ParentLock.appliesTo(profile.ageYears)
     fun <T> guarded(change: (T) -> Unit): (T) -> Unit = { if (locked) askingPin = true else change(it) }
     if (askingPin) PinDialog(setting = false, stored = parentPin, onDone = { unlocked = true; askingPin = false }, onDismiss = { askingPin = false })
     val context = LocalContext.current
@@ -208,239 +221,262 @@ fun SettingsScreen(
     val wears = role.wears
     val missing = rememberMissingSetup().let { all -> if (wears) all else all.filter { it in FOLLOWER_SETUP_ITEMS } }
 
-    Column(
-        modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 16.dp),
-    ) {
-        when (val open = page) {
-            null -> {
-                Text(stringResource(R.string.home_nav_you), fontFamily = HeadlineSerifFontFamily, fontSize = 30.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(horizontal = 4.dp))
-                Spacer(Modifier.height(14.dp))
-                ProfileCard(emergency.yourName, wears = pairing != null) { page = YouPage.PEOPLE }
-                if (missing.isNotEmpty()) {
-                    Spacer(Modifier.height(10.dp))
-                    NeedsYou(missing.size, stringResource(missing.first().titleRes)) { page = YouPage.HELP }
-                }
-                Spacer(Modifier.height(12.dp))
-                val summaries = mapOf(
-                    YouPage.SENSOR to sensorSummary(sourceKind, status, pairing),
-                    YouPage.ALARMS to alarmsSummary(alarmSettings),
-                    YouPage.PEOPLE to emergency.contacts.take(2).joinToString { it.name }.ifBlank { stringResource(R.string.you_people_none) },
-                    YouPage.INSULIN to stringResource(R.string.you_insulin_summary, insulinAction.peakMinutes, formatHours(insulinAction.durationMinutes)),
-                    YouPage.APPS to stringResource(R.string.you_apps_summary),
-                    YouPage.REPORTS to stringResource(R.string.you_reports_summary),
-                    YouPage.APPEARANCE to "${themeLabel(themeMode)} · ${languageLabel()}",
-                    YouPage.HELP to stringResource(R.string.you_help_summary),
-                )
-                (if (wears) YouPage.entries else FOLLOWER_PAGES).chunked(2).forEach { row ->
-                    Row(Modifier.padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        row.forEach { p -> SectionCard(p, summaries.getValue(p), Modifier.weight(1f)) { page = p } }
-                        if (row.size == 1) Spacer(Modifier.weight(1f))
+    val reduced = Motion.reduced()
+    // Push / pop (motion spec): a page slides 30 dp in from the trailing edge (mirrored in Arabic) as it fades in over the hub; back reverses it.
+    val travel = with(LocalDensity.current) { 30.dp.roundToPx() } * if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1 else 1
+    val hubScroll = rememberScrollState()
+    AnimatedContent(
+        page,
+        modifier.fillMaxSize(),
+        transitionSpec = {
+            val push = targetState != null
+            when {
+                reduced -> fadeIn(tween(Motion.REDUCED)) togetherWith fadeOut(tween(Motion.REDUCED))
+                push -> slideInHorizontally(tween(Motion.CALM, easing = Motion.Out)) { travel } + fadeIn(tween(Motion.CALM, easing = Motion.Out)) togetherWith
+                    ExitTransition.KeepUntilTransitionsFinished
+                else -> EnterTransition.None togetherWith
+                    slideOutHorizontally(tween(Motion.CALM, easing = Motion.In)) { travel } + fadeOut(tween(Motion.CALM, easing = Motion.In))
+            }.apply { targetContentZIndex = if (push) 1f else 0f }
+        },
+        label = "youPage",
+    ) { shown ->
+        Column(
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .verticalScroll(if (shown == null) hubScroll else rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+        ) {
+            when (val open = shown) {
+                null -> {
+                    Text(stringResource(R.string.home_nav_you), fontFamily = HeadlineSerifFontFamily, fontSize = 30.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(horizontal = 4.dp))
+                    Spacer(Modifier.height(14.dp))
+                    ProfileCard(emergency.yourName, wears = pairing != null) { page = YouPage.PEOPLE }
+                    if (missing.isNotEmpty()) {
+                        Spacer(Modifier.height(10.dp))
+                        NeedsYou(missing.size, stringResource(missing.first().titleRes)) { page = YouPage.HELP }
                     }
-                }
-                if (!wears) WearToo { page = YouPage.SENSOR }
-            }
-            else -> {
-                PageHeader(stringResource(open.title)) { page = null }
-                Spacer(Modifier.height(16.dp))
-                when (open) {
-                    YouPage.SENSOR -> {
-                        SensorCard(
-                            pairing = pairing,
-                            sensorSelected = sourceKind == SourceKind.LIBRE_BLE,
-                            status = status,
-                            onPaired = onPaired,
-                            onForget = {
-                                onForgetSensor()
-                                context.toast(context.getString(R.string.toast_sensor_forgotten))
-                            },
-                        )
-                        if (pairing != null && sourceKind == SourceKind.LIBRE_BLE) {
-                            Gap()
-                            SectionLabel(stringResource(R.string.sensor_connection_title))
-                            ConnectionHealth(dayOfReadings, saveIntervalMinutes)
+                    Spacer(Modifier.height(12.dp))
+                    val summaries = mapOf(
+                        YouPage.SENSOR to sensorSummary(sourceKind, status, pairing),
+                        YouPage.ALARMS to alarmsSummary(alarmSettings),
+                        YouPage.PEOPLE to emergency.contacts.take(2).joinToString { it.name }.ifBlank { stringResource(R.string.you_people_none) },
+                        YouPage.INSULIN to stringResource(R.string.you_insulin_summary, insulinAction.peakMinutes, formatHours(insulinAction.durationMinutes)),
+                        YouPage.APPS to stringResource(R.string.you_apps_summary),
+                        YouPage.REPORTS to stringResource(R.string.you_reports_summary),
+                        YouPage.APPEARANCE to "${themeLabel(themeMode)} · ${languageLabel()}",
+                        YouPage.HELP to stringResource(R.string.you_help_summary),
+                    )
+                    (if (wears) YouPage.entries else FOLLOWER_PAGES).chunked(2).forEach { row ->
+                        Row(Modifier.padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            row.forEach { p -> SectionCard(p, summaries.getValue(p), Modifier.weight(1f)) { page = p } }
+                            if (row.size == 1) Spacer(Modifier.weight(1f))
                         }
-                        Gap()
-                        SectionLabel(stringResource(R.string.settings_source_title))
-                        if (pairing != null) {
-                            SourceOption(SourceKind.LIBRE_BLE, sourceKind, R.string.settings_source_sensor, R.string.settings_source_sensor_body) {
-                                onSelectSource(SourceKind.LIBRE_BLE)
-                                context.toast(context.getString(R.string.toast_source_sensor))
-                            }
-                        }
-                        // LibreLinkUp connections as this phone's glucose (a Libre 3 on Abbott's app, say).
-                        val llu = sharing.libreLinkUp
-                        val lluAccount by llu.account.collectAsStateWithLifecycle()
-                        val connections by produceState<List<LibreLinkUp.Connection>>(emptyList(), lluAccount) {
-                            value = if (lluAccount == null) emptyList() else runCatching { llu.connections() }.getOrDefault(emptyList())
-                        }
-                        connections.forEach { c ->
-                            val chosen = sourceKind == SourceKind.LIBRE_LINK_UP && llu.ownPatientId == c.patientId
-                            SourceRow(stringResource(R.string.settings_source_llu, c.name.ifBlank { "…" }), stringResource(R.string.settings_source_llu_body), chosen) {
-                                llu.ownPatientId = c.patientId
-                                onSelectSource(SourceKind.LIBRE_LINK_UP)
-                                context.toast(context.getString(R.string.toast_source_llu, c.name))
-                            }
-                        }
-                        val dexcomAccount by sharing.dexcom.account.collectAsStateWithLifecycle()
-                        dexcomAccount?.let { d ->
-                            SourceRow(stringResource(R.string.settings_source_dexcom, d.name.ifBlank { d.username }), stringResource(R.string.settings_source_dexcom_body), sourceKind == SourceKind.DEXCOM_SHARE) {
-                                onSelectSource(SourceKind.DEXCOM_SHARE)
-                                context.toast(context.getString(R.string.toast_source_dexcom))
-                            }
-                        }
-                        SourceOption(SourceKind.SIMULATED, sourceKind, R.string.settings_source_demo, R.string.settings_source_demo_body) {
-                            onSelectSource(SourceKind.SIMULATED)
-                            context.toast(context.getString(R.string.toast_source_demo))
-                        }
-                        Gap()
-                        SectionLabel(stringResource(R.string.readings_title))
-                        ReadingsSection(saveIntervalMinutes, onSaveInterval)
-                        Gap()
-                        SectionLabel(stringResource(R.string.calibration_title))
-                        CalibrationSection(calibration)
                     }
-                    YouPage.ALARMS -> if (!wears) {
-                        // Following only: their alarms reach you through these; nothing here is about a sensor of yours.
-                        SectionLabel(stringResource(R.string.alarms_reach_title))
-                        AlarmReach(sensorIsSource = true)
-                        Gap()
-                        SectionLabel(stringResource(R.string.alarms_history_title))
-                        AlarmHistory(alarmLog)
-                    } else {
-                        // Whether alarms can reach you goes first while something stops them, else after the alarms (design "You · Alarms").
-                        val blocked = !sourceKind.real || missing.any { it in ALARM_SETUP }
-                        if (blocked) {
-                            SectionLabel(stringResource(R.string.alarms_reach_title))
-                            AlarmReach(sensorIsSource = sourceKind.real)
+                    if (!wears) WearToo { page = YouPage.SENSOR }
+                }
+                else -> {
+                    PageHeader(stringResource(open.title)) { page = null }
+                    Spacer(Modifier.height(16.dp))
+                    when (open) {
+                        YouPage.SENSOR -> {
+                            SensorCard(
+                                pairing = pairing,
+                                sensorSelected = sourceKind == SourceKind.LIBRE_BLE,
+                                status = status,
+                                onPaired = onPaired,
+                                onForget = {
+                                    onForgetSensor()
+                                    context.toast(context.getString(R.string.toast_sensor_forgotten))
+                                },
+                            )
+                            if (pairing != null && sourceKind == SourceKind.LIBRE_BLE) {
+                                Gap()
+                                SectionLabel(stringResource(R.string.sensor_connection_title))
+                                ConnectionHealth(dayOfReadings, saveIntervalMinutes)
+                            }
                             Gap()
-                        }
-                        if (locked) {
-                            LockedNotice { askingPin = true }
+                            SectionLabel(stringResource(R.string.settings_source_title))
+                            if (pairing != null) {
+                                SourceOption(SourceKind.LIBRE_BLE, sourceKind, R.string.settings_source_sensor, R.string.settings_source_sensor_body) {
+                                    onSelectSource(SourceKind.LIBRE_BLE)
+                                    context.toast(context.getString(R.string.toast_source_sensor))
+                                }
+                            }
+                            // LibreLinkUp connections as this phone's glucose (a Libre 3 on Abbott's app, say).
+                            val llu = sharing.libreLinkUp
+                            val lluAccount by llu.account.collectAsStateWithLifecycle()
+                            val connections by produceState<List<LibreLinkUp.Connection>>(emptyList(), lluAccount) {
+                                value = if (lluAccount == null) emptyList() else runCatching { llu.connections() }.getOrDefault(emptyList())
+                            }
+                            connections.forEach { c ->
+                                val chosen = sourceKind == SourceKind.LIBRE_LINK_UP && llu.ownPatientId == c.patientId
+                                SourceRow(stringResource(R.string.settings_source_llu, c.name.ifBlank { "…" }), stringResource(R.string.settings_source_llu_body), chosen) {
+                                    llu.ownPatientId = c.patientId
+                                    onSelectSource(SourceKind.LIBRE_LINK_UP)
+                                    context.toast(context.getString(R.string.toast_source_llu, c.name))
+                                }
+                            }
+                            val dexcomAccount by sharing.dexcom.account.collectAsStateWithLifecycle()
+                            dexcomAccount?.let { d ->
+                                SourceRow(stringResource(R.string.settings_source_dexcom, d.name.ifBlank { d.username }), stringResource(R.string.settings_source_dexcom_body), sourceKind == SourceKind.DEXCOM_SHARE) {
+                                    onSelectSource(SourceKind.DEXCOM_SHARE)
+                                    context.toast(context.getString(R.string.toast_source_dexcom))
+                                }
+                            }
+                            SourceOption(SourceKind.SIMULATED, sourceKind, R.string.settings_source_demo, R.string.settings_source_demo_body) {
+                                onSelectSource(SourceKind.SIMULATED)
+                                context.toast(context.getString(R.string.toast_source_demo))
+                            }
                             Gap()
+                            SectionLabel(stringResource(R.string.readings_title))
+                            ReadingsSection(saveIntervalMinutes, onSaveInterval)
+                            Gap()
+                            SectionLabel(stringResource(R.string.calibration_title))
+                            CalibrationSection(calibration)
                         }
-                        RangeCard(targetHigh, guarded(onTargetHigh))
-                        Gap()
-                        AlarmSettingsSection(alarmSettings, guarded(onAlarmSettings), onTestAlarm, onPreviewAlarm, onPreviewPack)
-                        Gap()
-                        if (!blocked) {
+                        YouPage.ALARMS -> if (!wears) {
+                            // Following only: their alarms reach you through these; nothing here is about a sensor of yours.
                             SectionLabel(stringResource(R.string.alarms_reach_title))
                             AlarmReach(sensorIsSource = true)
                             Gap()
-                        }
-                        SectionLabel(stringResource(R.string.alarms_history_title))
-                        AlarmHistory(alarmLog)
-                    }
-                    YouPage.PEOPLE -> {
-                        if (wears) {
-                            SectionLabel(stringResource(R.string.emergency_title))
-                            EmergencySection(emergency, emergencyAlerts, onEmergency)
+                            SectionLabel(stringResource(R.string.alarms_history_title))
+                            AlarmHistory(alarmLog)
+                        } else {
+                            // Whether alarms can reach you goes first while something stops them, else after the alarms (design "You · Alarms").
+                            val blocked = !sourceKind.real || missing.any { it in ALARM_SETUP }
+                            if (blocked) {
+                                SectionLabel(stringResource(R.string.alarms_reach_title))
+                                AlarmReach(sensorIsSource = sourceKind.real)
+                                Gap()
+                            }
+                            if (locked) {
+                                LockedNotice { askingPin = true }
+                                Gap()
+                            }
+                            RangeCard(targetHigh, guarded(onTargetHigh))
                             Gap()
-                        }
-                        SectionLabel(stringResource(R.string.sharing_title))
-                        SharingSection(sharing, followerWatch)
-                        Gap()
-                        SectionLabel(stringResource(R.string.llu_title))
-                        LibreLinkUpSection(sharing.libreLinkUp, sharing, followerWatch)
-                        Gap()
-                        SectionLabel(stringResource(R.string.dexcom_title))
-                        DexcomSection(sharing.dexcom, sharing, followerWatch)
-                    }
-                    YouPage.INSULIN -> {
-                        SectionLabel(stringResource(R.string.reminder_basal_section))
-                        BasalReminderCard(basalReminder, onBasalReminder, usualBasalMinute)
-                        Gap()
-                        SectionLabel(stringResource(R.string.sites_title))
-                        InjectionSitesCard(injectionSites)
-                        Gap()
-                        InsulinSection(insulinAction, onInsulinAction, doseSettings.step) { onDoseSettings(doseSettings.copy(step = it)) }
-                        Gap()
-                        DoseCard(doseSettings, guarded(onDoseSettings), doseStartingPoints, learningReport, insulinAction.durationMinutes / 60, profile, guarded(onProfile), locked, { askingPin = true }, parentPin, onParentPin, openLearning, onOpenedLearning)
-                    }
-                    YouPage.APPS -> {
-                        HealthConnectSection(healthConnect)
-                        Spacer(Modifier.height(10.dp))
-                        var service by rememberSaveable { mutableStateOf<String?>(null) }
-                        val nsOn = nightscout.enabled && nightscout.url.isNotBlank()
-                        Column(
-                            Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(18.dp))
-                                .background(MaterialTheme.colorScheme.surface)
-                                .border(1.dp, outline(), RoundedCornerShape(18.dp))
-                                .padding(horizontal = 14.dp, vertical = 4.dp),
-                        ) {
-                            ServiceRow(
-                                stringResource(R.string.ns_title),
-                                if (nsOn) Uri.parse(nightscout.url).host ?: nightscout.url else stringResource(R.string.apps_not_set_up),
-                                stringResource(if (service == "ns") R.string.apps_close else if (nsOn) R.string.apps_change else R.string.apps_set_up),
-                                prominent = !nsOn && service != "ns",
-                            ) { service = if (service == "ns") null else "ns" }
-                            // Opens right under its row, in the same panel as the alarms' settings.
-                            ExpandedPanel(service == "ns", inset = 0.dp) { NightscoutSection(nightscout, nightscoutStatus, onNightscout, onUploadNow, plain = true) }
-                            HorizontalDivider(color = outline().copy(alpha = 0.08f))
-                            ServiceRow(
-                                stringResource(R.string.apps_ai),
-                                if (geminiKey.isNotBlank()) stringResource(R.string.apps_ai_key_ending, geminiKey.takeLast(4)) else stringResource(R.string.apps_not_set_up),
-                                stringResource(if (service == "ai") R.string.apps_close else if (geminiKey.isNotBlank()) R.string.apps_change else R.string.apps_set_up),
-                                prominent = geminiKey.isBlank() && service != "ai",
-                            ) { service = if (service == "ai") null else "ai" }
-                            ExpandedPanel(service == "ai", inset = 0.dp) { AiKey(geminiKey, onSaveGeminiKey) }
-                        }
-                    }
-                    YouPage.REPORTS -> {
-                        Text(stringResource(R.string.you_reports_body), fontSize = 13.sp, color = CaptionMuted)
-                        Gap()
-                        SectionLabel(stringResource(R.string.export_title))
-                        ExportSection(buildCsv)
-                        Gap()
-                        SectionLabel(stringResource(R.string.backup_title))
-                        BackupSection()
-                    }
-                    YouPage.APPEARANCE -> {
-                        SectionLabel(stringResource(R.string.you_theme))
-                        ThemeCards(themeMode, onThemeMode)
-                        Gap()
-                        SectionLabel(stringResource(R.string.you_language))
-                        LanguageChoice()
-                        Gap()
-                        SectionLabel(stringResource(R.string.you_clock))
-                        ClockChoice()
-                        Gap()
-                        SectionLabel(stringResource(R.string.widgets_title))
-                        WidgetsCard()
-                    }
-                    YouPage.HELP -> {
-                        Text(
-                            stringResource(R.string.settings_guide),
-                            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onOpenGuide).padding(vertical = 10.dp),
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = SageDeep,
-                        )
-                        Text(
-                            stringResource(R.string.privacy_link),
-                            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable {
-                                runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(com.sukoon.app.PRIVACY_URL))) }
-                            }.padding(vertical = 10.dp),
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = SageDeep,
-                        )
-                        Gap()
-                        SectionLabel(stringResource(R.string.setup_title))
-                        SetupChecklist(only = if (wears) null else FOLLOWER_SETUP_ITEMS)
-                        Gap()
-                        updates?.takeIf { com.sukoon.app.BuildConfig.SELF_UPDATE }?.let {
-                            SectionLabel(stringResource(R.string.updates_title))
-                            UpdatesSection(it, onBackUp = { page = YouPage.REPORTS })
+                            AlarmSettingsSection(alarmSettings, guarded(onAlarmSettings), onTestAlarm, onPreviewAlarm, onPreviewPack)
                             Gap()
+                            SectionLabel(stringResource(R.string.workout_check_section))
+                            GentleChecks()
+                            Gap()
+                            if (!blocked) {
+                                SectionLabel(stringResource(R.string.alarms_reach_title))
+                                AlarmReach(sensorIsSource = true)
+                                Gap()
+                            }
+                            SectionLabel(stringResource(R.string.alarms_history_title))
+                            AlarmHistory(alarmLog)
                         }
-                        SectionLabel(stringResource(R.string.settings_about_title))
-                        Text(stringResource(R.string.settings_about_body, BuildConfig.VERSION_NAME), fontSize = 12.5.sp, color = CaptionMuted)
+                        YouPage.PEOPLE -> {
+                            if (wears) {
+                                SectionLabel(stringResource(R.string.emergency_title))
+                                EmergencySection(emergency, emergencyAlerts, onEmergency)
+                                Gap()
+                            }
+                            SectionLabel(stringResource(R.string.sharing_title))
+                            SharingSection(sharing, followerWatch, locked = locked, onUnlock = { askingPin = true })
+                            Gap()
+                            SectionLabel(stringResource(R.string.llu_title))
+                            LibreLinkUpSection(sharing.libreLinkUp, sharing, followerWatch)
+                            Gap()
+                            SectionLabel(stringResource(R.string.dexcom_title))
+                            DexcomSection(sharing.dexcom, sharing, followerWatch)
+                        }
+                        YouPage.INSULIN -> {
+                            SectionLabel(stringResource(R.string.reminder_basal_section))
+                            BasalReminderCard(basalReminder, onBasalReminder, usualBasalMinute)
+                            Gap()
+                            SectionLabel(stringResource(R.string.sites_title))
+                            InjectionSitesCard(injectionSites)
+                            Gap()
+                            InsulinSection(insulinAction, onInsulinAction, doseSettings.step) { onDoseSettings(doseSettings.copy(step = it)) }
+                            Gap()
+                            DoseCard(doseSettings, guarded(onDoseSettings), doseStartingPoints, learningReport, insulinAction.durationMinutes / 60, profile, guarded(onProfile), locked, { askingPin = true }, parentPin, onParentPin, openLearning, onOpenedLearning)
+                        }
+                        YouPage.APPS -> {
+                            HealthConnectSection(healthConnect)
+                            Spacer(Modifier.height(10.dp))
+                            var service by rememberSaveable { mutableStateOf<String?>(null) }
+                            val nsOn = nightscout.enabled && nightscout.url.isNotBlank()
+                            Column(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(18.dp))
+                                    .background(MaterialTheme.colorScheme.surface)
+                                    .border(1.dp, outline(), RoundedCornerShape(18.dp))
+                                    .padding(horizontal = 14.dp, vertical = 4.dp),
+                            ) {
+                                ServiceRow(
+                                    stringResource(R.string.ns_title),
+                                    if (nsOn) Uri.parse(nightscout.url).host ?: nightscout.url else stringResource(R.string.apps_not_set_up),
+                                    stringResource(if (service == "ns") R.string.apps_close else if (nsOn) R.string.apps_change else R.string.apps_set_up),
+                                    prominent = !nsOn && service != "ns",
+                                ) { service = if (service == "ns") null else "ns" }
+                                // Opens right under its row, in the same panel as the alarms' settings.
+                                ExpandedPanel(service == "ns", inset = 0.dp) { NightscoutSection(nightscout, nightscoutStatus, onNightscout, onUploadNow, plain = true) }
+                                HorizontalDivider(color = outline().copy(alpha = 0.08f))
+                                ServiceRow(
+                                    stringResource(R.string.apps_ai),
+                                    if (geminiKey.isNotBlank()) stringResource(R.string.apps_ai_key_ending, geminiKey.takeLast(4)) else stringResource(R.string.apps_not_set_up),
+                                    stringResource(if (service == "ai") R.string.apps_close else if (geminiKey.isNotBlank()) R.string.apps_change else R.string.apps_set_up),
+                                    prominent = geminiKey.isBlank() && service != "ai",
+                                ) { service = if (service == "ai") null else "ai" }
+                                ExpandedPanel(service == "ai", inset = 0.dp) { AiKey(geminiKey, onSaveGeminiKey) }
+                            }
+                        }
+                        YouPage.REPORTS -> {
+                            Text(stringResource(R.string.you_reports_body), fontSize = 13.sp, color = CaptionMuted)
+                            Gap()
+                            SectionLabel(stringResource(R.string.export_title))
+                            ExportSection(buildCsv)
+                            Gap()
+                            SectionLabel(stringResource(R.string.backup_title))
+                            BackupSection()
+                        }
+                        YouPage.APPEARANCE -> {
+                            SectionLabel(stringResource(R.string.you_theme))
+                            ThemeCards(themeMode, onThemeMode)
+                            Gap()
+                            SectionLabel(stringResource(R.string.you_language))
+                            LanguageChoice()
+                            Gap()
+                            SectionLabel(stringResource(R.string.you_clock))
+                            ClockChoice()
+                            Gap()
+                            SectionLabel(stringResource(R.string.widgets_title))
+                            WidgetsCard()
+                        }
+                        YouPage.HELP -> {
+                            Text(
+                                stringResource(R.string.settings_guide),
+                                modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onOpenGuide).padding(vertical = 10.dp),
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = SageDeep,
+                            )
+                            Text(
+                                stringResource(R.string.privacy_link),
+                                modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable {
+                                    runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(com.sukoon.app.PRIVACY_URL))) }
+                                }.padding(vertical = 10.dp),
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = SageDeep,
+                            )
+                            Gap()
+                            SectionLabel(stringResource(R.string.setup_title))
+                            SetupChecklist(only = if (wears) null else FOLLOWER_SETUP_ITEMS)
+                            Gap()
+                            updates?.takeIf { com.sukoon.app.BuildConfig.SELF_UPDATE }?.let {
+                                SectionLabel(stringResource(R.string.updates_title))
+                                UpdatesSection(it, onBackUp = { page = YouPage.REPORTS })
+                                Gap()
+                            }
+                            SectionLabel(stringResource(R.string.settings_about_title))
+                            Text(stringResource(R.string.settings_about_body, BuildConfig.VERSION_NAME), fontSize = 12.5.sp, color = CaptionMuted)
+                        }
                     }
                 }
             }

@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import com.sukoon.app.calibration.Calibration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 
 /**
  * The single source of truth for glucose data (A2, docs/track-a-plan.md). It runs a collector
@@ -51,6 +52,9 @@ class GlucoseRepository(
 ) {
     private fun adjust(reading: GlucoseReading) = calibration.value?.apply(reading) ?: reading
 
+    /** Emits when the calibration changes: anything holding adjusted readings reloads them. */
+    val calibrationChanges: Flow<Calibration?> = calibration
+
     private val _live = MutableSharedFlow<GlucoseReading>(extraBufferCapacity = 64)
 
     /**
@@ -58,6 +62,13 @@ class GlucoseRepository(
      * sparser saved log can never delay an urgent-low alert.
      */
     val liveReadings: Flow<GlucoseReading> = _live.asSharedFlow().map(::adjust)
+
+    /**
+     * The sensor's first hour is shown (Home, the graph, the notification) but not trusted: every
+     * function below leaves it out unless it says otherwise, so reports, insights, alarms, uploads,
+     * calibration and the AI never see it. [latestReading] and [recentReadings] are display-only.
+     */
+    private fun List<GlucoseReading>.trusted(include: Boolean) = if (include) this else filterNot { it.warmup }
 
     val status: StateFlow<SourceStatus> = sources
         .flatMapLatest { it.status }
@@ -71,16 +82,23 @@ class GlucoseRepository(
         combine(readingDao.latestN(limit), calibration) { rows, _ -> rows.asReversed().map { adjust(it.toGlucoseReading()) } }
 
     /** Readings at or after [sinceMillis], chronological — backs the time-ranged graph (A3). */
-    fun readingsSince(sinceMillis: Long): Flow<List<GlucoseReading>> =
-        combine(readingDao.since(sinceMillis), calibration) { rows, _ -> rows.map { adjust(it.toGlucoseReading()) } }
+    fun readingsSince(sinceMillis: Long, includeWarmup: Boolean = false): Flow<List<GlucoseReading>> =
+        combine(readingDao.since(sinceMillis), calibration) { rows, _ -> rows.map { adjust(it.toGlucoseReading()) }.trusted(includeWarmup) }
 
     /** Readings in [fromMillis, toMillis), chronological: a past day. */
-    fun readingsBetween(fromMillis: Long, toMillis: Long): Flow<List<GlucoseReading>> =
-        combine(readingDao.between(fromMillis, toMillis), calibration) { rows, _ -> rows.map { adjust(it.toGlucoseReading()) } }
+    fun readingsBetween(fromMillis: Long, toMillis: Long, includeWarmup: Boolean = false): Flow<List<GlucoseReading>> =
+        combine(readingDao.between(fromMillis, toMillis), calibration) { rows, _ -> rows.map { adjust(it.toGlucoseReading()) }.trusted(includeWarmup) }
 
     /** As stored, before calibration: what the calibration itself is fitted on. */
     fun rawReadingsSince(sinceMillis: Long): Flow<List<GlucoseReading>> =
-        readingDao.since(sinceMillis).map { rows -> rows.map { it.toGlucoseReading() } }
+        readingDao.since(sinceMillis).map { rows -> rows.map { it.toGlucoseReading() }.trusted(false) }
+
+    /** Deletes readings no body produces ([Spikes]) since [sinceMillis]; returns how many. */
+    suspend fun removeSpikes(sinceMillis: Long): Int {
+        val spikes = com.sukoon.app.domain.metrics.Spikes.of(readingDao.since(sinceMillis).first().map { it.toGlucoseReading() })
+        if (spikes.isNotEmpty()) readingDao.deleteAt(spikes.map { it.timestamp.toEpochMilli() })
+        return spikes.size
+    }
 
     /** For readings that arrive outside the collector — the NFC pairing tap's 8-hour backfill. */
     suspend fun ingest(reading: GlucoseReading) = readingDao.insert(reading.toEntity())
@@ -101,7 +119,7 @@ class GlucoseRepository(
                 coroutineScope {
                     launch {
                         source.readings.collect { reading ->
-                            _live.tryEmit(reading)
+                            if (!reading.warmup) _live.tryEmit(reading) // alarms watch this: never on warm-up values
                             if (shouldSave(reading, saveIntervalMinutes())) readingDao.insert(reading.toEntity())
                         }
                     }

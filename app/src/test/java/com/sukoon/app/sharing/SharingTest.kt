@@ -29,7 +29,7 @@ class SharingTest {
 
     @Test
     fun `invite codes read in two halves`() {
-        assertEquals("ABCD-EFGH", Sharing.formatCode("ABCDEFGH"))
+        assertEquals("ABCD-EFGH", InviteCode.format("ABCDEFGH"))
     }
 
     @Test
@@ -38,5 +38,14 @@ class SharingTest {
         assertEquals("Email not confirmed", Supabase.errorMessage("""{"code":400,"error_code":"email_not_confirmed","msg":"Email not confirmed"}""", 400))
         assertEquals("That code is wrong, used or expired", Supabase.errorMessage("""{"code":"P0001","message":"That code is wrong, used or expired"}""", 400))
         assertEquals("HTTP 502", Supabase.errorMessage("<html>bad gateway</html>", 502))
+    }
+
+    @Test
+    fun `shared alarms always include urgent low and drop names this version doesn't know`() {
+        val urgent = com.sukoon.app.alarms.AlarmType.URGENT_LOW
+        val high = com.sukoon.app.alarms.AlarmType.HIGH
+        org.junit.Assert.assertEquals(setOf(urgent, high), Sharing.alarmsFrom(listOf("HIGH", "SOMETHING_NEW")))
+        org.junit.Assert.assertEquals(setOf(urgent), Sharing.alarmsFrom(emptyList()))
+        org.junit.Assert.assertEquals(com.sukoon.app.alarms.AlarmType.entries.toSet(), Sharing.ALL_ALARMS)
     }
 }

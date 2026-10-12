@@ -65,7 +65,7 @@ class GraphViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     private val readings = combine(_range, day) { r, d -> r to d }.flatMapLatest { (range, d) ->
         val end = endOf(d)
-        if (end == null) glucoseRepository.readingsSince(System.currentTimeMillis() - range.millis) else glucoseRepository.readingsBetween(end - range.millis, end)
+        if (end == null) glucoseRepository.readingsSince(System.currentTimeMillis() - range.millis, includeWarmup = true) else glucoseRepository.readingsBetween(end - range.millis, end, includeWarmup = true)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -76,7 +76,7 @@ class GraphViewModel(
 
     val uiState: StateFlow<GraphUiState> = combine(_range, readings, events, day) { range, readings, events, d ->
         val end = endOf(d)
-        GraphUiState(range = range, readings = readings, events = events, summary = InsightEngine.summary(readings, end?.let(Instant::ofEpochMilli) ?: Instant.now(), TargetRange.high), day = d, endMillis = end)
+        GraphUiState(range = range, readings = readings, events = events, summary = InsightEngine.summary(readings.filterNot { it.warmup }, end?.let(Instant::ofEpochMilli) ?: Instant.now(), TargetRange.high), day = d, endMillis = end)
     }
         .flowOn(Dispatchers.Default) // 14 days is ~20k readings: keep the summary off the main thread
         .stateIn(

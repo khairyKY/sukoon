@@ -14,6 +14,7 @@ json = "20240303"
 glance = "1.1.1"
 camerax = "1.4.2" # 1.4: native libraries aligned for 16 KB pages (Play)
 mlkitBarcode = "17.3.0"
+zxing = "3.5.3"
 # ponytail: newest that builds with compileSdk 35 / AGP 8.6; 1.1.0 final needs compileSdk 36 + AGP 8.9.1.
 healthConnect = "1.1.0-beta01"
 
@@ -23,6 +24,7 @@ androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycl
 androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
 guava = { group = "com.google.guava", name = "guava", version = "31.1-android" }
 mlkit-barcode = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "mlkitBarcode" }
+zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

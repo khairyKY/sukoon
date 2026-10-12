@@ -1,6 +1,7 @@
 package com.sukoon.app.sharing
 
 import android.content.Context
+import com.sukoon.app.alarms.AlarmType
 import com.sukoon.app.data.repository.GlucoseRepository
 import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.data.source.SourceKind
@@ -13,6 +14,7 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -26,7 +28,14 @@ data class Person(val id: String, val name: String)
 /** Where a followed person's readings come from. */
 enum class FollowVia { SUKOON, LIBRE_LINK_UP, DEXCOM }
 
-data class Followed(val id: String, val name: String, val latest: GlucoseReading?, val via: FollowVia = FollowVia.SUKOON)
+/** [alarms]: the alarms they let followers get (all, for LibreLinkUp, Dexcom and people who haven't chosen). */
+data class Followed(
+    val id: String,
+    val name: String,
+    val latest: GlucoseReading?,
+    val via: FollowVia = FollowVia.SUKOON,
+    val alarms: Set<AlarmType> = Sharing.ALL_ALARMS,
+)
 
 /**
  * Followers (A6) on Supabase. Sharing: this phone uploads its real-sensor readings, and anyone who
@@ -52,6 +61,29 @@ class Sharing(
 
     private val me: String get() = supabase.session.value?.userId ?: throw SupabaseException(401, "Not signed in")
 
+    /** The alarms followers' phones sound for this person (You → Sharing). Urgent low always. */
+    var sharedAlarms: Set<AlarmType>
+        get() = prefs.getStringSet(KEY_SHARED_ALARMS, null)?.let(::alarmsFrom) ?: ALL_ALARMS
+        set(value) = prefs.edit().putStringSet(KEY_SHARED_ALARMS, alarmsFrom(value.map { it.name }).map { it.name }.toSet()).apply()
+
+    /** Puts [sharedAlarms] on this account's profile, where followers' phones read it. */
+    suspend fun publishSharedAlarms() {
+        val body = JSONObject().put("id", me).put("shared_alarms", JSONArray(sharedAlarms.map { it.name }))
+        supabase.post("profiles?on_conflict=id", body.toString(), prefer = "resolution=merge-duplicates,return=minimal")
+    }
+
+    /**
+     * Which alarms each of [ids] shares. Anyone who hasn't chosen, or a project where the 2026-10-12
+     * migration hasn't run yet (the query fails), shares them all: never fewer alerts by accident.
+     */
+    private suspend fun sharedAlarmsOf(ids: List<String>): Map<String, Set<AlarmType>> = runCatching {
+        val rows = JSONArray(supabase.get("profiles?id=in.(${ids.joinToString(",")})&select=id,shared_alarms"))
+        (0 until rows.length()).associate { i ->
+            val row = rows.getJSONObject(i)
+            row.getString("id") to (row.optJSONArray("shared_alarms")?.let { a -> alarmsFrom((0 until a.length()).map(a::getString)) } ?: ALL_ALARMS)
+        }
+    }.getOrDefault(emptyMap())
+
     fun start() {
         val retry = flow {
             while (true) {
@@ -59,6 +91,8 @@ class Sharing(
                 delay(TimeUnit.MINUTES.toMillis(5))
             }
         }
+        // On every sign-in (and start): followers' phones learn which alarms to sound.
+        scope.launch { supabase.session.filterNotNull().collect { runCatching { publishSharedAlarms() } } }
         scope.launch {
             // New reading → upload; plus a 5-minute retry tick. Failures wait for the next one.
             merge(glucose.latestReading.map { }, retry).conflate().collect { runCatching { upload() } }
@@ -80,9 +114,20 @@ class Sharing(
 
     /** A one-time code, valid for 24 h, that lets one person follow you. */
     suspend fun createInvite(): String {
-        val code = (1..8).map { CODE_ALPHABET[random.nextInt(CODE_ALPHABET.length)] }.joinToString("")
+        val code = (1..InviteCode.LENGTH).map { InviteCode.ALPHABET[random.nextInt(InviteCode.ALPHABET.length)] }.joinToString("")
         supabase.post("invites", JSONObject().put("code", code).toString(), prefer = "return=minimal")
         return code
+    }
+
+    /** My invites nobody has used yet, newest first, with when each runs out. */
+    suspend fun openInvites(): List<Pair<String, Instant>> {
+        val now = URLEncoder.encode(Instant.now().toString(), "UTF-8")
+        val rows = JSONArray(supabase.get("invites?owner=eq.$me&used_by=is.null&expires_at=gt.$now&order=created_at.desc&select=code,expires_at"))
+        return (0 until rows.length()).map { rows.getJSONObject(it).let { r -> r.getString("code") to java.time.OffsetDateTime.parse(r.getString("expires_at")).toInstant() } }
+    }
+
+    suspend fun cancelInvite(code: String) {
+        supabase.delete("invites?code=eq.$code&owner=eq.$me")
     }
 
     /** Follows the owner of [code]; returns their name. */
@@ -102,7 +147,8 @@ class Sharing(
         val mine = if (supabase.session.value == null) emptyList() else {
             val ids = column(supabase.get("follows?follower=eq.$me&select=owner"), "owner")
             val names = names(ids)
-            ids.map { Followed(it, names[it].orEmpty(), latestOf(it)) }
+            val alarms = sharedAlarmsOf(ids)
+            ids.map { Followed(it, names[it].orEmpty(), latestOf(it), alarms = alarms[it] ?: ALL_ALARMS) }
         }
         return mine + runCatching { libreLinkUp.followed() }.getOrDefault(emptyList()) + runCatching { dexcom.followed() }.getOrDefault(emptyList())
     }
@@ -147,16 +193,20 @@ class Sharing(
     companion object {
         private const val KEY_SHARE = "share_readings_on"
         private const val KEY_CURSOR = "share_cursor_"
+        private const val KEY_SHARED_ALARMS = "shared_alarms"
+
+        val ALL_ALARMS: Set<AlarmType> = AlarmType.entries.toSet()
+
+        /** Alarm names to types: unknown names are dropped, and urgent low is always in. */
+        fun alarmsFrom(names: Collection<String>): Set<AlarmType> =
+            names.mapNotNull { n -> AlarmType.entries.firstOrNull { it.name == n } }.toSet() + AlarmType.URGENT_LOW
         private val BACKFILL_MS = TimeUnit.DAYS.toMillis(2)
         private const val MAX_BATCH = 1000
         private const val PAGE = 1000
-        private const val CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // no 0/O, 1/I
 
         /** The follower page (web/, on GitHub Pages): follow from any browser, iPhone included. */
         const val FOLLOW_PAGE = "https://khairyky.github.io/sukoon/"
 
-        /** "ABCD-EFGH": easier to read out or type. */
-        fun formatCode(code: String) = code.chunked(4).joinToString("-")
 
         fun trendCode(trend: TrendDirection) = when (trend) {
             TrendDirection.FALLING_FAST -> -2

@@ -19,6 +19,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.combine
+import com.sukoon.app.data.source.SourceKind
+import com.sukoon.app.domain.metrics.Spikes
 import kotlinx.coroutines.launch
 import com.sukoon.app.insulin.InsulinAction
 
@@ -28,7 +31,12 @@ data class AskUiState(
     val error: String? = null,
     /** A question whose answer failed — dropped from [turns] (Gemini needs strictly alternating turns) and handed back to the input box. */
     val unanswered: String? = null,
+    /** What the answers are based on, shown under the title. */
+    val basedOn: BasedOn? = null,
 )
+
+/** The same data the AI gets (AiPrompts.dataBrief): real readings, or demo only when that's all there is. */
+data class BasedOn(val days: Int, val readings: Int, val entries: Int, val demo: Boolean)
 
 /**
  * "Ask" chat (Trends → Ask). Each question re-reads the last 7 days from Room so answers track
@@ -49,11 +57,28 @@ class AskViewModel(
 
     val hasKey: Boolean get() = gemini.hasKey
 
+    init {
+        val since = System.currentTimeMillis() - WINDOW_MILLIS
+        viewModelScope.launch {
+            combine(glucoseRepository.readingsSince(since), logbookRepository.eventsSince(since)) { readings, events ->
+                val real = readings.filter { it.source != SourceKind.SIMULATED }
+                val demo = real.isEmpty() && readings.isNotEmpty()
+                val shown = Spikes.without(if (demo) readings else real)
+                BasedOn(
+                    days = shown.map { it.timestamp.atZone(ZoneId.systemDefault()).toLocalDate() }.distinct().size,
+                    readings = shown.size,
+                    entries = events.size,
+                    demo = demo,
+                )
+            }.collect { based -> _uiState.update { it.copy(basedOn = based) } }
+        }
+    }
+
     fun ask(question: String) {
         val text = question.trim()
         if (text.isEmpty() || _uiState.value.thinking) return
         val turns = _uiState.value.turns + ChatTurn(fromUser = true, text = text)
-        _uiState.value = AskUiState(turns = turns, thinking = true)
+        _uiState.update { it.copy(turns = turns, thinking = true, error = null, unanswered = null) }
         viewModelScope.launch {
             val since = System.currentTimeMillis() - WINDOW_MILLIS
             val result = runCatching {
@@ -80,7 +105,7 @@ class AskViewModel(
     }
 
     fun clear() {
-        if (!_uiState.value.thinking) _uiState.value = AskUiState()
+        if (!_uiState.value.thinking) _uiState.update { AskUiState(basedOn = it.basedOn) }
     }
 
     companion object {

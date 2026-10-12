@@ -20,6 +20,7 @@ data class ReadingEntity(
     val glucoseMgDl: Int,
     val trend: String, // TrendDirection.name
     val source: String, // SourceKind.name
+    val warmup: Boolean = false, // first hour of a sensor: displayed, never analysed (GlucoseRepository filters it)
 )
 
 @Dao
@@ -34,6 +35,9 @@ interface ReadingDao {
     /** Saved readings strictly inside (from, to) — backs the save-interval spacing rule. */
     @Query("SELECT COUNT(*) FROM readings WHERE timestampMillis > :from AND timestampMillis < :to")
     suspend fun countBetween(from: Long, to: Long): Int
+
+    @Query("DELETE FROM readings WHERE timestampMillis IN (:timestamps)")
+    suspend fun deleteAt(timestamps: List<Long>)
 
     @Query("SELECT * FROM readings ORDER BY timestampMillis DESC LIMIT 1")
     fun latest(): Flow<ReadingEntity?>

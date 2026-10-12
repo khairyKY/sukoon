@@ -98,7 +98,7 @@ Someone who only follows sees a simpler app: no sensor, insulin or dose settings
 
 ### Pairing a sensor
 
-**You → Sensor → Connect**, then hold the phone to the sensor. Sukoon reads it over NFC, checks that it can decode it, and only then switches on its Bluetooth stream. From there a reading arrives every minute, a new sensor counts down its 60-minute warm-up on Home, and Sukoon reminds you 3 days, a day and an hour before the sensor ends.
+**A new sensor:** You → Sensor → **Start a new sensor**, then hold the phone to it. Sukoon starts it over NFC (no LibreLink or DiaBox needed), checks its memory says it's warming up, and pairs it. **A running sensor:** **You → Sensor → Connect**, then hold the phone to the sensor. Sukoon reads it over NFC, checks that it can decode it, and only then switches on its Bluetooth stream. From there a reading arrives every minute, a new sensor counts down its 60-minute warm-up on Home (any first-hour reading shows in grey and counts for nothing: no alarms, reports or AI), and Sukoon reminds you 3 days, a day and an hour before the sensor ends.
 
 > [!WARNING]
 > **A Libre 2 streams to one phone at a time.** Pairing Sukoon takes the sensor's Bluetooth from whichever app had it (LibreLink, DiaBox, xDrip+). To hand it back, scan the sensor once with the other app. To try Sukoon on a second phone, use **Follower** with an invite code from the first phone, or demo data.
@@ -125,6 +125,7 @@ Someone who only follows sees a simpler app: no sensor, insulin or dose settings
 - ✅ **Meals, rapid and long-acting insulin, finger-pricks and activity** from big tiles and a number pad. A meal and its insulin save together, with pre-bolus minutes and *when it happened* (now, 15/30/60 minutes ago, or a picked time). Every entry shows the glucose at that moment. Undo on every save.
 - ✅ **Insulin on board** on the exponential curve OpenAPS and Loop use (peak 75 minutes, 5 hours by default), shown on Home and before you log another dose.
 - ✅ **Finger-pricks beside the sensor.** Each check shows the sensor reading at that minute and whether the two agree, and sits on the graph as a ring.
+- 🌱 **After-workout check.** Log a workout and, 30 to 90 minutes after it ends, Sukoon asks for a reading if it can't see one, since lows often come later. On by default, under You → Alarms.
 - ✅ **Long-acting reminder.** A daily nudge at your time unless the dose was already logged, with *Took it* right on the notification.
 - 🌱 **Injection sites.** *Where?* on rapid and long-acting entries: two figures, front and back, one tap for the spot and the side. The spot rested longest is suggested, the last 30 days show as a body map, and an insight says when one spot takes most of your doses.
 - 🌱 **Dose suggestions (beta, off by default).** Carb counting with a ratio per meal (breakfast, lunch, dinner, late), how far 1 unit lowers you, and a target; any box can stay empty. A new rapid entry shows the suggested dose with its maths line by line, rounded down to your pen (whole units by default) and capped at your maximum. Nothing is suggested when you're low or dropping. *Use* fills the amount; only Save logs it. Above your range and not eating, Home shows a correction the same way.
@@ -139,14 +140,14 @@ Someone who only follows sees a simpler app: no sensor, insulin or dose settings
 
 - ✅ **The graph:** 3 hours to 14 days, the line coloured by range with gaps left as gaps, time in range in five bands, average and GMI, and every reading listed underneath.
 - ✅ **Any day, back as far as you have data.** The logbook and the graph both have a *‹ Today ›* bar: a day back, a day on, or tap it for a calendar.
-- ✅ **Insights**, each with its source: time in range against the international consensus targets, variability (CV), recurring lows and highs, the dawn rise, what each meal did, pre-bolus timing, insulin stacking, this week against last, lows after workouts, highs after treating a low, one injection spot taking most doses. With a tighter range of your own, its share sits beside the international one.
+- 🌱 **Insights, one thing at a time.** The last 14 days in one line, then *the one thing* worth doing this week with a button that does it (turn on the going-low alarm or the after-workout check, set up doses, log a meal, open the doctor report; a button for something already on is replaced by the next one), up to three more worth knowing, and the rest behind *More*. Under a week of data it says so instead of guessing. Each finding keeps its source: time in range against the international consensus targets, variability (CV), recurring lows and highs, the dawn rise, what each meal did, pre-bolus timing, insulin stacking, this week against last, lows after workouts, highs after treating a low, one injection spot taking most doses. With a tighter range of your own, its share sits beside the international one.
 - ✅ **Report for your doctor:** an Ambulatory Glucose Profile (5–95, 25–75 and median by time of day) over 7, 14 or 30 days with GMI and CV, exported as a one-page A4 PDF.
 - ✅ **Ask.** A chat about your own data, and carb estimates from a meal photo or a description, through Google's Gemini with **your own free API key**. It sees summaries, not raw readings, and an estimate only ever pre-fills a field you confirm.
 
 ### Share: the people who'd want to know
 
 - ✅ **Emergency contacts** from the phone book. See [the escalation](#-alarms-that-reach-you) below.
-- 🌱 **Followers.** Invite someone with a one-time code. In the app, they see your live number, chart and Home message on their own phone and get your alarms with your name on them. Runs on Supabase with row-level security; an account is optional if you only wear a sensor.
+- 🌱 **Followers.** Invite someone with a link or a QR code: on Android it opens Sukoon with the one-time code filled in, anywhere else the follow page. They see your live number, chart and Home message on their own phone and get your alarms with your name on them; you choose which alarms (urgent low always). Unused invites can be shown again or cancelled, and you're told when someone new follows you, with *Remove* right there. Accounts confirm their email and can reset a forgotten password ([how](docs/accounts.md)). Runs on Supabase with row-level security; an account is optional if you only wear a sensor.
 - 🌱 **Follow from any phone's browser, iPhone included.** The [follow page](https://khairyky.github.io/sukoon/) shows the same number, arrow, 3-hour chart and words, in English or Arabic, installs to the home screen, and sounds an alarm while it's open. *Send* in You → People shares the code and the link in one message.
 - 🌱 **Follow anyone on Abbott's or Dexcom's apps.** Sign in to LibreLinkUp or Dexcom Share and those people sit next to your Sukoon follows, with the same Home, widget and alarms. Either connection can also be *this phone's* glucose, which is how a Libre 3 wearer can use Sukoon.
 - ✅ **Nightscout upload** (readings, treatments and finger-pricks), **CSV export**, and **Backup**: one zip with the database, every setting, the sensor pairing and the meal photos, restored in one step.
@@ -154,10 +155,12 @@ Someone who only follows sees a simpler app: no sensor, insulin or dose settings
 
 ### Everything else
 
-- ✅ **Your sensor at a glance.** You → Sensor says *Live*, *Reconnecting* or *No signal* from the last reading, puts what needs you on top in red or amber (Bluetooth off, no readings, sensor ending, ended) with the fix one tap away, and shows the sensor's life as a bar that turns amber 3 days before the end. Bluetooth off also shows on Home, and a notice comes 3 days, 1 day and 1 hour before the sensor stops.
+- ✅ **Your sensor at a glance.** You → Sensor says *Live*, *Reconnecting* or *No signal* from the last reading, puts what needs you on top in red or amber (Bluetooth off, no readings, sensor ending, ended) with the fix one tap away, and shows the sensor's life as a bar that turns amber 3 days before the end. *Connection* lists the last 24 hours' drops: when, how long the link had lasted, why Android says it dropped, and how soon it came back. Bluetooth off also shows on Home, and a notice comes 3 days, 1 day and 1 hour before the sensor stops.
 - ✅ **English, Standard Arabic and Egyptian Arabic**, right to left, with the language picked inside the app (1,404 strings in each, checked for parity; Arabic phones in Egypt get Egyptian, elsewhere Standard), and a **12- or 24-hour clock** (or the phone's).
 - ✅ **Light, dark or like the phone**, with motion from the design spec that turns off when the phone's *Remove animations* is on.
 - ✅ **A built-in guide** (You → Guide) and a getting-started card on Home.
+- 🌱 **Notices from Sukoon**: a short message to every install (a known problem, "please update"), as a notification and a card on Now, read every 6 hours from a file on GitHub Pages ([how](docs/notices.md)).
+- ✅ **A parent lock for children**: a PIN over the alarms, range, doses, profile and everything that would cut a parent off as a follower. From 18 it doesn't apply.
 - ✅ **Starts after a reboot or update**, and a watchdog wakes it if the phone kills it.
 
 ---
@@ -316,13 +319,14 @@ Nothing, unless you turn it on. There are no analytics, no ads and no tracking o
 | :-- | :-- | :-- |
 | Readings, logbook, photos, your profile and dose settings | Your phone (app-private) | always |
 | Readings out, meals in | Health Connect, on the phone | you grant Health Connect access |
-| Your live readings | Your Supabase account, readable only by people you approved (row-level security) | you sign in and invite a follower |
+| Your live readings, and which alarms your followers get | Your Supabase account, readable only by people you approved (row-level security) | you sign in and invite a follower |
 | Your LibreLinkUp or Dexcom login | Abbott's or Dexcom's servers, to fetch the readings you're allowed to see | you sign in to follow someone there, or use it as your glucose |
 | Readings and treatments | Your own Nightscout site | you add its address and token |
 | Summaries of your data, your profile and dose settings, meal photos, a dish you ask about | Google Gemini, with your own API key | you add a key and ask a question or for an estimate |
 | What you type in food search, or a barcode you scan | Open Food Facts (free, open data), to find the food | you search or scan |
 | A full backup (readings, logbook, photos, settings, your AI key) | One file in the cloud app you chose | you turn on the daily cloud backup |
 | Glucose, how long, location | Your emergency contacts by SMS and phone call | an urgent low goes unanswered |
+| Nothing about you: a request for two public files (notices, latest version) | GitHub, which hosts Sukoon | every 6 hours while Sukoon runs |
 
 **Cost:** Supabase, Gemini's free tier and Nightscout on your own machine are all $0. The app itself has no subscription, no account requirement and no server of its own.
 

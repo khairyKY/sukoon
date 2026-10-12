@@ -1,5 +1,13 @@
 package com.sukoon.app.ui.navigation
 
+import com.sukoon.app.ui.theme.SageDeep
+import com.sukoon.app.ui.theme.SageMist
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.animateColorAsState
+import androidx.annotation.DrawableRes
 import androidx.compose.runtime.produceState
 import com.sukoon.app.ui.logbook.formatAmountLocalized
 import com.sukoon.app.ui.insights.slot
@@ -84,6 +92,7 @@ import java.time.Instant
 import com.sukoon.app.ui.reports.ReportViewModel
 import com.sukoon.app.ui.help.GettingStartedCard
 import com.sukoon.app.ui.help.HelpDialog
+import com.sukoon.app.insights.InsightAction
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -116,17 +125,16 @@ import kotlinx.coroutines.withContext
  *
  * State is preserved per-tab via the standard popUpTo(saveState)/restoreState pattern.
  */
-enum class SukoonTab(val route: String, @StringRes val labelRes: Int) {
-    NOW("now", R.string.home_nav_now),
-    TRENDS("trends", R.string.home_nav_trends),
-    YOU("you", R.string.home_nav_you),
+enum class SukoonTab(val route: String, @StringRes val labelRes: Int, @DrawableRes val icon: Int, @DrawableRes val iconOn: Int) {
+    NOW("now", R.string.home_nav_now, R.drawable.ic_nav_now, R.drawable.ic_nav_now_on),
+    TRENDS("trends", R.string.home_nav_trends, R.drawable.ic_nav_trends, R.drawable.ic_nav_trends_on),
+    YOU("you", R.string.home_nav_you, R.drawable.ic_nav_you, R.drawable.ic_nav_you_on),
 }
 
 @Composable
 fun MainScaffold() {
     val navController = rememberNavController()
     var showGuide by rememberSaveable { mutableStateOf(false) }
-    if (showGuide) HelpDialog(onClose = { showGuide = false })
     // Health Connect only lets most phones read while Sukoon is on screen: sync on every return.
     val appContainer = (LocalContext.current.applicationContext as SukoonApp).container
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -163,6 +171,55 @@ fun MainScaffold() {
     fun openYou(page: YouPage? = null) {
         youOpen = youOpen.first + 1 to page
         navController.navigateToTab(SukoonTab.YOU)
+    }
+    // A Trends sub-tab asked for from elsewhere (a guide link), handled once by TrendsHub.
+    var trendsRequest by remember { mutableStateOf<TrendsSubTab?>(null) }
+    fun openTrends(tab: TrendsSubTab) {
+        trendsRequest = tab
+        navController.navigateToTab(SukoonTab.TRENDS)
+    }
+    /** A guide link ("link" in assets/guide) to the screen it names. */
+    fun openLink(link: String) {
+        when (link) {
+            "now" -> navController.navigateToTab(SukoonTab.NOW)
+            "sensor" -> openYou(YouPage.SENSOR)
+            "sensor_start" -> {
+                appContainer.requestedStartSensor.value = true
+                openYou(YouPage.SENSOR)
+            }
+            "alarms" -> openYou(YouPage.ALARMS)
+            "people" -> openYou(YouPage.PEOPLE)
+            "insulin" -> openYou(YouPage.INSULIN)
+            "learning" -> {
+                appContainer.requestedLearning.value = true
+                openYou(YouPage.INSULIN)
+            }
+            "apps" -> openYou(YouPage.APPS)
+            "reports" -> openYou(YouPage.REPORTS)
+            "appearance" -> openYou(YouPage.APPEARANCE)
+            "help" -> openYou(YouPage.HELP)
+            "trends_graph" -> openTrends(TrendsSubTab.GRAPH)
+            "trends_logbook" -> openTrends(TrendsSubTab.LOGBOOK)
+            "trends_insights" -> openTrends(TrendsSubTab.INSIGHTS)
+            "trends_report" -> openTrends(TrendsSubTab.REPORT)
+            "trends_ask" -> openTrends(TrendsSubTab.ASK)
+            "entry_carb" -> appContainer.requestedEntry.value = LogEventType.CARB
+            "entry_insulin" -> appContainer.requestedEntry.value = LogEventType.INSULIN
+            "entry_basal" -> appContainer.requestedEntry.value = LogEventType.BASAL
+            "entry_fingerstick" -> appContainer.requestedEntry.value = LogEventType.FINGERSTICK
+        }
+    }
+    if (showGuide) HelpDialog(onClose = { showGuide = false }, onLink = { showGuide = false; openLink(it) })
+    // An invite link tapped (sukoon://follow): follow in one tap, or sign in first and it comes back.
+    val pendingInvite by appContainer.pendingInvite.collectAsStateWithLifecycle()
+    val account by appContainer.sharing.supabase.session.collectAsStateWithLifecycle()
+    var signingInForInvite by remember(pendingInvite) { mutableStateOf(false) }
+    pendingInvite?.takeIf { account != null || !signingInForInvite }?.let { code ->
+        com.sukoon.app.ui.sharing.FollowInviteDialog(
+            code, signedIn = account != null, sharing = appContainer.sharing, watch = appContainer.followerWatch,
+            onSignIn = { signingInForInvite = true; openYou(YouPage.PEOPLE) },
+            onDone = { appContainer.pendingInvite.value = null },
+        )
     }
     Scaffold(
         bottomBar = { SukoonBottomBar(navController, onYou = { openYou() }) },
@@ -245,6 +302,14 @@ fun MainScaffold() {
                 }
                 // Beta: a correction when you're above your range and haven't eaten in 2 hours.
                 val recentEvents by remember { home.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofHours(6).toMillis()) }.collectAsStateWithLifecycle(initialValue = emptyList())
+                // ponytail: the newest 150 rows cover 2 hours at the 1-minute save interval (sparser saves cover more).
+                val lastReadings by remember { repository.recentReadings(150) }.collectAsStateWithLifecycle(initialValue = emptyList())
+                // A value under 70 in the last 2 hours: Home suggests no dose (the carbs since are treating it).
+                val lowAt = com.sukoon.app.insulin.Dose.lowAt(
+                    lastReadings.map { it.timestamp to it.glucoseMgDl } +
+                        recentEvents.filter { it.logType == LogEventType.FINGERSTICK }.mapNotNull { e -> e.value?.let { Instant.ofEpochMilli(e.timestampMillis) to kotlin.math.round(it).toInt() } },
+                    Instant.now(),
+                )
                 val correction = latest?.let { r ->
                     val now = Instant.now()
                     Dose.correction(
@@ -257,6 +322,7 @@ fun MainScaffold() {
                         onBoard = insulinOnBoard,
                         lastCarbsAt = recentEvents.lastOrNull { it.logType == LogEventType.CARB && (it.value ?: 0.0) > 0 }?.let { Instant.ofEpochMilli(it.timestampMillis) },
                         slot = InsightEngine.slotFor(now.atZone(ZoneId.systemDefault()).hour),
+                        lowAt = lowAt,
                     )
                 }
                 // Beta: a meal in the last hour with no insulin logged and none working.
@@ -278,6 +344,7 @@ fun MainScaffold() {
                             now = now,
                             onBoard = insulinOnBoard,
                             slot = InsightEngine.slotFor(mealAt.atZone(ZoneId.systemDefault()).hour),
+                            lowAt = lowAt,
                         )?.let { meal to it }
                     }
                 }
@@ -298,13 +365,13 @@ fun MainScaffold() {
                     }
                     val app = (context.applicationContext as SukoonApp).container
                     var startDismissed by remember { mutableStateOf(app.settings.gettingStartedDismissed) }
-                    val sensorConnected = app.pairingStore.load() != null
+                    val sensorConnected = app.pairingStore.load()?.started == true
                     val hasContact = app.settings.emergency.contacts.isNotEmpty()
-                    if (!startDismissed && !(sensorConnected && hasContact)) {
+                    val alarmsReach = missingSetup.isEmpty()
+                    if (!startDismissed && !(sensorConnected && hasContact && alarmsReach)) {
                         GettingStartedCard(
-                            sensorConnected = sensorConnected,
-                            hasEmergencyContact = hasContact,
-                            onSetUp = toYou,
+                            done = listOf(sensorConnected, alarmsReach, hasContact),
+                            onStep = ::openLink,
                             onGuide = { showGuide = true },
                             onDismiss = {
                                 app.settings.gettingStartedDismissed = true
@@ -380,12 +447,35 @@ fun MainScaffold() {
                 )
                 val askState by askViewModel.uiState.collectAsStateWithLifecycle()
                 val insightsViewModel: InsightsViewModel = viewModel(
-                    factory = InsightsViewModel.factory(container.glucoseRepository, container.logbookRepository, container.settings),
+                    factory = InsightsViewModel.factory(container.glucoseRepository, container.logbookRepository, container.settings) { container.calibration.enabled },
                 )
                 val insightsState by insightsViewModel.uiState.collectAsStateWithLifecycle()
                 val reportViewModel: ReportViewModel = viewModel(factory = ReportViewModel.factory(container.glucoseRepository))
                 val reportState by reportViewModel.state.collectAsStateWithLifecycle()
+                val trendsContext = LocalContext.current
                 TrendsHub(
+                    requestedSubTab = trendsRequest,
+                    onSubTabHandled = { trendsRequest = null },
+                    onInsightAction = { action ->
+                        when (action) {
+                            InsightAction.TURN_ON_GOING_LOW -> {
+                                container.settings.alarmSettings = container.settings.alarmSettings.copy(goingLowEnabled = true)
+                                trendsContext.toast(trendsContext.getString(R.string.in2_toast_going_low))
+                                insightsViewModel.settingsChanged()
+                            }
+                            InsightAction.TURN_ON_WORKOUT_CHECK -> {
+                                container.settings.afterWorkoutCheck = true
+                                trendsContext.toast(trendsContext.getString(R.string.in2_toast_workout))
+                                insightsViewModel.settingsChanged()
+                            }
+                            InsightAction.OPEN_DOSE_SETUP, InsightAction.OPEN_SITES -> openYou(YouPage.INSULIN)
+                            InsightAction.OPEN_LEARNING -> openLink("learning")
+                            InsightAction.OPEN_CALIBRATION -> openYou(YouPage.SENSOR)
+                            InsightAction.LOG_INSULIN -> container.requestedEntry.value = LogEventType.INSULIN
+                            InsightAction.LOG_MEAL -> container.requestedEntry.value = LogEventType.CARB
+                            InsightAction.REPORT, InsightAction.LOOK_AT -> Unit // TrendsHub switches tabs itself
+                        }
+                    },
                     graphState = graphState,
                     onSelectRange = graphViewModel::selectRange,
                     onGraphDay = graphViewModel::showDay,
@@ -401,7 +491,7 @@ fun MainScaffold() {
                     hasAiKey = askViewModel.hasKey,
                     onAsk = askViewModel::ask,
                     onClearAsk = askViewModel::clear,
-                    onOpenSettings = { openYou() },
+                    onOpenSettings = { openYou(YouPage.APPS) }, // the AI assistant's key lives in Apps & data
                     insightsState = insightsState,
                     onAcknowledgeInsights = insightsViewModel::acknowledge,
                     pendingEntry = pendingEntry,
@@ -577,13 +667,15 @@ private fun SukoonBottomBar(navController: NavHostController, onYou: () -> Unit)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 22.dp, vertical = 13.dp),
+                .padding(horizontal = 22.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceAround,
         ) {
             SukoonTab.entries.forEach { tab ->
                 val selected = currentRoute == tab.route
                 BottomBarItem(
                     label = stringResource(tab.labelRes),
+                    icon = tab.icon,
+                    iconOn = tab.iconOn,
                     selected = selected,
                     onClick = {
                         // You always opens on its hub, even when it's the tab already open.
@@ -605,34 +697,31 @@ private fun NavHostController.navigateToTab(tab: SukoonTab) {
 }
 
 @Composable
-private fun BottomBarItem(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun BottomBarItem(label: String, @DrawableRes icon: Int, @DrawableRes iconOn: Int, selected: Boolean, onClick: () -> Unit) {
+    val ink = MaterialTheme.colorScheme.onBackground
     Column(
         modifier = Modifier
-            .clip(CircleShape)
+            .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 2.dp),
+            .padding(horizontal = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(5.dp),
+        verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
-        if (selected) {
-            Box(Modifier.size(7.dp).clip(CircleShape).background(Sage))
-        } else {
-            Box(
-                Modifier
-                    .size(7.dp)
-                    .clip(CircleShape)
-                    .border(1.5.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f), CircleShape),
+        // The selected tab: a sage wash behind a filled icon; the others stay quiet outlines.
+        val wash by animateColorAsState(if (selected) SageMist else Color.Transparent, tween(Motion.BASE, easing = Motion.Standard), label = "navWash")
+        Box(Modifier.size(width = 56.dp, height = 30.dp).clip(CircleShape).background(wash), contentAlignment = Alignment.Center) {
+            Icon(
+                painterResource(if (selected) iconOn else icon),
+                contentDescription = null,
+                tint = if (selected) SageDeep else ink.copy(alpha = 0.6f),
+                modifier = Modifier.size(24.dp),
             )
         }
         Text(
             text = label,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-            fontSize = 9.5.sp,
-            color = if (selected) {
-                MaterialTheme.colorScheme.onBackground
-            } else {
-                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
-            },
+            fontSize = 11.sp,
+            color = if (selected) ink else ink.copy(alpha = 0.6f),
         )
     }
 }

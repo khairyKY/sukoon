@@ -9,6 +9,8 @@ import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.domain.metrics.GlucoseMetrics
 import com.sukoon.app.domain.metrics.GlucoseMetrics.RangeBracket
 import com.sukoon.app.domain.metrics.GlucoseSample
+import com.sukoon.app.domain.metrics.Spikes
+import com.sukoon.app.data.source.SourceKind
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
@@ -55,7 +57,7 @@ object AiPrompts {
           15 g of fast carbs and recheck in 15 minutes.
         - Be calm and brief: 2–6 short sentences or a few "•" bullets. Plain text — no markdown, no headings.
         - Reply in the language the user writes in (English or Egyptian Arabic).
-        - If DATA SOURCE is SIMULATED, say once that this is demo data, not their real readings.
+        - If DATA SOURCE is DEMO, say once that this is demo data, not their real readings. Otherwise never call it demo data.
         - INSIGHTS are computed by the app from these readings with the cited consensus rules: use their
           numbers rather than re-deriving them, and keep their caveats. ACTIVE INSULIN is rapid insulin
           still working; mention stacking risk if it matters.
@@ -98,6 +100,12 @@ object AiPrompts {
         zone: ZoneId,
         insulinAction: InsulinAction = InsulinAction(),
     ): String = buildString {
+        // Only what can be trusted reaches the model: real readings (demo only when there's nothing real),
+        // without readings no body produces (Spikes: misreads, or noise saved from a sensor that wasn't running).
+        val real = readings.filter { it.source != SourceKind.SIMULATED }
+        val demo = real.isEmpty() && readings.isNotEmpty()
+        @Suppress("NAME_SHADOWING")
+        val readings = Spikes.without(if (demo) readings else real)
         // Locale.US throughout: the model gets one consistent numeral/day-name format whatever the UI language.
         val dayTime = DateTimeFormatter.ofPattern("EEE MM-dd HH:mm", Locale.US).withZone(zone)
         val time = DateTimeFormatter.ofPattern("HH:mm", Locale.US).withZone(zone)
@@ -108,7 +116,7 @@ object AiPrompts {
             appendLine("No glucose readings recorded yet.")
         } else {
             val minutesAgo = Duration.between(latest.timestamp, now).toMinutes()
-            appendLine("DATA SOURCE: ${latest.source}")
+            appendLine("DATA SOURCE: " + if (demo) "DEMO (made-up readings to try the app)" else "REAL (their ${latest.source.name.lowercase().replace('_', ' ')})")
             appendLine("LATEST: ${latest.glucoseMgDl} mg/dL, trend ${latest.trend.name.lowercase()}, $minutesAgo min ago")
             appendLine(summary("LAST 24H", readings.filter { it.timestamp >= now.minus(Duration.ofHours(24)) }, dayTime))
             appendLine(summary("ALL ${readings.size} READINGS SHOWN (up to 7 days)", readings, dayTime))
@@ -211,6 +219,9 @@ object AiPrompts {
                 "(${insight.days} days) [Evert et al. 2019]."
             is Insight.Rotation -> "Injection sites: ${siteLabel(insight.site)} took ${insight.count} of ${insight.total} " +
                 "${if (insight.longActing) "long-acting" else "rapid"} doses in 2 weeks; using one spot often can cause lipohypertrophy [Frid et al. 2016]."
+            is com.sukoon.app.insights.LowsStory -> "Lows: ${insight.totalLows} in 14 days" +
+                (insight.recurring?.let { ", clustering ${hour(it.fromHour)}–${hour(it.toHour)} on ${it.days} days" } ?: "") +
+                (insight.cause?.let { "; likely cause: ${it.name.lowercase()}" } ?: "") + "."
         }
     }
 

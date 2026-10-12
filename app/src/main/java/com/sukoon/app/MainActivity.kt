@@ -19,6 +19,8 @@ import androidx.compose.runtime.collectAsState
 import com.sukoon.app.data.prefs.ThemeMode
 import android.content.Intent
 import com.sukoon.app.data.db.LogEventType
+import kotlinx.coroutines.launch
+import androidx.lifecycle.lifecycleScope
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,15 +60,58 @@ class MainActivity : ComponentActivity() {
         takeEntry(intent)
     }
 
-    /** A notification asked for a new entry (the long-acting reminder's "Log it"): the Logbook opens it. */
+    /**
+     * A notification asked for a new entry (the long-acting reminder's "Log it"): the Logbook opens it.
+     * From a low alarm's "Log what I ate", the low is answered as treated first, as Home's button does.
+     */
     private fun takeEntry(intent: Intent) {
+        takeLink(intent)
         val type = intent.getStringExtra(EXTRA_ENTRY)?.let { name -> LogEventType.entries.firstOrNull { it.name == name } } ?: return
         intent.removeExtra(EXTRA_ENTRY)
-        (application as SukoonApp).container.requestedEntry.value = type
+        val container = (application as SukoonApp).container
+        if (intent.getBooleanExtra(EXTRA_TREATED, false)) {
+            intent.removeExtra(EXTRA_TREATED)
+            container.appScope.launch { container.alarms.treated() }
+        }
+        container.requestedEntry.value = type
+    }
+
+    /**
+     * sukoon:// links, which web/join.html and web/auth.html open: an invite to follow (sukoon://follow?c=CODE)
+     * and the account confirmation email (sukoon://auth?code=…), which signs this phone in.
+     */
+    private fun takeLink(intent: Intent) {
+        val uri = intent.data?.takeIf { it.scheme == "sukoon" } ?: return
+        intent.data = null
+        val container = (application as SukoonApp).container
+        when (uri.host) {
+            "follow" -> uri.getQueryParameter("c")?.let(com.sukoon.app.sharing.InviteCode::find)?.let { container.pendingInvite.value = it }
+            "auth" -> {
+                val code = uri.getQueryParameter("code") ?: return
+                lifecycleScope.launch {
+                    val message = try {
+                        container.sharing.supabase.finishLink(code)
+                        container.followerWatch.refreshNow()
+                        getString(R.string.auth_confirmed)
+                    } catch (e: Exception) {
+                        getString(R.string.auth_link_failed, e.message ?: e.javaClass.simpleName)
+                    }
+                    android.widget.Toast.makeText(this@MainActivity, message, android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        }
     }
 
     companion object {
         const val EXTRA_ENTRY = "entry"
+        private const val EXTRA_TREATED = "treated_low"
+
+        /** A low alarm's "Log what I ate": answers it as treated, then opens a new meal. */
+        fun logTreatment(context: android.content.Context): Intent =
+            Intent(context, MainActivity::class.java)
+                .putExtra(EXTRA_ENTRY, LogEventType.CARB.name)
+                .putExtra(EXTRA_TREATED, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
     }
 }
 

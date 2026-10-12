@@ -127,7 +127,7 @@ fun DoseCard(
             LockedNotice(onUnlock)
             return@Column
         }
-        ParentLockRow(parentPin, onParentPin)
+        if (com.sukoon.app.platform.ParentLock.appliesTo(profile.ageYears)) ParentLockRow(parentPin, onParentPin) // no lock from 18
         if (!settings.enabled) return@Column
 
         val fromLogbook by produceState<Insight.Formulas?>(null) { value = runCatching { startingPoints() }.getOrNull() }
@@ -263,6 +263,17 @@ private fun MoreSettings(settings: DoseSettings, onChange: (DoseSettings) -> Uni
             Text(stringResource(R.string.dose_max_label), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted)
             DoseNumberField(settings.maxDose, suffix = units) { v -> v?.takeIf { it in 1.0..50.0 }?.let { onChange(settings.copy(maxDose = it)) } }
         }
+    }
+    Column(DoseTile.modifier(Modifier.fillMaxWidth()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.dose_after_low_label), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted)
+        val context = androidx.compose.ui.platform.LocalContext.current
+        com.sukoon.app.ui.components.NumberChips(
+            choices = listOf(60, 90, 120, 180),
+            selected = settings.afterLowMinutes,
+            range = com.sukoon.app.insulin.Dose.AFTER_LOW_RANGE,
+            label = { com.sukoon.app.ui.components.durationText(context, it.toLong()) },
+        ) { onChange(settings.copy(afterLowMinutes = it)) }
+        Text(stringResource(R.string.dose_after_low_hint), fontSize = 12.5.sp, lineHeight = 17.sp, color = CaptionMuted)
     }
 }
 

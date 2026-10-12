@@ -145,6 +145,11 @@ class AlarmActivity : ComponentActivity() {
                             color = s.type.screenColor,
                             snoozes = s.type.snoozeChoices,
                             onSnooze = { snooze(it, treated = false) },
+                            secondary = if (treatable && !s.test) stringResource(R.string.alarm_action_log_food) else null,
+                            onSecondary = {
+                                startActivity(com.sukoon.app.MainActivity.logTreatment(this@AlarmActivity))
+                                finish()
+                            },
                         ) { snooze(s.type.defaultSnooze(settings), treated = treatable) }
                     }
                 }
@@ -237,6 +242,9 @@ private fun Takeover(
     color: Color = StateUrgent,
     snoozes: List<Int> = emptyList(),
     onSnooze: (Int) -> Unit = {},
+    /** A second, outlined button under the main one (a low's "Log what I ate"). */
+    secondary: String? = null,
+    onSecondary: () -> Unit = {},
     onAction: () -> Unit,
 ) {
     // Motion spec: scales in from 93 % over 560 ms; the reading breathes with the live-dot rhythm.
@@ -278,6 +286,20 @@ private fun Takeover(
             contentAlignment = Alignment.Center,
         ) {
             Text(action, color = color, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        }
+        secondary?.let {
+            Spacer(Modifier.height(12.dp))
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(18.dp))
+                    .border(1.5.dp, Color.White, RoundedCornerShape(18.dp))
+                    .clickable(onClick = onSecondary)
+                    .padding(vertical = 18.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(it, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
         if (snoozes.isNotEmpty()) {
             Spacer(Modifier.height(20.dp))

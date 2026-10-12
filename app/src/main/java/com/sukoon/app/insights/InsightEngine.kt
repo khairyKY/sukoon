@@ -87,6 +87,8 @@ sealed interface Insight {
         val averageRise: Int,
         /** Grams of carbs per unit of rapid insulin actually used, when insulin was logged with the meal. */
         val gramsPerUnit: Double?,
+        /** The highest reading within 3 h of eating, on average. */
+        val averagePeak: Int = 0,
     ) : Insight {
         override val level = when {
             lowWithin4h >= 2 -> Level.URGENT
@@ -458,6 +460,7 @@ object InsightEngine {
             highAt2h = meals.count { (it.at2h ?: 0) > 180 },
             lowWithin4h = meals.count { it.lowWithin4h },
             averageRise = meals.map { it.rise }.average().roundToInt(),
+            averagePeak = meals.map { it.start + it.rise }.average().roundToInt(),
             gramsPerUnit = if (withInsulin.isEmpty()) null else (withInsulin.sumOf { it.carbs } / withInsulin.sumOf { it.insulin }).let { (it * 10).roundToInt() / 10.0 },
         )
     }

@@ -51,6 +51,8 @@ import kotlinx.coroutines.flow.asStateFlow
 class LibreBleSource(
     private val context: Context,
     private val store: SensorPairingStore,
+    /** Every time the link comes up and goes down (You → Sensor → Connection). */
+    private val log: ConnectionLog? = null,
 ) : GlucoseSource {
 
     private val _readings = MutableSharedFlow<GlucoseReading>(extraBufferCapacity = 64)
@@ -71,8 +73,8 @@ class LibreBleSource(
     private var lastPacketAt = 0L
     private var attemptStartedAt = 0L
     private var connectedThisAttempt = false
-    private var directFailures = 0
     private var refreshedThisAttempt = false
+    private var connectedAt = 0L
 
     /** BluetoothGatt.refresh() (hidden API, widely used by BLE apps): drops the cached service table. */
     private fun refreshCache(g: BluetoothGatt): Boolean =
@@ -114,31 +116,32 @@ class LibreBleSource(
         }
         try {
             _status.value = SourceStatus.Connecting
-            // Known address (from Enable Streaming): connect straight to it. autoConnect=true lets
-            // the stack wait for the sensor to advertise and keep retrying — no scan filters, works
-            // with the screen off, and doesn't depend on what the advertisement contains.
+            // Known address (from Enable Streaming): the stack waits for the sensor to advertise and
+            // connects (autoConnect) — no scan filters, works with the screen off. Never a direct
+            // connect: on Kai's Galaxy A23 (Android 14) a direct connect to the sensor's random address
+            // leaves the stack's 10 s create-connection timer running after it succeeds, and when it
+            // fires the live link is torn down ("one packet, then status 255 after ~8 s", 12 Oct).
             val address = store.bleAddress
             if (address != null && BluetoothAdapter.checkBluetoothAddress(address)) {
-                // Direct connect first (fast, ~30 s timeout); after a failed direct attempt let the
-                // stack wait for the sensor in the background (autoConnect) until the watchdog cycles.
-                // Quick direct attempts (each gives up in ~10 s) catch the sensor within seconds of it
-                // becoming free, e.g. right after an update cut the old connection; the background
-                // connect (autoConnect) is far slower to notice, so it's only the fallback.
-                val auto = directFailures >= DIRECT_TRIES
-                Log.i(TAG, "Connecting ${if (auto) "(background)" else "directly"} to $address")
+                Log.i(TAG, "Waiting for the sensor at $address")
                 attemptStartedAt = System.currentTimeMillis()
                 connectedThisAttempt = false
                 refreshedThisAttempt = false
-                gatt = remoteDevice(adapter, address).connectGatt(context, auto, gattCallback, BluetoothDevice.TRANSPORT_LE)
+                gatt = remoteDevice(adapter, address).connectGatt(context, true, gattCallback, BluetoothDevice.TRANSPORT_LE)
                 return
             }
             // No address yet: unfiltered scan, matched on the advertised UID (some firmware doesn't
             // advertise the FDE3 service UUID, so a service filter can miss the sensor entirely).
-            adapter.bluetoothLeScanner?.startScan(
+            val scanner = adapter.bluetoothLeScanner
+            if (scanner == null) { // Bluetooth is mid-restart: the scanner isn't there yet
+                main.postDelayed(::startScan, RETRY_MS)
+                return
+            }
+            scanner.startScan(
                 emptyList<ScanFilter>(),
                 ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build(),
                 scanCallback,
-            ) ?: return
+            )
             scanning = true
             // Android quietly stops long-running scans; restart periodically while still looking.
             main.postDelayed({ if (scanning) { stopScan(); startScan() } }, SCAN_RESTART_MS)
@@ -183,7 +186,10 @@ class LibreBleSource(
                 Log.i(TAG, "Found paired sensor ${result.device.address}")
                 store.bleAddress = result.device.address
                 stopScan()
-                gatt = result.device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+                attemptStartedAt = System.currentTimeMillis()
+                connectedThisAttempt = false
+                refreshedThisAttempt = false
+                gatt = result.device.connectGatt(context, true, gattCallback, BluetoothDevice.TRANSPORT_LE) // background: see startScan
             }
         }
 
@@ -207,19 +213,20 @@ class LibreBleSource(
     }
 
     /**
-     * Once a minute: if no packet has arrived for [STALL_MS] and the current attempt is at least
-     * that old, the link is stuck (half-open connection, or a background connect that never
-     * fires) — tear it down and start over with a fast direct attempt.
+     * Every [WATCHDOG_MS]: if no packet has arrived for [STALL_MS] and the current attempt is at
+     * least that old, the link is stuck (half-open connection, or a wait the stack forgot): tear it
+     * down and wait for the sensor again.
      */
     private fun watchdog() {
         if (!active) return
         val now = System.currentTimeMillis()
-        if (gatt != null && now - lastPacketAt > STALL_MS && now - attemptStartedAt > STALL_MS) {
-            Log.w(TAG, if (lastPacketAt == 0L) "No packet since connecting — restarting the connection" else "No packet for ${(now - lastPacketAt) / 1000} s — restarting the connection")
+        val stuckLink = now - lastPacketAt > STALL_MS && now - attemptStartedAt > STALL_MS
+        if (gatt != null && stuckLink) {
+            Log.w(TAG, if (lastPacketAt == 0L) "No packet since connecting, restarting the connection" else "No packet for ${(now - lastPacketAt) / 1000} s, restarting the connection")
+            if (connectedThisAttempt) log?.add(ConnectionLog.Event(Instant.now(), ConnectionLog.Kind.DOWN, ConnectionLog.STATUS_WATCHDOG, (now - connectedAt) / 1000))
             gatt?.close()
             gatt = null
             chunks.clear()
-            directFailures = 0
             startScan()
         }
         main.postDelayed(::watchdog, WATCHDOG_MS)
@@ -232,11 +239,15 @@ class LibreBleSource(
             main.post {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
                     connectedThisAttempt = true
+                    connectedAt = System.currentTimeMillis()
+                    log?.add(ConnectionLog.Event(Instant.now(), ConnectionLog.Kind.UP))
                     Log.i(TAG, "Connected, discovering services")
                     g.discoverServices()
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                    Log.i(TAG, "Disconnected (status $status)")
-                    if (!connectedThisAttempt) directFailures++
+                    val sinceConnect = (System.currentTimeMillis() - connectedAt) / 1000
+                    val sincePacket = if (lastPacketAt == 0L) "never" else "${(System.currentTimeMillis() - lastPacketAt) / 1000} s ago"
+                    Log.i(TAG, "Disconnected (status $status)" + if (connectedThisAttempt) " after $sinceConnect s, last packet $sincePacket" else "")
+                    if (connectedThisAttempt) log?.add(ConnectionLog.Event(Instant.now(), ConnectionLog.Kind.DOWN, status, sinceConnect))
                     g.close()
                     if (gatt === g) gatt = null
                     chunks.clear()
@@ -250,9 +261,11 @@ class LibreBleSource(
 
         override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
             main.post {
-                val notify = g.getService(SERVICE)?.getCharacteristic(NOTIFY)
-                val cccd = notify?.getDescriptor(CCCD)
-                if (notify == null || cccd == null) {
+                val p = pairing ?: return@post
+                val service = g.getService(SERVICE)
+                val write = service?.getCharacteristic(WRITE)
+                val cccd = service?.getCharacteristic(NOTIFY)?.getDescriptor(CCCD)
+                if (write == null || cccd == null) {
                     // Usually Android's cached services from before (an update, a restart): clear the cache and look again, once.
                     if (!refreshedThisAttempt && refreshCache(g)) {
                         refreshedThisAttempt = true
@@ -264,20 +277,8 @@ class LibreBleSource(
                     g.disconnect()
                     return@post
                 }
-                g.setCharacteristicNotification(notify, true)
-                writeDescriptor(g, cccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
-            }
-        }
-
-        override fun onDescriptorWrite(g: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
-            main.post {
-                val p = pairing ?: return@post
-                val write = g.getService(SERVICE)?.getCharacteristic(WRITE) ?: return@post
-                if (status != BluetoothGatt.GATT_SUCCESS) {
-                    Log.w(TAG, "Enabling notifications failed ($status)")
-                    g.disconnect()
-                    return@post
-                }
+                // Login first, notifications after it lands: the order DiaBLE and Juggluco use. The other
+                // way round, a Libre 2 Plus sent one packet and hung up.
                 val count = store.nextUnlockCount()
                 Log.i(TAG, "Logging in, unlock count $count")
                 writeCharacteristic(g, write, Libre2.streamingUnlockPayload(p.uid, p.patchInfo, Libre2.UNLOCK_CODE, count))
@@ -286,6 +287,23 @@ class LibreBleSource(
 
         override fun onCharacteristicWrite(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
             Log.i(TAG, "Login write status $status")
+            main.post {
+                val notify = g.getService(SERVICE)?.getCharacteristic(NOTIFY)
+                val cccd = notify?.getDescriptor(CCCD)
+                if (status != BluetoothGatt.GATT_SUCCESS || notify == null || cccd == null) {
+                    g.disconnect()
+                    return@post
+                }
+                g.setCharacteristicNotification(notify, true)
+                writeDescriptor(g, cccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+            }
+        }
+
+        override fun onDescriptorWrite(g: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                Log.w(TAG, "Enabling notifications failed ($status)")
+                main.post { g.disconnect() }
+            }
         }
 
         override fun onCharacteristicChanged(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, value: ByteArray) {
@@ -339,7 +357,6 @@ class LibreBleSource(
         }
         badPackets = 0
         lastPacketAt = System.currentTimeMillis()
-        directFailures = 0
         val (age, points) = Libre2.parseBle(p.calibration, decrypted)
         val now = System.currentTimeMillis()
         Log.i(TAG, "Packet: age $age min, ${points.joinToString { "${it.minute}:${it.mgDl}" }}")
@@ -360,13 +377,17 @@ class LibreBleSource(
             age >= p.lifetimeMinutes -> SourceStatus.Error("Sensor has expired")
             else -> SourceStatus.Connected
         }
-        if (_status.value != SourceStatus.Connected) return // warm-up and expired values aren't glucose
+        if (age >= p.lifetimeMinutes) return // an ended sensor's values aren't glucose
 
+        // The first hour is passed on too, flagged: shown on Home and the graph, left out of everything else.
         val plausible = points.filter { it.mgDl in PLAUSIBLE_MG_DL }
         val trend = GlucoseMetrics.trendFor(plausible.map { GlucoseSample(Instant.ofEpochMilli(anchored.startMillis + it.minute * MINUTE_MS), it.mgDl) })
         for (point in plausible) {
             _readings.tryEmit(
-                GlucoseReading(Instant.ofEpochMilli(anchored.startMillis + point.minute * MINUTE_MS), point.mgDl, trend, SourceKind.LIBRE_BLE),
+                GlucoseReading(
+                    Instant.ofEpochMilli(anchored.startMillis + point.minute * MINUTE_MS), point.mgDl, trend, SourceKind.LIBRE_BLE,
+                    warmup = point.minute < WARMUP_MINUTES,
+                ),
             )
         }
     }
@@ -383,12 +404,11 @@ class LibreBleSource(
         private val CHUNK_SIZES = listOf(20, 18, 8)
 
         const val MINUTE_MS = 60_000L
-        private const val WARMUP_MINUTES = 60
+        /** The sensor's own first hour, in sensor minutes. */
+        const val WARMUP_MINUTES = 60
         private const val RETRY_MS = 15_000L
         private const val RECONNECT_MS = 2_000L
-        /** Direct attempts before the slower background connect: about 90 s of quick tries. */
-        private const val DIRECT_TRIES = 8
-        private const val WATCHDOG_MS = 60_000L
+        private const val WATCHDOG_MS = 30_000L
         private const val STALL_MS = 3 * 60_000L
         private const val SCAN_RESTART_MS = 10 * 60_000L
         // ponytail: fixed tolerance; tune if real sensors drift faster than ~2 min over a session.

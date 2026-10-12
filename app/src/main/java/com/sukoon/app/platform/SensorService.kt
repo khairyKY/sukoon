@@ -95,6 +95,11 @@ class SensorService : Service() {
                     .setSmallIcon(R.drawable.ic_stat_sukoon)
                     .setContentTitle(context.getString(R.string.service_title))
                     .setContentText(context.getString(R.string.service_body))
+                // The first hour: shown, but plainly not a reading to act on (no number icon, no range colour).
+                reading.warmup && minutes <= HomeUiStateMapper.STALE_AFTER.toMinutes() -> builder
+                    .setSmallIcon(R.drawable.ic_stat_sukoon)
+                    .setContentTitle("${String.format(Locale.getDefault(), "%d", reading.glucoseMgDl)} ${context.getString(R.string.home_unit_mgdl)} · ${context.getString(R.string.service_warmup)}")
+                    .setContentText(context.getString(R.string.service_warmup_body))
                 minutes > HomeUiStateMapper.STALE_AFTER.toMinutes() -> builder
                     .setSmallIcon(R.drawable.ic_stat_sukoon)
                     .setContentTitle(context.resources.getQuantityString(R.plurals.service_stale_title, minutes.toInt(), minutes.toInt()))

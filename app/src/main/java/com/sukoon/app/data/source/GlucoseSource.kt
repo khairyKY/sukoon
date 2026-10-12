@@ -23,6 +23,8 @@ data class GlucoseReading(
     val glucoseMgDl: Int,
     val trend: TrendDirection,
     val source: SourceKind,
+    /** Taken in the sensor's first hour: shown, but never counted in reports, insights, alarms, shares or the AI. */
+    val warmup: Boolean = false,
 )
 
 /** Rate-of-change buckets over a 15-min window, mg/dL/min. See docs/PLAN.md §3. */

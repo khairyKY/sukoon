@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sukoon · Account</title>
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#F4F1EA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1E2B26" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<style>
+:root {
+  --bg: #F4F1EA; --surface: #FFFFFF; --ink: #1E2B26; --muted: #5E6B64; --line: #E4DFD4;
+  --sage: #3E7A63; --deep: #2E5C4A; --low: #A23F35;
+  --serif: 'Newsreader', Georgia, serif; --sans: 'Hanken Grotesk', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1E2B26; --surface: #10201B; --ink: #E4DFD4; --muted: #A6B1AA; --line: rgba(228,223,212,.14); --sage: #82BBA0; --deep: #A8D3BE; --low: #F0A097; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-text-size-adjust: 100%; }
+body { min-height: 100vh; padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom)); }
+main { max-width: 440px; margin: 0 auto; }
+.mark { width: 56px; height: 56px; }
+h1 { font-family: var(--serif); font-weight: 400; font-size: 30px; margin: 14px 0 6px; }
+p { line-height: 1.45; }
+.muted { color: var(--muted); font-size: 15px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px; margin-top: 14px; }
+label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin: 12px 0 6px; }
+input { width: 100%; min-height: 48px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: 500 16px var(--sans); padding: 0 14px; }
+input:focus { outline: 2px solid var(--sage); border-color: transparent; }
+.primary, .secondary { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 52px; margin-top: 14px; border-radius: 14px; font: 600 16px var(--sans); text-decoration: none; cursor: pointer; }
+.primary { background: var(--sage); color: #fff; border: none; }
+.primary:disabled { opacity: .5; }
+.secondary { border: 1.5px solid var(--sage); color: var(--deep); background: none; }
+.error { color: var(--low); font-size: 14px; margin-top: 10px; min-height: 1em; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <svg class="mark" viewBox="0 0 108 108" aria-hidden="true"><rect width="108" height="108" rx="30" fill="#1E2B26"/><circle cx="54" cy="54" r="19.13" fill="#EAF0EC"/><circle cx="63.56" cy="46.35" r="19.13" fill="#1E2B26"/><circle cx="60.69" cy="55.91" r="4.78" fill="none" stroke="#82BBA0" stroke-width="2.3"/></svg>
+  <h1 id="title"></h1>
+  <p class="muted" id="body"></p>
+
+  <form id="reset" class="card hidden">
+    <label for="password" data-t="newPassword"></label>
+    <input id="password" type="password" autocomplete="new-password" minlength="6" required>
+    <label for="again" data-t="again"></label>
+    <input id="again" type="password" autocomplete="new-password" minlength="6" required>
+    <button class="primary" id="save" type="submit" data-t="save"></button>
+    <div class="error" id="error" role="alert"></div>
+  </form>
+
+  <a class="primary hidden" id="openApp" href="#" data-t="openApp"></a>
+  <a class="secondary hidden" id="openWeb" href="index.html" data-t="openWeb"></a>
+</main>
+<script>
+'use strict';
+// Where Supabase's emails land (Supabase.AUTH_PAGE in the app; docs/accounts.md):
+//  ?code=…                 an account made in the Android app, confirmed: hand the one-time code back to
+//                          it (sukoon://auth). Useless without the verifier that only that phone has.
+//  #…&type=recovery        a password reset: choose the new one here, on any device.
+//  #access_token…          an account made on the follow page (or a resent email), confirmed.
+//  ?error / #error         an expired or used link.
+// Tokens are read once and wiped from the address bar; nothing here talks to anyone but Supabase.
+const T = {
+  en: {
+    confirmed: 'Email confirmed', appBody: 'Tap below to go back to Sukoon, signed in. Opened this on another device? Go back to Sukoon on your phone and tap "I\'ve confirmed it".',
+    webBody: 'Your account is ready. In the Sukoon app, tap "I\'ve confirmed it"; following from the browser, continue below.',
+    resetTitle: 'Choose a new password', resetBody: 'At least 6 characters. Then sign in with it in Sukoon or on the follow page.',
+    newPassword: 'New password', again: 'Type it again', save: 'Save the password',
+    mismatch: "The two passwords don't match.", short: 'At least 6 characters.', offline: "Can't reach Sukoon. Check the internet and try again.",
+    saved: 'Password changed', savedBody: 'Sign in with the new password in Sukoon, or on the follow page.',
+    expired: 'This link has run out', expiredBody: 'Links work once, for a limited time. Ask Sukoon for a new one: "Send it again" after making the account, or "Forgot password?" on the sign-in screen.',
+    nothing: 'Nothing to do here', nothingBody: 'This page opens from Sukoon\'s emails.',
+    openApp: 'Open Sukoon', openWeb: 'Continue in the browser',
+  },
+  ar: {
+    confirmed: 'الإيميل اتأكد', appBody: 'دوس تحت عشان ترجع لسكون وإنت داخل. فتحت ده على جهاز تاني؟ ارجع لسكون على موبايلك ودوس "أكدته".',
+    webBody: 'حسابك جاهز. في تطبيق سكون دوس "أكدته"؛ ولو بتتابع من المتصفح، كمّل من تحت.',
+    resetTitle: 'اختار كلمة سر جديدة', resetBody: '٦ حروف على الأقل. وبعدين ادخل بيها في سكون أو في صفحة المتابعة.',
+    newPassword: 'كلمة السر الجديدة', again: 'اكتبها تاني', save: 'احفظ كلمة السر',
+    mismatch: 'كلمتين السر مش زي بعض.', short: '٦ حروف على الأقل.', offline: 'مش قادر أوصل لسكون. اتأكد من النت وجرّب تاني.',
+    saved: 'كلمة السر اتغيرت', savedBody: 'ادخل بكلمة السر الجديدة في سكون، أو في صفحة المتابعة.',
+    expired: 'اللينك ده خلص', expiredBody: 'اللينكات بتشتغل مرة واحدة ولوقت محدود. اطلب واحد جديد من سكون: "ابعته تاني" بعد ما تعمل الحساب، أو "نسيت كلمة السر؟" في شاشة الدخول.',
+    nothing: 'مفيش حاجة هنا', nothingBody: 'الصفحة دي بتتفتح من إيميلات سكون.',
+    openApp: 'افتح سكون', openWeb: 'كمّل في المتصفح',
+  },
+};
+const lang = (localStorage.getItem('lang') || navigator.language || 'en').startsWith('ar') ? 'ar' : 'en';
+const t = (k) => T[lang][k];
+const $ = (id) => document.getElementById(id);
+document.documentElement.lang = lang;
+document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+document.querySelectorAll('[data-t]').forEach((el) => { el.textContent = t(el.dataset.t); });
+const android = /Android/i.test(navigator.userAgent);
+
+const query = new URLSearchParams(location.search);
+const hash = new URLSearchParams(location.hash.slice(1));
+history.replaceState(null, '', location.pathname); // the tokens leave the address bar (and history) at once
+
+function say(title, body) { $('title').textContent = t(title); $('body').textContent = t(body); }
+function keep(json) { // the follow page's session format (index.html)
+  localStorage.setItem('session', JSON.stringify({ access_token: json.access_token, refresh_token: json.refresh_token, expires_at: Date.now() + Number(json.expires_in || 3600) * 1000, user: json.user }));
+}
+
+if (query.get('error') || hash.get('error')) {
+  say('expired', 'expiredBody');
+} else if (query.get('code')) {
+  say('confirmed', 'appBody');
+  if (android) {
+    $('openApp').href = `intent://auth?code=${encodeURIComponent(query.get('code'))}#Intent;scheme=sukoon;end`;
+    $('openApp').classList.remove('hidden');
+  }
+} else if (hash.get('access_token') && hash.get('type') === 'recovery') {
+  say('resetTitle', 'resetBody');
+  $('reset').classList.remove('hidden');
+  const token = hash.get('access_token');
+  $('reset').onsubmit = async (e) => {
+    e.preventDefault();
+    $('error').textContent = '';
+    const password = $('password').value;
+    if (password.length < 6) { $('error').textContent = t('short'); return; }
+    if (password !== $('again').value) { $('error').textContent = t('mismatch'); return; }
+    $('save').disabled = true;
+    try {
+      const res = await fetch(SUKOON.url + '/auth/v1/user', {
+        method: 'PUT',
+        headers: { apikey: SUKOON.key, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) { $('error').textContent = json.msg || json.error_description || json.message || t('offline'); return; }
+      $('reset').classList.add('hidden');
+      say('saved', 'savedBody');
+      $('openWeb').classList.remove('hidden');
+      if (android) { $('openApp').href = 'intent://auth#Intent;scheme=sukoon;end'; $('openApp').classList.remove('hidden'); }
+    } catch (err) { $('error').textContent = t('offline'); } finally { $('save').disabled = false; }
+  };
+} else if (hash.get('access_token')) {
+  say('confirmed', 'webBody');
+  const json = { access_token: hash.get('access_token'), refresh_token: hash.get('refresh_token'), expires_in: hash.get('expires_in') };
+  // The browser keeps this session only if it's used here: the app signs in with its own password.
+  fetch(SUKOON.url + '/auth/v1/user', { headers: { apikey: SUKOON.key, Authorization: 'Bearer ' + json.access_token } })
+    .then((r) => r.json()).then((u) => { if (u && u.id) $('openWeb').onclick = () => keep({ ...json, user: u.id }); }).catch(() => {});
+  $('openWeb').classList.remove('hidden');
+  if (android) { $('openApp').href = 'intent://auth#Intent;scheme=sukoon;end'; $('openApp').classList.remove('hidden'); }
+} else {
+  say('nothing', 'nothingBody');
+  $('openWeb').classList.remove('hidden');
+}
+</script>
+</body>
+</html>

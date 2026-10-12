@@ -20,14 +20,19 @@ fun GlucoseReading.toEntity(): ReadingEntity = ReadingEntity(
     glucoseMgDl = glucoseMgDl,
     trend = trend.name,
     source = source.name,
+    warmup = warmup,
 )
 
 fun ReadingEntity.toGlucoseReading(): GlucoseReading = GlucoseReading(
     timestamp = Instant.ofEpochMilli(timestampMillis),
     glucoseMgDl = glucoseMgDl,
     trend = safeEnum(trend, TrendDirection.STEADY),
-    source = safeEnum(source, SourceKind.SIMULATED),
+    source = if (source in LEGACY_REAL_SOURCES) SourceKind.LIBRE_BLE else safeEnum(source, SourceKind.SIMULATED),
+    warmup = warmup,
 )
+
+/** Sources 0.2 had (DiaBox's broadcast, Nightscout): real Libre readings, never to be read back as demo. */
+private val LEGACY_REAL_SOURCES = setOf("NIGHTSCOUT", "BROADCAST")
 
 private inline fun <reified T : Enum<T>> safeEnum(name: String, default: T): T =
     enumValues<T>().firstOrNull { it.name == name } ?: default

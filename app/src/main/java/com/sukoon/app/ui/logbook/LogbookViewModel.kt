@@ -88,6 +88,11 @@ class LogbookViewModel(
             glucoseAt = events.mapNotNull { e -> readings.nearestTo(e.timestampMillis)?.let { e.id to it } }.toMap(),
             insulinOnBoard = InsulinOnBoard.total(events, Instant.now(), insulinAction()),
             photos = photos?.all().orEmpty(),
+            lowAt = com.sukoon.app.insulin.Dose.lowAt(
+                latest.map { it.timestamp to it.glucoseMgDl } +
+                    month.filter { it.logType == LogEventType.FINGERSTICK }.mapNotNull { e -> e.value?.let { Instant.ofEpochMilli(e.timestampMillis) to it.roundToInt() } },
+                Instant.now(),
+            ),
             glucoseNow = readings.lastOrNull()?.takeIf { Duration.between(it.timestamp, Instant.now()) <= HomeUiStateMapper.STALE_AFTER },
             readings = readings,
             day = past?.first,
@@ -114,7 +119,11 @@ class LogbookViewModel(
                 type = draft.type.name,
                 value = draft.amount,
                 note = draft.note,
-                site = draft.site?.name?.takeIf { draft.type == LogEventType.INSULIN || draft.type == LogEventType.BASAL },
+                site = when (draft.type) {
+                    LogEventType.INSULIN, LogEventType.BASAL -> draft.site?.name
+                    LogEventType.FINGERSTICK -> draft.finger?.name
+                    else -> null
+                },
                 mealId = draft.mealId,
                 fiber = n?.fiber,
                 sugar = n?.sugar,

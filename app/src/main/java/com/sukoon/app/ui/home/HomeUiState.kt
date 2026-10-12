@@ -26,7 +26,8 @@ sealed interface HomeUiState {
 
     data class Urgent(val glucoseMgDl: Int, val trend: TrendDirection) : HomeUiState
 
-    data class WarmingUp(val minutesRemaining: Int) : HomeUiState
+    /** [provisionalMgDl]: a first-hour reading the sensor sent anyway: shown, but not counted anywhere. */
+    data class WarmingUp(val minutesRemaining: Int, val provisionalMgDl: Int? = null) : HomeUiState
 
     data class Stale(
         val lastGlucoseMgDl: Int,

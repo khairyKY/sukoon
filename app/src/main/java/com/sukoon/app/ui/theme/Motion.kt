@@ -30,6 +30,9 @@ object Motion {
     const val DRAW = 900
     const val LOOP = 2400
 
+    /** Reduced motion: spatial moves (push, sheet, toast) become this crossfade in place. */
+    const val REDUCED = 120
+
     val Standard = CubicBezierEasing(0.4f, 0f, 0.2f, 1f)
     val Out = CubicBezierEasing(0f, 0f, 0.2f, 1f)
     val In = CubicBezierEasing(0.4f, 0f, 1f, 1f)

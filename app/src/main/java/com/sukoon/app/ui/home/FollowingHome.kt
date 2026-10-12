@@ -65,6 +65,7 @@ import com.sukoon.app.ui.graph.GraphScreen
 import com.sukoon.app.ui.graph.GraphUiState
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
+import com.sukoon.app.ui.components.NoticeBanner
 import com.sukoon.app.ui.theme.PillHighBg
 import com.sukoon.app.ui.theme.PillHighText
 import com.sukoon.app.ui.theme.PillLowBg
@@ -116,6 +117,7 @@ fun FollowingHome(sharing: Sharing, settings: SettingsPrefs, onAddPerson: () -> 
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 14.dp),
     ) {
+        NoticeBanner(Modifier.padding(bottom = 12.dp))
         when {
             people == null -> Unit // first load
             person == null -> NobodyYet(onAddPerson)
@@ -364,10 +366,13 @@ private fun FollowedInsights(sharing: Sharing, person: Followed, modifier: Modif
             delay(Duration.ofMinutes(15).toMillis())
         }
     }
+    // Their readings only (meals and insulin stay on their phone); no buttons: their settings aren't this phone's.
+    val digest = insights?.let { com.sukoon.app.insights.InsightDigestBuilder.build(it, emptyList(), java.time.Instant.now(), java.time.ZoneId.systemDefault()) }
     com.sukoon.app.ui.insights.InsightsScreen(
-        com.sukoon.app.ui.insights.InsightsUiState(acknowledged, insights),
+        com.sukoon.app.ui.insights.InsightsUiState(acknowledged, insights, digest),
         onAcknowledge = { settings.insightsAcknowledged = true; acknowledged = true },
         modifier = modifier,
+        showActions = false,
     )
 }
 

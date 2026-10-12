@@ -1,0 +1,71 @@
+# Accounts: confirming emails, resetting passwords, invite links
+
+What the app and the web pages do, and the Supabase settings they need. Sign-in is email and
+password only (no Google or Apple).
+
+## The flows
+
+**Creating an account (app).** Sign-up sends a PKCE challenge; the verifier stays on the phone
+(`Supabase.signUp`). Sukoon shows *Check your inbox* with *Send it again* (a minute apart) and
+*I've confirmed it*. The email's link goes through Supabase to `web/auth.html?code=…`, whose
+*Open Sukoon* button hands the code to the app (`sukoon://auth?code=…`). The app trades it for a
+session with its verifier, so tapping the link on the same phone signs in; on any other device the
+page says to go back to the phone and tap *I've confirmed it*. Another app catching the link gets a
+code it can't use without the verifier.
+
+**Creating an account (follow page).** Same email; the link lands on `auth.html#access_token=…`,
+and *Continue in the browser* keeps that session for the follow page.
+
+**Forgot password.** *Forgot password?* (app sign-in, onboarding, follow page) emails a link to
+`auth.html#…type=recovery`, where a new password is chosen on any device. Then sign in with it.
+
+**Expired or used links** show *This link has run out* and say where to get a new one.
+
+**Invite links.** An invite is shared as `https://khairyky.github.io/sukoon/join.html?c=CODE`
+(also as a QR code on the invite sheet). On Android, *Open in Sukoon* opens the app with the code
+(`sukoon://follow?c=CODE`): signed in, one tap follows; signed out, the code waits while you sign in
+(onboarding's code step starts filled in). Without the app, or on an iPhone or computer, it opens
+the follow page with the code, which follows by itself once signed in. Codes are typed in capitals
+automatically; O, 0, I and 1 never appear in one, so they're ignored.
+
+## Supabase settings (dashboard, once)
+
+1. **Your own email provider first.** Supabase's built-in email only sends to members of your
+   Supabase team, a few per hour. Anyone else would never get a confirmation or reset link.
+   Sukoon uses **Gmail's SMTP** (free, no domain needed, about 500 emails a day):
+   1. A Gmail for Sukoon (a new one such as `sukoon.app…@gmail.com` keeps it apart from your own).
+   2. In that Google account: Security → **2-Step Verification** on.
+   3. https://myaccount.google.com/apppasswords → name it `Supabase` → copy the 16-letter password.
+      It's shown once; it only works for sending mail and can be revoked there any time.
+   4. Supabase → Authentication → Emails → **SMTP Settings** → *Enable custom SMTP*:
+      sender email = that Gmail, sender name = `Sukoon`, host `smtp.gmail.com`, port `465`,
+      username = that Gmail, password = the app password.
+   5. Test it: *Forgot password?* on the follow page with your own email. Nothing in the inbox
+      within a minute: check spam, then Supabase → Logs → Auth for the SMTP error.
+
+   (Resend gives better delivery but its free plan needs a domain you own; Brevo works without one
+   but mail "from" a Gmail through it tends to land in spam.)
+2. **Confirm email on.** Authentication → Sign In / Providers → Email → *Confirm email*. Accounts
+   made before this are already confirmed and aren't affected.
+3. **Where links may go.** Authentication → URL Configuration:
+   - Site URL: `https://khairyky.github.io/sukoon/`
+   - Redirect URLs: add `https://khairyky.github.io/sukoon/auth.html`
+4. **Optional: the emails' words.** Authentication → Emails → Templates. The default templates work
+   (they use `{{ .ConfirmationURL }}`); a line of Arabic under the English is a kind touch.
+
+Nothing here needs the service_role key or the database password.
+
+## Housekeeping
+
+`supabase/migrations/20261013000000_invite_cleanup.sql` (run it in the SQL editor like the others)
+deletes invites a week after they expired, used or not: the follows they made live in
+`public.follows`, so nothing is lost. It runs once straight away and then daily at 03:17 UTC through
+pg_cron. If pg_cron isn't on, it says so and only does the one-off clean-up: turn it on under
+Database → Extensions → pg_cron and run the file again. The app never shows expired invites anyway.
+
+## New followers
+
+Every 15 minutes the app checks who follows the account and notifies about anyone new: *Reema now
+follows you*, with *Remove* on the notification. Under the parent lock (a PIN, under 18) there's no
+Remove there: removing a follower stays behind the PIN in You → People. The first check on an
+account only remembers who's there.

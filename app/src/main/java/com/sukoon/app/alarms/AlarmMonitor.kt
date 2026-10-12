@@ -16,6 +16,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -45,6 +46,8 @@ class AlarmMonitor(
     private val enabled: () -> Boolean,
     /** Re-arms [SignalWatchdog] (wake Sukoon after this long without a reading). */
     private val watchdog: (Duration) -> Unit = {},
+    /** The paired sensor is in its first hour: it sends nothing to act on yet, so silence isn't "no readings". */
+    private val warmingUp: () -> Boolean = { false },
 ) {
     private val mutex = Mutex()
     private val restored = store?.load()
@@ -71,9 +74,18 @@ class AlarmMonitor(
 
     fun start() {
         scope.launch {
-            repository.readingsSince(System.currentTimeMillis() - WINDOW.toMillis()).first().forEach(::keep)
-            // However old: after a restart with the sensor quiet for an hour, "no readings" must still go off.
-            repository.latestReading.first()?.let(::keep)
+            reload()
+            // A new finger-prick fit: what's kept was adjusted the old way, so read it again.
+            launch {
+                repository.calibrationChanges.drop(1).collect {
+                    mutex.withLock {
+                        recent.clear()
+                        newest = null
+                        reload()
+                        evaluateLocked()
+                    }
+                }
+            }
             val minuteTicks = flow {
                 while (true) {
                     emit(null)
@@ -155,6 +167,12 @@ class AlarmMonitor(
     /** A pack's low-alarm sound, before choosing it (at the volume a low alarm plays). */
     fun previewPack(pack: SoundPack) = notifier.preview(AlarmType.LOW, settings.alarmSettings.let { it.copy(soundPack = pack, sounds = it.sounds - AlarmType.LOW) })
 
+    private suspend fun reload() {
+        repository.readingsSince(System.currentTimeMillis() - WINDOW.toMillis()).first().forEach(::keep)
+        // However old: after a restart with the sensor quiet for an hour, "no readings" must still go off.
+        repository.latestReading.first()?.takeIf { !it.warmup }?.let(::keep)
+    }
+
     private fun keep(reading: GlucoseReading) {
         recent[reading.timestamp] = reading
         if (newest?.timestamp?.isBefore(reading.timestamp) != false) newest = reading
@@ -173,14 +191,15 @@ class AlarmMonitor(
         }
         // The newest reading always counts, however old: the 30-minute window alone would forget it and end
         // "no readings" (and its emergency escalation) half an hour after the sensor went quiet.
-        val result = AlarmEngine.evaluate((recent.values + listOfNotNull(newest)).distinct(), now, settings.alarmSettings, state)
+        val alarmSettings = settings.alarmSettings.let { if (warmingUp()) it.copy(signalLossEnabled = false) else it }
+        val result = AlarmEngine.evaluate((recent.values + listOfNotNull(newest)).distinct(), now, alarmSettings, state)
         state = result.state
         _active.value = state.activeSince.keys // before showing: the alert screen checks it as it opens
         result.cleared.forEach {
             notifier.cancel(it)
             log.add(AlarmLog.Entry(now, it, AlarmLog.Kind.RESOLVED))
         }
-        result.fire.forEach { notifier.show(it, settings.alarmSettings) }
+        result.fire.forEach { notifier.show(it, alarmSettings) }
         escalateLocked(now)
     }
 

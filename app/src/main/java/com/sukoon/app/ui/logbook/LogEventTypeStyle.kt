@@ -1,6 +1,8 @@
 package com.sukoon.app.ui.logbook
 
+import androidx.annotation.DrawableRes
 import androidx.compose.ui.graphics.Color
+import com.sukoon.app.R
 import com.sukoon.app.data.db.LogEventType
 import com.sukoon.app.ui.theme.Sage
 import com.sukoon.app.ui.theme.SageDeep
@@ -19,4 +21,15 @@ fun colorForLogEventType(type: LogEventType): Color = when (type) {
     LogEventType.FINGERSTICK -> PillLowText
     LogEventType.ACTIVITY -> StateHigh
     LogEventType.NOTE -> TextMuted
+}
+
+/** The line icon per event type, shared by the timeline chips and the add tiles. */
+@DrawableRes
+fun iconForLogEventType(type: LogEventType): Int = when (type) {
+    LogEventType.CARB -> R.drawable.ic_food
+    LogEventType.INSULIN -> R.drawable.ic_insulin
+    LogEventType.BASAL -> R.drawable.ic_moon
+    LogEventType.FINGERSTICK -> R.drawable.ic_drop
+    LogEventType.ACTIVITY -> R.drawable.ic_walk
+    LogEventType.NOTE -> R.drawable.ic_note
 }

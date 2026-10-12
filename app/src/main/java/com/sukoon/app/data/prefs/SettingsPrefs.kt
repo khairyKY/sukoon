@@ -10,6 +10,7 @@ import com.sukoon.app.alarms.AlarmType
 import com.sukoon.app.alarms.SoundPack
 import com.sukoon.app.emergency.EmergencySettings
 import com.sukoon.app.insulin.InsulinAction
+import com.sukoon.app.insulin.Dose
 import com.sukoon.app.insulin.DoseSettings
 import com.sukoon.app.insulin.Profile
 import com.sukoon.app.insulin.Sex
@@ -158,6 +159,7 @@ class SettingsPrefs(context: Context) {
                 target = prefs.getInt(KEY_DOSE_TARGET, 110).coerceIn(80, 180),
                 maxDose = number(KEY_DOSE_MAX) ?: 10.0,
                 step = number(KEY_DOSE_STEP) ?: 1.0,
+                afterLowMinutes = prefs.getInt(KEY_DOSE_AFTER_LOW, 120).coerceIn(Dose.AFTER_LOW_RANGE),
             )
         }
         set(value) = prefs.edit().apply {
@@ -168,6 +170,7 @@ class SettingsPrefs(context: Context) {
             putInt(KEY_DOSE_TARGET, value.target)
             number(KEY_DOSE_MAX, value.maxDose)
             number(KEY_DOSE_STEP, value.step)
+            putInt(KEY_DOSE_AFTER_LOW, value.afterLowMinutes)
         }.apply()
 
     /** You → Appearance. */
@@ -209,6 +212,11 @@ class SettingsPrefs(context: Context) {
         get() = prefs.getBoolean(KEY_START_DISMISSED, false)
         set(value) = prefs.edit().putBoolean(KEY_START_DISMISSED, value).apply()
 
+    /** Gentle check 30 min after a logged workout: the number and its arrow (You → Alarms → Gentle checks). */
+    var afterWorkoutCheck: Boolean
+        get() = prefs.getBoolean(KEY_AFTER_WORKOUT, true)
+        set(value) = prefs.edit().putBoolean(KEY_AFTER_WORKOUT, value).apply()
+
     /** Trends → Insights stays locked until the user has read and accepted what it is (and isn't). */
     var insightsAcknowledged: Boolean
         get() = prefs.getBoolean(KEY_INSIGHTS_ACK, false)
@@ -218,6 +226,7 @@ class SettingsPrefs(context: Context) {
         val SAVE_INTERVALS = listOf(1, 2, 3, 5, 15)
         val SAVE_INTERVAL_RANGE = 1..60
         private const val KEY_SOURCE = "source_kind"
+        private const val KEY_AFTER_WORKOUT = "after_workout_check"
         private const val KEY_ROLE = "user_role"
         private const val KEY_HOME_STATS = "home_stats"
         private const val KEY_ONBOARDED = "onboarded"
@@ -252,6 +261,7 @@ class SettingsPrefs(context: Context) {
         private const val KEY_DOSE_FACTOR = "dose_factor"
         private const val KEY_DOSE_TARGET = "dose_target"
         private const val KEY_DOSE_MAX = "dose_max"
+        private const val KEY_DOSE_AFTER_LOW = "dose_after_low_minutes"
         private const val KEY_DOSE_STEP = "dose_step"
         private const val KEY_BASAL_REMINDER = "basal_reminder_on"
         private const val KEY_BASAL_MINUTE = "basal_reminder_minute"

@@ -26,13 +26,17 @@ Picked first by the sensor's life, then by the newest reading. One state at a ti
 | State | When | What Home shows |
 |---|---|---|
 | **Sensor ended** | The sensor's life is up (15 days for a Libre 2 Plus) | "Sensor ended", how to start a new one |
-| **Warming up** | First 60 minutes of a new sensor | Countdown ring to the first reading |
+| **Warming up** | First 60 minutes of a new sensor, or the newest reading is from a sensor's first hour | Countdown ring to the first reading; a first-hour reading in grey, "not counted" |
 | **No sensor** | Nothing paired, or no reading ever | Pair a sensor / enter the code |
 | **Signal lost** | Newest reading older than 10 min | The last value greyed, how long ago, help to reconnect |
 | **Urgent** | Under **55** | Red banner, big number, "Do this now: 15 g fast carbs", *I've treated it* / *Alert emergency contact* |
 | **Low** | 55 to 69 | Big number, "You're going low", *I've treated it* / *Snooze 15 min* |
 | **In range** | 70 to the top of your range (180 unless you set it lower, You → Alarms → Your range) | Number, last 3 hours as bars (one per 15 min, a low or high in it shows), your chosen stats, the message |
 | **High** | Over the top of your range | Same layout as in range, amber |
+
+**First-hour readings** (the sensor's own minutes 0–59, flagged *warm-up*) show only on Home (grey), the
+graph and the status bar ("warming up", no number icon, no colour). Reports, insights, time in range,
+alarms, uploads (followers, Nightscout, Health Connect), calibration, the CSV and the AI never count them.
 
 Urgent on Home starts exactly where the urgent-low alarm does (under 55). Time-in-range figures
 still use the international bands (under 54 = very low).
@@ -92,7 +96,7 @@ a high 10 below its line.
 | **Low** | Under your low line | 70 | Line 60 to 110, on/off | After its snooze (15 min) | Alarm stream, 30 s, volume lifted to at least 50% |
 | **Going low** | Heading under your low line within 20 min | On | On/off | Once per episode | Alarm stream, 8 s, volume lifted to at least 50% |
 | **High** | Over your high line | 180 | Line 120 to 400, on/off, quiet hours | After its snooze (60 min) | Notification stream, 8 s |
-| **No readings** | No reading for N min | 20 min | 10 to 120, on/off | Every 30 min | Notification stream, 8 s |
+| **No readings** | No reading for N min (held while the paired sensor warms up: it sends nothing to act on yet) | 20 min | 10 to 120, on/off | Every 30 min | Notification stream, 8 s |
 
 - Sounds come from a pack (You → Alarms → Sounds): Astral by default, Orbit, Glass, Clear or Bells, one sound per alarm and one for the long-acting reminder. An alarm given its own phone sound or file keeps it.
 - Urgent low takes over from low, and low from going low. Easing out of an urgent low into a low is the same episode, not a new alarm.
@@ -158,6 +162,12 @@ managed in Abbott's app, so there's no "stop following" for them here. Their Hom
 **low** under 70, **heading low** when under 70 within 20 minutes, **high** over 180 (calm until 250),
 **steady** otherwise, and **no readings** after 10 minutes. Their alarms show their name. Answers only snooze them on your phone.
 Emergency texts are never sent from a follower's phone.
+
+**What followers get** (You → People → *Alarms your followers get*): the wearer picks which of their
+alarms sound on followers' phones, in the app and on the follow page; **urgent low always does**. It is
+saved on the wearer's account (needs `supabase/migrations/20261012000000_shared_alarms.sql`). Until that
+runs, for a wearer who hasn't chosen, and on followers' phones with an older Sukoon, every alarm comes
+through: a follower never gets fewer alerts by accident. LibreLinkUp and Dexcom people: every alarm.
 
 ---
 
@@ -254,8 +264,19 @@ no insulin logged for it (linked, or from an hour before it), under 0.5 u still 
 reading that isn't low: Home shows the meal's dose with *Log it*, which opens insulin for that meal.
 After an hour it stops (a full meal dose that late risks a low); the correction covers a high.
 
-**When you're low**: no dose is suggested under 70, or under 100 and dropping. With a meal, the low
-card adds what the meal itself needs (carbs ÷ ratio, rounded down) for once you're back over 70.
+**When you're low**: no dose is suggested under 70, or under 100 and dropping.
+
+**After a low**: for 2 hours (You → Insulin → More: 1, 1½, 2 or 3 hours, or 30 minutes to 4 hours)
+after any reading or finger-prick under 70, no dose is suggested at all
+(not the meal, not a correction), even once you're back over 70: carbs eaten during or after a low
+are treating it, and insulin for them brings the low back (Kai, 12 Oct: a meal logged going low, then
+1 u suggested at a steady 76). The editor says *Back from a low* and when suggestions return; Home
+shows no meal or correction card. Earlier builds told you the meal's dose "for once you're back over
+70"; that line is gone.
+
+**Logging the treatment**: a low or urgent-low alarm (screen and notification) has *Log what I ate*
+next to *I'm treating it*. It answers the alarm the same way (sound off, the 15-minute check starts)
+and opens a new meal, so what you treated with is in the logbook.
 
 **Correction on Home**: with suggestions on and a correction factor set, Home shows "Correction · beta"
 when the reading is fresh and above your range, nothing with carbs was logged in the last 2 hours,
@@ -269,8 +290,12 @@ age (0.5 u/kg a day for adults, 1.0 for 12–17, 0.7 under 12), else for adults 
 and 1 u per 50 mg/dL. A child without a weight gets none. *Fill the empty boxes* or *Use for all*.
 
 **Parent lock**: a 4–8 digit PIN (stored as a salted hash). While it's on, changing your range, any
-alarm setting, the dose settings or the profile asks for it, once per visit to You. Under 18, dose
-suggestions only switch on once a parent has set one. Removing it needs the PIN.
+alarm setting, the dose settings or the profile asks for it, once per visit to You, and so does
+anything that would cut a parent off as a follower: which alarms followers get, sharing on/off,
+removing a follower, signing out and deleting the account. Under 18, dose suggestions only switch on
+once a parent has set one. Removing it needs the PIN. **It is for children only:** from 18 (the age in
+About you) it doesn't apply and isn't offered, even if a PIN was set before; with no age it applies.
+The age is behind the lock, so a child can't raise it to get out.
 
 **Pens**: whole units by default (You → Insulin → Your pens). The insulin keypad takes a decimal point
 only for half-unit pens, and suggestions round down to the pen.
@@ -330,6 +355,17 @@ only for half-unit pens, and suggestions round down to the pen.
 - What needs you is listed first: Bluetooth off (red, *Turn on*), no readings for 10 minutes or
   more (red), ending within 3 days (amber; red on the last day), ended (red).
 - Its life is a bar, *Day 12 of 15 · ends …*, amber in the last 3 days and red on the last.
+- **Start a new sensor** (NFC, behind a confirmation: it can't be undone): only for a Libre 2 / 2 Plus
+  EU whose decrypted memory says it was never started. Sukoon sends Activate, reads the memory back
+  until it says *warming up*, then pairs as usual. A sensor already warming up or running is just
+  paired. If pairing fails after starting, it says the sensor is running and to tap *Pair again*.
+- **Pair again** refuses a sensor nobody started ("hasn't been started yet", which used to restart the
+  warm-up countdown each time) and one that has ended.
+- **Check sensor** (read-only) says *Not started*, *Warming up*, *Running* (day N of M and the value
+  its memory reads now) or *Ended*; a value only while running.
+- A read the phone loses halfway (*Tag was lost*) doesn't end Pair, Start or Check: the card keeps
+  listening ("Lost it for a moment") and carries on when Android finds the sensor again. Any answer
+  from the sensor, even an error, ends it with a message.
 - Notices: 3 days, 1 day and 1 hour before the end, and when it ends. Bluetooth off shows on Home,
   and the no-readings alarm says Bluetooth is off when it is.
 
@@ -356,3 +392,31 @@ only for half-unit pens, and suggestions round down to the pen.
   read from Android itself, with the page that fixes each.
 - Before an emergency contact is added, and before an AI key is saved, a one-time screen says what
   will be sent where; nothing happens until *I agree*.
+
+## 16. Notices from Sukoon
+
+- Every install (GitHub and Play, wearer, follower or demo) reads `web/notices.json` from Sukoon's
+  GitHub Pages site when it starts and every 6 hours, and asks GitHub for a new release at most once
+  a day on the same rhythm. How to send one: docs/notices.md.
+- A new notice comes as a notification (channel *Notices from Sukoon*); which ones and how many at
+  once is `Notices.toShow`. The newest one still running sits on Now as a card until it is closed;
+  closing it is remembered on that phone. Arabic text when the app is in Arabic; a link only if https.
+- Not instant: up to 6 hours, plus up to 10 minutes of GitHub caching. Phones on 0.8.1 or older
+  don't read notices; they see a new release on Now, with its notes under *What's new*.
+
+## 17. Insights, Ask and the after-workout check
+
+- **Insights** (Trends): the 14 days in one line (time in range, ↑/↓ against the week before); **the one
+  thing**, the most important finding (lows first, merged from five rules with their likeliest cause:
+  workouts or doses close together), with one button: the first action not already in effect (turn on
+  Going low, the after-workout check, dose suggestions, Learning, calibration, the site map, log insulin),
+  else *Look at it* (the graph over the same 14 days). Then at most 3 more as one-line rows, the rest
+  folded. Every row opens its full card (numbers and source). Not enough data says what to log (3 days
+  of readings; meals on 5 days) with the button. A followed person's Insights show no buttons.
+  Spec: docs/insights-rework.md.
+- **After-workout check** (on by default, You → Alarms → Gentle checks): 30 to 90 minutes after a
+  logged workout ends (own or MyFitnessPal), once, if there's a fresh reading: "After your workout: 92 ↘",
+  plus one line only when falling. Not an alarm; lows keep their own.
+- **Ask**: under the title, what the answers are based on (days, readings and log entries the AI gets:
+  real readings without impossible spikes), or an amber *Demo data* chip when that's all there is. The
+  first suggestion asks about Insights' one thing (not on demo data).

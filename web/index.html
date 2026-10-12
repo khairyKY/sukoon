@@ -101,6 +101,7 @@ button { font: 600 16px var(--sans); cursor: pointer; }
     <svg class="mark" viewBox="0 0 108 108" aria-hidden="true"><rect width="108" height="108" rx="30" fill="#1E2B26"/><circle cx="54" cy="54" r="19.13" fill="#EAF0EC"/><circle cx="63.56" cy="46.35" r="19.13" fill="#1E2B26"/><circle cx="60.69" cy="55.91" r="4.78" fill="none" stroke="#82BBA0" stroke-width="2.3"/></svg>
     <h1 data-t="authTitle"></h1>
     <p class="muted" data-t="authBody"></p>
+    <p class="card small hidden" id="invited" role="note"></p>
     <form id="authForm" class="card" autocomplete="on">
       <div id="nameRow" class="hidden"><label for="name" data-t="yourName"></label><input id="name" autocomplete="name"></div>
       <label for="email" data-t="email"></label><input id="email" type="email" autocomplete="email" required>
@@ -108,7 +109,7 @@ button { font: 600 16px var(--sans); cursor: pointer; }
       <button class="primary" id="authGo" type="submit"></button>
       <div class="error" id="authError" role="alert"></div>
     </form>
-    <button class="link" id="authSwitch" type="button"></button>
+    <div class="foot"><button class="link" id="authSwitch" type="button"></button><button class="link" id="forgot" type="button" data-t="forgot"></button></div>
   </section>
 
   <!-- Signed in, following nobody: the invite code -->
@@ -117,7 +118,7 @@ button { font: 600 16px var(--sans); cursor: pointer; }
     <p class="muted" data-t="codeBody"></p>
     <form id="codeForm" class="card">
       <label for="codeInput" data-t="code"></label>
-      <input id="codeInput" autocomplete="off" autocapitalize="characters" placeholder="ABCD-EFGH" required>
+      <input id="codeInput" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" inputmode="text" maxlength="9" placeholder="ABCD-EFGH" required>
       <button class="primary" type="submit" data-t="follow"></button>
       <div class="error" id="codeError" role="alert"></div>
     </form>
@@ -175,6 +176,8 @@ const T = {
     trend: { '-2': 'falling fast', '-1': 'falling', '0': 'steady', '1': 'rising', '2': 'rising fast' },
     wrongLogin: "That email and password don't match.", confirmEmail: 'Check your email to confirm the account, then sign in.',
     badCode: 'That code is wrong, used or expired.', offline: "Can't reach Sukoon. Check the internet.", lang: 'العربية',
+    forgot: 'Forgot password?', needEmail: 'Type your email above first.', resetSent: (e) => `If ${e} has a Sukoon account, a link to choose a new password is on its way.`,
+    invited: (c) => `Sign in or create an account and you'll follow with the code ${c}.`,
     installTitle: 'Keep Sukoon on your home screen', installNow: 'Install', installLater: 'Not now',
     iosSteps: ['Open this page in Safari.', 'Tap Share (the square with an arrow) at the bottom.', 'Tap Add to Home Screen, then Add.', 'Open Sukoon from the home screen and sign in there.'],
     androidSteps: ['Tap Install below, or the ⋮ menu in Chrome → Add to Home screen.', 'Open Sukoon from the home screen.'],
@@ -197,6 +200,8 @@ const T = {
     trend: { '-2': 'نازل بسرعة', '-1': 'نازل', '0': 'ثابت', '1': 'طالع', '2': 'طالع بسرعة' },
     wrongLogin: 'الإيميل والباسورد مش متطابقين.', confirmEmail: 'افتح إيميلك وأكّد الحساب، وبعدين ادخل.',
     badCode: 'الكود غلط أو اتستخدم أو انتهى.', offline: 'مش قادر أوصل لسكون. اتأكد من النت.', lang: 'English',
+    forgot: 'نسيت كلمة السر؟', needEmail: 'اكتب إيميلك فوق الأول.', resetSent: (e) => `لو ${e} ليه حساب على سكون، لينك تختار بيه كلمة سر جديدة في الطريق.`,
+    invited: (c) => `ادخل أو اعمل حساب وهتتابع بالكود ${c}.`,
     installTitle: 'خلّي سكون على الشاشة الرئيسية', installNow: 'ثبّت', installLater: 'مش دلوقتي',
     iosSteps: ['افتح الصفحة دي في سفاري.', 'دوس على مشاركة (المربع اللي فيه سهم) تحت.', 'دوس على "إضافة إلى الشاشة الرئيسية" وبعدين إضافة.', 'افتح سكون من الشاشة الرئيسية وادخل من هناك.'],
     androidSteps: ['دوس ثبّت تحت، أو قائمة ⋮ في كروم ← إضافة للشاشة الرئيسية.', 'افتح سكون من الشاشة الرئيسية.'],
@@ -217,6 +222,16 @@ function applyLanguage() {
 // ------------------------------------------------------------------ Supabase over HTTPS (Auth, PostgREST, RPC)
 const $ = (id) => document.getElementById(id);
 const DEMO = new URLSearchParams(location.search).has('demo');
+// Where Supabase's emails land: confirming an account, choosing a new password (web/auth.html).
+const AUTH_PAGE = new URL('auth.html', location.href).href;
+// An invite code from a link (join.html → index.html?code=…): kept until it's used, through signing in.
+const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const cleanCode = (v) => (v || '').toUpperCase().split('').filter((c) => ALPHABET.includes(c)).join('').slice(0, 8);
+const showCode = (c) => (c.length > 4 ? c.slice(0, 4) + '-' + c.slice(4) : c);
+{
+  const fromLink = cleanCode(new URLSearchParams(location.search).get('code'));
+  if (fromLink.length === 8) { localStorage.setItem('pendingCode', fromLink); history.replaceState(null, '', location.pathname); }
+}
 let session = JSON.parse(localStorage.getItem('session') || 'null');
 
 async function call(path, { method = 'GET', body, auth = true } = {}) {
@@ -260,7 +275,7 @@ $('authForm').onsubmit = async (e) => {
   try {
     const email = $('email').value.trim(), password = $('password').value;
     if (authMode === 'create') {
-      const json = await call('/auth/v1/signup', { method: 'POST', body: { email, password, data: { display_name: $('name').value.trim() } }, auth: false });
+      const json = await call('/auth/v1/signup?redirect_to=' + encodeURIComponent(AUTH_PAGE), { method: 'POST', body: { email, password, data: { display_name: $('name').value.trim() } }, auth: false });
       if (!json.access_token) { $('authError').textContent = t('confirmEmail'); return; }
       keep(json);
     } else {
@@ -276,10 +291,22 @@ $('codeForm').onsubmit = async (e) => {
   e.preventDefault();
   $('codeError').textContent = '';
   try {
-    await call('/rest/v1/rpc/redeem_invite', { method: 'POST', body: { p_code: $('codeInput').value } });
+    await call('/rest/v1/rpc/redeem_invite', { method: 'POST', body: { p_code: cleanCode($('codeInput').value) } });
     $('codeInput').value = '';
+    localStorage.removeItem('pendingCode');
     await start();
   } catch (err) { $('codeError').textContent = err.status ? t('badCode') : t('offline'); }
+};
+// Capitals as you type, only characters a code has, the dash put in for you.
+$('codeInput').oninput = () => { $('codeInput').value = showCode(cleanCode($('codeInput').value)); };
+$('forgot').onclick = async () => {
+  const email = $('email').value.trim();
+  $('authError').textContent = '';
+  if (!email.includes('@')) { $('authError').textContent = t('needEmail'); $('email').focus(); return; }
+  try {
+    await call('/auth/v1/recover?redirect_to=' + encodeURIComponent(AUTH_PAGE), { method: 'POST', body: { email }, auth: false });
+    $('authError').textContent = t('resetSent')(email);
+  } catch (err) { $('authError').textContent = t('offline'); }
 };
 $('codeBack').onclick = () => (people.length ? show('home') : null);
 $('addPerson').onclick = () => show('code');
@@ -301,7 +328,14 @@ async function loadPeople() {
   const ids = follows.map((f) => f.owner);
   if (!ids.length) return [];
   const names = await call(`/rest/v1/profiles?id=in.(${ids.join(',')})&select=id,display_name`);
-  return ids.map((id) => ({ id, name: (names.find((n) => n.id === id) || {}).display_name || '…' }));
+  // Which alarms they share with followers; null (everything) if they haven't chosen or the column isn't there yet.
+  let shares = [];
+  try { shares = await call(`/rest/v1/profiles?id=in.(${ids.join(',')})&select=id,shared_alarms`); } catch (e) {}
+  return ids.map((id) => ({
+    id,
+    name: (names.find((n) => n.id === id) || {}).display_name || '…',
+    alarms: (shares.find((s) => s.id === id) || {}).shared_alarms || null,
+  }));
 }
 async function loadReadings(id) {
   const since = new Date(Date.now() - 3 * 3600 * 1000).toISOString();
@@ -313,7 +347,23 @@ async function loadReadings(id) {
 
 async function start() {
   if (DEMO) { people = [{ id: 'demo', name: lang === 'ar' ? 'ماما' : 'Mum' }]; current = { person: people[0], readings: demoReadings() }; show('home'); render(); return; }
+  const pending = localStorage.getItem('pendingCode');
+  $('invited').classList.toggle('hidden', !pending);
+  if (pending) $('invited').textContent = t('invited')(showCode(pending).replace('-', '‑')); // a dash that never breaks the code across lines
   if (!session) { show('auth'); return; }
+  if (pending) { // a tapped invite: follow straight away, or show the code to fix if it didn't work
+    try {
+      await call('/rest/v1/rpc/redeem_invite', { method: 'POST', body: { p_code: pending } });
+      localStorage.removeItem('pendingCode');
+    } catch (e) {
+      if (e.status === 401) return signOut();
+      localStorage.removeItem('pendingCode');
+      $('codeInput').value = showCode(pending);
+      $('codeError').textContent = e.status ? t('badCode') : t('offline');
+      show('code');
+      return;
+    }
+  }
   try {
     people = await loadPeople();
   } catch (e) { if (e.status === 401) return signOut(); $('banner').textContent = t('offline'); $('banner').classList.add('on'); show('home'); return; }
@@ -384,7 +434,9 @@ function render() {
   else { $('title').textContent = t('steady')(name); $('detail').textContent = ''; }
 
   $('chart').innerHTML = chart(readings);
-  alarm(kind === 'urgent' || kind === 'low' || !!headingIn, kind);
+  // Urgent low always sounds; low and heading low only if they share them with followers.
+  const shares = (type) => !person.alarms || person.alarms.includes(type);
+  alarm(kind === 'urgent' || (kind === 'low' && shares('LOW')) || (!!headingIn && shares('GOING_LOW')), kind);
 }
 
 function chart(readings) {

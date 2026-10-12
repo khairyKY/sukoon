@@ -1,5 +1,12 @@
 package com.sukoon.app.ui.home
 
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.foundation.Canvas
 import com.sukoon.app.platform.TimeFormat
 import com.sukoon.app.data.db.EventEntity
 import com.sukoon.app.ui.theme.SageDeep
@@ -75,6 +82,8 @@ import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.LaunchedEffect
 import com.sukoon.app.ui.theme.Motion
+import com.sukoon.app.ui.components.NoticeBanner
+import com.sukoon.app.ui.components.drawSensor
 import com.sukoon.app.ui.theme.Motion.pressScale
 import kotlin.math.roundToInt
 import androidx.compose.foundation.rememberScrollState
@@ -234,6 +243,15 @@ private fun HomeStatusBar(statusLabel: String, dotColor: Color, pulsing: Boolean
 
 @Composable
 private fun HomeAppBar(dimmed: Boolean = false) {
+    Column {
+        HomeAppBarRow(dimmed)
+        // A notice from Sukoon, under the bar on the calm screens (not on a low or urgent one).
+        NoticeBanner(Modifier.padding(horizontal = 16.dp).padding(top = 12.dp))
+    }
+}
+
+@Composable
+private fun HomeAppBarRow(dimmed: Boolean) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -904,21 +922,32 @@ private fun ColumnScope.WarmingUpContent(state: HomeUiState.WarmingUp) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Box(modifier = Modifier.size(150.dp), contentAlignment = Alignment.Center) {
-                val track = PillNeutralBg
-                androidx.compose.foundation.Canvas(modifier = Modifier.size(150.dp)) {
-                    drawCircle(color = track, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 6.dp.toPx()))
-                    drawArc(
-                        color = StateHigh,
-                        startAngle = -45f,
-                        sweepAngle = 90f,
-                        useCenter = false,
-                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 6.dp.toPx()),
-                    )
-                }
-                Text(text = "- -", fontFamily = HeadlineSerifFontFamily, fontWeight = FontWeight.Light, fontSize = 52.sp, color = PlaceholderMuted)
+            WarmupSensor(progress = if (state.minutesRemaining > 0) 1f - state.minutesRemaining / WARMUP_MINUTES else 1f)
+            if (state.minutesRemaining > 0) {
+                Text(
+                    buildAnnotatedString {
+                        append(String.format(java.util.Locale.getDefault(), "%d", state.minutesRemaining))
+                        withStyle(SpanStyle(fontFamily = UiFontFamily, fontWeight = FontWeight.Medium, fontSize = 15.sp, color = CaptionMuted)) {
+                            append(" " + stringResource(R.string.logbook_unit_minutes))
+                        }
+                    },
+                    fontFamily = HeadlineSerifFontFamily,
+                    fontWeight = FontWeight.Light,
+                    fontSize = 54.sp,
+                    color = PillHighText,
+                    modifier = Modifier.padding(top = 14.dp),
+                )
             }
-            Spacer(Modifier.height(28.dp))
+            state.provisionalMgDl?.let { mgDl ->
+                Text(
+                    text = stringResource(R.string.home_warmup_provisional, mgDl),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = PlaceholderMuted,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+            Spacer(Modifier.height(if (state.minutesRemaining > 0) 6.dp else 28.dp))
             Text(
                 text = stringResource(R.string.home_getting_ready),
                 fontFamily = HeadlineSerifFontFamily,
@@ -927,21 +956,65 @@ private fun ColumnScope.WarmingUpContent(state: HomeUiState.WarmingUp) {
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                text = buildAnnotatedString {
-                    append(stringResource(R.string.home_first_reading_prefix))
-                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = StateHigh)) {
-                        append(stringResource(R.string.home_first_reading_bold, state.minutesRemaining))
-                    }
-                },
+                text = stringResource(R.string.home_warmup_sub),
                 fontSize = 13.sp,
                 color = CaptionMuted,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             )
         }
         Box(Modifier.padding(horizontal = 20.dp, vertical = 0.dp)) {
-            MessageCard(title = null, body = stringResource(R.string.home_warmup_body))
+            MessageCard(title = null, body = stringResource(if (state.provisionalMgDl != null) R.string.home_warmup_provisional_body else R.string.home_warmup_body))
         }
         Spacer(Modifier.height(12.dp))
+    }
+}
+
+/** A Libre 2 warms up for an hour before its first reading. */
+private const val WARMUP_MINUTES = 60f
+
+/**
+ * The warm-up picture: the sensor in line, kept minimal (disc, bevel, the filament port) inside a
+ * ring that fills toward the first reading, an amber glow breathing behind it on the live pulse's
+ * 2.4 s loop. Reduced motion: the glow holds still and the ring is drawn at once.
+ */
+@Composable
+private fun WarmupSensor(progress: Float) {
+    val reduced = Motion.reduced()
+    val breath by if (reduced) {
+        remember { mutableFloatStateOf(0.6f) }
+    } else {
+        rememberInfiniteTransition(label = "warmupGlow").animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(Motion.LOOP / 2, easing = Motion.Standard), RepeatMode.Reverse),
+            label = "breath",
+        )
+    }
+    val sweep = remember { Animatable(if (reduced) progress else 0f) }
+    LaunchedEffect(progress) { sweep.animateTo(progress, tween(if (reduced) 0 else Motion.SLOW, easing = Motion.Calm)) }
+    val track = PillNeutralBg
+    val ink = MaterialTheme.colorScheme.onBackground
+    Canvas(Modifier.size(230.dp)) {
+        val c = center
+        // The glow: breathes 0.94 → 1.04 in size and 35 % → 100 % in strength.
+        val glowR = size.minDimension / 2f * (0.94f + 0.10f * breath)
+        drawCircle(
+            Brush.radialGradient(
+                0f to StateHigh.copy(alpha = 0.42f * (0.35f + 0.65f * breath)),
+                0.45f to StateHigh.copy(alpha = 0.14f * (0.35f + 0.65f * breath)),
+                1f to Color.Transparent,
+                center = c,
+                radius = glowR,
+            ),
+            glowR,
+            c,
+        )
+        val ring = 86.dp.toPx()
+        val ringWidth = 10.dp.toPx()
+        drawCircle(track, ring, c, style = Stroke(ringWidth))
+        drawArc(StateHigh, -90f, 360f * sweep.value, false, Offset(c.x - ring, c.y - ring), Size(ring * 2, ring * 2), style = Stroke(ringWidth, cap = StrokeCap.Round))
+        // The sensor sits just inside the ring; the ring takes the adhesive's place.
+        drawSensor(c, 76.dp.toPx(), ink, adhesive = false)
     }
 }
 

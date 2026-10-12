@@ -1,5 +1,17 @@
 package com.sukoon.app.ui.sharing
 
+import com.sukoon.app.sharing.InviteCode
+import com.sukoon.app.ui.components.CodeBoxes
+import com.sukoon.app.ui.components.PasteCodeChip
+import com.sukoon.app.ui.components.durationText
+
+import com.sukoon.app.ui.settings.LockedNotice
+import com.sukoon.app.ui.theme.TextMuted
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.border
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -44,6 +56,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sukoon.app.R
+import com.sukoon.app.alarms.AlarmType
+import com.sukoon.app.alarms.titleRes
 import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.insights.InsightEngine
 import com.sukoon.app.sharing.Followed
@@ -70,7 +84,7 @@ import androidx.compose.ui.res.pluralStringResource
 
 /** You → Sharing: an account, sharing your readings with people you invite, and following others. */
 @Composable
-fun SharingSection(sharing: Sharing, watch: FollowerWatch) {
+fun SharingSection(sharing: Sharing, watch: FollowerWatch, locked: Boolean = false, onUnlock: () -> Unit = {}) {
     val session by sharing.supabase.session.collectAsStateWithLifecycle()
     Column(
         Modifier
@@ -84,7 +98,7 @@ fun SharingSection(sharing: Sharing, watch: FollowerWatch) {
         when {
             !sharing.supabase.configured -> Text(stringResource(R.string.sharing_not_configured), fontSize = 12.5.sp, color = CaptionMuted)
             current == null -> SignIn(sharing, watch)
-            else -> SignedIn(sharing, watch, current)
+            else -> SignedIn(sharing, watch, current, locked, onUnlock)
         }
     }
 }
@@ -98,8 +112,22 @@ private fun SignIn(sharing: Sharing, watch: FollowerWatch) {
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
+    // An account waiting for its email to be confirmed: the inbox card instead of the form.
+    var awaiting by rememberSaveable { mutableStateOf<String?>(null) }
 
     Text(stringResource(R.string.sharing_body), fontSize = 12.5.sp, color = CaptionMuted)
+    awaiting?.let { address ->
+        CheckInbox(
+            sharing.supabase, address, password,
+            onSignedIn = {
+                awaiting = null
+                watch.refreshNow()
+                context.toast(context.getString(R.string.toast_sharing_signed_in))
+            },
+            onOtherEmail = { awaiting = null; creating = true },
+        )
+        return
+    }
     if (creating) {
         OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.sharing_your_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
     }
@@ -126,18 +154,15 @@ private fun SignIn(sharing: Sharing, watch: FollowerWatch) {
                 try {
                     if (creating) {
                         val session = sharing.supabase.signUp(email, password, name)
-                        context.toast(
-                            if (session == null) context.getString(R.string.toast_sharing_confirm_email, email.trim()) else context.getString(R.string.toast_sharing_signed_in),
-                            long = true,
-                        )
-                        if (session == null) creating = false
+                        if (session == null) awaiting = email.trim() else context.toast(context.getString(R.string.toast_sharing_signed_in))
                     } else {
                         sharing.supabase.signIn(email, password)
                         watch.refreshNow()
                         context.toast(context.getString(R.string.toast_sharing_signed_in))
                     }
                 } catch (e: Exception) {
-                    context.toast(readable(context, e), long = true)
+                    if (e is SupabaseException && e.message.orEmpty().contains("Email not confirmed", ignoreCase = true)) awaiting = email.trim()
+                    else context.toast(readable(context, e), long = true)
                 } finally {
                     busy = false
                 }
@@ -147,10 +172,11 @@ private fun SignIn(sharing: Sharing, watch: FollowerWatch) {
             Text(stringResource(if (creating) R.string.sharing_have_account else R.string.sharing_new_account), color = Sage, fontSize = 13.sp)
         }
     }
+    if (!creating) ForgotPassword(sharing.supabase, email)
 }
 
 @Composable
-private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
+private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session, locked: Boolean, onUnlock: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var shareOn by remember { mutableStateOf(sharing.shareOn) }
@@ -160,6 +186,7 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
     var problem by remember { mutableStateOf<String?>(null) }
     var refresh by remember { mutableIntStateOf(0) }
     var invite by rememberSaveable { mutableStateOf<String?>(null) }
+    var waiting by remember { mutableStateOf<List<Pair<String, Instant>>>(emptyList()) }
     var enteringCode by rememberSaveable { mutableStateOf(false) }
     var viewing by remember { mutableStateOf<Followed?>(null) }
     var alertsOn by remember { mutableStateOf(watch.alertsOn) }
@@ -169,11 +196,15 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
             if (name.isBlank()) name = sharing.myName()
             followers = sharing.followers()
             following = sharing.following()
+            waiting = runCatching { sharing.openInvites() }.getOrDefault(emptyList())
             problem = null
         } catch (e: Exception) {
             problem = readable(context, e)
         }
     }
+    /** Behind the parent lock: anything that would stop a follower (a parent) getting this child's readings or alarms. */
+    fun guard(change: () -> Unit) = if (locked) onUnlock() else change()
+    var sharedAlarms by remember { mutableStateOf(sharing.sharedAlarms) }
     fun act(block: suspend () -> String?) {
         scope.launch {
             try {
@@ -187,14 +218,16 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(stringResource(R.string.sharing_signed_in_as, session.email), fontSize = 12.5.sp, color = CaptionMuted, modifier = Modifier.weight(1f))
         TextButton(onClick = {
-            sharing.supabase.signOut()
-            watch.refreshNow()
-            context.toast(context.getString(R.string.toast_sharing_signed_out))
+            guard {
+                sharing.supabase.signOut()
+                watch.refreshNow()
+                context.toast(context.getString(R.string.toast_sharing_signed_out))
+            }
         }) { Text(stringResource(R.string.sharing_sign_out), color = StateLow, fontSize = 12.sp) }
     }
     // Deleting the account: it, its readings and every follow, both ways, gone for good (Play requires it in the app).
     var deleting by remember { mutableStateOf(false) }
-    TextButton(onClick = { deleting = true }) { Text(stringResource(R.string.account_delete), color = StateLow, fontSize = 12.sp) }
+    TextButton(onClick = { guard { deleting = true } }) { Text(stringResource(R.string.account_delete), color = StateLow, fontSize = 12.sp) }
     if (deleting) {
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { deleting = false },
@@ -234,12 +267,54 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
         Switch(
             checked = shareOn,
             onCheckedChange = {
-                shareOn = it
-                sharing.shareOn = it
-                if (it) act { sharing.upload(); null }
+                guard {
+                    shareOn = it
+                    sharing.shareOn = it
+                    if (it) act { sharing.upload(); null }
+                }
             },
             colors = SwitchDefaults.colors(checkedTrackColor = Sage),
         )
+    }
+    // Which alarms followers' phones sound for you; urgent low always does.
+    Label(stringResource(R.string.sharing_alarms_title))
+    Text(stringResource(R.string.sharing_alarms_body), fontSize = 12.sp, color = CaptionMuted)
+    if (locked) LockedNotice(onUnlock)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+            .padding(horizontal = 14.dp),
+    ) {
+        AlarmType.entries.forEachIndexed { i, type ->
+            if (i > 0) HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f))
+            val always = type == AlarmType.URGENT_LOW
+            Row(Modifier.heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                // The alarm's colour, as on Now: lows red, high amber, signal loss quiet.
+                Box(Modifier.size(9.dp).clip(CircleShape).background(if (type.loud) StateLow else if (type == AlarmType.HIGH) StateHigh else TextMuted))
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(type.titleRes), fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                    if (always) Text(stringResource(R.string.sharing_alarm_always), fontSize = 12.sp, color = CaptionMuted)
+                }
+                Switch(
+                    checked = type in sharedAlarms,
+                    enabled = !always,
+                    onCheckedChange = { on ->
+                        guard {
+                            sharedAlarms = if (on) sharedAlarms + type else sharedAlarms - type
+                            sharing.sharedAlarms = sharedAlarms
+                            act {
+                                sharing.publishSharedAlarms()
+                                context.getString(R.string.toast_sharing_alarms_saved)
+                            }
+                        }
+                    },
+                    colors = SwitchDefaults.colors(checkedTrackColor = Sage),
+                )
+            }
+        }
     }
     Label(stringResource(R.string.sharing_followers))
     val people = followers
@@ -250,10 +325,12 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(person.name.ifBlank { "…" }, fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
                 TextButton(onClick = {
-                    act {
-                        sharing.removeFollower(person.id)
-                        refresh++
-                        context.getString(R.string.toast_sharing_follower_removed, person.name)
+                    guard {
+                        act {
+                            sharing.removeFollower(person.id)
+                            refresh++
+                            context.getString(R.string.toast_sharing_follower_removed, person.name)
+                        }
                     }
                 }) { Text(stringResource(R.string.emergency_remove), color = StateLow, fontSize = 12.sp) }
             }
@@ -261,22 +338,33 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
     }
     Pill(stringResource(R.string.sharing_invite)) {
         act {
-            val code = sharing.createInvite()
-            invite = code
-            val text = context.getString(R.string.sharing_invite_message, name.ifBlank { session.email }, Sharing.formatCode(code))
-            context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text), null))
+            invite = sharing.createInvite()
+            refresh++
             null
         }
     }
-    invite?.let { code ->
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.sharing_invite_code, Sharing.formatCode(code)), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Sage, modifier = Modifier.weight(1f))
-            // The code with the follower page: someone on an iPhone (or without the app) follows from the browser.
-            TextButton(onClick = {
-                val text = context.getString(R.string.sharing_invite_share, Sharing.FOLLOW_PAGE, Sharing.formatCode(code))
-                context.startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, text), null))
-            }) { Text(stringResource(R.string.sharing_invite_send), color = Sage, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) }
+    // Invites nobody has used yet: show one again (to scan or resend), or cancel it.
+    if (waiting.isNotEmpty()) {
+        Text(stringResource(R.string.invites_waiting), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted)
+        waiting.forEach { (code, until) ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.invite_left, InviteCode.format(code), durationText(context, Duration.between(Instant.now(), until).toMinutes())),
+                    fontSize = 13.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = { invite = code }) { Text(stringResource(R.string.invite_show), color = Sage, fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
+                TextButton(onClick = {
+                    act {
+                        sharing.cancelInvite(code)
+                        refresh++
+                        context.getString(R.string.toast_invite_cancelled)
+                    }
+                }) { Text(stringResource(R.string.invite_cancel), color = StateLow, fontSize = 12.sp) }
+            }
         }
+    }
+    invite?.let { code ->
+        InviteSheet(code, waiting.firstOrNull { it.first == code }?.second, from = name.ifBlank { session.email }, onDismiss = { invite = null })
     }
 
     // Following: people who invited me.
@@ -378,19 +466,23 @@ internal fun FollowViewer(sharing: Sharing, person: Followed, onClose: () -> Uni
 }
 
 @Composable
-private fun CodeDialog(onRedeem: (String) -> Unit, onDismiss: () -> Unit) {
-    var code by rememberSaveable { mutableStateOf("") }
-    val clean = code.filter { it.isLetterOrDigit() }
+internal fun CodeDialog(onRedeem: (String) -> Unit, onDismiss: () -> Unit, initial: String = "") {
+    var code by rememberSaveable { mutableStateOf(initial) }
+    var problem by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    val ready = code.length == InviteCode.LENGTH
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.sharing_enter_code)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(stringResource(R.string.sharing_enter_code_body), fontSize = 13.sp, color = CaptionMuted)
-                OutlinedTextField(code, { code = it.uppercase() }, label = { Text("ABCD-EFGH") }, singleLine = true)
+                CodeBoxes(code, { code = it; problem = null }, onDone = { onRedeem(code) }, autoFocus = initial.isEmpty())
+                if (!ready) PasteCodeChip(onCode = { code = it }, onNone = { problem = context.getString(R.string.ob_paste_none) })
+                problem?.let { Text(it, fontSize = 13.sp, color = StateLow) }
             }
         },
-        confirmButton = { TextButton(enabled = clean.length == 8, onClick = { onRedeem(clean) }) { Text(stringResource(R.string.sharing_follow)) } },
+        confirmButton = { TextButton(enabled = ready, onClick = { onRedeem(code) }) { Text(stringResource(R.string.sharing_follow)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.emergency_cancel)) } },
     )
 }
@@ -412,7 +504,7 @@ internal fun latestColor(r: GlucoseReading?): Color = when {
 }
 
 /** Server errors in words a person can act on. */
-private fun readable(context: android.content.Context, e: Exception): String = when {
+internal fun readable(context: android.content.Context, e: Exception): String = when {
     e is SupabaseException && (e.status == 404 || e.message.orEmpty().contains("does not exist")) -> context.getString(R.string.sharing_server_not_ready)
     e is SupabaseException && e.message.orEmpty().contains("Email not confirmed", ignoreCase = true) -> context.getString(R.string.sharing_confirm_first)
     e is SupabaseException && e.message.orEmpty().contains("Invalid login", ignoreCase = true) -> context.getString(R.string.sharing_wrong_login)
@@ -426,7 +518,7 @@ private fun Label(text: String) {
 }
 
 @Composable
-private fun Pill(label: String, filled: Boolean = true, enabled: Boolean = true, onClick: () -> Unit) {
+internal fun Pill(label: String, filled: Boolean = true, enabled: Boolean = true, onClick: () -> Unit) {
     Box(
         Modifier
             .clip(RoundedCornerShape(12.dp))

@@ -27,6 +27,9 @@ object Libre2 {
     private const val SUB_ACTIVATE = 0x1B
     private const val SUB_ENABLE_STREAMING = 0x1E
 
+    /** DiaBLE's `Libre2.secret`: the y of the activation proof, reused by the BLE key and login. */
+    private const val SECRET = 0x1B6A
+
     /** The constant unlock code / enable time GlucoseDirect uses for both NFC enable and BLE login. */
     const val UNLOCK_CODE = 42L
 
@@ -133,7 +136,7 @@ object Libre2 {
     /** Decrypts one 46-byte BLE notification (the 20 + 18 + 8 byte chunks joined) into 44 bytes; throws on CRC mismatch. */
     fun decryptBle(uid: ByteArray, data: ByteArray): ByteArray {
         require(data.size == 46) { "BLE packet must be 46 bytes, was ${data.size}" }
-        val d = usefulFunction(uid, SUB_ACTIVATE, 0x1B6A)
+        val d = usefulFunction(uid, SUB_ACTIVATE, SECRET)
         val x = (word(u(d, 1), u(d, 0)) xor word(u(d, 3), u(d, 2))) or 0x63
         val y = word(u(data, 1), u(data, 0)) xor 0x63
 
@@ -153,7 +156,7 @@ object Libre2 {
         val time = (enableTime + unlockCount) and 0xFFFFFFFFL
         val b = ByteArray(4) { (time ushr (8 * it)).toByte() }
 
-        val ad = usefulFunction(uid, SUB_ACTIVATE, 0x1B6A)
+        val ad = usefulFunction(uid, SUB_ACTIVATE, SECRET)
         val ed = usefulFunction(uid, SUB_ENABLE_STREAMING, (enableTime and 0xFFFF).toInt() xor word(u(patchInfo, 5), u(patchInfo, 4)))
 
         val t11 = word(u(ed, 1), u(ed, 0)) xor word(u(b, 3), u(b, 2))
@@ -173,6 +176,16 @@ object Libre2 {
         val t4 = wordsLe(processCrypto(prepareVariables(uid, t31, t32, t33, t34)))
         return b + t4
     }
+
+    /**
+     * Parameters after `02 A1 07` for the NFC Activate command (sub-command 0x1B): starts a sensor
+     * that has just been put on, so its warm-up hour and its 14 or 15 days begin. A Libre 2 answers
+     * 4 bytes and its memory then says it is warming up. Same construction as DiaBLE's
+     * `nfcCommand(.activate)` and GlucoseDirect's `nfcCommand` (both MIT): the sub-command, then
+     * usefulFunction(uid, 0x1B, secret), the same 4 bytes the BLE key and login are built from.
+     */
+    fun activationParameters(uid: ByteArray): ByteArray =
+        byteArrayOf(SUB_ACTIVATE.toByte()) + usefulFunction(uid, SUB_ACTIVATE, SECRET)
 
     /**
      * Parameters after `02 A1 07` for the NFC Enable-Streaming command (sub-command 0x1E). This is the
@@ -247,7 +260,7 @@ object Libre2 {
             val minute = age - delay - i * 15
             if (minute < 0 || minute >= oldestTrend) null else at(124 + j * 6)?.let { Point(minute, it) }
         }
-        return (history + trend).sortedBy { it.minute }
+        return (history + trend).filter { it.minute >= 0 }.sortedBy { it.minute } // before minute 0 the sensor wasn't running
     }
 
     // --- sensor info -----------------------------------------------------------------------------

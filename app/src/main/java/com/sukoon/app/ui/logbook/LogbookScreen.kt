@@ -6,6 +6,21 @@ import com.sukoon.app.health.HealthConnectSync
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.view.HapticFeedbackConstants
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.ui.platform.LocalAccessibilityManager
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import com.sukoon.app.ui.theme.Motion
+import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,7 +45,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
@@ -68,6 +82,7 @@ import com.sukoon.app.data.db.logType
 import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.insights.MeterCheck
 import com.sukoon.app.insulin.injectionSite
+import com.sukoon.app.insulin.finger
 import com.sukoon.app.insulin.DoseSettings
 import com.sukoon.app.ui.theme.CanvasDark
 import com.sukoon.app.ui.theme.CaptionMuted
@@ -171,9 +186,15 @@ fun LogbookScreen(
         // Every meal opens on what it did; yours have Edit meal there.
         if (event.logType == LogEventType.CARB) detail = event else editor = EditorRequest(event.logType, existing = event)
     }
+    val accessibility = LocalAccessibilityManager.current
     fun announce(message: String, undo: List<Long>? = null) {
         scope.launch {
-            val result = snackbar.showSnackbar(message, actionLabel = undo?.let { context.getString(R.string.entry_undo) }, withDismissAction = false)
+            // Toast confirm (motion spec): rise, hold ~2.2 s, lift away on its own; longer when accessibility settings ask.
+            val shown = Motion.BASE + 2_200L
+            val hold = accessibility?.calculateRecommendedTimeoutMillis(shown, containsIcons = false, containsText = true, containsControls = undo != null) ?: shown
+            val result = withTimeoutOrNull(hold) {
+                snackbar.showSnackbar(message, actionLabel = undo?.let { context.getString(R.string.entry_undo) }, withDismissAction = false, duration = SnackbarDuration.Indefinite)
+            }
             if (result == SnackbarResult.ActionPerformed && undo != null) onUndoEntry(undo)
         }
     }
@@ -234,8 +255,31 @@ fun LogbookScreen(
         ) {
             Icon(painterResource(R.drawable.ic_plus), contentDescription = null, modifier = Modifier.size(26.dp))
         }
-        SnackbarHost(snackbar, Modifier.align(Alignment.BottomStart).padding(start = 16.dp, end = 92.dp, bottom = 16.dp)) { data ->
-            Snackbar(data, containerColor = CanvasDark, contentColor = Color.White, actionColor = SageLight, shape = RoundedCornerShape(14.dp))
+        val toast = snackbar.currentSnackbarData
+        LaunchedEffect(toast) {
+            if (toast != null) view.performHapticFeedback(if (Build.VERSION.SDK_INT >= 30) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.KEYBOARD_TAP)
+        }
+        val reduced = Motion.reduced()
+        val (rise, lift) = with(LocalDensity.current) { 10.dp.roundToPx() to 6.dp.roundToPx() }
+        // Our own host, not SnackbarHost: its fade-and-scale can't be retimed to the spec's rise in / lift out.
+        AnimatedContent(
+            toast,
+            Modifier.align(Alignment.BottomStart).padding(start = 16.dp, end = 92.dp, bottom = 16.dp),
+            transitionSpec = {
+                val move = if (reduced) {
+                    fadeIn(tween(Motion.REDUCED)) togetherWith fadeOut(tween(Motion.REDUCED))
+                } else {
+                    slideInVertically(tween(Motion.BASE, easing = Motion.Out)) { rise } + fadeIn(tween(Motion.BASE, easing = Motion.Out)) togetherWith
+                        slideOutVertically(tween(Motion.BASE, easing = Motion.In)) { -lift } + fadeOut(tween(Motion.BASE, easing = Motion.In))
+                }
+                move using SizeTransform(clip = false)
+            },
+            contentAlignment = Alignment.BottomStart,
+            label = "toast",
+        ) { data ->
+            data?.let {
+                Snackbar(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, containerColor = CanvasDark, contentColor = Color.White, actionColor = SageLight, shape = RoundedCornerShape(14.dp))
+            }
         }
     }
 
@@ -262,10 +306,10 @@ fun LogbookScreen(
             photoFiles = existing?.let { state.photos[it.id] }.orEmpty(),
             siteHistory = state.siteHistory,
             doseSettings = remember(request) { doseSettings() },
+            lowAt = state.lowAt,
             onEstimateCarbs = onEstimateCarbs,
             onSave = { draft ->
                 editor = null
-                view.performHapticFeedback(if (Build.VERSION.SDK_INT >= 30) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.KEYBOARD_TAP)
                 val saving = onSaveEntry(draft)
                 scope.launch { announce(savedMessage(context, draft), saving.await()) }
             },
@@ -357,7 +401,7 @@ private fun EntryRow(
     val title = if (isMeal) mealTitle(event) else event.note ?: typeLabel(type)
     Column(Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(horizontal = 4.dp, vertical = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (photo != null) PhotoThumb(photo, Modifier.size(40.dp)) else Box(Modifier.size(9.dp).clip(CircleShape).background(colorForLogEventType(type)))
+            if (photo != null) PhotoThumb(photo, Modifier.size(34.dp)) else TypeChip(type)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(title, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onBackground, maxLines = 1)
@@ -370,14 +414,18 @@ private fun EntryRow(
                         ),
                     )
                     check != null -> Text(
-                        when {
-                            check.percentDiff > 2 -> stringResource(R.string.logbook_sensor_higher, check.sensorMgDl, check.percentDiff)
-                            check.percentDiff < -2 -> stringResource(R.string.logbook_sensor_lower, check.sensorMgDl, -check.percentDiff)
-                            else -> stringResource(R.string.logbook_sensor_same, check.sensorMgDl)
-                        },
+                        listOfNotNull(
+                            when {
+                                check.percentDiff > 2 -> stringResource(R.string.logbook_sensor_higher, check.sensorMgDl, check.percentDiff)
+                                check.percentDiff < -2 -> stringResource(R.string.logbook_sensor_lower, check.sensorMgDl, -check.percentDiff)
+                                else -> stringResource(R.string.logbook_sensor_same, check.sensorMgDl)
+                            },
+                            event.finger?.let { fingerName(it) },
+                        ).joinToString(" · "),
                         fontSize = 12.5.sp,
                         color = if (check.agrees) SageDeep else PillHighText,
                     )
+                    type == LogEventType.FINGERSTICK && event.finger != null -> Text(fingerName(event.finger!!), fontSize = 12.5.sp, color = CaptionMuted)
                     // A dose: where it went, or a quiet "Where?" (the row opens the entry to add it).
                     type == LogEventType.INSULIN || type == LogEventType.BASAL -> {
                         val site = event.injectionSite
@@ -399,7 +447,7 @@ private fun EntryRow(
             Text(hmFormatter.format(Instant.ofEpochMilli(event.timestampMillis)), fontSize = 13.sp, color = CaptionMuted, textAlign = TextAlign.End, modifier = Modifier.width(48.dp))
         }
         group.insulin.forEach { dose ->
-            Row(Modifier.fillMaxWidth().clickable { onOpenDose(dose) }.padding(start = 21.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().clickable { onOpenDose(dose) }.padding(start = 46.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(7.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onBackground))
                 Text(
                     listOfNotNull(typeLabel(LogEventType.INSULIN), doseTiming(dose, event), dose.injectionSite?.let { siteName(it) }).joinToString(" · "),
@@ -420,15 +468,24 @@ private fun EntryRow(
                 },
                 fontSize = 12.5.sp,
                 color = if (r.peak > 180) PillHighText else CaptionMuted,
-                modifier = Modifier.padding(start = 21.dp, top = 6.dp),
+                modifier = Modifier.padding(start = 46.dp, top = 6.dp),
             )
         }
         if (askForInsulin) {
-            Row(Modifier.padding(start = 21.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.padding(start = 46.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.logbook_no_insulin), fontSize = 13.5.sp, color = CaptionMuted, modifier = Modifier.weight(1f))
                 PillButton(stringResource(R.string.logbook_add_insulin), onClick = onAddInsulin)
             }
         }
+    }
+}
+
+/** The entry's type as a soft tinted circle with its line icon, in the type's colour. */
+@Composable
+private fun TypeChip(type: LogEventType) {
+    val tint = colorForLogEventType(type)
+    Box(Modifier.size(34.dp).clip(CircleShape).background(tint.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+        Icon(painterResource(iconForLogEventType(type)), contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
     }
 }
 

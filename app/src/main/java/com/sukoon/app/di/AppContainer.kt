@@ -81,6 +81,9 @@ class AppContainer(private val context: Context) {
 
     val pairingStore = SensorPairingStore(context)
 
+    /** The sensor link's ups and downs, for You → Sensor → Connection. */
+    val connectionLog = com.sukoon.app.data.source.libre.ConnectionLog(java.io.File(context.filesDir, "connection.log"))
+
     /** You → Appearance, applied at once by MainActivity. */
     val themeMode = MutableStateFlow(settings.themeMode)
 
@@ -96,12 +99,15 @@ class AppContainer(private val context: Context) {
     /** Updates from Sukoon's GitHub releases. */
     val updates = Updates(context, appScope)
 
+    /** Messages from Sukoon's maker to every install (docs/notices.md). */
+    val notices = com.sukoon.app.platform.Notices(context, appScope)
+
     /** Dexcom Share: a Dexcom wearer's readings through Dexcom's servers. */
     val dexcom = DexcomShare(context)
 
     private val source = MutableStateFlow(sourceFor(_sourceKind.value))
 
-    private val calibrationInForce = MutableStateFlow<Calibration?>(null)
+    private val calibrationInForce = MutableStateFlow(CalibrationManager.saved(context))
 
     val glucoseRepository: GlucoseRepository = GlucoseRepository(
         sources = source,
@@ -154,6 +160,7 @@ class AppContainer(private val context: Context) {
         scope = appScope,
         enabled = { _sourceKind.value.real },
         watchdog = { SignalWatchdog.arm(context, it) },
+        warmingUp = { sensorLife() is SensorLife.WarmingUp },
     )
 
     val followerWatch = FollowerWatch(context, sharing, settings, notifier, appScope)
@@ -162,23 +169,48 @@ class AppContainer(private val context: Context) {
 
     /** The paired sensor's life while it's the source (null on demo data or with no sensor). */
     fun sensorLife(now: Instant = Instant.now()): SensorLife? =
-        if (_sourceKind.value != SourceKind.LIBRE_BLE) null else pairingStore.load()?.let { SensorLifecycle.of(it.startMillis, it.lifetimeMinutes, now) }
+        if (_sourceKind.value != SourceKind.LIBRE_BLE) null else pairingStore.load()?.takeIf { it.started }?.let { SensorLifecycle.of(it.startMillis, it.lifetimeMinutes, now) }
 
     private val sensorNotices = SensorLifeNotices(context) {
         pairingStore.load()
-            ?.takeIf { _sourceKind.value == SourceKind.LIBRE_BLE }
+            ?.takeIf { _sourceKind.value == SourceKind.LIBRE_BLE && it.started }
             ?.let { it.serial to SensorLifecycle.of(it.startMillis, it.lifetimeMinutes, Instant.now()) }
     }
 
     /** A new entry something outside the app asked for (a reminder's "Log it"); MainScaffold opens it. */
     val requestedEntry = MutableStateFlow<LogEventType?>(null)
+
+    /** An invite link tapped (sukoon://follow): Now offers to follow; onboarding's code step starts with it. */
+    val pendingInvite = MutableStateFlow<String?>(null)
+
+    /** "Reema now follows you", with Remove unless the parent lock guards followers. */
+    val newFollowers = com.sukoon.app.sharing.NewFollowers(context, sharing) {
+        settings.parentPin != null && com.sukoon.app.platform.ParentLock.appliesTo(settings.profile.ageYears)
+    }
     /** Home's learning notice asked for You → Insulin → Learning. */
     val requestedLearning = MutableStateFlow(false)
+    /** A guide link asked for You → Sensor → Start a new sensor: the Sensor card opens its confirmation. */
+    val requestedStartSensor = MutableStateFlow(false)
 
     init {
         glucoseRepository.start()
         BasalReminder.schedule(context, settings.basalReminder)
-        updates.checkIfDue()
+        // Every few hours, not just at start: the sensor service keeps Sukoon running for days, and a release
+        // should still reach it (checkIfDue itself asks GitHub at most once a day).
+        appScope.launch {
+            while (true) {
+                updates.checkIfDue()
+                delay(com.sukoon.app.platform.Notices.CHECK_EVERY.toMillis())
+            }
+        }
+        notices.start()
+        com.sukoon.app.platform.AfterWorkoutCheck(context, settings, logbookRepository, glucoseRepository, appScope).start()
+        // Once: the noise 0.8.1 saved from an unstarted sensor's memory (and any other impossible jump) goes.
+        val prefs = context.getSharedPreferences("sukoon_prefs", Context.MODE_PRIVATE)
+        if (!prefs.getBoolean(KEY_SPIKES_CLEANED, false)) appScope.launch {
+            runCatching { glucoseRepository.removeSpikes(System.currentTimeMillis() - Duration.ofDays(30).toMillis()) }
+                .onSuccess { android.util.Log.i("Sukoon", "Removed $it impossible readings"); prefs.edit().putBoolean(KEY_SPIKES_CLEANED, true).apply() }
+        }
         // Long-acting logged anywhere clears its reminder.
         appScope.launch {
             logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofHours(12).toMillis()).collect { events ->
@@ -190,14 +222,19 @@ class AppContainer(private val context: Context) {
         alarms.start()
         nightscout.start()
         sharing.start()
+        newFollowers.start(appScope)
         followerWatch.start()
         healthConnect.start()
         calibration.start()
         cloudBackup.start(appScope)
         // The sensor's ongoing notification shows the newest reading; re-drawn each minute for its age.
         appScope.launch {
-            combine(glucoseRepository.latestReading, ticks(60_000)) { reading, _ -> reading }.collect { reading ->
-                if (_sourceKind.value.real) SensorService.show(context, reading, Instant.now())
+            combine(glucoseRepository.recentReadings(15), ticks(60_000)) { recent, _ -> recent }.collect { recent ->
+                val now = Instant.now()
+                val latest = recent.lastOrNull()
+                // A first-hour reading only once it reads like glucose (WarmupReadings); before that, no number.
+                val shown = if (latest?.warmup == true) com.sukoon.app.domain.metrics.WarmupReadings.settled(recent, now) else latest
+                if (_sourceKind.value.real) SensorService.show(context, shown, now)
             }
         }
         appScope.launch {
@@ -259,11 +296,12 @@ class AppContainer(private val context: Context) {
         val pairing = SensorPairing(read.uid, read.patchInfo, fram, scannedAtMillis - Libre2.sensorInfo(fram).ageMinutes * LibreBleSource.MINUTE_MS)
         pairingStore.save(pairing)
         pairingStore.bleAddress = read.bleMac
-        appScope.launch {
+        // Only a running sensor's memory holds glucose: a just-started one holds noise (LibreNfc.SensorRead.check).
+        if (Libre2.sensorInfo(fram).state == Libre2.State.READY) appScope.launch {
             for (point in Libre2.parseFram(pairing.calibration, fram)) {
                 if (point.mgDl !in LibreBleSource.PLAUSIBLE_MG_DL) continue
                 val at = Instant.ofEpochMilli(pairing.startMillis + point.minute * LibreBleSource.MINUTE_MS)
-                glucoseRepository.ingest(GlucoseReading(at, point.mgDl, TrendDirection.STEADY, SourceKind.LIBRE_BLE))
+                glucoseRepository.ingest(GlucoseReading(at, point.mgDl, TrendDirection.STEADY, SourceKind.LIBRE_BLE, warmup = point.minute < LibreBleSource.WARMUP_MINUTES))
             }
         }
         selectSource(SourceKind.LIBRE_BLE)
@@ -272,10 +310,11 @@ class AppContainer(private val context: Context) {
     private companion object {
         const val MINUTE_MS = 60_000L
         const val WIDGET_MIN_INTERVAL_MS = 15_000L
+        const val KEY_SPIKES_CLEANED = "spikes_cleaned_v1"
     }
 
     private fun sourceFor(kind: SourceKind): GlucoseSource = when (kind) {
-        SourceKind.LIBRE_BLE -> LibreBleSource(context, pairingStore)
+        SourceKind.LIBRE_BLE -> LibreBleSource(context, pairingStore, connectionLog)
         SourceKind.SIMULATED -> SimulatedSource(scope = appScope)
         // ponytail: shares the connected-device foreground service that keeps the process alive; a
         // data-sync service of its own if a phone ever refuses it without Bluetooth permission.
