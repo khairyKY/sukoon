@@ -117,6 +117,9 @@ class AlarmNotifier(private val context: Context, private val log: AlarmLog) {
             .setDeleteIntent(actionIntent(alert.type, minutes = 0, requestCode = alert.type.ordinal + 100, person = person))
             .addAction(0, snoozeLabel, actionIntent(alert.type, snoozeMinutes, requestCode = alert.type.ordinal, person = person, treated = treating && !test))
             .setFullScreenIntent(PendingIntent.getActivity(context, 1, screen, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT), true)
+        if (treating && !test) {
+            builder.addAction(0, context.getString(R.string.alarm_action_log_food), PendingIntent.getActivity(context, 200 + alert.type.ordinal, MainActivity.logTreatment(context), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
+        }
         // With "display over other apps" Android lets us open the alert screen from the background.
         val overlaid = Settings.canDrawOverlays(context) && runCatching { context.startActivity(Intent(screen).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess
         val posted = NotificationManagerCompat.from(context).areNotificationsEnabled() &&

@@ -10,6 +10,7 @@ import com.sukoon.app.alarms.AlarmType
 import com.sukoon.app.alarms.SoundPack
 import com.sukoon.app.emergency.EmergencySettings
 import com.sukoon.app.insulin.InsulinAction
+import com.sukoon.app.insulin.Dose
 import com.sukoon.app.insulin.DoseSettings
 import com.sukoon.app.insulin.Profile
 import com.sukoon.app.insulin.Sex
@@ -158,6 +159,7 @@ class SettingsPrefs(context: Context) {
                 target = prefs.getInt(KEY_DOSE_TARGET, 110).coerceIn(80, 180),
                 maxDose = number(KEY_DOSE_MAX) ?: 10.0,
                 step = number(KEY_DOSE_STEP) ?: 1.0,
+                afterLowMinutes = prefs.getInt(KEY_DOSE_AFTER_LOW, 120).coerceIn(Dose.AFTER_LOW_RANGE),
             )
         }
         set(value) = prefs.edit().apply {
@@ -168,6 +170,7 @@ class SettingsPrefs(context: Context) {
             putInt(KEY_DOSE_TARGET, value.target)
             number(KEY_DOSE_MAX, value.maxDose)
             number(KEY_DOSE_STEP, value.step)
+            putInt(KEY_DOSE_AFTER_LOW, value.afterLowMinutes)
         }.apply()
 
     /** You → Appearance. */
@@ -258,6 +261,7 @@ class SettingsPrefs(context: Context) {
         private const val KEY_DOSE_FACTOR = "dose_factor"
         private const val KEY_DOSE_TARGET = "dose_target"
         private const val KEY_DOSE_MAX = "dose_max"
+        private const val KEY_DOSE_AFTER_LOW = "dose_after_low_minutes"
         private const val KEY_DOSE_STEP = "dose_step"
         private const val KEY_BASAL_REMINDER = "basal_reminder_on"
         private const val KEY_BASAL_MINUTE = "basal_reminder_minute"

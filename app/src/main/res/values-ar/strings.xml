@@ -1367,6 +1367,9 @@
     <string name="dose_low_body">أنت عند %1$d. تناول ١٥ غرامًا من السكريات السريعة وافحص مجددًا بعد ١٥ دقيقة. لا يُقترح أي أنسولين ما دمت منخفضًا أو تنخفض إلى ما دون ١٠٠.</string>
     <string name="dose_after_low_title">بعد الهبوط</string>
     <string name="dose_after_low_body">كنت تحت ٧٠ عند %1$s. الكربوهيدرات التي تناولتها بعدها ترفعك، وأنسولين لها قد يعيد الهبوط، لذلك لا تُقترح أي جرعة حتى %2$s. افحص مجددًا حينها.</string>
+    <string name="alarm_action_log_food">سجّل ما أكلته</string>
+    <string name="dose_after_low_label">لا تُقترح جرعة بعد الهبوط لمدة</string>
+    <string name="dose_after_low_hint">تُحسب من آخر قراءة أو وخزة إصبع تحت ٧٠: الكربوهيدرات التي تتناولها حينها تعالج الهبوط.</string>
     <string name="dose_r_meal">الوجبة</string>
     <string name="dose_r_meal_how">%1$s غ ÷ %2$s (%3$s)</string>
     <string name="dose_r_corr">التصحيح</string>

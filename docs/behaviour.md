@@ -266,12 +266,17 @@ After an hour it stops (a full meal dose that late risks a low); the correction 
 
 **When you're low**: no dose is suggested under 70, or under 100 and dropping.
 
-**After a low**: for 2 hours after any reading or finger-prick under 70, no dose is suggested at all
+**After a low**: for 2 hours (You → Insulin → More: 1, 1½, 2 or 3 hours, or 30 minutes to 4 hours)
+after any reading or finger-prick under 70, no dose is suggested at all
 (not the meal, not a correction), even once you're back over 70: carbs eaten during or after a low
 are treating it, and insulin for them brings the low back (Kai, 12 Oct: a meal logged going low, then
 1 u suggested at a steady 76). The editor says *Back from a low* and when suggestions return; Home
 shows no meal or correction card. Earlier builds told you the meal's dose "for once you're back over
 70"; that line is gone.
+
+**Logging the treatment**: a low or urgent-low alarm (screen and notification) has *Log what I ate*
+next to *I'm treating it*. It answers the alarm the same way (sound off, the 15-minute check starts)
+and opens a new meal, so what you treated with is in the logbook.
 
 **Correction on Home**: with suggestions on and a correction factor set, Home shows "Correction · beta"
 when the reading is fresh and above your range, nothing with carbs was logged in the last 2 hours,

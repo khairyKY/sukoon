@@ -1279,6 +1279,9 @@
     <string name="dose_low_body">You\'re at %1$d. Have 15 g of fast carbs and check again in 15 minutes. No insulin is suggested while you\'re low or dropping under 100.</string>
     <string name="dose_after_low_title">Back from a low</string>
     <string name="dose_after_low_body">You were under 70 at %1$s. The carbs you\'ve had since are bringing you up, and insulin for them could bring the low back, so no dose is suggested until %2$s. Check again then.</string>
+    <string name="alarm_action_log_food">Log what I ate</string>
+    <string name="dose_after_low_label">No dose suggested after a low for</string>
+    <string name="dose_after_low_hint">Counted from the last reading or finger-prick under 70: the carbs you have then are treating the low.</string>
     <string name="dose_r_meal">Meal</string>
     <string name="dose_r_meal_how">%1$s g ÷ %2$s (%3$s)</string>
     <string name="dose_r_corr">Correction</string>

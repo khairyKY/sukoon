@@ -19,6 +19,7 @@ import androidx.compose.runtime.collectAsState
 import com.sukoon.app.data.prefs.ThemeMode
 import android.content.Intent
 import com.sukoon.app.data.db.LogEventType
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,15 +59,31 @@ class MainActivity : ComponentActivity() {
         takeEntry(intent)
     }
 
-    /** A notification asked for a new entry (the long-acting reminder's "Log it"): the Logbook opens it. */
+    /**
+     * A notification asked for a new entry (the long-acting reminder's "Log it"): the Logbook opens it.
+     * From a low alarm's "Log what I ate", the low is answered as treated first, as Home's button does.
+     */
     private fun takeEntry(intent: Intent) {
         val type = intent.getStringExtra(EXTRA_ENTRY)?.let { name -> LogEventType.entries.firstOrNull { it.name == name } } ?: return
         intent.removeExtra(EXTRA_ENTRY)
-        (application as SukoonApp).container.requestedEntry.value = type
+        val container = (application as SukoonApp).container
+        if (intent.getBooleanExtra(EXTRA_TREATED, false)) {
+            intent.removeExtra(EXTRA_TREATED)
+            container.appScope.launch { container.alarms.treated() }
+        }
+        container.requestedEntry.value = type
     }
 
     companion object {
         const val EXTRA_ENTRY = "entry"
+        private const val EXTRA_TREATED = "treated_low"
+
+        /** A low alarm's "Log what I ate": answers it as treated, then opens a new meal. */
+        fun logTreatment(context: android.content.Context): Intent =
+            Intent(context, MainActivity::class.java)
+                .putExtra(EXTRA_ENTRY, LogEventType.CARB.name)
+                .putExtra(EXTRA_TREATED, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
     }
 }
 

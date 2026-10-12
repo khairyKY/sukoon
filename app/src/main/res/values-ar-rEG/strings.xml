@@ -1367,6 +1367,9 @@
     <string name="dose_low_body">إنت على %1$d. خد ١٥ جم سكريات سريعة وقيس تاني بعد ١٥ دقيقة. مفيش إنسولين مقترح وإنت واطي أو بتنزل تحت ١٠٠.</string>
     <string name="dose_after_low_title">بعد الهبوط</string>
     <string name="dose_after_low_body">كنت تحت ٧٠ الساعة %1$s. النشويات اللي أكلتها بعدها بترفعك، وإنسولين ليها ممكن يرجّع الهبوط، فمفيش جرعة مقترحة لحد %2$s. قيس تاني ساعتها.</string>
+    <string name="alarm_action_log_food">سجّل اللي أكلته</string>
+    <string name="dose_after_low_label">مفيش جرعة مقترحة بعد الهبوط لمدة</string>
+    <string name="dose_after_low_hint">بتتحسب من آخر قراية أو شكّة صباع تحت ٧٠: النشويات اللي بتاكلها ساعتها بتعالج الهبوط.</string>
     <string name="dose_r_meal">الوجبة</string>
     <string name="dose_r_meal_how">%1$s جم ÷ %2$s (%3$s)</string>
     <string name="dose_r_corr">التصحيح</string>

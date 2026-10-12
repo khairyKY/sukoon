@@ -98,16 +98,21 @@ class DoseTest {
     }
 
     @Test
-    fun `nothing is suggested for 2 hours after a low, even once back over 70`() {
+    fun `nothing is suggested for the set time after a low, even once back over 70`() {
         val now = java.time.Instant.parse("2026-10-12T21:00:00Z")
         val low = now.minusSeconds(20 * 60)
         // Kai's evening: a meal eaten going low, 66 twenty minutes ago, steady at 76 now.
         assertEquals(low, Dose.lowAt(listOf(now.minusSeconds(40 * 60) to 70, low to 66, now to 76), now))
-        assertNull(Dose.lowAt(listOf(now.minusSeconds(3 * 3600) to 55, now to 76), now)) // over 2 hours ago
-        assertEquals(DoseAdvice.AfterLow(low, low.plus(Dose.AFTER_LOW)), Dose.advise(settings, MealSlot.LUNCH, 30.0, 76, TrendDirection.STEADY, 0.0, low))
+        assertNull(Dose.lowAt(listOf(now.minusSeconds(5 * 3600) to 55, now to 76), now)) // past the longest setting
+        assertEquals(DoseAdvice.AfterLow(low, low.plusSeconds(2 * 3600)), Dose.advise(settings, MealSlot.LUNCH, 30.0, 76, TrendDirection.STEADY, 0.0, low, now))
+        // Your own window: 15 minutes would be over (the meal is suggested again), 3 hours still holds.
+        assertTrue(Dose.advise(settings.copy(afterLowMinutes = 15), MealSlot.LUNCH, 30.0, 76, TrendDirection.STEADY, 0.0, low, now) is DoseAdvice.Suggestion)
+        val longAgo = now.minusSeconds(150 * 60)
+        assertTrue(Dose.advise(settings, MealSlot.LUNCH, 30.0, 76, TrendDirection.STEADY, 0.0, longAgo, now) is DoseAdvice.Suggestion)
+        assertTrue(Dose.advise(settings.copy(afterLowMinutes = 180), MealSlot.LUNCH, 30.0, 76, TrendDirection.STEADY, 0.0, longAgo, now) is DoseAdvice.AfterLow)
         val s = settings.copy(step = 1.0)
         assertNull(Dose.mealDose(s, 30.0, now.minusSeconds(30 * 60), false, 76, TrendDirection.STEADY, now, now, 0.0, MealSlot.LUNCH, low))
         assertNull(Dose.correction(s, 220, TrendDirection.STEADY, now, now, 180, 0.0, null, MealSlot.LUNCH, low)) // a rebound: let it settle
-        assertEquals(DoseAdvice.TreatLowFirst(65), Dose.advise(settings, MealSlot.LUNCH, 30.0, 65, TrendDirection.STEADY, 0.0, low)) // still low: that first
+        assertEquals(DoseAdvice.TreatLowFirst(65), Dose.advise(settings, MealSlot.LUNCH, 30.0, 65, TrendDirection.STEADY, 0.0, low, now)) // still low: that first
     }
 }
