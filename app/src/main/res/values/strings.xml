@@ -134,6 +134,12 @@
     <string name="sensor_repair">Pair again</string>
     <string name="sensor_connect_hint">Takes its readings over; other apps stop getting them.</string>
     <string name="sensor_hold">Hold the back of your phone flat on the sensor…</string>
+    <string name="sensor_start">Start a new sensor</string>
+    <string name="sensor_start_hint">For a sensor you just put on that no app has started yet.</string>
+    <string name="sensor_start_title">Start this sensor?</string>
+    <string name="sensor_start_body">Only for a new sensor on your body that no app has started. Sukoon starts it and takes its readings: the warm-up hour begins and its 14 days start counting. This can\'t be undone. Hold the back of your phone flat on the sensor until it says it has started.</string>
+    <string name="sensor_start_confirm">Start it</string>
+    <string name="sensor_started_now">Started. The sensor warms up for an hour; readings follow.</string>
     <string name="sensor_cancel">Cancel</string>
     <string name="sensor_forget">Forget sensor</string>
     <string name="sensor_no_nfc">This phone has no NFC, so it can\'t pair a Libre sensor.</string>

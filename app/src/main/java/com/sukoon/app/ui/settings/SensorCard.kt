@@ -21,7 +21,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -78,7 +80,7 @@ import com.sukoon.app.ui.theme.StateHigh
 import java.time.Duration
 import kotlinx.coroutines.delay
 
-private enum class TapMode { CHECK, CONNECT }
+private enum class TapMode { CHECK, CONNECT, START }
 
 /**
  * You → Your sensor. Two NFC actions:
@@ -99,6 +101,9 @@ fun SensorCard(
     val activity = context as? Activity
     val adapter = remember { NfcAdapter.getDefaultAdapter(context) }
     var mode by remember { mutableStateOf<TapMode?>(null) }
+    /** The mode the Bluetooth permission prompt was opened for (pairing needs it; so does starting). */
+    var afterPermission by remember { mutableStateOf(TapMode.CONNECT) }
+    var confirmStart by remember { mutableStateOf(false) }
     var result by rememberSaveable { mutableStateOf<String?>(null) }
     var failed by rememberSaveable { mutableStateOf(false) }
     val paired by rememberUpdatedState(onPaired)
@@ -128,7 +133,7 @@ fun SensorCard(
     fun bluetoothGranted() = permissions.filter { it != Manifest.permission.POST_NOTIFICATIONS }
         .all { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
     val requestPermissions = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        if (bluetoothGranted()) mode = TapMode.CONNECT else report(context.getString(R.string.sensor_need_permissions), isFailure = true)
+        if (bluetoothGranted()) mode = afterPermission else report(context.getString(R.string.sensor_need_permissions), isFailure = true)
     }
 
     val active = mode
@@ -138,14 +143,14 @@ fun SensorCard(
                 activity,
                 { tag ->
                     val scannedAt = System.currentTimeMillis()
-                    val outcome = runCatching { LibreNfc.readAndPair(tag, pair = active == TapMode.CONNECT) }
+                    val outcome = runCatching { LibreNfc.readAndPair(tag, pair = active != TapMode.CHECK, start = active == TapMode.START) }
                     outcome.onSuccess { logRead(it) }.onFailure { Log.w("LibreNfc", "Read failed", it) }
                     activity.runOnUiThread {
                         outcome.onSuccess { read ->
                             if (read.bleMac != null) {
                                 paired(read, scannedAt)
                                 awaitingReadings = true
-                                report(context.getString(R.string.sensor_connected_now), isFailure = false)
+                                report(context.getString(if (active == TapMode.START) R.string.sensor_started_now else R.string.sensor_connected_now), isFailure = false)
                             } else {
                                 report(describe(context, read), isFailure = read.fram == null || !read.supported)
                             }
@@ -252,14 +257,32 @@ fun SensorCard(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         CardButton(stringResource(if (pairing == null) R.string.sensor_connect else R.string.sensor_repair)) {
                             result = null
+                            afterPermission = TapMode.CONNECT
                             if (bluetoothGranted()) mode = TapMode.CONNECT else requestPermissions.launch(permissions.toTypedArray())
                         }
                         CardButton(stringResource(R.string.sensor_check), filled = false) { result = null; mode = TapMode.CHECK }
                     }
                     Text(stringResource(R.string.sensor_connect_hint) + " " + stringResource(R.string.sensor_check_hint), fontSize = 12.sp, color = CaptionMuted)
+                    CardButton(stringResource(R.string.sensor_start), filled = false) { result = null; confirmStart = true }
+                    Text(stringResource(R.string.sensor_start_hint), fontSize = 12.sp, color = CaptionMuted)
                 }
             }
             result?.let { Text(it, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (failed) StateLow else Sage) }
+        }
+        if (confirmStart) {
+            AlertDialog(
+                onDismissRequest = { confirmStart = false },
+                title = { Text(stringResource(R.string.sensor_start_title)) },
+                text = { Text(stringResource(R.string.sensor_start_body), fontSize = 14.sp) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        confirmStart = false
+                        afterPermission = TapMode.START
+                        if (bluetoothGranted()) mode = TapMode.START else requestPermissions.launch(permissions.toTypedArray())
+                    }) { Text(stringResource(R.string.sensor_start_confirm)) }
+                },
+                dismissButton = { TextButton(onClick = { confirmStart = false }) { Text(stringResource(R.string.sensor_cancel)) } },
+            )
         }
         if (pairing != null && mode == null) {
             Text(

@@ -134,6 +134,12 @@
     <string name="sensor_repair">الربط من جديد</string>
     <string name="sensor_connect_hint">يتولى استقبال قراءاته؛ فتتوقف التطبيقات الأخرى عن تلقيها.</string>
     <string name="sensor_hold">ضع ظهر هاتفك مستويًا على المستشعر…</string>
+    <string name="sensor_start">تشغيل مستشعر جديد</string>
+    <string name="sensor_start_hint">لمستشعر ركّبته للتو ولم يشغّله أي تطبيق بعد.</string>
+    <string name="sensor_start_title">تشغيل هذا المستشعر؟</string>
+    <string name="sensor_start_body">فقط لمستشعر جديد على جسمك لم يشغّله أي تطبيق. يشغّله سكون ويتولى استقبال قراءاته: تبدأ ساعة التهيئة ويبدأ عدّ أيامه الأربعة عشر. لا يمكن التراجع عن ذلك. ضع ظهر هاتفك مستويًا على المستشعر حتى يظهر أنه بدأ.</string>
+    <string name="sensor_start_confirm">شغّله</string>
+    <string name="sensor_started_now">بدأ التشغيل. يتهيأ المستشعر لمدة ساعة، ثم تصل القراءات.</string>
     <string name="sensor_cancel">إلغاء</string>
     <string name="sensor_forget">نسيان المستشعر</string>
     <string name="sensor_no_nfc">لا يدعم هذا الهاتف NFC، لذا لا يمكنه ربط مستشعر Libre.</string>

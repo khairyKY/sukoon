@@ -134,6 +134,12 @@
     <string name="sensor_repair">اربطه تاني</string>
     <string name="sensor_connect_hint">بياخد القرايات؛ التطبيقات التانية بتبطّل تاخدها.</string>
     <string name="sensor_hold">حط ضهر الموبايل على الحساس…</string>
+    <string name="sensor_start">شغّل حساس جديد</string>
+    <string name="sensor_start_hint">لحساس لسه راكبه ومحدش شغّله لسه.</string>
+    <string name="sensor_start_title">تشغّل الحساس ده؟</string>
+    <string name="sensor_start_body">بس لحساس جديد على جسمك محدش شغّله. سكون هيشغّله وياخد قراياته: ساعة التهيئة هتبدأ وال ١٤ يوم هيبدأوا يتعدّوا. مينفعش ترجع فيها. حط ضهر الموبايل على الحساس لحد ما يقول إنه اشتغل.</string>
+    <string name="sensor_start_confirm">شغّله</string>
+    <string name="sensor_started_now">اشتغل. الحساس هيتهيّأ ساعة، وبعدها القرايات هتيجي.</string>
     <string name="sensor_cancel">إلغاء</string>
     <string name="sensor_forget">انسَ الحساس</string>
     <string name="sensor_no_nfc">الموبايل ده مفيهوش NFC، فمش هيقدر يربط حساس Libre.</string>

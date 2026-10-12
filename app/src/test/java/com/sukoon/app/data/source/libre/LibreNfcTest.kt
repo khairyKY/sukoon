@@ -34,6 +34,17 @@ class LibreNfcTest {
     }
 
     @Test
+    fun `activate is patch-info + sub-command 1B + the 4-byte proof the BLE key is built from`() {
+        val uid = bytes(0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x07, 0xE0)
+        val params = Libre2.activationParameters(uid)
+        assertEquals(5, params.size)
+        assertEquals(0x1B.toByte(), params[0])
+        // usefulFunction(uid, 0x1B, 0x1B6A) is what decryptBle keys on; Libre2Test checks it against a real packet.
+        assertArrayEquals(Libre2.usefulFunction(uid, 0x1B, 0x1B6A), params.copyOfRange(1, 5))
+        assertArrayEquals(bytes(0x02, 0xA1, 0x07, 0x1B), LibreNfc.CMD_PATCH_INFO + params.copyOfRange(0, 1))
+    }
+
+    @Test
     fun `only Libre 2 EU patch infos are streamable`() {
         assertTrue(Libre2.isLibre2Eu(bytes(0x9D, 0x08, 0x30, 0x01, 0x76, 0x25)))
         assertTrue(Libre2.isLibre2Eu(bytes(0xC5, 0x09, 0x31, 0x01, 0x00, 0x00)))
