@@ -1,7 +1,7 @@
 # Notices: a message to everyone who has Sukoon
 
 Every phone with Sukoon (GitHub and Play builds, wearers, followers and demo users alike) reads
-`web/notices.json` from Sukoon's GitHub Pages site when the app starts and then once an hour, and
+`web/notices.json` from Sukoon's GitHub Pages site when the app starts and then every 6 hours, and
 shows each notice it hasn't shown before as a notification ("Notices from Sukoon" channel). Tapping
 it opens the notice's link, or the app. The newest notice that is still running also sits on Now as
 a card until it is closed.
@@ -37,6 +37,6 @@ a card until it is closed.
 
 ## Timing
 
-Not instant: up to an hour for the phone's next check, plus up to 10 minutes of GitHub Pages
+Not instant: up to 6 hours for the phone's next check, plus up to 10 minutes of GitHub Pages
 caching. A phone with notifications turned off for Sukoon gets the notice once they're back on.
 Old entries can stay in the file; remove them when they no longer matter.

@@ -33,7 +33,7 @@ import org.json.JSONObject
  * [CHECK_EVERY]. Each notice it hasn't shown before comes as a notification, and the newest one
  * still running sits on Now as a card until it is closed. docs/notices.md says how to send one.
  *
- * ponytail: polling a static file, so a notice reaches phones within about an hour, not instantly;
+ * ponytail: polling a static file, so a notice reaches phones within [CHECK_EVERY], not instantly;
  * a push service (FCM) if that ever matters more than having no server and no Google SDK.
  */
 class Notices(private val context: Context, private val scope: CoroutineScope) {
@@ -141,7 +141,8 @@ class Notices(private val context: Context, private val scope: CoroutineScope) {
         private const val KEY_DISMISSED = "dismissed"
         private const val KEY_FILE = "file"
         private const val NOTIFICATION_BASE = 5000
-        val CHECK_EVERY: Duration = Duration.ofHours(1)
+        /** How often a running Sukoon looks for notices (and a new release, which it asks GitHub for at most daily). */
+        val CHECK_EVERY: Duration = Duration.ofHours(6)
 
         /**
          * The file: a JSON array of notices, newest last. An entry without an id, title or body is
