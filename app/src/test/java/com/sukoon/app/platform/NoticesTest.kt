@@ -14,7 +14,7 @@ class NoticesTest {
             [
               {"id": "2026-10-12-start", "title": "Start sensors in Sukoon", "body": "You → Sensor → Start a new sensor.",
                "title_ar": "شغّل الحساس من سكون", "body_ar": "إنت ← الحساس ← شغّل حساس جديد.",
-               "link": "https://github.com/khairyKY/sukoon/releases", "until": "2026-10-20"}
+               "link": "https://github.com/khairyKY/sukoon/releases", "until": "2026-10-20", "date": "2026-10-12"}
             ]
             """,
         )
@@ -24,6 +24,7 @@ class NoticesTest {
             assertEquals("شغّل الحساس من سكون", titleAr)
             assertEquals("https://github.com/khairyKY/sukoon/releases", link)
             assertEquals(LocalDate.of(2026, 10, 20), until)
+            assertEquals(LocalDate.of(2026, 10, 12), date)
         }
     }
 

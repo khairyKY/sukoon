@@ -4,7 +4,7 @@ Every phone with Sukoon (GitHub and Play builds, wearers, followers and demo use
 `web/notices.json` from Sukoon's GitHub Pages site when the app starts and then every 6 hours, and
 shows each notice it hasn't shown before as a notification ("Notices from Sukoon" channel). Tapping
 it opens the notice's link, or the app. The newest notice that is still running also sits on Now as
-a card until it is closed.
+a slim banner that opens into the full notice, until "Don't show again" or its last day.
 
 ## Send one
 
@@ -15,6 +15,7 @@ a card until it is closed.
 [
   {
     "id": "2026-10-12-sensor-start",
+    "date": "2026-10-12",
     "title": "Start new sensors in Sukoon",
     "body": "You → Sensor → Start a new sensor. No other app needed.",
     "title_ar": "شغّل الحساس الجديد من سكون",
@@ -33,6 +34,7 @@ a card until it is closed.
 | `title`, `body` | Required. English. |
 | `title_ar`, `body_ar` | Optional. Shown when the app is in Arabic. |
 | `link` | Optional, `https://` only (anything else is ignored). |
+| `date` | Optional day it was sent (`YYYY-MM-DD`), shown as "From Sukoon · today". |
 | `until` | Optional last day (`YYYY-MM-DD`). Set it, so new installs don't get old news. |
 
 ## Timing

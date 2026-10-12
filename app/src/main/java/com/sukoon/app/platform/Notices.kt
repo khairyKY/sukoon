@@ -31,7 +31,7 @@ import org.json.JSONObject
  * update", a heads-up). No push server: every phone fetches one small file from Sukoon's GitHub
  * Pages site (web/notices.json, published on every push to main) when the app starts and then every
  * [CHECK_EVERY]. Each notice it hasn't shown before comes as a notification, and the newest one
- * still running sits on Now as a card until it is closed. docs/notices.md says how to send one.
+ * still running sits on Now as a slim banner (opening into a sheet) until "Don't show again". docs/notices.md says how to send one.
  *
  * ponytail: polling a static file, so a notice reaches phones within [CHECK_EVERY], not instantly;
  * a push service (FCM) if that ever matters more than having no server and no Google SDK.
@@ -48,6 +48,8 @@ class Notices(private val context: Context, private val scope: CoroutineScope) {
         val link: String? = null,
         /** The last day it is shown, on the phone's calendar; null = no end. */
         val until: LocalDate? = null,
+        /** The day it was sent ("From Sukoon · today"); null when the file doesn't say. */
+        val date: LocalDate? = null,
     ) {
         /** Still running on [today]: shown up to and including [until]. */
         fun liveOn(today: LocalDate) = until == null || !today.isAfter(until)
@@ -64,7 +66,19 @@ class Notices(private val context: Context, private val scope: CoroutineScope) {
     /** The newest notice still running that this phone hasn't closed: the card on Now. */
     val current: StateFlow<Notice?> = _current.asStateFlow()
 
-    /** The card's ×: that notice stays closed on this phone. */
+    private val _read = MutableStateFlow(prefs.getStringSet(KEY_READ, null).orEmpty())
+
+    /** Notices opened on this phone: the banner's unread dot goes once its id is here. */
+    val read: StateFlow<Set<String>> = _read.asStateFlow()
+
+    /** Opening the notice's sheet. */
+    fun markRead(id: String) {
+        if (id in _read.value) return
+        _read.value = _read.value + id
+        prefs.edit().putStringSet(KEY_READ, _read.value).apply()
+    }
+
+    /** "Don't show again": that notice stays closed on this phone. */
     fun dismiss(id: String) {
         prefs.edit().putStringSet(KEY_DISMISSED, dismissed() + id).apply()
         _current.value = newest(cached(), dismissed(), LocalDate.now())
@@ -140,6 +154,7 @@ class Notices(private val context: Context, private val scope: CoroutineScope) {
         private const val KEY_SEEN = "seen"
         private const val KEY_DISMISSED = "dismissed"
         private const val KEY_FILE = "file"
+        private const val KEY_READ = "read"
         private const val NOTIFICATION_BASE = 5000
         /** How often a running Sukoon looks for notices (and a new release, which it asks GitHub for at most daily). */
         val CHECK_EVERY: Duration = Duration.ofHours(6)
@@ -162,6 +177,7 @@ class Notices(private val context: Context, private val scope: CoroutineScope) {
                     bodyAr = row.text("body_ar"),
                     link = row.text("link")?.takeIf { it.startsWith("https://") },
                     until = row.text("until")?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
+                    date = row.text("date")?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
                 )
             }
         }
