@@ -328,8 +328,8 @@ private fun words(f: Finding): Pair<String, String> {
         }
         is Insight.MealOutcomes -> when {
             i.lowWithin4h >= 2 -> stringResource(R.string.in2_meal_low, i.lowWithin4h, i.meals, slot(i.slot).lowercase())
-            f.priority >= 60 -> stringResource(R.string.in2_meal_hard, slot(i.slot), i.averageRise)
-            else -> stringResource(R.string.in2_meal_rise, slot(i.slot), i.averageRise)
+            f.priority >= 60 -> stringResource(R.string.in2_meal_hard, slot(i.slot), i.averagePeak)
+            else -> stringResource(R.string.in2_meal_rise, slot(i.slot), i.averagePeak)
         } to stringResource(R.string.in2_ev_meals, i.meals)
         is Insight.RecurringHighs -> stringResource(R.string.in2_highs, clock(i.fromHour), clock(i.toHour)) to stringResource(R.string.in2_ev_percent_days, i.percentOfDays)
         is Insight.Rebounds -> stringResource(R.string.in2_rebound) to stringResource(R.string.in2_ev_of_lows, i.rebounds, i.lows)

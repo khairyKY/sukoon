@@ -1635,8 +1635,8 @@
     <string name="in2_cause_workouts">mostly after workouts</string>
     <string name="in2_cause_stacking">often after two doses close together</string>
     <string name="in2_meal_low">Lows followed %1$d of your %2$d %3$s meals.</string>
-    <string name="in2_meal_hard">%1$s is your hardest meal: you rise about %2$d after it.</string>
-    <string name="in2_meal_rise">%1$s: you rise about %2$d after it.</string>
+    <string name="in2_meal_hard">%1$s is your hardest meal: you peak at %2$d on average.</string>
+    <string name="in2_meal_rise">%1$s: you peak at %2$d on average.</string>
     <string name="in2_ev_meals">from %1$d meals</string>
     <string name="in2_highs">You\'re often high between %1$s and %2$s.</string>
     <string name="in2_ev_percent_days">on %1$d%% of days</string>

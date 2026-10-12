@@ -142,7 +142,7 @@ object InsightDigestBuilder {
         }
         // The hardest meal time (most rise) is one finding; the other meal times fold away.
         val meals = insights.filterIsInstance<Insight.MealOutcomes>()
-        val hardest = meals.filter { it.level != Level.GOOD }.maxByOrNull { it.averageRise }
+        val hardest = meals.filter { it.level != Level.GOOD }.maxByOrNull { it.averagePeak }
         meals.forEach { m ->
             val lowsAfter = m.lowWithin4h >= 2
             out += Finding(

@@ -8,7 +8,7 @@
     <string name="home_status_no_signal">مفيش إشارة</string>
     <string name="home_status_not_connected">مش متصل</string>
     <string name="home_nav_now">دلوقتي</string>
-    <string name="home_nav_trends">التقارير</string>
+    <string name="home_nav_trends">الاتجاهات</string>
     <string name="home_nav_you">حسابي</string>
 
     <!-- Graph (A3) -->
@@ -569,7 +569,7 @@
     <string name="help_emergency_title">جهات الطوارئ</string>
     <string name="help_emergency_body">لو هبوط شديد، أو انقطاع إشارة وإنت واطي، مترودش عليه في الوقت اللي تختاره (١٠ دقايق في الأول)، سكون بيعدّ ٦٠ ثانية على الشاشة، وبعدين بيبعت رسالة لكل اللي في حسابي ← الناس ← جهات الطوارئ وبيتصل بأولهم؛ وتاني بعد ٣٠ دقيقة لو لسه مفيش رد، ورسالة «رجع طبيعي» لما تبقى ٧٠ أو أكتر. أي رد، حتى لو شلت المنبّه، بيبدأ العدّ من الأول؛ و«أنا كويس» بيوقّفه. في الرئيسية، «بلّغ جهة الطوارئ» بيخليك تبعتلهم أو تكلّمهم بنفسك.</string>
     <string name="help_logbook_title">السجل</string>
-    <string name="help_logbook_body">التقارير ← السجل فيه الأكل، والإنسولين السريع والقاعدي، وقياسات الصباع، والنشاط، والملاحظات. الوجبة ممكن تتسجّل معاها جرعة الإنسولين وكام دقيقة قبل الأكل. كل تسجيل بيظهر جنبه السكر في اللحظة دي؛ وقياس الصباع بيوريك الحساس كان بعيد قد إيه عن الجهاز. الذكاء الاصطناعي يقدر يقدّر كربوهيدرات الوجبة من صورة أو وصف، بس عمره ما بيقترح جرعات.</string>
+    <string name="help_logbook_body">الاتجاهات ← السجل فيه الأكل، والإنسولين السريع والقاعدي، وقياسات الصباع، والنشاط، والملاحظات. الوجبة ممكن تتسجّل معاها جرعة الإنسولين وكام دقيقة قبل الأكل. كل تسجيل بيظهر جنبه السكر في اللحظة دي؛ وقياس الصباع بيوريك الحساس كان بعيد قد إيه عن الجهاز. الذكاء الاصطناعي يقدر يقدّر كربوهيدرات الوجبة من صورة أو وصف، بس عمره ما بيقترح جرعات.</string>
     <string name="help_trends_title">الرسم البياني والملاحظات والتقرير</string>
     <string name="help_trends_body">الرسم البياني بيوري أي مدة من ٣ ساعات لـ ١٤ يوم، ومعاه الوقت في المدى والـ GMI (تقدير للـ A1C)، وكل القرايات تحته. الملاحظات بتلاقي أنماط، زي هبوط بيتكرر في ساعة معينة، وبتقول كل قاعدة جاية منين؛ ومفيش فيها أي أوامر. والتقرير بيدّيك ملخص الـ AGP في صفحة واحدة اللي العيادات بتستخدمه، ومعاه PDF تشاركه.</string>
     <string name="help_widgets_title">الويدجت</string>
@@ -734,7 +734,7 @@
     <string name="you_apps_summary">MyFitnessPal، Nightscout، الذكاء الاصطناعي</string>
     <string name="you_reports_summary">ملف CSV للدكتور</string>
     <string name="you_help_summary">الدليل، فحص الإعداد</string>
-    <string name="you_reports_body">تقرير الدكتور لـ١٤ يوم (PDF) موجود في التقارير ← التقرير.</string>
+    <string name="you_reports_body">تقرير الدكتور لـ١٤ يوم (PDF) موجود في الاتجاهات ← التقرير.</string>
     <string name="ob_back">رجوع</string>
     <string name="ob_continue">كمّل</string>
     <string name="ob_skip">تخطّى</string>
@@ -1751,8 +1751,8 @@
     <string name="in2_cause_workouts">غالبًا بعد التمرين</string>
     <string name="in2_cause_stacking">غالبًا بعد جرعتين قريبين من بعض</string>
     <string name="in2_meal_low">%1$d من %2$d من وجبات %3$s جه بعدها هبوط.</string>
-    <string name="in2_meal_hard">%1$s أصعب أكلة عندك: السكر بيعلى حوالي %2$d بعدها.</string>
-    <string name="in2_meal_rise">%1$s: السكر بيعلى حوالي %2$d بعدها.</string>
+    <string name="in2_meal_hard">%1$s أصعب أكلة عندك: بتوصل في المتوسط لـ %2$d.</string>
+    <string name="in2_meal_rise">%1$s: بتوصل في المتوسط لـ %2$d.</string>
     <string name="in2_ev_meals">من %1$d وجبة</string>
     <string name="in2_highs">كتير السكر بيعلى عندك بين %1$s و%2$s.</string>
     <string name="in2_ev_percent_days">في %1$d%% من الأيام</string>
@@ -1780,7 +1780,7 @@
     <string name="in2_ev_nights">%1$d من %2$d ليلة في المدى</string>
     <string name="in2_act_going_low">شغّل «نازل وقرّب يهبط»</string>
     <string name="in2_cap_going_low">بينبّهك قبل الهبوط بحوالي ٢٠ دقيقة.</string>
-    <string name="in2_act_workout">شغّل الاطمئنان بعد التمرين</string>
+    <string name="in2_act_workout">شغّل البصّة بعد التمرين</string>
     <string name="in2_cap_workout">بعد التمرين بنص ساعة: رقمك والسهم بتاعه.</string>
     <string name="in2_act_dose">ظبّط اقتراحات الجرعات</string>
     <string name="in2_cap_dose">بتحسب الأنسولين اللي لسه شغّال قبل ما تقترح زيادة.</string>
@@ -1798,7 +1798,7 @@
     <string name="in2_cap_look">بيفتح الرسم البياني على آخر ١٤ يوم.</string>
     <string name="in2_cap_already">ده شغّال أصلًا؛ وأهو على الرسم البياني.</string>
     <string name="in2_toast_going_low">«نازل وقرّب يهبط» اشتغل.</string>
-    <string name="in2_toast_workout">الاطمئنان بعد التمرين اشتغل.</string>
+    <string name="in2_toast_workout">البصّة بعد التمرين اشتغلت.</string>
     <!-- Ask, reworked (Redesign Canvas §9) -->
     <string name="ask2_based_on">آخر %1$d يوم · %2$s قراية · %3$d تسجيل</string>
     <string name="ask2_demo_chip">بيانات تجريبية</string>
@@ -1822,11 +1822,11 @@
     <string name="ask2_q_meter">ليه الحساس والجهاز مش متفقين؟</string>
     <string name="ask2_q_sites">أغيّر أماكن الحقن إزاي؟</string>
     <!-- After-workout check -->
-    <string name="workout_check_channel">اطمئنان هادي</string>
+    <string name="workout_check_channel">بصّات هادية</string>
     <string name="workout_check_title">بعد التمرين: %1$d %2$s</string>
     <string name="workout_check_falling">بينزل شوية. سناك دلوقتي يخلّيك فوق ٧٠.</string>
-    <string name="workout_check_section">اطمئنان هادي</string>
-    <string name="workout_check_row">الاطمئنان بعد التمرين</string>
+    <string name="workout_check_section">بصّات هادية</string>
+    <string name="workout_check_row">بصّة بعد التمرين</string>
     <string name="workout_check_row_body">بعد نص ساعة من تمرين متسجّل: رقمك والسهم بتاعه. مش منبّه.</string>
     <string name="workout_check_mfp">التمارين اللي بتسجّلها، واللي MyFitnessPal بيجيبها، الاتنين بيتحسبوا.</string>
     <!-- Guide (Redesign Canvas §7) -->
