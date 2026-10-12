@@ -16,6 +16,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -73,9 +74,18 @@ class AlarmMonitor(
 
     fun start() {
         scope.launch {
-            repository.readingsSince(System.currentTimeMillis() - WINDOW.toMillis()).first().forEach(::keep)
-            // However old: after a restart with the sensor quiet for an hour, "no readings" must still go off.
-            repository.latestReading.first()?.takeIf { !it.warmup }?.let(::keep)
+            reload()
+            // A new finger-prick fit: what's kept was adjusted the old way, so read it again.
+            launch {
+                repository.calibrationChanges.drop(1).collect {
+                    mutex.withLock {
+                        recent.clear()
+                        newest = null
+                        reload()
+                        evaluateLocked()
+                    }
+                }
+            }
             val minuteTicks = flow {
                 while (true) {
                     emit(null)
@@ -156,6 +166,12 @@ class AlarmMonitor(
 
     /** A pack's low-alarm sound, before choosing it (at the volume a low alarm plays). */
     fun previewPack(pack: SoundPack) = notifier.preview(AlarmType.LOW, settings.alarmSettings.let { it.copy(soundPack = pack, sounds = it.sounds - AlarmType.LOW) })
+
+    private suspend fun reload() {
+        repository.readingsSince(System.currentTimeMillis() - WINDOW.toMillis()).first().forEach(::keep)
+        // However old: after a restart with the sensor quiet for an hour, "no readings" must still go off.
+        repository.latestReading.first()?.takeIf { !it.warmup }?.let(::keep)
+    }
 
     private fun keep(reading: GlucoseReading) {
         recent[reading.timestamp] = reading

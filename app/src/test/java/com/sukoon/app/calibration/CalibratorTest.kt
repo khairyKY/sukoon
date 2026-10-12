@@ -75,4 +75,12 @@ class CalibratorTest {
         // Offsets 20, 0, 0, 0 weighted 1, ½, ⅓, ¼ → 20 / (25/12) = 9.6
         assertEquals(9.6, c.intercept, 1e-9)
     }
+
+    @Test
+    fun `the saved fit comes back exactly, and a broken one is ignored`() {
+        val c = Calibration(1.0731, -7.25, 3)
+        assertEquals(c, CalibrationManager.decode(CalibrationManager.encode(c)))
+        assertNull(CalibrationManager.decode("1.0;oops;2"))
+        assertNull(CalibrationManager.decode(""))
+    }
 }

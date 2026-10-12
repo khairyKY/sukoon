@@ -52,6 +52,9 @@ class GlucoseRepository(
 ) {
     private fun adjust(reading: GlucoseReading) = calibration.value?.apply(reading) ?: reading
 
+    /** Emits when the calibration changes: anything holding adjusted readings reloads them. */
+    val calibrationChanges: Flow<Calibration?> = calibration
+
     private val _live = MutableSharedFlow<GlucoseReading>(extraBufferCapacity = 64)
 
     /**

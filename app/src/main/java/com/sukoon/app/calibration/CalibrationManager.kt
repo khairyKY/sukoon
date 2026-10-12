@@ -60,6 +60,7 @@ class CalibrationManager(
 
     suspend fun refit() {
         if (!enabled) {
+            save(null)
             current.value = null
             _fit.value = null
             return
@@ -74,11 +75,34 @@ class CalibrationManager(
             }
         }
         val result = Calibrator.fit(pairs, now)
+        save(result.calibration)
         current.value = result.calibration
         _fit.value = result
     }
 
-    private companion object {
-        const val KEY_ON = "calibration_on"
+    private fun save(c: Calibration?) {
+        prefs.edit().putString(KEY_SAVED, c?.let(::encode)).apply()
+    }
+
+    companion object {
+        private const val KEY_ON = "calibration_on"
+        private const val KEY_SAVED = "calibration_saved"
+
+        /**
+         * The last fit, known the moment the app starts: the refit reads a week of readings, and the
+         * alarms and the follower upload would otherwise start on raw values until it finishes.
+         */
+        fun saved(context: Context): Calibration? {
+            val prefs = context.getSharedPreferences("sukoon_prefs", Context.MODE_PRIVATE)
+            if (!prefs.getBoolean(KEY_ON, false)) return null
+            return prefs.getString(KEY_SAVED, null)?.let(::decode)
+        }
+
+        internal fun encode(c: Calibration) = "${c.slope};${c.intercept};${c.pairsUsed}"
+
+        internal fun decode(text: String): Calibration? {
+            val p = text.split(';').takeIf { it.size == 3 } ?: return null
+            return runCatching { Calibration(p[0].toDouble(), p[1].toDouble(), p[2].toInt()) }.getOrNull()
+        }
     }
 }

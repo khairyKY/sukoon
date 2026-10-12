@@ -107,7 +107,7 @@ class AppContainer(private val context: Context) {
 
     private val source = MutableStateFlow(sourceFor(_sourceKind.value))
 
-    private val calibrationInForce = MutableStateFlow<Calibration?>(null)
+    private val calibrationInForce = MutableStateFlow(CalibrationManager.saved(context))
 
     val glucoseRepository: GlucoseRepository = GlucoseRepository(
         sources = source,
