@@ -181,7 +181,14 @@ class AppContainer(private val context: Context) {
     init {
         glucoseRepository.start()
         BasalReminder.schedule(context, settings.basalReminder)
-        updates.checkIfDue()
+        // Hourly, not just at start: the sensor service keeps Sukoon running for days, and a release
+        // should still reach it (checkIfDue itself asks GitHub at most once a day).
+        appScope.launch {
+            while (true) {
+                updates.checkIfDue()
+                delay(com.sukoon.app.platform.Notices.CHECK_EVERY.toMillis())
+            }
+        }
         notices.start()
         // Long-acting logged anywhere clears its reminder.
         appScope.launch {
