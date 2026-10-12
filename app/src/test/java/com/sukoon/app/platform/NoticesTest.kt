@@ -28,6 +28,18 @@ class NoticesTest {
     }
 
     @Test
+    fun `the card shows the newest notice still running that wasn't closed`() {
+        val today = LocalDate.of(2026, 10, 12)
+        val old = Notices.Notice("a", "Old", "x", until = today.minusDays(1))
+        val lastDay = Notices.Notice("b", "Ends today", "x", until = today)
+        val closed = Notices.Notice("c", "Closed", "x")
+        assertEquals("b", Notices.newest(listOf(old, lastDay, closed), dismissed = setOf("c"), today = today)?.id)
+        assertNull(Notices.newest(listOf(old, closed), dismissed = setOf("c"), today = today))
+        assertEquals("كلام", Notices.Notice("d", "T", "words", bodyAr = "كلام").bodyIn(arabic = true))
+        assertEquals("words", Notices.Notice("d", "T", "words").bodyIn(arabic = true))
+    }
+
+    @Test
     fun `skips broken entries and anything that isn't an https link or a real date`() {
         val notices = Notices.parse(
             """

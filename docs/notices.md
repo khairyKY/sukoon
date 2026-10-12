@@ -3,12 +3,13 @@
 Every phone with Sukoon (GitHub and Play builds, wearers, followers and demo users alike) reads
 `web/notices.json` from Sukoon's GitHub Pages site when the app starts and then once an hour, and
 shows each notice it hasn't shown before as a notification ("Notices from Sukoon" channel). Tapping
-it opens the notice's link, or the app.
+it opens the notice's link, or the app. The newest notice that is still running also sits on Now as
+a card until it is closed.
 
 ## Send one
 
 1. Edit [`web/notices.json`](../web/notices.json) on `main` (GitHub's web editor works from a phone).
-2. Add an entry to the array:
+2. Add an entry at the end of the array (newest last):
 
 ```json
 [

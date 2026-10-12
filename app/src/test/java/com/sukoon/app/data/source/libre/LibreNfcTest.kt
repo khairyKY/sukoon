@@ -53,6 +53,43 @@ class LibreNfcTest {
         assertFalse(LibreNfc.retryable(LibreNfc.NfcException(LibreNfc.STARTED_NOT_PAIRED)))
     }
 
+    /** Decrypted memory with just the fields the check reads: state (byte 4), age (316-317), lifetime (326-327). */
+    private fun read(state: Int, ageMinutes: Int, patch: Int = 0x7F, lifetime: Int = 22320) = LibreNfc.SensorRead(
+        uid = bytes(0x62, 0x4F, 0x50, 0x88, 0x79, 0x00, 0x7A, 0xE0),
+        patchInfo = bytes(patch, 0x0E, 0x31, 0x01, 0xE4, 0x19),
+        rawFram = ByteArray(344),
+        fram = ByteArray(344).also {
+            it[4] = state.toByte()
+            it[316] = ageMinutes.toByte(); it[317] = (ageMinutes shr 8).toByte()
+            it[326] = lifetime.toByte(); it[327] = (lifetime shr 8).toByte()
+        },
+    )
+
+    @Test
+    fun `the check says where the sensor is in its life, and a value only while it runs`() {
+        val fresh = read(state = 1, ageMinutes = 0).check()!!
+        assertEquals(LibreNfc.Stage.NOT_STARTED, fresh.stage)
+        assertEquals(null, fresh.mgDl)
+        assertEquals(15, fresh.days) // a Libre 2 Plus: 15 days (+ its 12-hour grace)
+
+        val warming = read(state = 2, ageMinutes = 22).check()!!
+        assertEquals(LibreNfc.Stage.WARMING_UP, warming.stage)
+        assertEquals(38, warming.minutesToReadings)
+        assertEquals(1, warming.day)
+
+        val ended = read(state = 4, ageMinutes = 15 * 1440 + 100).check()!!
+        assertEquals(LibreNfc.Stage.ENDED, ended.stage)
+        assertEquals(16, ended.day)
+        assertEquals(null, ended.minutesToReadings)
+    }
+
+    @Test
+    fun `no check from memory that can't be trusted`() {
+        assertEquals(null, read(state = 0, ageMinutes = 0).check()) // a state no sensor writes
+        assertEquals(null, read(state = 3, ageMinutes = 500, patch = 0xDF).check()) // a Libre 1
+        assertEquals(null, read(state = 3, ageMinutes = 500).copy(fram = null).check()) // didn't decrypt
+    }
+
     @Test
     fun `only Libre 2 EU patch infos are streamable`() {
         assertTrue(Libre2.isLibre2Eu(bytes(0x9D, 0x08, 0x30, 0x01, 0x76, 0x25)))

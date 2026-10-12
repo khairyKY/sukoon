@@ -83,6 +83,36 @@ import kotlinx.coroutines.delay
 
 private enum class TapMode { CHECK, CONNECT, START }
 
+/**
+ * Where the card's NFC actions are, one value per step (Sukoon Redesign Canvas §5–6): the visuals
+ * switch on this, and only the reader callback moves it on from Holding / Lost.
+ */
+private sealed interface SensorStep {
+    data object Idle : SensorStep
+    /** Start's confirmation is open. */
+    data object Confirm : SensorStep
+    /** Listening for the sensor. */
+    data class Holding(val mode: TapMode) : SensorStep
+    /** Lost it for a moment halfway through a read: still listening. */
+    data class Lost(val mode: TapMode) : SensorStep
+    /** Started, warming up, and paired. */
+    data object Started : SensorStep
+    /** Streaming to Sukoon. */
+    data object Paired : SensorStep
+    /** A read-only check's findings. */
+    data class Checked(val check: LibreNfc.Check) : SensorStep
+    /** A final no, worded for the person: what happened and what to try. */
+    data class Refused(val reason: String) : SensorStep
+}
+
+/** The action the reader is listening for, if any. */
+private val SensorStep.listeningFor: TapMode?
+    get() = when (this) {
+        is SensorStep.Holding -> mode
+        is SensorStep.Lost -> mode
+        else -> null
+    }
+
 /** Milliseconds between Android's "is the tag still there?" checks while Sukoon reads (default 125). */
 private const val PRESENCE_CHECK_MS = 2_000
 
@@ -107,20 +137,13 @@ fun SensorCard(
     val context = LocalContext.current
     val activity = context as? Activity
     val adapter = remember { NfcAdapter.getDefaultAdapter(context) }
-    var mode by remember { mutableStateOf<TapMode?>(null) }
-    /** The mode the Bluetooth permission prompt was opened for (pairing needs it; so does starting). */
+    var step by remember { mutableStateOf<SensorStep>(SensorStep.Idle) }
+    /** The action the Bluetooth permission prompt was opened for (pairing needs it; so does starting). */
     var afterPermission by remember { mutableStateOf(TapMode.CONNECT) }
-    var confirmStart by remember { mutableStateOf(false) }
-    /** The phone lost the sensor halfway through a read: still listening, say so. */
-    var lostContact by remember { mutableStateOf(false) }
-    LaunchedEffect(mode) { lostContact = false }
-    var result by rememberSaveable { mutableStateOf<String?>(null) }
-    var failed by rememberSaveable { mutableStateOf(false) }
     val paired by rememberUpdatedState(onPaired)
-    // Shown on the card and toasted, so the outcome is seen even if the card is scrolled away.
-    fun report(message: String, isFailure: Boolean) {
-        result = message
-        failed = isFailure
+    // Every outcome is also toasted, so it is seen even if the card is scrolled away.
+    fun settle(next: SensorStep, message: String) {
+        step = next
         context.toast(message, long = true)
     }
     var awaitingReadings by remember { mutableStateOf(false) }
@@ -143,10 +166,14 @@ fun SensorCard(
     fun bluetoothGranted() = permissions.filter { it != Manifest.permission.POST_NOTIFICATIONS }
         .all { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
     val requestPermissions = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        if (bluetoothGranted()) mode = afterPermission else report(context.getString(R.string.sensor_need_permissions), isFailure = true)
+        if (bluetoothGranted()) {
+            step = SensorStep.Holding(afterPermission)
+        } else {
+            context.getString(R.string.sensor_need_permissions).let { settle(SensorStep.Refused(it), it) }
+        }
     }
 
-    val active = mode
+    val active = step.listeningFor
     if (active != null && activity != null && adapter != null) {
         DisposableEffect(active) {
             adapter.enableReaderMode(
@@ -156,11 +183,11 @@ fun SensorCard(
                     val outcome = runCatching { LibreNfc.readAndPair(tag, pair = active != TapMode.CHECK, start = active == TapMode.START) }
                     outcome.onSuccess { logRead(it) }.onFailure { Log.w("LibreNfc", "Read failed", it) }
                     activity.runOnUiThread {
-                        if (mode != active) return@runOnUiThread // a late answer for a tap already settled or cancelled
+                        if (step.listeningFor != active) return@runOnUiThread // a late answer for a tap already settled or cancelled
                         val error = outcome.exceptionOrNull()
                         if (error != null && LibreNfc.retryable(error)) {
                             // Lost for a moment, not refused: keep listening; Android calls back when it finds the sensor again.
-                            lostContact = true
+                            step = SensorStep.Lost(active)
                             return@runOnUiThread
                         }
                         outcome.onSuccess { read ->
@@ -168,14 +195,22 @@ fun SensorCard(
                                 paired(read, scannedAt)
                                 awaitingReadings = true
                                 val warming = read.info?.state == Libre2.State.STARTING
-                                report(context.getString(if (active == TapMode.START && warming) R.string.sensor_started_now else R.string.sensor_connected_now), isFailure = false)
+                                if (active == TapMode.START && warming) {
+                                    settle(SensorStep.Started, context.getString(R.string.sensor_started_now))
+                                } else {
+                                    settle(SensorStep.Paired, context.getString(R.string.sensor_connected_now))
+                                }
                             } else {
-                                report(describe(context, read), isFailure = read.fram == null || !read.supported)
+                                val check = read.check()
+                                when {
+                                    check != null -> settle(SensorStep.Checked(check), describe(context, check))
+                                    !read.supported -> context.getString(R.string.sensor_unsupported, read.patchInfo.hex()).let { settle(SensorStep.Refused(it), it) }
+                                    else -> context.getString(R.string.sensor_memory_bad).let { settle(SensorStep.Refused(it), it) }
+                                }
                             }
                         }.onFailure {
-                            report(context.getString(R.string.sensor_failed, it.message ?: it.javaClass.simpleName), isFailure = true)
+                            context.getString(R.string.sensor_failed, it.message ?: it.javaClass.simpleName).let { message -> settle(SensorStep.Refused(message), message) }
                         }
-                        mode = null
                     }
                 },
                 NfcAdapter.FLAG_READER_NFC_V or NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK,
@@ -269,43 +304,48 @@ fun SensorCard(
                     Text(stringResource(R.string.sensor_nfc_off), fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground)
                     CardButton(stringResource(R.string.sensor_nfc_settings)) { context.startActivity(Intent(Settings.ACTION_NFC_SETTINGS)) }
                 }
-                mode != null -> {
+                active != null -> {
                     Text(stringResource(R.string.sensor_hold), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                    if (lostContact) Text(stringResource(R.string.sensor_hold_again), fontSize = 13.sp, color = CaptionMuted)
-                    CardButton(stringResource(R.string.sensor_cancel), filled = false) { mode = null }
+                    if (step is SensorStep.Lost) Text(stringResource(R.string.sensor_hold_again), fontSize = 13.sp, color = CaptionMuted)
+                    CardButton(stringResource(R.string.sensor_cancel), filled = false) { step = SensorStep.Idle }
                 }
                 else -> {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         CardButton(stringResource(if (pairing == null) R.string.sensor_connect else R.string.sensor_repair)) {
-                            result = null
                             afterPermission = TapMode.CONNECT
-                            if (bluetoothGranted()) mode = TapMode.CONNECT else requestPermissions.launch(permissions.toTypedArray())
+                            if (bluetoothGranted()) step = SensorStep.Holding(TapMode.CONNECT) else requestPermissions.launch(permissions.toTypedArray())
                         }
-                        CardButton(stringResource(R.string.sensor_check), filled = false) { result = null; mode = TapMode.CHECK }
+                        CardButton(stringResource(R.string.sensor_check), filled = false) { step = SensorStep.Holding(TapMode.CHECK) }
                     }
                     Text(stringResource(R.string.sensor_connect_hint) + " " + stringResource(R.string.sensor_check_hint), fontSize = 12.sp, color = CaptionMuted)
-                    CardButton(stringResource(R.string.sensor_start), filled = false) { result = null; confirmStart = true }
+                    CardButton(stringResource(R.string.sensor_start), filled = false) { step = SensorStep.Confirm }
                     Text(stringResource(R.string.sensor_start_hint), fontSize = 12.sp, color = CaptionMuted)
                 }
             }
-            result?.let { Text(it, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (failed) StateLow else Sage) }
+            // ponytail: plain lines until the designs (Redesign Canvas §5–6) are built on these steps.
+            when (val s = step) {
+                SensorStep.Started -> stringResource(R.string.sensor_started_now) to false
+                SensorStep.Paired -> stringResource(R.string.sensor_connected_now) to false
+                is SensorStep.Checked -> describe(context, s.check) to false
+                is SensorStep.Refused -> s.reason to true
+                else -> null
+            }?.let { (text, failed) -> Text(text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (failed) StateLow else Sage) }
         }
-        if (confirmStart) {
+        if (step == SensorStep.Confirm) {
             AlertDialog(
-                onDismissRequest = { confirmStart = false },
+                onDismissRequest = { step = SensorStep.Idle },
                 title = { Text(stringResource(R.string.sensor_start_title)) },
                 text = { Text(stringResource(R.string.sensor_start_body), fontSize = 14.sp) },
                 confirmButton = {
                     TextButton(onClick = {
-                        confirmStart = false
                         afterPermission = TapMode.START
-                        if (bluetoothGranted()) mode = TapMode.START else requestPermissions.launch(permissions.toTypedArray())
+                        if (bluetoothGranted()) step = SensorStep.Holding(TapMode.START) else requestPermissions.launch(permissions.toTypedArray())
                     }) { Text(stringResource(R.string.sensor_start_confirm)) }
                 },
-                dismissButton = { TextButton(onClick = { confirmStart = false }) { Text(stringResource(R.string.sensor_cancel)) } },
+                dismissButton = { TextButton(onClick = { step = SensorStep.Idle }) { Text(stringResource(R.string.sensor_cancel)) } },
             )
         }
-        if (pairing != null && mode == null) {
+        if (pairing != null && active == null) {
             Text(
                 stringResource(R.string.sensor_forget),
                 modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onForget).padding(horizontal = 4.dp, vertical = 12.dp),
@@ -374,23 +414,15 @@ private fun Issue(danger: Boolean, title: String, body: String, action: String? 
     }
 }
 
-private fun days(minutes: Int) = String.format(Locale.getDefault(), "%.1f", minutes / 1440.0)
-
-/** One-tap summary: what the sensor is, whether its memory decrypted, and the decoded current value. */
-private fun describe(context: Context, read: LibreNfc.SensorRead): String {
-    if (!read.supported) return context.getString(R.string.sensor_unsupported, read.patchInfo.hex())
-    val fram = read.fram ?: return context.getString(R.string.sensor_memory_bad)
-    val info = Libre2.sensorInfo(fram)
-    if (info.state == Libre2.State.NOT_STARTED) return context.getString(R.string.sensor_check_not_started, read.serial)
-    // Only a running sensor's memory holds glucose; during warm-up and after the end it's not to be read as a value.
-    val latest = if (info.state == Libre2.State.READY) Libre2.parseFram(FactoryCalibration.fromFram(fram), fram).maxByOrNull { it.minute } else null
-    val state = when (info.state) {
-        Libre2.State.STARTING -> context.getString(R.string.sensor_state_warming)
-        Libre2.State.READY -> context.getString(R.string.sensor_check_running)
-        Libre2.State.EXPIRED, Libre2.State.SHUTDOWN, Libre2.State.FAILURE -> context.getString(R.string.sensor_state_ended)
-        else -> info.state.name.lowercase()
+/** The check in one line (the toast, and the card until its design is built). */
+private fun describe(context: Context, check: LibreNfc.Check): String {
+    val stage = when (check.stage) {
+        LibreNfc.Stage.NOT_STARTED -> return context.getString(R.string.sensor_check_not_started, check.serial)
+        LibreNfc.Stage.WARMING_UP -> context.getString(R.string.sensor_state_warming)
+        LibreNfc.Stage.RUNNING -> context.getString(R.string.sensor_check_running)
+        LibreNfc.Stage.ENDED -> context.getString(R.string.sensor_state_ended)
     }
-    return context.getString(R.string.sensor_check_result, read.serial, days(info.ageMinutes), state, latest?.mgDl?.toString() ?: "-")
+    return context.getString(R.string.sensor_check_result, check.serial, check.day.toString(), stage, check.mgDl?.toString() ?: "-")
 }
 
 private fun logRead(read: LibreNfc.SensorRead) {

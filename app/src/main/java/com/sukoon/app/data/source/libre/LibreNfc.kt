@@ -30,6 +30,7 @@ object LibreNfc {
     /** After Activate: read the memory back up to this many times, this far apart, until it says it started. */
     private const val START_CHECKS = 5
     private const val START_WAIT_MS = 400L
+    private const val MINUTES_PER_DAY = 1440
 
     const val STARTED_NOT_PAIRED = "The sensor has started and is warming up, but pairing didn't finish. Tap Pair again while it warms up."
 
@@ -47,7 +48,48 @@ object LibreNfc {
         val supported: Boolean get() = Libre2.isLibre2Eu(patchInfo)
         val serial: String get() = Libre2.serial(uid, patchInfo)
         val info: Libre2.SensorInfo? get() = fram?.let(Libre2::sensorInfo)
+
+        /**
+         * What a read-only check shows; null when the memory can't be trusted (not a Libre 2 EU, it
+         * didn't decrypt, or a state byte no sensor writes).
+         */
+        fun check(): Check? {
+            val f = fram?.takeIf { supported } ?: return null
+            val info = Libre2.sensorInfo(f)
+            val stage = when (info.state) {
+                Libre2.State.NOT_STARTED -> Stage.NOT_STARTED
+                Libre2.State.STARTING -> Stage.WARMING_UP
+                Libre2.State.READY -> Stage.RUNNING
+                Libre2.State.EXPIRED, Libre2.State.SHUTDOWN, Libre2.State.FAILURE -> Stage.ENDED
+                Libre2.State.UNKNOWN -> return null
+            }
+            return Check(
+                serial = serial,
+                stage = stage,
+                day = info.ageMinutes / MINUTES_PER_DAY + 1,
+                days = (info.lifetimeMinutes + 60) / MINUTES_PER_DAY, // sensorInfo keeps a 60-min margin off the end
+                minutesToReadings = if (stage == Stage.WARMING_UP) (LibreBleSource.WARMUP_MINUTES - info.ageMinutes).coerceAtLeast(0) else null,
+                // Only a running sensor's memory holds glucose: warming up or ended, it is not to be read as a value.
+                mgDl = if (stage == Stage.RUNNING) Libre2.parseFram(FactoryCalibration.fromFram(f), f).maxByOrNull { it.minute }?.mgDl else null,
+            )
+        }
     }
+
+    /** Where a sensor is in its life, as the check shows it. */
+    enum class Stage { NOT_STARTED, WARMING_UP, RUNNING, ENDED }
+
+    /** A read-only check's findings, for the Sensor card to lay out. */
+    data class Check(
+        val serial: String,
+        val stage: Stage,
+        /** The day of its life, from 1, and how many days it lasts. */
+        val day: Int,
+        val days: Int,
+        /** Warming up: minutes until the first readings. */
+        val minutesToReadings: Int?,
+        /** Running: the value its memory reads now. */
+        val mgDl: Int?,
+    )
 
     /**
      * [retry]: the link or one answer failed, not the sensor's verdict; holding the phone still and
