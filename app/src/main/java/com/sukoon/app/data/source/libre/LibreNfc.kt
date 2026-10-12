@@ -25,11 +25,12 @@ object LibreNfc {
     private const val FRAM_BLOCKS = 43
     private const val BLOCKS_PER_READ = 3 // some phones truncate longer multi-block responses
     private const val RETRIES = 3
+    /** A dropped link is reopened after this pause, if the sensor is still in the field. */
+    private const val RECONNECT_MS = 100L
     /** After Activate: read the memory back up to this many times, this far apart, until it says it started. */
     private const val START_CHECKS = 5
     private const val START_WAIT_MS = 400L
 
-    const val ALREADY_STARTED = "This sensor has already been started, so there's nothing to start. Tap Pair again to connect to it."
     const val STARTED_NOT_PAIRED = "The sensor has started and is warming up, but pairing didn't finish. Tap Pair again while it warms up."
 
     fun readMultipleBlocks(first: Int, count: Int) = byteArrayOf(FLAGS, 0x23, first.toByte(), (count - 1).toByte())
@@ -45,9 +46,24 @@ object LibreNfc {
     ) {
         val supported: Boolean get() = Libre2.isLibre2Eu(patchInfo)
         val serial: String get() = Libre2.serial(uid, patchInfo)
+        val info: Libre2.SensorInfo? get() = fram?.let(Libre2::sensorInfo)
     }
 
-    class NfcException(message: String) : IOException(message)
+    /**
+     * [retry]: the link or one answer failed, not the sensor's verdict; holding the phone still and
+     * reading again can fix it, so the Sensor card keeps listening instead of giving up.
+     */
+    class NfcException(message: String, val retry: Boolean = false) : IOException(message)
+
+    /**
+     * A failure worth reading again for (the phone lost the sensor for a moment: TagLost, a tag
+     * Android has since found again, a closed handle), not a final answer from the sensor or Sukoon.
+     */
+    fun retryable(e: Throwable): Boolean = when (e) {
+        is NfcException -> e.retry
+        is IOException, is SecurityException, is IllegalStateException -> true
+        else -> false
+    }
 
     /**
      * Why a sensor in [state] can't be taken over (null = it can). A sensor nobody has scanned to
@@ -61,9 +77,9 @@ object LibreNfc {
 
     /**
      * Reads patch info + FRAM and decrypts it; with [start], first starts a sensor that has never
-     * been started (and reads it back to prove it did); with [pair] (implied by [start]), then
-     * enables BLE streaming for this app (taking the sensor's stream from any other reader).
-     * Blocking — call from the NFC reader callback thread.
+     * been started (and reads it back to prove it did; one already warming up or running is just
+     * paired); with [pair] (implied by [start]), then enables BLE streaming for this app (taking the
+     * sensor's stream from any other reader). Blocking — call from the NFC reader callback thread.
      */
     fun readAndPair(tag: Tag, pair: Boolean, start: Boolean = false): SensorRead {
         val nfcV = NfcV.get(tag) ?: throw NfcException("Not an ISO 15693 tag — is this a Libre sensor?")
@@ -75,19 +91,30 @@ object LibreNfc {
                     try {
                         val response = it.transceive(command)
                         if (response.isEmpty() || response[0].toInt() and 0x01 != 0) {
-                            throw NfcException("Sensor answered with an error (${response.hex()})")
+                            throw NfcException("Sensor answered with an error (${response.hex()})", retry = true)
                         }
                         return response.copyOfRange(1, response.size)
-                    } catch (e: IOException) {
+                    } catch (e: NfcException) {
                         last = e
+                    } catch (e: IOException) {
+                        // A dropped link closes the handle: reopen it if the sensor is still there, else stop
+                        // here and let Android find the tag again (the card keeps listening for it).
+                        last = e
+                        val back = runCatching {
+                            it.close()
+                            Thread.sleep(RECONNECT_MS)
+                            it.connect()
+                        }.isSuccess
+                        if (!back) throw e
                     }
                 }
-                throw last ?: NfcException("No response")
+                throw last ?: NfcException("No response", retry = true)
             }
 
             val uid = tag.id
-            val patchInfo = send(CMD_PATCH_INFO)
-            if (patchInfo.size < 6) throw NfcException("Unexpected patch info (${patchInfo.hex()})")
+            // Its last two bytes key the memory's encryption and can differ from one tap to the next.
+            var patchInfo = send(CMD_PATCH_INFO)
+            if (patchInfo.size < 6) throw NfcException("Unexpected patch info (${patchInfo.hex()})", retry = true)
 
             /** Raw FRAM, and the decrypted copy when its CRCs validate. */
             fun readFram(): Pair<ByteArray, ByteArray?> {
@@ -95,7 +122,7 @@ object LibreNfc {
                 for (first in 0 until FRAM_BLOCKS step BLOCKS_PER_READ) {
                     val count = minOf(BLOCKS_PER_READ, FRAM_BLOCKS - first)
                     val blocks = send(readMultipleBlocks(first, count))
-                    if (blocks.size < count * 8) throw NfcException("Short read at block $first")
+                    if (blocks.size < count * 8) throw NfcException("Short read at block $first", retry = true)
                     blocks.copyInto(raw, first * 8, 0, count * 8)
                 }
                 val decrypted = if (Libre2.isLibre1(patchInfo)) raw else Libre2.decryptFram(uid, patchInfo, raw)
@@ -108,24 +135,32 @@ object LibreNfc {
                 if (!Libre2.isLibre2Eu(patchInfo)) throw NfcException("Sukoon can only start Libre 2 EU sensors (patch info ${patchInfo.hex()})")
                 val state = fram?.let { f -> Libre2.sensorInfo(f).state }
                     ?: throw NfcException("Sensor memory didn't decrypt cleanly, so Sukoon won't start it")
-                if (state != Libre2.State.NOT_STARTED) throw NfcException(ALREADY_STARTED)
-                val answer = send(CMD_PATCH_INFO + Libre2.activationParameters(uid))
-                Log.i(TAG, "Activate answered ${answer.hex("")}")
-                // The answer isn't the proof: the sensor's own memory saying it has started is.
-                var started = false
-                for (attempt in 0 until START_CHECKS) {
-                    if (attempt > 0) Thread.sleep(START_WAIT_MS)
-                    val again = readFram()
-                    rawFram = again.first
-                    fram = again.second
-                    val now = fram?.let { f -> Libre2.sensorInfo(f).state }
-                    Log.i(TAG, "After activate, check ${attempt + 1}: state $now")
-                    if (now != null && now != Libre2.State.NOT_STARTED) {
-                        started = true
-                        break
+                // Already warming up or running (another app started it, or a tap that started it was cut
+                // short before pairing): nothing to start, it is just paired below.
+                if (state == Libre2.State.NOT_STARTED) {
+                    val answer = try {
+                        send(CMD_PATCH_INFO + Libre2.activationParameters(uid))
+                    } catch (e: NfcException) {
+                        throw NfcException("The sensor refused to start: ${e.message}")
                     }
+                    Log.i(TAG, "Activate answered ${answer.hex("")}")
+                    // The answer isn't the proof: the sensor's own memory saying it has started is.
+                    var started = false
+                    for (attempt in 0 until START_CHECKS) {
+                        if (attempt > 0) Thread.sleep(START_WAIT_MS)
+                        patchInfo = send(CMD_PATCH_INFO)
+                        val again = readFram()
+                        rawFram = again.first
+                        fram = again.second
+                        val now = fram?.let { f -> Libre2.sensorInfo(f).state }
+                        Log.i(TAG, "After activate, check ${attempt + 1}: patch ${patchInfo.hex("")}, state $now")
+                        if (now != null && now != Libre2.State.NOT_STARTED) {
+                            started = true
+                            break
+                        }
+                    }
+                    if (!started) throw NfcException("The sensor didn't start (it answered ${answer.hex()}). Keep the phone flat on it and try again.")
                 }
-                if (!started) throw NfcException("The sensor didn't start (it answered ${answer.hex()}). Keep the phone flat on it and try again.")
             }
 
             val read = SensorRead(uid, patchInfo, rawFram, fram)
@@ -134,11 +169,11 @@ object LibreNfc {
             if (!read.supported) throw NfcException("Only Libre 2 EU sensors can stream to Sukoon (patch info ${patchInfo.hex()})")
             if (fram == null) throw NfcException("Sensor memory didn't decrypt cleanly, so Sukoon won't take it over")
             problemWith(Libre2.sensorInfo(fram).state)?.let { throw NfcException(it) }
-            // Once started, a failure here must say so: the sensor's clock is already running.
             val mac = try {
                 send(CMD_PATCH_INFO + Libre2.enableStreamingParameters(uid, patchInfo))
-            } catch (e: IOException) {
-                if (start) throw NfcException(STARTED_NOT_PAIRED) else throw e
+            } catch (e: NfcException) {
+                // The sensor said no (a lost link is retried instead): once started, say it is running.
+                throw NfcException(if (start) STARTED_NOT_PAIRED else "Enable streaming failed: ${e.message}")
             }
             if (mac.size != 6) throw NfcException(if (start) STARTED_NOT_PAIRED else "Enable streaming failed (${mac.hex()})")
             // The sensor reports its MAC least-significant byte first.

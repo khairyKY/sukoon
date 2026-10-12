@@ -96,6 +96,9 @@ class AppContainer(private val context: Context) {
     /** Updates from Sukoon's GitHub releases. */
     val updates = Updates(context, appScope)
 
+    /** Messages from Sukoon's maker to every install (docs/notices.md). */
+    val notices = com.sukoon.app.platform.Notices(context, appScope)
+
     /** Dexcom Share: a Dexcom wearer's readings through Dexcom's servers. */
     val dexcom = DexcomShare(context)
 
@@ -179,6 +182,7 @@ class AppContainer(private val context: Context) {
         glucoseRepository.start()
         BasalReminder.schedule(context, settings.basalReminder)
         updates.checkIfDue()
+        notices.start()
         // Long-acting logged anywhere clears its reminder.
         appScope.launch {
             logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofHours(12).toMillis()).collect { events ->

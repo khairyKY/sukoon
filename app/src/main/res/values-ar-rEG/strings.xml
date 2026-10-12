@@ -140,6 +140,10 @@
     <string name="sensor_start_body">بس لحساس جديد على جسمك محدش شغّله. سكون هيشغّله وياخد قراياته: ساعة التهيئة هتبدأ وال ١٤ يوم هيبدأوا يتعدّوا. مينفعش ترجع فيها. حط ضهر الموبايل على الحساس لحد ما يقول إنه اشتغل.</string>
     <string name="sensor_start_confirm">شغّله</string>
     <string name="sensor_started_now">اشتغل. الحساس هيتهيّأ ساعة، وبعدها القرايات هتيجي.</string>
+    <string name="sensor_hold_again">الاتصال فصل لحظة. خلّي الموبايل ثابت على الحساس؛ هيكمّل لوحده.</string>
+    <string name="sensor_check_not_started">الحساس %1$s لسه متشغّلش. دوس «شغّل حساس جديد» عشان تشغّله.</string>
+    <string name="sensor_check_running">شغّال</string>
+    <string name="notice_channel">إشعارات من سكون</string>
     <string name="sensor_cancel">إلغاء</string>
     <string name="sensor_forget">انسَ الحساس</string>
     <string name="sensor_no_nfc">الموبايل ده مفيهوش NFC، فمش هيقدر يربط حساس Libre.</string>

@@ -140,6 +140,10 @@
     <string name="sensor_start_body">فقط لمستشعر جديد على جسمك لم يشغّله أي تطبيق. يشغّله سكون ويتولى استقبال قراءاته: تبدأ ساعة التهيئة ويبدأ عدّ أيامه الأربعة عشر. لا يمكن التراجع عن ذلك. ضع ظهر هاتفك مستويًا على المستشعر حتى يظهر أنه بدأ.</string>
     <string name="sensor_start_confirm">شغّله</string>
     <string name="sensor_started_now">بدأ التشغيل. يتهيأ المستشعر لمدة ساعة، ثم تصل القراءات.</string>
+    <string name="sensor_hold_again">انقطع الاتصال للحظة. أبقِ الهاتف ثابتًا على المستشعر؛ سيكمل من تلقاء نفسه.</string>
+    <string name="sensor_check_not_started">المستشعر %1$s لم يُشغَّل بعد. اضغط «تشغيل مستشعر جديد» لتشغيله.</string>
+    <string name="sensor_check_running">يعمل</string>
+    <string name="notice_channel">إشعارات من سكون</string>
     <string name="sensor_cancel">إلغاء</string>
     <string name="sensor_forget">نسيان المستشعر</string>
     <string name="sensor_no_nfc">لا يدعم هذا الهاتف NFC، لذا لا يمكنه ربط مستشعر Libre.</string>

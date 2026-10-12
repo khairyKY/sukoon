@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.nfc.NfcAdapter
 import android.os.Build
+import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -82,12 +83,18 @@ import kotlinx.coroutines.delay
 
 private enum class TapMode { CHECK, CONNECT, START }
 
+/** Milliseconds between Android's "is the tag still there?" checks while Sukoon reads (default 125). */
+private const val PRESENCE_CHECK_MS = 2_000
+
 /**
- * You → Your sensor. Two NFC actions:
- * - Check (read-only): reads + decrypts the sensor and shows the decoded value — DiaBox keeps
- *   working, so the two numbers can be compared before switching (the B7 validation step).
+ * You → Your sensor. Three NFC actions:
+ * - Check (read-only): reads + decrypts the sensor and shows its state and decoded value — DiaBox
+ *   keeps working, so the two numbers can be compared before switching (the B7 validation step).
  * - Connect: the same read, then Enable Streaming — Sukoon takes the sensor's Bluetooth stream.
- * Every read is also logged (tag LibreNfc) with the raw bytes for debugging over adb.
+ * - Start: for a new sensor nobody has started — Activate, then the same as Connect.
+ * A read the phone loses halfway ("Tag was lost") doesn't end the action: the card keeps listening
+ * and Android hands the sensor back as soon as it finds it again. Every read is also logged (tag
+ * LibreNfc) with the raw bytes for debugging over adb.
  */
 @Composable
 fun SensorCard(
@@ -104,6 +111,9 @@ fun SensorCard(
     /** The mode the Bluetooth permission prompt was opened for (pairing needs it; so does starting). */
     var afterPermission by remember { mutableStateOf(TapMode.CONNECT) }
     var confirmStart by remember { mutableStateOf(false) }
+    /** The phone lost the sensor halfway through a read: still listening, say so. */
+    var lostContact by remember { mutableStateOf(false) }
+    LaunchedEffect(mode) { lostContact = false }
     var result by rememberSaveable { mutableStateOf<String?>(null) }
     var failed by rememberSaveable { mutableStateOf(false) }
     val paired by rememberUpdatedState(onPaired)
@@ -146,11 +156,19 @@ fun SensorCard(
                     val outcome = runCatching { LibreNfc.readAndPair(tag, pair = active != TapMode.CHECK, start = active == TapMode.START) }
                     outcome.onSuccess { logRead(it) }.onFailure { Log.w("LibreNfc", "Read failed", it) }
                     activity.runOnUiThread {
+                        if (mode != active) return@runOnUiThread // a late answer for a tap already settled or cancelled
+                        val error = outcome.exceptionOrNull()
+                        if (error != null && LibreNfc.retryable(error)) {
+                            // Lost for a moment, not refused: keep listening; Android calls back when it finds the sensor again.
+                            lostContact = true
+                            return@runOnUiThread
+                        }
                         outcome.onSuccess { read ->
                             if (read.bleMac != null) {
                                 paired(read, scannedAt)
                                 awaitingReadings = true
-                                report(context.getString(if (active == TapMode.START) R.string.sensor_started_now else R.string.sensor_connected_now), isFailure = false)
+                                val warming = read.info?.state == Libre2.State.STARTING
+                                report(context.getString(if (active == TapMode.START && warming) R.string.sensor_started_now else R.string.sensor_connected_now), isFailure = false)
                             } else {
                                 report(describe(context, read), isFailure = read.fram == null || !read.supported)
                             }
@@ -161,7 +179,9 @@ fun SensorCard(
                     }
                 },
                 NfcAdapter.FLAG_READER_NFC_V or NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK,
-                null,
+                // Android checks the tag is still there every 125 ms by default; on a Libre those extra
+                // commands are what cut reads short ("Tag was lost"), so check far less often.
+                Bundle().apply { putInt(NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, PRESENCE_CHECK_MS) },
             )
             onDispose { adapter.disableReaderMode(activity) }
         }
@@ -251,6 +271,7 @@ fun SensorCard(
                 }
                 mode != null -> {
                     Text(stringResource(R.string.sensor_hold), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                    if (lostContact) Text(stringResource(R.string.sensor_hold_again), fontSize = 13.sp, color = CaptionMuted)
                     CardButton(stringResource(R.string.sensor_cancel), filled = false) { mode = null }
                 }
                 else -> {
@@ -360,9 +381,16 @@ private fun describe(context: Context, read: LibreNfc.SensorRead): String {
     if (!read.supported) return context.getString(R.string.sensor_unsupported, read.patchInfo.hex())
     val fram = read.fram ?: return context.getString(R.string.sensor_memory_bad)
     val info = Libre2.sensorInfo(fram)
-    val running = info.state == Libre2.State.STARTING || info.state == Libre2.State.READY
-    val latest = if (running) Libre2.parseFram(FactoryCalibration.fromFram(fram), fram).maxByOrNull { it.minute } else null // an unstarted sensor's memory is noise
-    return context.getString(R.string.sensor_check_result, read.serial, days(info.ageMinutes), info.state.name.lowercase(), latest?.mgDl?.toString() ?: "-")
+    if (info.state == Libre2.State.NOT_STARTED) return context.getString(R.string.sensor_check_not_started, read.serial)
+    // Only a running sensor's memory holds glucose; during warm-up and after the end it's not to be read as a value.
+    val latest = if (info.state == Libre2.State.READY) Libre2.parseFram(FactoryCalibration.fromFram(fram), fram).maxByOrNull { it.minute } else null
+    val state = when (info.state) {
+        Libre2.State.STARTING -> context.getString(R.string.sensor_state_warming)
+        Libre2.State.READY -> context.getString(R.string.sensor_check_running)
+        Libre2.State.EXPIRED, Libre2.State.SHUTDOWN, Libre2.State.FAILURE -> context.getString(R.string.sensor_state_ended)
+        else -> info.state.name.lowercase()
+    }
+    return context.getString(R.string.sensor_check_result, read.serial, days(info.ageMinutes), state, latest?.mgDl?.toString() ?: "-")
 }
 
 private fun logRead(read: LibreNfc.SensorRead) {

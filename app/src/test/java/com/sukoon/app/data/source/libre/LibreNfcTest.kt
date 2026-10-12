@@ -45,6 +45,15 @@ class LibreNfcTest {
     }
 
     @Test
+    fun `a lost link is read again, the sensor's or Sukoon's refusal is final`() {
+        assertTrue(LibreNfc.retryable(java.io.IOException("Tag was lost.")))
+        assertTrue(LibreNfc.retryable(SecurityException("Tag is out of date")))
+        assertTrue(LibreNfc.retryable(LibreNfc.NfcException("Short read at block 3", retry = true)))
+        assertFalse(LibreNfc.retryable(LibreNfc.NfcException("This sensor has ended or failed. Put a new one on.")))
+        assertFalse(LibreNfc.retryable(LibreNfc.NfcException(LibreNfc.STARTED_NOT_PAIRED)))
+    }
+
+    @Test
     fun `only Libre 2 EU patch infos are streamable`() {
         assertTrue(Libre2.isLibre2Eu(bytes(0x9D, 0x08, 0x30, 0x01, 0x76, 0x25)))
         assertTrue(Libre2.isLibre2Eu(bytes(0xC5, 0x09, 0x31, 0x01, 0x00, 0x00)))
