@@ -90,7 +90,7 @@ fun HelpDialog(onClose: () -> Unit, onLink: (String) -> Unit = {}) {
 internal fun startDone(): List<Boolean> {
     val container = (LocalContext.current.applicationContext as SukoonApp).container
     val missing = rememberMissingSetup()
-    return listOf(container.pairingStore.load() != null, missing.isEmpty(), container.settings.emergency.contacts.isNotEmpty())
+    return listOf(container.pairingStore.load()?.started == true, missing.isEmpty(), container.settings.emergency.contacts.isNotEmpty())
 }
 
 @Composable

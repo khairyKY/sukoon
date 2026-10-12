@@ -92,7 +92,10 @@ object LibreNfc {
     )
 
     /** A final answer, from the sensor or from Sukoon's own checks: reading again won't change it. */
-    class NfcException(message: String) : IOException(message)
+    open class NfcException(message: String) : IOException(message)
+
+    /** Pair asked of a sensor nobody has started: the card offers to start it instead. */
+    class NotStartedException(message: String) : NfcException(message)
 
     /**
      * The phone lost the sensor for a moment (TagLost, a tag Android has since found again, a closed
@@ -207,7 +210,8 @@ object LibreNfc {
 
             if (!read.supported) throw NfcException("Only Libre 2 EU sensors can stream to Sukoon (patch info ${patchInfo.hex()})")
             if (fram == null) throw NfcException("Sensor memory didn't decrypt cleanly, so Sukoon won't take it over")
-            problemWith(Libre2.sensorInfo(fram).state)?.let { throw NfcException(it) }
+            val state = Libre2.sensorInfo(fram).state
+            problemWith(state)?.let { throw if (state == Libre2.State.NOT_STARTED) NotStartedException(it) else NfcException(it) }
             val mac = try {
                 send(CMD_PATCH_INFO + Libre2.enableStreamingParameters(uid, patchInfo))
             } catch (e: NfcException) {

@@ -14,6 +14,9 @@ class SensorPairing(
     val calibration: FactoryCalibration get() = FactoryCalibration.fromFram(fram)
     val lifetimeMinutes: Int get() = Libre2.sensorInfo(fram).lifetimeMinutes
     val serial: String get() = Libre2.serial(uid, patchInfo)
+
+    /** False for a pairing 0.8.1 saved from a sensor nobody had started: its start time means nothing. */
+    val started: Boolean get() = Libre2.sensorInfo(fram).state != Libre2.State.NOT_STARTED
 }
 
 /**

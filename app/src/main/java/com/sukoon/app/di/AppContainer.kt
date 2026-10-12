@@ -166,11 +166,11 @@ class AppContainer(private val context: Context) {
 
     /** The paired sensor's life while it's the source (null on demo data or with no sensor). */
     fun sensorLife(now: Instant = Instant.now()): SensorLife? =
-        if (_sourceKind.value != SourceKind.LIBRE_BLE) null else pairingStore.load()?.let { SensorLifecycle.of(it.startMillis, it.lifetimeMinutes, now) }
+        if (_sourceKind.value != SourceKind.LIBRE_BLE) null else pairingStore.load()?.takeIf { it.started }?.let { SensorLifecycle.of(it.startMillis, it.lifetimeMinutes, now) }
 
     private val sensorNotices = SensorLifeNotices(context) {
         pairingStore.load()
-            ?.takeIf { _sourceKind.value == SourceKind.LIBRE_BLE }
+            ?.takeIf { _sourceKind.value == SourceKind.LIBRE_BLE && it.started }
             ?.let { it.serial to SensorLifecycle.of(it.startMillis, it.lifetimeMinutes, Instant.now()) }
     }
 

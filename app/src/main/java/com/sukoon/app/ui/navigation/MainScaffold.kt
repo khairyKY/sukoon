@@ -344,7 +344,7 @@ fun MainScaffold() {
                     }
                     val app = (context.applicationContext as SukoonApp).container
                     var startDismissed by remember { mutableStateOf(app.settings.gettingStartedDismissed) }
-                    val sensorConnected = app.pairingStore.load() != null
+                    val sensorConnected = app.pairingStore.load()?.started == true
                     val hasContact = app.settings.emergency.contacts.isNotEmpty()
                     val alarmsReach = missingSetup.isEmpty()
                     if (!startDismissed && !(sensorConnected && hasContact && alarmsReach)) {

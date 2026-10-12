@@ -246,7 +246,13 @@ fun SensorCard(
                                 }
                             }
                         }.onFailure {
-                            context.getString(R.string.sensor_failed, it.message ?: it.javaClass.simpleName).let { message -> settle(SensorStep.Refused(message), message) }
+                            when (it) {
+                                // Pair again on a sensor nobody started: offer to start it, it's what's needed.
+                                is LibreNfc.NotStartedException -> step = SensorStep.Confirm
+                                // Sukoon's own sentences already say what happened and what to do.
+                                is LibreNfc.NfcException -> settle(SensorStep.Refused(it.message.orEmpty()), it.message.orEmpty())
+                                else -> context.getString(R.string.sensor_failed, it.message ?: it.javaClass.simpleName).let { message -> settle(SensorStep.Refused(message), message) }
+                            }
                         }
                     }
                 },
@@ -269,7 +275,9 @@ fun SensorCard(
             value = Instant.now()
         }
     }
-    val life = pairing?.let { SensorLifecycle.of(it.startMillis, it.lifetimeMinutes, now) }
+    // A pairing saved from a sensor nobody started (0.8.1 did that): no life, no "no readings", just Start.
+    val notStarted = pairing != null && !pairing.started
+    val life = pairing?.takeIf { it.started }?.let { SensorLifecycle.of(it.startMillis, it.lifetimeMinutes, now) }
     val agoMinutes = lastReadingAt?.let { Duration.between(it, now).toMinutes().coerceAtLeast(0) }
     val inUse = pairing != null && sensorSelected
 
@@ -309,6 +317,7 @@ fun SensorCard(
             } else {
                 // The state from the last reading, not the Bluetooth link: the sensor drops it after every reading.
                 val (state, color) = when {
+                    notStarted -> stringResource(R.string.sensor_state_not_started) to CaptionMuted
                     !sensorSelected -> stringResource(R.string.sensor_state_unused) to CaptionMuted
                     life is SensorLife.Ended -> stringResource(R.string.sensor_state_ended) to StateLow
                     life is SensorLife.WarmingUp || status == SourceStatus.WarmingUp -> stringResource(R.string.sensor_state_warming) to StateHigh
@@ -320,7 +329,7 @@ fun SensorCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(10.dp).clip(CircleShape).background(color))
                     Text(state, fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(start = 10.dp).weight(1f))
-                    Text(
+                    if (!notStarted) Text(
                         when (agoMinutes) {
                             null -> stringResource(R.string.sensor_last_none)
                             0L -> stringResource(R.string.sensor_last_now)
@@ -350,6 +359,11 @@ fun SensorCard(
                     }
                     CardButton(stringResource(R.string.sensor_cancel), filled = false) { step = SensorStep.Idle }
                 }
+                notStarted -> {
+                    // Nothing to pair until it runs: starting it is the one thing to do; Check stays to look at it.
+                    StartRow { step = SensorStep.Confirm }
+                    CardButton(stringResource(R.string.sensor_check), filled = false) { step = SensorStep.Holding(TapMode.CHECK) }
+                }
                 else -> {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         CardButton(stringResource(if (pairing == null) R.string.sensor_connect else R.string.sensor_repair)) {
@@ -367,7 +381,7 @@ fun SensorCard(
                 SensorStep.Paired -> Text(stringResource(R.string.sensor_connected_now), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Sage)
                 is SensorStep.Checked -> {
                     CheckCard(s.check)
-                    if (s.check.stage == LibreNfc.Stage.NOT_STARTED) StartRow { step = SensorStep.Confirm }
+                    if (s.check.stage == LibreNfc.Stage.NOT_STARTED && !notStarted) StartRow { step = SensorStep.Confirm }
                 }
                 is SensorStep.Refused -> Issue(danger = true, title = stringResource(R.string.sensor_refused_title), body = s.reason)
                 else -> Unit
