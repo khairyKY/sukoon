@@ -28,10 +28,14 @@ class HomeUiStateMapperTest {
 
     @Test
     fun `warm-up shows the sensor's first-hour value while it is fresh, and nothing once it is old`() {
-        val fresh = HomeUiStateMapper.map(SourceStatus.WarmingUp, reading(230, now.minusSeconds(60)), emptyList(), now, SensorLife.WarmingUp(30))
-        assertEquals(HomeUiState.WarmingUp(30, provisionalMgDl = 230), fresh)
-        val old = HomeUiStateMapper.map(SourceStatus.WarmingUp, reading(230, now.minusSeconds(3600)), emptyList(), now, SensorLife.WarmingUp(30))
-        assertEquals(HomeUiState.WarmingUp(30, provisionalMgDl = null), old)
+        fun warm(mgDl: Int, minutesAgo: Long) = GlucoseReading(now.minusSeconds(minutesAgo * 60), mgDl, TrendDirection.STEADY, SourceKind.LIBRE_BLE, warmup = true)
+        val steady = listOf(warm(226, 3), warm(228, 2), warm(230, 1))
+        assertEquals(HomeUiState.WarmingUp(30, provisionalMgDl = 230), HomeUiStateMapper.map(SourceStatus.WarmingUp, steady.last(), steady, now, SensorLife.WarmingUp(30)))
+        // The sensor's opening noise (Kai's: 1103, 528, 358) never shows as a number.
+        val noise = listOf(warm(528, 3), warm(358, 2), warm(378, 1))
+        assertEquals(HomeUiState.WarmingUp(30, provisionalMgDl = null), HomeUiStateMapper.map(SourceStatus.WarmingUp, noise.last(), noise, now, SensorLife.WarmingUp(30)))
+        val old = listOf(warm(226, 63), warm(228, 62), warm(230, 61))
+        assertEquals(HomeUiState.WarmingUp(30, provisionalMgDl = null), HomeUiStateMapper.map(SourceStatus.WarmingUp, old.last(), old, now, SensorLife.WarmingUp(30)))
     }
 
     @Test
@@ -115,8 +119,8 @@ class HomeUiStateMapperTest {
 
     @Test
     fun `a first-hour reading never shows as a real one, even when the countdown says running`() {
-        val warm = GlucoseReading(now.minusSeconds(60), 62, TrendDirection.FALLING, SourceKind.LIBRE_BLE, warmup = true)
-        val state = HomeUiStateMapper.map(SourceStatus.Connected, warm, emptyList(), now, SensorLife.Running(now.minusSeconds(7200), now.plusSeconds(86_400)))
-        assertEquals(HomeUiState.WarmingUp(0, provisionalMgDl = 62), state)
+        val warm = (3L downTo 1L).map { GlucoseReading(now.minusSeconds(it * 60), 64 - it.toInt(), TrendDirection.FALLING, SourceKind.LIBRE_BLE, warmup = true) }
+        val state = HomeUiStateMapper.map(SourceStatus.Connected, warm.last(), warm, now, SensorLife.Running(now.minusSeconds(7200), now.plusSeconds(86_400)))
+        assertEquals(HomeUiState.WarmingUp(0, provisionalMgDl = 63), state)
     }
 }

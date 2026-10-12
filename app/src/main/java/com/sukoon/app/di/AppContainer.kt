@@ -217,8 +217,12 @@ class AppContainer(private val context: Context) {
         cloudBackup.start(appScope)
         // The sensor's ongoing notification shows the newest reading; re-drawn each minute for its age.
         appScope.launch {
-            combine(glucoseRepository.latestReading, ticks(60_000)) { reading, _ -> reading }.collect { reading ->
-                if (_sourceKind.value.real) SensorService.show(context, reading, Instant.now())
+            combine(glucoseRepository.recentReadings(15), ticks(60_000)) { recent, _ -> recent }.collect { recent ->
+                val now = Instant.now()
+                val latest = recent.lastOrNull()
+                // A first-hour reading only once it reads like glucose (WarmupReadings); before that, no number.
+                val shown = if (latest?.warmup == true) com.sukoon.app.domain.metrics.WarmupReadings.settled(recent, now) else latest
+                if (_sourceKind.value.real) SensorService.show(context, shown, now)
             }
         }
         appScope.launch {
