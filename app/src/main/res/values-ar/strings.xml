@@ -1826,10 +1826,10 @@
     <string name="ask2_q_meter">لماذا لا يتوافق المستشعر مع جهاز القياس؟</string>
     <string name="ask2_q_sites">كيف أبدّل مواضع الحقن؟</string>
     <!-- After-workout check -->
-    <string name="workout_check_channel">إشعارات خفيفة</string>
+    <string name="workout_check_channel">بعد التمرين</string>
     <string name="workout_check_title">بعد تمرينك: %1$d %2$s</string>
     <string name="workout_check_falling">ينخفض قليلًا. وجبة خفيفة الآن تُبقيك فوق ٧٠.</string>
-    <string name="workout_check_section">إشعارات خفيفة</string>
+    <string name="workout_check_section">بعد التمرين</string>
     <string name="workout_check_row">قراءة بعد التمرين</string>
     <string name="workout_check_row_body">بعد ٣٠ دقيقة من تمرين مسجّل: رقمك واتجاهه. ليس تنبيهًا.</string>
     <string name="workout_check_mfp">تُحتسب التمارين التي تسجّلها، وتلك التي يجلبها MyFitnessPal أيضًا.</string>

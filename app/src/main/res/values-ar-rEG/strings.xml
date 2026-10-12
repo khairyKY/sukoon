@@ -1822,10 +1822,10 @@
     <string name="ask2_q_meter">ليه الحساس والجهاز مش متفقين؟</string>
     <string name="ask2_q_sites">أغيّر أماكن الحقن إزاي؟</string>
     <!-- After-workout check -->
-    <string name="workout_check_channel">إشعارات خفيفة</string>
+    <string name="workout_check_channel">بعد التمرين</string>
     <string name="workout_check_title">بعد التمرين: %1$d %2$s</string>
     <string name="workout_check_falling">بينزل شوية. سناك دلوقتي يخلّيك فوق ٧٠.</string>
-    <string name="workout_check_section">إشعارات خفيفة</string>
+    <string name="workout_check_section">بعد التمرين</string>
     <string name="workout_check_row">قراية بعد التمرين</string>
     <string name="workout_check_row_body">بعد نص ساعة من تمرين متسجّل: رقمك والسهم بتاعه. مش منبّه.</string>
     <string name="workout_check_mfp">التمارين اللي بتسجّلها، واللي MyFitnessPal بيجيبها، الاتنين بيتحسبوا.</string>
