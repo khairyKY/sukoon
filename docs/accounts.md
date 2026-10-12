@@ -32,8 +32,19 @@ automatically; O, 0, I and 1 never appear in one, so they're ignored.
 
 1. **Your own email provider first.** Supabase's built-in email only sends to members of your
    Supabase team, a few per hour. Anyone else would never get a confirmation or reset link.
-   Authentication → Emails → SMTP Settings → *Enable custom SMTP*, with any provider's SMTP details
-   (Resend, Brevo, Postmark… the free tiers are plenty). Sender name: Sukoon.
+   Sukoon uses **Gmail's SMTP** (free, no domain needed, about 500 emails a day):
+   1. A Gmail for Sukoon (a new one such as `sukoon.app…@gmail.com` keeps it apart from your own).
+   2. In that Google account: Security → **2-Step Verification** on.
+   3. https://myaccount.google.com/apppasswords → name it `Supabase` → copy the 16-letter password.
+      It's shown once; it only works for sending mail and can be revoked there any time.
+   4. Supabase → Authentication → Emails → **SMTP Settings** → *Enable custom SMTP*:
+      sender email = that Gmail, sender name = `Sukoon`, host `smtp.gmail.com`, port `465`,
+      username = that Gmail, password = the app password.
+   5. Test it: *Forgot password?* on the follow page with your own email. Nothing in the inbox
+      within a minute: check spam, then Supabase → Logs → Auth for the SMTP error.
+
+   (Resend gives better delivery but its free plan needs a domain you own; Brevo works without one
+   but mail "from" a Gmail through it tends to land in spam.)
 2. **Confirm email on.** Authentication → Sign In / Providers → Email → *Confirm email*. Accounts
    made before this are already confirmed and aren't affected.
 3. **Where links may go.** Authentication → URL Configuration:

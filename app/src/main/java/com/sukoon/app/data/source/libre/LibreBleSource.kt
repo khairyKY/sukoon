@@ -73,9 +73,7 @@ class LibreBleSource(
     private var lastPacketAt = 0L
     private var attemptStartedAt = 0L
     private var connectedThisAttempt = false
-    private var directFailures = 0
     private var refreshedThisAttempt = false
-    private var backgroundAttempt = false
     private var connectedAt = 0L
 
     /** BluetoothGatt.refresh() (hidden API, widely used by BLE apps): drops the cached service table. */
@@ -118,28 +116,22 @@ class LibreBleSource(
         }
         try {
             _status.value = SourceStatus.Connecting
-            // Known address (from Enable Streaming): connect straight to it. autoConnect=true lets
-            // the stack wait for the sensor to advertise and keep retrying — no scan filters, works
-            // with the screen off, and doesn't depend on what the advertisement contains.
+            // Known address (from Enable Streaming): the stack waits for the sensor to advertise and
+            // connects (autoConnect) — no scan filters, works with the screen off. Never a direct
+            // connect: on Kai's Galaxy A23 (Android 14) a direct connect to the sensor's random address
+            // leaves the stack's 10 s create-connection timer running after it succeeds, and when it
+            // fires the live link is torn down ("one packet, then status 255 after ~8 s", 12 Oct).
             val address = store.bleAddress
             if (address != null && BluetoothAdapter.checkBluetoothAddress(address)) {
-                // Direct connect first (fast, ~30 s timeout); after a failed direct attempt let the
-                // stack wait for the sensor in the background (autoConnect) until the watchdog cycles.
-                // Quick direct attempts (each gives up in ~10 s) catch the sensor within seconds of it
-                // becoming free, e.g. right after an update cut the old connection; the background
-                // connect (autoConnect) is far slower to notice, so it's only the fallback.
-                val auto = directFailures >= DIRECT_TRIES
-                backgroundAttempt = auto
-                Log.i(TAG, "Connecting ${if (auto) "(background)" else "directly"} to $address")
+                Log.i(TAG, "Waiting for the sensor at $address")
                 attemptStartedAt = System.currentTimeMillis()
                 connectedThisAttempt = false
                 refreshedThisAttempt = false
-                gatt = remoteDevice(adapter, address).connectGatt(context, auto, gattCallback, BluetoothDevice.TRANSPORT_LE)
+                gatt = remoteDevice(adapter, address).connectGatt(context, true, gattCallback, BluetoothDevice.TRANSPORT_LE)
                 return
             }
             // No address yet: unfiltered scan, matched on the advertised UID (some firmware doesn't
             // advertise the FDE3 service UUID, so a service filter can miss the sensor entirely).
-            backgroundAttempt = false
             val scanner = adapter.bluetoothLeScanner
             if (scanner == null) { // Bluetooth is mid-restart: the scanner isn't there yet
                 main.postDelayed(::startScan, RETRY_MS)
@@ -197,8 +189,7 @@ class LibreBleSource(
                 attemptStartedAt = System.currentTimeMillis()
                 connectedThisAttempt = false
                 refreshedThisAttempt = false
-                backgroundAttempt = false
-                gatt = result.device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+                gatt = result.device.connectGatt(context, true, gattCallback, BluetoothDevice.TRANSPORT_LE) // background: see startScan
             }
         }
 
@@ -223,22 +214,19 @@ class LibreBleSource(
 
     /**
      * Every [WATCHDOG_MS]: if no packet has arrived for [STALL_MS] and the current attempt is at
-     * least that old, the link is stuck (half-open connection) — tear it down and start over with a
-     * fast direct attempt. A background connect that hasn't fired within [BACKGROUND_MS] is cut short
-     * the same way: it is slow to notice the sensor, so it only gets a minute before direct tries resume.
+     * least that old, the link is stuck (half-open connection, or a wait the stack forgot): tear it
+     * down and wait for the sensor again.
      */
     private fun watchdog() {
         if (!active) return
         val now = System.currentTimeMillis()
         val stuckLink = now - lastPacketAt > STALL_MS && now - attemptStartedAt > STALL_MS
-        val slowBackground = backgroundAttempt && !connectedThisAttempt && now - attemptStartedAt > BACKGROUND_MS
-        if (gatt != null && (stuckLink || slowBackground)) {
-            Log.w(TAG, if (slowBackground && !stuckLink) "Background connect found nothing, back to direct tries" else if (lastPacketAt == 0L) "No packet since connecting, restarting the connection" else "No packet for ${(now - lastPacketAt) / 1000} s, restarting the connection")
+        if (gatt != null && stuckLink) {
+            Log.w(TAG, if (lastPacketAt == 0L) "No packet since connecting, restarting the connection" else "No packet for ${(now - lastPacketAt) / 1000} s, restarting the connection")
             if (connectedThisAttempt) log?.add(ConnectionLog.Event(Instant.now(), ConnectionLog.Kind.DOWN, ConnectionLog.STATUS_WATCHDOG, (now - connectedAt) / 1000))
             gatt?.close()
             gatt = null
             chunks.clear()
-            directFailures = 0
             startScan()
         }
         main.postDelayed(::watchdog, WATCHDOG_MS)
@@ -259,7 +247,7 @@ class LibreBleSource(
                     val sinceConnect = (System.currentTimeMillis() - connectedAt) / 1000
                     val sincePacket = if (lastPacketAt == 0L) "never" else "${(System.currentTimeMillis() - lastPacketAt) / 1000} s ago"
                     Log.i(TAG, "Disconnected (status $status)" + if (connectedThisAttempt) " after $sinceConnect s, last packet $sincePacket" else "")
-                    if (connectedThisAttempt) log?.add(ConnectionLog.Event(Instant.now(), ConnectionLog.Kind.DOWN, status, sinceConnect)) else directFailures++
+                    if (connectedThisAttempt) log?.add(ConnectionLog.Event(Instant.now(), ConnectionLog.Kind.DOWN, status, sinceConnect))
                     g.close()
                     if (gatt === g) gatt = null
                     chunks.clear()
@@ -369,7 +357,6 @@ class LibreBleSource(
         }
         badPackets = 0
         lastPacketAt = System.currentTimeMillis()
-        directFailures = 0
         val (age, points) = Libre2.parseBle(p.calibration, decrypted)
         val now = System.currentTimeMillis()
         Log.i(TAG, "Packet: age $age min, ${points.joinToString { "${it.minute}:${it.mgDl}" }}")
@@ -421,11 +408,7 @@ class LibreBleSource(
         const val WARMUP_MINUTES = 60
         private const val RETRY_MS = 15_000L
         private const val RECONNECT_MS = 2_000L
-        /** Direct attempts before the slower background connect: about 90 s of quick tries. */
-        private const val DIRECT_TRIES = 8
         private const val WATCHDOG_MS = 30_000L
-        /** How long a background (autoConnect) attempt may wait before direct tries start again. */
-        private const val BACKGROUND_MS = 60_000L
         private const val STALL_MS = 3 * 60_000L
         private const val SCAN_RESTART_MS = 10 * 60_000L
         // ponytail: fixed tolerance; tune if real sensors drift faster than ~2 min over a session.
