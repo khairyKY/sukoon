@@ -35,6 +35,8 @@ screen*) does the same.
 
 ## What the page can't do
 
+- **Only the alarms the wearer shares with followers** (You → People → *Alarms your followers get*;
+  urgent low always) sound here, as in the app.
 - **Alarms sound only while the page is open on screen.** iPhone stops web pages in the background.
   For when nobody is watching, the wearer's **emergency contacts** (You → People) get a text and a
   call when an urgent low goes unanswered: set those up, with the follower's number.

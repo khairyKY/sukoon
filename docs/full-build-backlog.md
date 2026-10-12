@@ -96,6 +96,19 @@ Behaviour: docs/behaviour.md §11–14.
 - 🗓 Guide redesign (canvas Round 8), waiting on Kai.
 - 🗓 Check the home-dish values against the Egyptian National Nutrition Institute tables or «افهم سكر» when a copy is available.
 
+## Sensor start, warm-up, notices, followers (Kai, 2026-10-12)
+Behaviour: docs/behaviour.md §2, §4, §6, §9, §13, §16.
+- ✅ Root cause of "warm-up never ends / restarts": the sensor was never started (NFC: NOT_STARTED, age 0). Pairing now refuses an unstarted or ended sensor.
+- ✅ Sukoon starts a new sensor itself (NFC Activate, from DiaBLE; verified by reading the memory back). Kai's sensor is a 7F Libre 2 Plus EU (non-Gen2).
+- ✅ First-hour readings shown (grey) but never counted: Room v7 `warmup` flag, filtered out of reports, insights, alarms, uploads, calibration, CSV and the AI; no "no readings" alarm during warm-up.
+- ✅ Bluetooth reconnects faster (background connect capped at a minute); Check/Pair/Start keep listening through "Tag was lost".
+- ✅ Notices to every install (web/notices.json, every 6 hours; docs/notices.md). ⬜ `Notices.toShow`: Kai writes it.
+- ✅ Followers: the wearer chooses which alarms they get (urgent low always); app and follow page. ⬜ Kai runs supabase/migrations/20261012000000_shared_alarms.sql.
+- ✅ Parent lock also guards anything that cuts a follower off; it doesn't apply from 18.
+- ✅ Update check every 6 hours (GitHub at most daily), keeps a downloaded update.
+- 🗓 Designs for the notice card, the Start flow and the check card: Redesign Canvas §4–6 (design session), awaiting Kai.
+- ⏸ Untested on a real sensor until Kai says install.
+
 Rules: no APK builds or installs unless Kai asks (compile + unit tests only); no AI attribution in commits or PRs.
 
 iPhone (Kai's father, own sensor): not possible without Apple's paid developer account — free personal teams can't use NFC to pair a Libre. Options: an Android phone with NFC (runs Sukoon fully), or the $99/yr account + a Mac + an iOS port. Kai declined the license (2026-10-03).

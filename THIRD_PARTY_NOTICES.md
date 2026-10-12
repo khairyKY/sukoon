@@ -5,6 +5,10 @@ Sukoon's FreeStyle Libre 2 support (`app/src/main/java/com/sukoon/app/data/sourc
 Kotlin port of code from **GlucoseDirect**, whose Libre 2 implementation in turn credits **DiaBLE**
 and **LibreTools**. All three are MIT-licensed; their notices follow.
 
+Starting a new sensor over NFC (Activate, sub-command `0x1B`, in `Libre2.activationParameters` and
+`LibreNfc.readAndPair`) follows **DiaBLE**'s `nfcCommand(.activate)` and its sensor-type table (the
+`7F` family is a non-Gen2 EU Libre 2 / 2 Plus), and GlucoseDirect's `nfcCommand`.
+
 `tools/libre2_reference.py` is an independent Python transliteration of the same GlucoseDirect
 code, used only to generate test vectors.
 
