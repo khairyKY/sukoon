@@ -114,9 +114,20 @@ class Sharing(
 
     /** A one-time code, valid for 24 h, that lets one person follow you. */
     suspend fun createInvite(): String {
-        val code = (1..8).map { CODE_ALPHABET[random.nextInt(CODE_ALPHABET.length)] }.joinToString("")
+        val code = (1..InviteCode.LENGTH).map { InviteCode.ALPHABET[random.nextInt(InviteCode.ALPHABET.length)] }.joinToString("")
         supabase.post("invites", JSONObject().put("code", code).toString(), prefer = "return=minimal")
         return code
+    }
+
+    /** My invites nobody has used yet, newest first, with when each runs out. */
+    suspend fun openInvites(): List<Pair<String, Instant>> {
+        val now = URLEncoder.encode(Instant.now().toString(), "UTF-8")
+        val rows = JSONArray(supabase.get("invites?owner=eq.$me&used_by=is.null&expires_at=gt.$now&order=created_at.desc&select=code,expires_at"))
+        return (0 until rows.length()).map { rows.getJSONObject(it).let { r -> r.getString("code") to java.time.OffsetDateTime.parse(r.getString("expires_at")).toInstant() } }
+    }
+
+    suspend fun cancelInvite(code: String) {
+        supabase.delete("invites?code=eq.$code&owner=eq.$me")
     }
 
     /** Follows the owner of [code]; returns their name. */
@@ -192,13 +203,10 @@ class Sharing(
         private val BACKFILL_MS = TimeUnit.DAYS.toMillis(2)
         private const val MAX_BATCH = 1000
         private const val PAGE = 1000
-        private const val CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // no 0/O, 1/I
 
         /** The follower page (web/, on GitHub Pages): follow from any browser, iPhone included. */
         const val FOLLOW_PAGE = "https://khairyky.github.io/sukoon/"
 
-        /** "ABCD-EFGH": easier to read out or type. */
-        fun formatCode(code: String) = code.chunked(4).joinToString("-")
 
         fun trendCode(trend: TrendDirection) = when (trend) {
             TrendDirection.FALLING_FAST -> -2

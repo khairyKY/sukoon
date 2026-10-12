@@ -346,8 +346,8 @@
           "sections": [
             { "steps": [
               { "text": "Make an account (email and password).", "path": "You › People › Sharing", "link": "people" },
-              { "text": "Invite someone to follow you, then Send: a one-time code (24 hours) with the follow-page link." },
-              { "text": "On Android they enter the code in Sukoon; on an iPhone they open the link, add it to the home screen and enter it there." },
+              { "text": "Invite someone to follow you: send the link, or let them scan the QR code. It works once, for 24 hours." },
+              { "text": "On Android the link opens Sukoon with the code filled in: one tap to follow. On an iPhone it opens the follow page, which follows once they sign in." },
               { "text": "Choose which of your alarms sound on their phones. Urgent low always does.", "path": "You › People › Alarms your followers get", "link": "people" }
             ]}
           ],

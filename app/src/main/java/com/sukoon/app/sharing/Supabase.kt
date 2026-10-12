@@ -35,15 +35,44 @@ class Supabase(context: Context, private val url: String, private val key: Strin
 
     val configured: Boolean get() = url.isNotBlank() && key.isNotBlank()
 
-    /** Returns null when the project wants the email confirmed before the first sign-in. */
+    /**
+     * Returns null when the project wants the email confirmed first (it does: docs/accounts.md). The
+     * email's link lands on [AUTH_PAGE], which hands its one-time code back to this app (PKCE: the
+     * verifier stays here), so tapping it on this phone signs in.
+     */
     suspend fun signUp(email: String, password: String, displayName: String): Session? {
         val body = JSONObject()
             .put("email", email.trim())
             .put("password", password)
             .put("data", JSONObject().put("display_name", displayName.trim()))
-        val json = JSONObject(call("POST", "/auth/v1/signup", body.toString(), authorized = false))
+            .put("code_challenge", challenge(newVerifier()))
+            .put("code_challenge_method", "s256")
+        val json = JSONObject(call("POST", "/auth/v1/signup?redirect_to=${encode(AUTH_PAGE)}", body.toString(), authorized = false))
         return if (json.has("access_token")) save(json) else null
     }
+
+    /** Sends the confirmation email again. */
+    suspend fun resendConfirmation(email: String) {
+        val body = JSONObject().put("type", "signup").put("email", email.trim())
+        call("POST", "/auth/v1/resend?redirect_to=${encode(AUTH_PAGE)}", body.toString(), authorized = false)
+    }
+
+    /** Emails a link to [AUTH_PAGE], where a new password is chosen (on any device, so no PKCE here). */
+    suspend fun sendPasswordReset(email: String) {
+        call("POST", "/auth/v1/recover?redirect_to=${encode(AUTH_PAGE)}", JSONObject().put("email", email.trim()).toString(), authorized = false)
+    }
+
+    /**
+     * The confirmation email's link, back from [AUTH_PAGE] (sukoon://auth?code=…): its one-time [code],
+     * traded with the verifier only this phone has. Another app catching the link gets nothing it can use.
+     */
+    suspend fun finishLink(code: String): Session {
+        val verifier = prefs.getString(K_VERIFIER, null) ?: throw SupabaseException(400, "This link was made on another phone")
+        val body = JSONObject().put("auth_code", code).put("code_verifier", verifier)
+        return save(JSONObject(call("POST", "/auth/v1/token?grant_type=pkce", body.toString(), authorized = false))).also { prefs.edit().remove(K_VERIFIER).apply() }
+    }
+
+    private fun newVerifier(): String = verifier().also { prefs.edit().putString(K_VERIFIER, it).apply() }
 
     suspend fun signIn(email: String, password: String): Session {
         val body = JSONObject().put("email", email.trim()).put("password", password)
@@ -51,7 +80,10 @@ class Supabase(context: Context, private val url: String, private val key: Strin
     }
 
     fun signOut() {
-        prefs.edit().clear().apply()
+        val verifier = prefs.getString(K_VERIFIER, null) // a confirmation still on its way survives signing out
+        val editor = prefs.edit().clear()
+        if (verifier != null) editor.putString(K_VERIFIER, verifier)
+        editor.apply()
         _session.value = null
     }
 
@@ -140,6 +172,20 @@ class Supabase(context: Context, private val url: String, private val key: Strin
         private const val K_EXPIRES = "expires_at"
         private const val K_USER = "user_id"
         private const val K_EMAIL = "email"
+        private const val K_VERIFIER = "pkce_verifier"
+
+        /** Where Supabase's emails send people (web/auth.html): confirmation and choosing a new password. */
+        const val AUTH_PAGE = "https://khairyky.github.io/sukoon/auth.html"
+
+        private fun encode(s: String) = java.net.URLEncoder.encode(s, "UTF-8")
+
+        /** A PKCE code verifier: 32 random bytes, base64url (RFC 7636). */
+        internal fun verifier(): String = java.util.Base64.getUrlEncoder().withoutPadding()
+            .encodeToString(ByteArray(32).also { java.security.SecureRandom().nextBytes(it) })
+
+        /** Its S256 challenge: base64url(SHA-256(verifier)). */
+        internal fun challenge(verifier: String): String = java.util.Base64.getUrlEncoder().withoutPadding()
+            .encodeToString(java.security.MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray(Charsets.US_ASCII)))
 
         /** The readable part of an Auth or PostgREST error body. */
         internal fun errorMessage(body: String, status: Int): String = runCatching {

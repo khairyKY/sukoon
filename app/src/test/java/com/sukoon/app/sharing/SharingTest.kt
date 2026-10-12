@@ -29,7 +29,7 @@ class SharingTest {
 
     @Test
     fun `invite codes read in two halves`() {
-        assertEquals("ABCD-EFGH", Sharing.formatCode("ABCDEFGH"))
+        assertEquals("ABCD-EFGH", InviteCode.format("ABCDEFGH"))
     }
 
     @Test

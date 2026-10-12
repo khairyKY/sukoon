@@ -1,5 +1,10 @@
 package com.sukoon.app.ui.sharing
 
+import com.sukoon.app.sharing.InviteCode
+import com.sukoon.app.ui.components.CodeBoxes
+import com.sukoon.app.ui.components.PasteCodeChip
+import com.sukoon.app.ui.components.durationText
+
 import com.sukoon.app.ui.settings.LockedNotice
 import com.sukoon.app.ui.theme.TextMuted
 import androidx.compose.foundation.layout.size
@@ -107,8 +112,22 @@ private fun SignIn(sharing: Sharing, watch: FollowerWatch) {
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
+    // An account waiting for its email to be confirmed: the inbox card instead of the form.
+    var awaiting by rememberSaveable { mutableStateOf<String?>(null) }
 
     Text(stringResource(R.string.sharing_body), fontSize = 12.5.sp, color = CaptionMuted)
+    awaiting?.let { address ->
+        CheckInbox(
+            sharing.supabase, address, password,
+            onSignedIn = {
+                awaiting = null
+                watch.refreshNow()
+                context.toast(context.getString(R.string.toast_sharing_signed_in))
+            },
+            onOtherEmail = { awaiting = null; creating = true },
+        )
+        return
+    }
     if (creating) {
         OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.sharing_your_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
     }
@@ -135,18 +154,15 @@ private fun SignIn(sharing: Sharing, watch: FollowerWatch) {
                 try {
                     if (creating) {
                         val session = sharing.supabase.signUp(email, password, name)
-                        context.toast(
-                            if (session == null) context.getString(R.string.toast_sharing_confirm_email, email.trim()) else context.getString(R.string.toast_sharing_signed_in),
-                            long = true,
-                        )
-                        if (session == null) creating = false
+                        if (session == null) awaiting = email.trim() else context.toast(context.getString(R.string.toast_sharing_signed_in))
                     } else {
                         sharing.supabase.signIn(email, password)
                         watch.refreshNow()
                         context.toast(context.getString(R.string.toast_sharing_signed_in))
                     }
                 } catch (e: Exception) {
-                    context.toast(readable(context, e), long = true)
+                    if (e is SupabaseException && e.message.orEmpty().contains("Email not confirmed", ignoreCase = true)) awaiting = email.trim()
+                    else context.toast(readable(context, e), long = true)
                 } finally {
                     busy = false
                 }
@@ -156,6 +172,7 @@ private fun SignIn(sharing: Sharing, watch: FollowerWatch) {
             Text(stringResource(if (creating) R.string.sharing_have_account else R.string.sharing_new_account), color = Sage, fontSize = 13.sp)
         }
     }
+    if (!creating) ForgotPassword(sharing.supabase, email)
 }
 
 @Composable
@@ -169,6 +186,7 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session, l
     var problem by remember { mutableStateOf<String?>(null) }
     var refresh by remember { mutableIntStateOf(0) }
     var invite by rememberSaveable { mutableStateOf<String?>(null) }
+    var waiting by remember { mutableStateOf<List<Pair<String, Instant>>>(emptyList()) }
     var enteringCode by rememberSaveable { mutableStateOf(false) }
     var viewing by remember { mutableStateOf<Followed?>(null) }
     var alertsOn by remember { mutableStateOf(watch.alertsOn) }
@@ -178,6 +196,7 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session, l
             if (name.isBlank()) name = sharing.myName()
             followers = sharing.followers()
             following = sharing.following()
+            waiting = runCatching { sharing.openInvites() }.getOrDefault(emptyList())
             problem = null
         } catch (e: Exception) {
             problem = readable(context, e)
@@ -319,22 +338,33 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session, l
     }
     Pill(stringResource(R.string.sharing_invite)) {
         act {
-            val code = sharing.createInvite()
-            invite = code
-            val text = context.getString(R.string.sharing_invite_message, name.ifBlank { session.email }, Sharing.formatCode(code))
-            context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text), null))
+            invite = sharing.createInvite()
+            refresh++
             null
         }
     }
-    invite?.let { code ->
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.sharing_invite_code, Sharing.formatCode(code)), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Sage, modifier = Modifier.weight(1f))
-            // The code with the follower page: someone on an iPhone (or without the app) follows from the browser.
-            TextButton(onClick = {
-                val text = context.getString(R.string.sharing_invite_share, Sharing.FOLLOW_PAGE, Sharing.formatCode(code))
-                context.startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, text), null))
-            }) { Text(stringResource(R.string.sharing_invite_send), color = Sage, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) }
+    // Invites nobody has used yet: show one again (to scan or resend), or cancel it.
+    if (waiting.isNotEmpty()) {
+        Text(stringResource(R.string.invites_waiting), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted)
+        waiting.forEach { (code, until) ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.invite_left, InviteCode.format(code), durationText(context, Duration.between(Instant.now(), until).toMinutes())),
+                    fontSize = 13.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = { invite = code }) { Text(stringResource(R.string.invite_show), color = Sage, fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
+                TextButton(onClick = {
+                    act {
+                        sharing.cancelInvite(code)
+                        refresh++
+                        context.getString(R.string.toast_invite_cancelled)
+                    }
+                }) { Text(stringResource(R.string.invite_cancel), color = StateLow, fontSize = 12.sp) }
+            }
         }
+    }
+    invite?.let { code ->
+        InviteSheet(code, waiting.firstOrNull { it.first == code }?.second, from = name.ifBlank { session.email }, onDismiss = { invite = null })
     }
 
     // Following: people who invited me.
@@ -436,19 +466,23 @@ internal fun FollowViewer(sharing: Sharing, person: Followed, onClose: () -> Uni
 }
 
 @Composable
-private fun CodeDialog(onRedeem: (String) -> Unit, onDismiss: () -> Unit) {
-    var code by rememberSaveable { mutableStateOf("") }
-    val clean = code.filter { it.isLetterOrDigit() }
+internal fun CodeDialog(onRedeem: (String) -> Unit, onDismiss: () -> Unit, initial: String = "") {
+    var code by rememberSaveable { mutableStateOf(initial) }
+    var problem by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    val ready = code.length == InviteCode.LENGTH
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.sharing_enter_code)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(stringResource(R.string.sharing_enter_code_body), fontSize = 13.sp, color = CaptionMuted)
-                OutlinedTextField(code, { code = it.uppercase() }, label = { Text("ABCD-EFGH") }, singleLine = true)
+                CodeBoxes(code, { code = it; problem = null }, onDone = { onRedeem(code) }, autoFocus = initial.isEmpty())
+                if (!ready) PasteCodeChip(onCode = { code = it }, onNone = { problem = context.getString(R.string.ob_paste_none) })
+                problem?.let { Text(it, fontSize = 13.sp, color = StateLow) }
             }
         },
-        confirmButton = { TextButton(enabled = clean.length == 8, onClick = { onRedeem(clean) }) { Text(stringResource(R.string.sharing_follow)) } },
+        confirmButton = { TextButton(enabled = ready, onClick = { onRedeem(code) }) { Text(stringResource(R.string.sharing_follow)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.emergency_cancel)) } },
     )
 }
@@ -470,7 +504,7 @@ internal fun latestColor(r: GlucoseReading?): Color = when {
 }
 
 /** Server errors in words a person can act on. */
-private fun readable(context: android.content.Context, e: Exception): String = when {
+internal fun readable(context: android.content.Context, e: Exception): String = when {
     e is SupabaseException && (e.status == 404 || e.message.orEmpty().contains("does not exist")) -> context.getString(R.string.sharing_server_not_ready)
     e is SupabaseException && e.message.orEmpty().contains("Email not confirmed", ignoreCase = true) -> context.getString(R.string.sharing_confirm_first)
     e is SupabaseException && e.message.orEmpty().contains("Invalid login", ignoreCase = true) -> context.getString(R.string.sharing_wrong_login)
@@ -484,7 +518,7 @@ private fun Label(text: String) {
 }
 
 @Composable
-private fun Pill(label: String, filled: Boolean = true, enabled: Boolean = true, onClick: () -> Unit) {
+internal fun Pill(label: String, filled: Boolean = true, enabled: Boolean = true, onClick: () -> Unit) {
     Box(
         Modifier
             .clip(RoundedCornerShape(12.dp))

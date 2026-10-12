@@ -116,6 +116,7 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
     implementation(libs.mlkit.barcode)
+    implementation(libs.zxing.core) // the invite QR code (ML Kit only reads codes)
     implementation(libs.guava) // already in the app through another library; CameraX hands its camera over as a ListenableFuture
     implementation(libs.androidx.health.connect) // MyFitnessPal meals in, glucose out (health/)
 

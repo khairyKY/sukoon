@@ -20,6 +20,7 @@ import com.sukoon.app.data.prefs.ThemeMode
 import android.content.Intent
 import com.sukoon.app.data.db.LogEventType
 import kotlinx.coroutines.launch
+import androidx.lifecycle.lifecycleScope
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,6 +65,7 @@ class MainActivity : ComponentActivity() {
      * From a low alarm's "Log what I ate", the low is answered as treated first, as Home's button does.
      */
     private fun takeEntry(intent: Intent) {
+        takeLink(intent)
         val type = intent.getStringExtra(EXTRA_ENTRY)?.let { name -> LogEventType.entries.firstOrNull { it.name == name } } ?: return
         intent.removeExtra(EXTRA_ENTRY)
         val container = (application as SukoonApp).container
@@ -72,6 +74,32 @@ class MainActivity : ComponentActivity() {
             container.appScope.launch { container.alarms.treated() }
         }
         container.requestedEntry.value = type
+    }
+
+    /**
+     * sukoon:// links, which web/join.html and web/auth.html open: an invite to follow (sukoon://follow?c=CODE)
+     * and the account confirmation email (sukoon://auth?code=…), which signs this phone in.
+     */
+    private fun takeLink(intent: Intent) {
+        val uri = intent.data?.takeIf { it.scheme == "sukoon" } ?: return
+        intent.data = null
+        val container = (application as SukoonApp).container
+        when (uri.host) {
+            "follow" -> uri.getQueryParameter("c")?.let(com.sukoon.app.sharing.InviteCode::find)?.let { container.pendingInvite.value = it }
+            "auth" -> {
+                val code = uri.getQueryParameter("code") ?: return
+                lifecycleScope.launch {
+                    val message = try {
+                        container.sharing.supabase.finishLink(code)
+                        container.followerWatch.refreshNow()
+                        getString(R.string.auth_confirmed)
+                    } catch (e: Exception) {
+                        getString(R.string.auth_link_failed, e.message ?: e.javaClass.simpleName)
+                    }
+                    android.widget.Toast.makeText(this@MainActivity, message, android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        }
     }
 
     companion object {

@@ -210,6 +210,17 @@ fun MainScaffold() {
         }
     }
     if (showGuide) HelpDialog(onClose = { showGuide = false }, onLink = { showGuide = false; openLink(it) })
+    // An invite link tapped (sukoon://follow): follow in one tap, or sign in first and it comes back.
+    val pendingInvite by appContainer.pendingInvite.collectAsStateWithLifecycle()
+    val account by appContainer.sharing.supabase.session.collectAsStateWithLifecycle()
+    var signingInForInvite by remember(pendingInvite) { mutableStateOf(false) }
+    pendingInvite?.takeIf { account != null || !signingInForInvite }?.let { code ->
+        com.sukoon.app.ui.sharing.FollowInviteDialog(
+            code, signedIn = account != null, sharing = appContainer.sharing, watch = appContainer.followerWatch,
+            onSignIn = { signingInForInvite = true; openYou(YouPage.PEOPLE) },
+            onDone = { appContainer.pendingInvite.value = null },
+        )
+    }
     Scaffold(
         bottomBar = { SukoonBottomBar(navController, onYou = { openYou() }) },
     ) { innerPadding ->

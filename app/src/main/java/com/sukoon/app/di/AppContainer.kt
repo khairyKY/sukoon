@@ -179,6 +179,14 @@ class AppContainer(private val context: Context) {
 
     /** A new entry something outside the app asked for (a reminder's "Log it"); MainScaffold opens it. */
     val requestedEntry = MutableStateFlow<LogEventType?>(null)
+
+    /** An invite link tapped (sukoon://follow): Now offers to follow; onboarding's code step starts with it. */
+    val pendingInvite = MutableStateFlow<String?>(null)
+
+    /** "Reema now follows you", with Remove unless the parent lock guards followers. */
+    val newFollowers = com.sukoon.app.sharing.NewFollowers(context, sharing) {
+        settings.parentPin != null && com.sukoon.app.platform.ParentLock.appliesTo(settings.profile.ageYears)
+    }
     /** Home's learning notice asked for You → Insulin → Learning. */
     val requestedLearning = MutableStateFlow(false)
     /** A guide link asked for You → Sensor → Start a new sensor: the Sensor card opens its confirmation. */
@@ -214,6 +222,7 @@ class AppContainer(private val context: Context) {
         alarms.start()
         nightscout.start()
         sharing.start()
+        newFollowers.start(appScope)
         followerWatch.start()
         healthConnect.start()
         calibration.start()

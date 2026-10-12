@@ -1,5 +1,9 @@
 package com.sukoon.app.ui.onboarding
 
+import com.sukoon.app.sharing.InviteCode
+import com.sukoon.app.ui.components.CodeBoxes
+import com.sukoon.app.ui.components.PasteCodeChip
+
 import com.sukoon.app.platform.ParentLock
 import com.sukoon.app.ui.settings.PinDialog
 import com.sukoon.app.ui.settings.SuggestRatios
@@ -323,9 +327,12 @@ private fun AccountStep(container: AppContainer, role: UserRole, startWithSignIn
     var showPassword by rememberSaveable { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf<String?>(null) }
+    // Created, waiting for the email to be confirmed. Its link, tapped on this phone, signs in and moves on.
+    var awaiting by rememberSaveable { mutableStateOf<String?>(null) }
     val optional = role == UserRole.WEARER
     val ready = !busy && email.contains('@') && password.length >= 6 && (signIn || name.isNotBlank())
     val current = session
+    LaunchedEffect(current) { if (awaiting != null && current != null) { container.followerWatch.refreshNow(); onDone() } }
 
     fun submit() {
         busy = true
@@ -335,13 +342,19 @@ private fun AccountStep(container: AppContainer, role: UserRole, startWithSignIn
                 if (signIn) {
                     supabase.signIn(email.trim(), password)
                 } else {
-                    supabase.signUp(email.trim(), password, name.trim())
-                        ?: throw SupabaseException(400, context.getString(R.string.toast_sharing_confirm_email, email.trim()))
                     container.settings.emergency = container.settings.emergency.copy(yourName = name.trim())
+                    if (supabase.signUp(email.trim(), password, name.trim()) == null) {
+                        awaiting = email.trim()
+                        return@launch
+                    }
                 }
                 container.followerWatch.refreshNow()
                 onDone()
             } catch (e: Exception) {
+                if (e is SupabaseException && e.message.orEmpty().contains("Email not confirmed", ignoreCase = true)) {
+                    awaiting = email.trim()
+                    return@launch
+                }
                 problem = when {
                     e is SupabaseException && e.message.orEmpty().contains("Invalid login", ignoreCase = true) -> context.getString(R.string.sharing_wrong_login)
                     e is SupabaseException -> e.message.orEmpty()
@@ -365,12 +378,18 @@ private fun AccountStep(container: AppContainer, role: UserRole, startWithSignIn
             signIn -> stringResource(R.string.sharing_sign_in)
             else -> stringResource(R.string.sharing_create)
         },
-        primaryEnabled = current != null || !supabase.configured || ready,
+        primaryEnabled = current != null || !supabase.configured || (awaiting == null && ready),
         onPrimary = { if (current != null || !supabase.configured) onDone() else submit() },
     ) {
+        val waitingFor = awaiting
         when {
             !supabase.configured -> Text(stringResource(R.string.sharing_not_configured), fontSize = 14.sp, color = CaptionMuted)
             current != null -> Text(stringResource(R.string.sharing_signed_in_as, current.email), fontSize = 15.sp, color = MaterialTheme.colorScheme.onBackground)
+            waitingFor != null -> com.sukoon.app.ui.sharing.CheckInbox(
+                supabase, waitingFor, password,
+                onSignedIn = {},
+                onOtherEmail = { awaiting = null; signIn = false },
+            )
             else -> {
                 Segmented(listOf(stringResource(R.string.ob_new_account), stringResource(R.string.sharing_sign_in)), if (signIn) 1 else 0) { signIn = it == 1 }
                 if (!signIn) {
@@ -389,6 +408,7 @@ private fun AccountStep(container: AppContainer, role: UserRole, startWithSignIn
                     },
                 )
                 problem?.let { Text(it, fontSize = 13.5.sp, color = StateLow) }
+                if (signIn) com.sukoon.app.ui.sharing.ForgotPassword(supabase, email)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 4.dp)) {
                     Icon(painterResource(R.drawable.ic_lock), contentDescription = null, tint = SageDeep, modifier = Modifier.size(18.dp))
                     Text(stringResource(R.string.ob_account_privacy), fontSize = 13.sp, lineHeight = 19.sp, color = CaptionMuted)
@@ -738,7 +758,8 @@ private fun Done(done: Boolean, text: String) {
 private fun CodeStep(container: AppContainer, progress: Pair<Int, Int>, onBack: () -> Unit, onFollowed: (String) -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var code by rememberSaveable { mutableStateOf("") }
+    // A tapped invite link (sukoon://follow) fills it in.
+    var code by rememberSaveable { mutableStateOf(container.pendingInvite.value.orEmpty()) }
     var busy by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf<String?>(null) }
     Page(
@@ -747,13 +768,14 @@ private fun CodeStep(container: AppContainer, progress: Pair<Int, Int>, onBack: 
         title = stringResource(R.string.ob_code_title),
         body = stringResource(R.string.ob_code_body),
         primary = stringResource(if (busy) R.string.sharing_working else R.string.sharing_follow),
-        primaryEnabled = !busy && code.length == CODE_LENGTH,
+        primaryEnabled = !busy && code.length == InviteCode.LENGTH,
         onPrimary = {
             busy = true
             problem = null
             scope.launch {
                 try {
                     val owner = container.sharing.redeem(code)
+                    container.pendingInvite.value = null
                     container.followerWatch.refreshNow()
                     onFollowed(owner)
                 } catch (e: Exception) {
@@ -764,26 +786,8 @@ private fun CodeStep(container: AppContainer, progress: Pair<Int, Int>, onBack: 
             }
         },
     ) {
-        CodeBoxes(code) { code = it.filter { c -> c.isLetterOrDigit() }.uppercase().take(CODE_LENGTH) }
-        if (code.length < CODE_LENGTH) {
-            Row(
-                Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(SageMist)
-                    .clickable {
-                        val pasted = context.getSystemService(ClipboardManager::class.java)?.primaryClip?.getItemAt(0)?.text?.toString()
-                            ?.filter { it.isLetterOrDigit() }?.uppercase()
-                        if (pasted != null && pasted.length == CODE_LENGTH) code = pasted else problem = context.getString(R.string.ob_paste_none)
-                    }
-                    .heightIn(min = 44.dp)
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Icon(painterResource(R.drawable.ic_paste), contentDescription = null, tint = SageDeep, modifier = Modifier.size(18.dp))
-                Text(stringResource(R.string.ob_paste), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = SageDeep)
-            }
-        }
+        CodeBoxes(code, { code = it; problem = null })
+        if (code.length < InviteCode.LENGTH) PasteCodeChip(onCode = { code = it }, onNone = { problem = context.getString(R.string.ob_paste_none) })
         problem?.let { Text(it, fontSize = 13.5.sp, color = StateLow) }
         Card {
             Text(stringResource(R.string.ob_code_no_app), fontSize = 15.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
@@ -794,42 +798,6 @@ private fun CodeStep(container: AppContainer, progress: Pair<Int, Int>, onBack: 
             }) { Text(stringResource(R.string.ob_send_app), color = SageDeep, fontWeight = FontWeight.SemiBold) }
         }
     }
-}
-
-private const val CODE_LENGTH = 8
-
-/** The invite code as two groups of four boxes; one hidden field takes the typing. */
-@Composable
-private fun CodeBoxes(code: String, onChange: (String) -> Unit) {
-    BasicTextField(
-        value = code,
-        onValueChange = onChange,
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, keyboardType = KeyboardType.Ascii),
-        textStyle = TextStyle(color = Color.Transparent),
-        decorationBox = { inner ->
-            Box {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    (0 until CODE_LENGTH).forEach { i ->
-                        if (i == 4) Text("–", fontSize = 20.sp, color = CaptionMuted)
-                        val focused = i == code.length
-                        Box(
-                            Modifier
-                                .weight(1f)
-                                .height(56.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(MaterialTheme.colorScheme.surface)
-                                .border(if (focused) 2.dp else 1.dp, if (focused) Sage else outline(), RoundedCornerShape(10.dp)),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(code.getOrNull(i)?.toString().orEmpty(), fontFamily = FontFamily.Monospace, fontSize = 22.sp, color = MaterialTheme.colorScheme.onBackground)
-                        }
-                    }
-                }
-                Box(Modifier.size(1.dp)) { inner() }
-            }
-        },
-    )
 }
 
 @Composable

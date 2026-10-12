@@ -81,10 +81,19 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.Sukoon">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Links from web/join.html (an invite) and web/auth.html (the confirmation email). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="sukoon" android:host="follow" />
+                <data android:scheme="sukoon" android:host="auth" />
             </intent-filter>
             <!-- Health Connect's "why does this app want access" link (Android 13 and older). -->
             <intent-filter>
@@ -116,6 +125,10 @@
         </provider>
 
         <!-- Home-screen glucose widget, resizable 1×1 up to half the screen (ui/widget/). -->
+        <receiver
+            android:name=".sharing.RemoveFollowerReceiver"
+            android:exported="false" />
+
         <receiver
             android:name=".ui.widget.GlucoseWidgetReceiver"
             android:exported="true"
