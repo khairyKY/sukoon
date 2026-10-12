@@ -1,5 +1,24 @@
 package com.sukoon.app.ui.settings
 
+import com.sukoon.app.ui.theme.SageDeep
+import com.sukoon.app.ui.theme.PillNeutralBg
+import com.sukoon.app.ui.theme.UiFontFamily
+import com.sukoon.app.ui.components.drawSensor
+import com.sukoon.app.ui.components.SukoonSheet
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.foundation.Canvas
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import android.Manifest
 import android.app.Activity
@@ -32,7 +51,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
@@ -136,6 +154,7 @@ private const val PRESENCE_CHECK_MS = 2_000
  * and Android hands the sensor back as soon as it finds it again. Every read is also logged (tag
  * LibreNfc) with the raw bytes for debugging over adb.
  */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun SensorCard(
     pairing: SensorPairing?,
@@ -316,8 +335,11 @@ fun SensorCard(
                 }
                 active != null -> {
                     ScanTarget()
-                    Text(stringResource(R.string.sensor_hold), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                    if (step is SensorStep.Lost) Text(stringResource(R.string.sensor_hold_again), fontSize = 13.sp, color = CaptionMuted)
+                    if (step is SensorStep.Lost) {
+                        Text(stringResource(R.string.sensor_hold_again), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = PillHighText)
+                    } else {
+                        Text(stringResource(R.string.sensor_hold), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                    }
                     CardButton(stringResource(R.string.sensor_cancel), filled = false) { step = SensorStep.Idle }
                 }
                 else -> {
@@ -329,32 +351,46 @@ fun SensorCard(
                         CardButton(stringResource(R.string.sensor_check), filled = false) { step = SensorStep.Holding(TapMode.CHECK) }
                     }
                     Text(stringResource(R.string.sensor_connect_hint) + " " + stringResource(R.string.sensor_check_hint), fontSize = 12.sp, color = CaptionMuted)
-                    CardButton(stringResource(R.string.sensor_start), filled = false) { step = SensorStep.Confirm }
-                    Text(stringResource(R.string.sensor_start_hint), fontSize = 12.sp, color = CaptionMuted)
+                    StartRow { step = SensorStep.Confirm }
                 }
             }
-            // ponytail: plain lines until the designs (Redesign Canvas §5–6) are built on these steps.
             when (val s = step) {
-                SensorStep.Started -> stringResource(R.string.sensor_started_now) to false
-                SensorStep.Paired -> stringResource(R.string.sensor_connected_now) to false
-                is SensorStep.Checked -> describe(context, s.check) to false
-                is SensorStep.Refused -> s.reason to true
-                else -> null
-            }?.let { (text, failed) -> Text(text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (failed) StateLow else Sage) }
+                SensorStep.Started -> StartedBlock()
+                SensorStep.Paired -> Text(stringResource(R.string.sensor_connected_now), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Sage)
+                is SensorStep.Checked -> {
+                    CheckCard(s.check)
+                    if (s.check.stage == LibreNfc.Stage.NOT_STARTED) StartRow { step = SensorStep.Confirm }
+                }
+                is SensorStep.Refused -> Issue(danger = true, title = stringResource(R.string.sensor_refused_title), body = s.reason)
+                else -> Unit
+            }
         }
         if (step == SensorStep.Confirm) {
-            AlertDialog(
-                onDismissRequest = { step = SensorStep.Idle },
-                title = { Text(stringResource(R.string.sensor_start_title)) },
-                text = { Text(stringResource(R.string.sensor_start_body), fontSize = 14.sp) },
-                confirmButton = {
-                    TextButton(onClick = {
-                        afterPermission = TapMode.START
-                        if (bluetoothGranted()) step = SensorStep.Holding(TapMode.START) else requestPermissions.launch(permissions.toTypedArray())
-                    }) { Text(stringResource(R.string.sensor_start_confirm)) }
-                },
-                dismissButton = { TextButton(onClick = { step = SensorStep.Idle }) { Text(stringResource(R.string.sensor_cancel)) } },
-            )
+            SukoonSheet(onDismissRequest = { step = SensorStep.Idle }) {
+                Column(
+                    Modifier.fillMaxWidth().padding(horizontal = 22.dp).padding(bottom = 22.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    val ink = MaterialTheme.colorScheme.onBackground
+                    Canvas(Modifier.size(120.dp)) { drawSensor(center, size.minDimension / 2 * 0.86f, ink) }
+                    Text(stringResource(R.string.sensor_start_title), fontFamily = HeadlineSerifFontFamily, fontSize = 23.sp, color = ink)
+                    Text(stringResource(R.string.sensor_start_body), fontSize = 14.sp, lineHeight = 21.sp, color = CaptionMuted, textAlign = TextAlign.Center)
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 52.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Sage)
+                            .clickable {
+                                afterPermission = TapMode.START
+                                if (bluetoothGranted()) step = SensorStep.Holding(TapMode.START) else requestPermissions.launch(permissions.toTypedArray())
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) { Text(stringResource(R.string.sensor_start_confirm), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White) }
+                    TextButton(onClick = { step = SensorStep.Idle }) { Text(stringResource(R.string.sensor_cancel), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = SageDeep) }
+                }
+            }
         }
         if (pairing != null && active == null) {
             Text(
@@ -424,6 +460,119 @@ private fun LifeBar(life: SensorLife, now: Instant) {
                 Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))) {
                     Box(Modifier.fillMaxWidth((elapsed.toMinutes().toFloat() / total.toMinutes()).coerceIn(0.02f, 1f)).fillMaxHeight().background(color))
                 }
+            }
+        }
+    }
+}
+
+/** "Start a new sensor": its own row under Pair again / Check (design "Sensor · start"): a different job. */
+@Composable
+private fun StartRow(onClick: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(Modifier.size(34.dp).clip(CircleShape).background(SageMist), contentAlignment = Alignment.Center) {
+            Icon(painterResource(R.drawable.ic_plus), contentDescription = null, tint = SageDeep, modifier = Modifier.size(18.dp))
+        }
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.sensor_start), fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.sensor_start_hint), fontSize = 12.5.sp, color = CaptionMuted)
+        }
+        val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+        Icon(painterResource(R.drawable.ic_chevron), contentDescription = null, tint = CaptionMuted, modifier = Modifier.size(16.dp).graphicsLayer { scaleX = if (rtl) -1f else 1f })
+    }
+}
+
+/** Started: the warm-up picture in small (the ring just begun, the glow breathing); Now then counts down. */
+@Composable
+private fun StartedBlock() {
+    val reduced = Motion.reduced()
+    val breath by if (reduced) {
+        remember { mutableFloatStateOf(0.6f) }
+    } else {
+        rememberInfiniteTransition(label = "startedGlow").animateFloat(0f, 1f, infiniteRepeatable(tween(Motion.LOOP / 2, easing = Motion.Standard), RepeatMode.Reverse), label = "breath")
+    }
+    val ink = MaterialTheme.colorScheme.onBackground
+    val track = ink.copy(alpha = 0.1f)
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        Canvas(Modifier.size(96.dp)) {
+            val glow = size.minDimension / 2 * (0.94f + 0.1f * breath)
+            drawCircle(Brush.radialGradient(listOf(StateHigh.copy(alpha = 0.36f * (0.35f + 0.65f * breath)), Color.Transparent), center, glow), glow)
+            val ring = 40.dp.toPx()
+            drawCircle(track, ring, style = Stroke(5.dp.toPx()))
+            drawArc(StateHigh, -90f, 8f, false, Offset(center.x - ring, center.y - ring), Size(ring * 2, ring * 2), style = Stroke(5.dp.toPx(), cap = StrokeCap.Round))
+            drawSensor(center, 33.dp.toPx(), ink, adhesive = false)
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(stringResource(R.string.sensor_started_title), fontFamily = HeadlineSerifFontFamily, fontSize = 22.sp, color = ink)
+            Text(stringResource(R.string.sensor_started_now), fontSize = 13.5.sp, lineHeight = 19.sp, color = CaptionMuted)
+        }
+    }
+}
+
+@Composable
+private fun CheckLine(name: String, value: @Composable () -> Unit) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(name, fontSize = 13.5.sp, color = CaptionMuted, modifier = Modifier.weight(1f))
+        value()
+    }
+}
+
+/** A read-only check, laid out (design "Check sensor result"): state, serial, life, and its value only while running. */
+@Composable
+private fun CheckCard(check: LibreNfc.Check) {
+    val ink = MaterialTheme.colorScheme.onBackground
+    val (label, bg, fg) = when (check.stage) {
+        LibreNfc.Stage.NOT_STARTED -> Triple(stringResource(R.string.sensor_state_not_started), PillNeutralBg, CaptionMuted)
+        LibreNfc.Stage.WARMING_UP -> Triple(stringResource(R.string.sensor_state_warming), PillHighBg, PillHighText)
+        LibreNfc.Stage.RUNNING -> Triple(stringResource(R.string.sensor_check_running), SageMist, SageDeep)
+        LibreNfc.Stage.ENDED -> Triple(stringResource(R.string.sensor_state_ended), PillLowBg, PillLowText)
+    }
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, ink.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.sensor_check_eyebrow).uppercase(), fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp, color = CaptionMuted, modifier = Modifier.weight(1f))
+            Text(label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = fg, modifier = Modifier.clip(RoundedCornerShape(50)).background(bg).padding(horizontal = 10.dp, vertical = 4.dp))
+        }
+        CheckLine(stringResource(R.string.sensor_check_serial)) { Text(check.serial, fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.5.sp, color = ink) }
+        when (check.stage) {
+            LibreNfc.Stage.WARMING_UP -> check.minutesToReadings?.let { m ->
+                CheckLine(stringResource(R.string.sensor_check_warmup)) { Text(stringResource(R.string.sensor_check_readings_in, m), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = ink) }
+            }
+            LibreNfc.Stage.RUNNING, LibreNfc.Stage.ENDED -> {
+                CheckLine(stringResource(R.string.sensor_check_life)) { Text(stringResource(R.string.sensor_day_of, check.day, check.days), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = ink) }
+                Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(50)).background(ink.copy(alpha = 0.08f))) {
+                    Box(Modifier.fillMaxWidth((check.day.toFloat() / check.days.coerceAtLeast(1)).coerceIn(0.02f, 1f)).fillMaxHeight().background(if (check.stage == LibreNfc.Stage.ENDED) StateLow else Sage))
+                }
+            }
+            LibreNfc.Stage.NOT_STARTED -> Text(stringResource(R.string.sensor_check_fresh), fontSize = 13.sp, lineHeight = 18.sp, color = CaptionMuted)
+        }
+        check.mgDl?.let { mgDl ->
+            CheckLine(stringResource(R.string.sensor_check_reads_now)) {
+                Text(
+                    buildAnnotatedString {
+                        append(String.format(java.util.Locale.getDefault(), "%d", mgDl))
+                        withStyle(SpanStyle(fontFamily = UiFontFamily, fontSize = 13.sp, color = CaptionMuted)) { append(" " + stringResource(R.string.home_unit_mgdl)) }
+                    },
+                    fontFamily = HeadlineSerifFontFamily,
+                    fontWeight = FontWeight.Light,
+                    fontSize = 30.sp,
+                    color = ink,
+                )
             }
         }
     }

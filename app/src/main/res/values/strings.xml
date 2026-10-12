@@ -1589,4 +1589,20 @@
     <string name="finger_dashed">Dashed ring: the fingertip that has rested longest.</string>
     <string name="home_warmup_sub">Readings start on their own.</string>
     <string name="home_warmup_provisional">%1$d mg/dL so far (first hour)</string>
+    <string name="notice_from">From Sukoon</string>
+    <string name="notice_from_today">From Sukoon · today</string>
+    <string name="notice_from_date">From Sukoon · %1$s</string>
+    <string name="notice_until">Shown until %1$s</string>
+    <string name="notice_open">Open ↗</string>
+    <string name="notice_dont_show">Don\'t show again</string>
+    <string name="sensor_refused_title">That didn\'t work</string>
+    <string name="sensor_started_title">Started</string>
+    <string name="sensor_state_not_started">Not started</string>
+    <string name="sensor_check_eyebrow">Checked just now</string>
+    <string name="sensor_check_serial">Serial</string>
+    <string name="sensor_check_warmup">Warm-up</string>
+    <string name="sensor_check_readings_in">Readings in %1$d min</string>
+    <string name="sensor_check_life">Life</string>
+    <string name="sensor_check_reads_now">Reads now</string>
+    <string name="sensor_check_fresh">This one is fresh. Start it below, or with the app it came with.</string>
 </resources>

@@ -82,6 +82,8 @@ import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.LaunchedEffect
 import com.sukoon.app.ui.theme.Motion
+import com.sukoon.app.ui.components.NoticeBanner
+import com.sukoon.app.ui.components.drawSensor
 import com.sukoon.app.ui.theme.Motion.pressScale
 import kotlin.math.roundToInt
 import androidx.compose.foundation.rememberScrollState
@@ -241,6 +243,15 @@ private fun HomeStatusBar(statusLabel: String, dotColor: Color, pulsing: Boolean
 
 @Composable
 private fun HomeAppBar(dimmed: Boolean = false) {
+    Column {
+        HomeAppBarRow(dimmed)
+        // A notice from Sukoon, under the bar on the calm screens (not on a low or urgent one).
+        NoticeBanner(Modifier.padding(horizontal = 16.dp).padding(top = 12.dp))
+    }
+}
+
+@Composable
+private fun HomeAppBarRow(dimmed: Boolean) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1002,15 +1013,8 @@ private fun WarmupSensor(progress: Float) {
         val ringWidth = 10.dp.toPx()
         drawCircle(track, ring, c, style = Stroke(ringWidth))
         drawArc(StateHigh, -90f, 360f * sweep.value, false, Offset(c.x - ring, c.y - ring), Size(ring * 2, ring * 2), style = Stroke(ringWidth, cap = StrokeCap.Round))
-        // The sensor, after the Libre 2 seen from above: disc, bevel, the filament port, sitting just
-        // inside the ring. (No dotted adhesive ring here; the progress ring takes its place.)
-        val r = 76.dp.toPx()
-        drawCircle(ink, r, c, style = Stroke(2.dp.toPx()))
-        drawCircle(ink.copy(alpha = 0.4f), r * 0.907f, c, style = Stroke(1.dp.toPx()))
-        drawCircle(ink, r * 0.128f, c, style = Stroke(1.8.dp.toPx()))
-        val arm = r * 0.07f
-        drawLine(ink, Offset(c.x, c.y - arm), Offset(c.x, c.y + arm), 1.6.dp.toPx(), StrokeCap.Round)
-        drawLine(ink, Offset(c.x - arm, c.y), Offset(c.x + arm, c.y), 1.6.dp.toPx(), StrokeCap.Round)
+        // The sensor sits just inside the ring; the ring takes the adhesive's place.
+        drawSensor(c, 76.dp.toPx(), ink, adhesive = false)
     }
 }
 

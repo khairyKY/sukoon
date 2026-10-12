@@ -65,6 +65,7 @@ import com.sukoon.app.ui.graph.GraphScreen
 import com.sukoon.app.ui.graph.GraphUiState
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
+import com.sukoon.app.ui.components.NoticeBanner
 import com.sukoon.app.ui.theme.PillHighBg
 import com.sukoon.app.ui.theme.PillHighText
 import com.sukoon.app.ui.theme.PillLowBg
@@ -116,6 +117,7 @@ fun FollowingHome(sharing: Sharing, settings: SettingsPrefs, onAddPerson: () -> 
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 14.dp),
     ) {
+        NoticeBanner(Modifier.padding(bottom = 12.dp))
         when {
             people == null -> Unit // first load
             person == null -> NobodyYet(onAddPerson)

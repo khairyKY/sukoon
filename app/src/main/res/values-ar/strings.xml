@@ -1705,4 +1705,20 @@
     <string name="finger_dashed">الحلقة المتقطعة: طرف الإصبع الذي استراح أطول وقت.</string>
     <string name="home_warmup_sub">ستبدأ القراءات من تلقاء نفسها.</string>
     <string name="home_warmup_provisional">%1$d مجم/دل حتى الآن (الساعة الأولى)</string>
+    <string name="notice_from">من سكون</string>
+    <string name="notice_from_today">من سكون · اليوم</string>
+    <string name="notice_from_date">من سكون · %1$s</string>
+    <string name="notice_until">يظهر حتى %1$s</string>
+    <string name="notice_open">افتح ↗</string>
+    <string name="notice_dont_show">لا تُظهره مجددًا</string>
+    <string name="sensor_refused_title">لم ينجح ذلك</string>
+    <string name="sensor_started_title">بدأ</string>
+    <string name="sensor_state_not_started">لم يبدأ</string>
+    <string name="sensor_check_eyebrow">فُحص الآن</string>
+    <string name="sensor_check_serial">الرقم التسلسلي</string>
+    <string name="sensor_check_warmup">التهيئة</string>
+    <string name="sensor_check_readings_in">القراءات بعد %1$d دقيقة</string>
+    <string name="sensor_check_life">العمر</string>
+    <string name="sensor_check_reads_now">يقرأ الآن</string>
+    <string name="sensor_check_fresh">هذا مستشعر جديد. شغّله من الأسفل، أو بالتطبيق الذي جاء معه.</string>
 </resources>

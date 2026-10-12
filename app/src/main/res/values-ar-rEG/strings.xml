@@ -1701,4 +1701,20 @@
     <string name="finger_dashed">الحلقة المتقطعة: طرف الصباع اللي ارتاح أطول وقت.</string>
     <string name="home_warmup_sub">القرايات هتبدأ لوحدها.</string>
     <string name="home_warmup_provisional">%1$d ملغم/دل لحد دلوقتي (أول ساعة)</string>
+    <string name="notice_from">من سكون</string>
+    <string name="notice_from_today">من سكون · النهارده</string>
+    <string name="notice_from_date">من سكون · %1$s</string>
+    <string name="notice_until">هيظهر لحد %1$s</string>
+    <string name="notice_open">افتح ↗</string>
+    <string name="notice_dont_show">ماتظهرهوش تاني</string>
+    <string name="sensor_refused_title">ماننفعش</string>
+    <string name="sensor_started_title">بدأ</string>
+    <string name="sensor_state_not_started">لسه مابدأش</string>
+    <string name="sensor_check_eyebrow">اتفحص دلوقتي</string>
+    <string name="sensor_check_serial">الرقم التسلسلي</string>
+    <string name="sensor_check_warmup">التسخين</string>
+    <string name="sensor_check_readings_in">القرايات بعد %1$d دقيقة</string>
+    <string name="sensor_check_life">العمر</string>
+    <string name="sensor_check_reads_now">بيقرا دلوقتي</string>
+    <string name="sensor_check_fresh">ده حساس جديد. شغّله من تحت، أو بالتطبيق اللي جه معاه.</string>
 </resources>
