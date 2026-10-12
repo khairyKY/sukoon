@@ -76,7 +76,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
+import com.sukoon.app.ui.components.SukoonSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.res.painterResource
 import com.sukoon.app.ui.logbook.outline
@@ -364,7 +364,7 @@ private fun AlarmDot(type: AlarmType) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SeeAndHear(onDismiss: () -> Unit, onHear: (AlarmType) -> Unit, onSee: (AlarmType) -> Unit) {
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = MaterialTheme.colorScheme.background) {
+    SukoonSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 28.dp)) {
             Text(stringResource(R.string.alarms_see_hear), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
             Text(stringResource(R.string.alarms_preview_body), fontSize = 13.sp, color = CaptionMuted, modifier = Modifier.padding(top = 6.dp, bottom = 14.dp))
