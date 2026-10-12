@@ -14,6 +14,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.painterResource
+import com.sukoon.app.insights.InsightAction
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -50,7 +58,7 @@ import java.time.Instant
 import com.sukoon.app.ui.logbook.EntryDraft
 import kotlinx.coroutines.Deferred
 
-private enum class TrendsSubTab { GRAPH, LOGBOOK, INSIGHTS, REPORT, ASK }
+enum class TrendsSubTab { GRAPH, LOGBOOK, INSIGHTS, REPORT, ASK }
 
 /**
  * The Trends tab's content (A1 comment in MainScaffold): a hub over Graph (A3) and Logbook (A4),
@@ -90,21 +98,20 @@ fun TrendsHub(
     mealRecord: suspend (Long) -> HealthConnectSync.MealRecord? = { null },
     onGraphDay: (java.time.LocalDate?) -> Unit = {},
     onLogbookDay: (java.time.LocalDate?) -> Unit = {},
+    /** A sub-tab asked for from elsewhere (a guide link); handled once. */
+    requestedSubTab: TrendsSubTab? = null,
+    onSubTabHandled: () -> Unit = {},
+    /** Insights' buttons that leave Trends (settings, You pages, new entries). */
+    onInsightAction: (InsightAction) -> Unit = {},
 ) {
     var subTab by rememberSaveable { mutableStateOf(TrendsSubTab.GRAPH) }
     if (pendingEntry != null || pendingMealInsulin != null) subTab = TrendsSubTab.LOGBOOK
+    LaunchedEffect(requestedSubTab) {
+        requestedSubTab?.let { subTab = it; onSubTabHandled() }
+    }
 
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            SubTabChip(stringResource(R.string.graph_title), subTab == TrendsSubTab.GRAPH) { subTab = TrendsSubTab.GRAPH }
-            SubTabChip(stringResource(R.string.logbook_title), subTab == TrendsSubTab.LOGBOOK) { subTab = TrendsSubTab.LOGBOOK }
-            SubTabChip(stringResource(R.string.insights_tab), subTab == TrendsSubTab.INSIGHTS) { subTab = TrendsSubTab.INSIGHTS }
-            SubTabChip(stringResource(R.string.report_tab), subTab == TrendsSubTab.REPORT) { subTab = TrendsSubTab.REPORT }
-            SubTabChip(stringResource(R.string.ask_tab), subTab == TrendsSubTab.ASK) { subTab = TrendsSubTab.ASK }
-        }
+        SegmentedTabs(subTab) { subTab = it }
         when (subTab) {
             TrendsSubTab.GRAPH -> GraphScreen(state = graphState, onSelectRange = onSelectRange, modifier = Modifier.weight(1f), onDay = onGraphDay)
             TrendsSubTab.LOGBOOK -> LogbookScreen(
@@ -125,7 +132,19 @@ fun TrendsHub(
                 onOpenedInsulinForMeal = onPendingMealInsulinHandled,
                 mealRecord = mealRecord,
             )
-            TrendsSubTab.INSIGHTS -> InsightsScreen(insightsState, onAcknowledgeInsights, Modifier.weight(1f))
+            TrendsSubTab.INSIGHTS -> InsightsScreen(
+                insightsState,
+                onAcknowledgeInsights,
+                onAction = { action ->
+                    when (action) {
+                        // "Look at it": the graph over the same 14 days the finding comes from.
+                        InsightAction.LOOK_AT -> { onSelectRange(GraphRange.D14); subTab = TrendsSubTab.GRAPH }
+                        InsightAction.REPORT -> subTab = TrendsSubTab.REPORT
+                        else -> onInsightAction(action)
+                    }
+                },
+                modifier = Modifier.weight(1f),
+            )
             TrendsSubTab.REPORT -> ReportScreen(reportState, reportName, onSelectReportDays, Modifier.weight(1f))
             TrendsSubTab.ASK -> AskScreen(
                 state = askState,
@@ -133,12 +152,62 @@ fun TrendsHub(
                 onAsk = onAsk,
                 onClear = onClearAsk,
                 onOpenSettings = onOpenSettings,
+                insightFinding = insightsState.digest?.oneThing,
                 modifier = Modifier.weight(1f),
             )
         }
     }
 }
 
+/** Graph · Logbook · Insights · Report · ✦ Ask (Redesign Canvas §8): one track, the chosen segment raised. */
+@Composable
+private fun SegmentedTabs(selected: TrendsSubTab, onSelect: (TrendsSubTab) -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f))
+            .padding(3.dp),
+    ) {
+        TrendsSubTab.entries.forEach { tab ->
+            val on = tab == selected
+            Row(
+                Modifier
+                    .weight(if (tab == TrendsSubTab.INSIGHTS || tab == TrendsSubTab.LOGBOOK) 1.12f else 1f)
+                    .clip(RoundedCornerShape(11.dp))
+                    .background(if (on) MaterialTheme.colorScheme.surface else Color.Transparent)
+                    .clickable { onSelect(tab) }
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (tab == TrendsSubTab.ASK) {
+                    Icon(painterResource(R.drawable.ic_sparkle), null, tint = if (on) Sage else CaptionMuted, modifier = Modifier.size(13.dp))
+                    Spacer(Modifier.width(3.dp))
+                }
+                Text(
+                    stringResource(
+                        when (tab) {
+                            TrendsSubTab.GRAPH -> R.string.graph_title
+                            TrendsSubTab.LOGBOOK -> R.string.logbook_title
+                            TrendsSubTab.INSIGHTS -> R.string.insights_tab
+                            TrendsSubTab.REPORT -> R.string.report_tab
+                            TrendsSubTab.ASK -> R.string.ask_tab
+                        },
+                    ),
+                    fontSize = 12.5.sp,
+                    maxLines = 1,
+                    softWrap = false,
+                    fontWeight = if (on) FontWeight.SemiBold else FontWeight.Medium,
+                    color = if (on) MaterialTheme.colorScheme.onBackground else CaptionMuted,
+                )
+            }
+        }
+    }
+}
+
+/** A small toggle chip (the followed person's Home and Trends). */
 @Composable
 internal fun SubTabChip(label: String, selected: Boolean, onClick: () -> Unit) {
     Box(

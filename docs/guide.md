@@ -2,8 +2,12 @@
 
 The source for You → Guide (and the getting-started card on Now). Every topic has the same shape so
 it reads at a glance: a one-line **what it's for**, numbered **steps** with the exact path, **good to
-know**, and, where things can go wrong, **if it doesn't work**. Facts follow docs/behaviour.md; when
-the app changes, change this first, then the three string files (English, Standard Arabic, Egyptian).
+know**, and, where things can go wrong, **if it doesn't work**. Facts follow docs/behaviour.md.
+
+**The app reads `app/src/main/assets/guide/guide-en.json`, `guide-ar.json` and `guide-ar-EG.json`**
+(same structure; a step's `link` is a screen MainScaffold.openLink knows, and GuideContentTest checks
+all three match and every link exists). When the app changes, change this doc, then the three files.
+The app's guide has two topics more than this list: Learning from your meals, and Ask Sukoon.
 
 Paths are written as the app shows them: tab → page → control (You → Sensor → *Start a new sensor*).
 

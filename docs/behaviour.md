@@ -392,3 +392,20 @@ only for half-unit pens, and suggestions round down to the pen.
   closing it is remembered on that phone. Arabic text when the app is in Arabic; a link only if https.
 - Not instant: up to 6 hours, plus up to 10 minutes of GitHub caching. Phones on 0.8.1 or older
   don't read notices; they see a new release on Now, with its notes under *What's new*.
+
+## 17. Insights, Ask and the after-workout check
+
+- **Insights** (Trends): the 14 days in one line (time in range, ↑/↓ against the week before); **the one
+  thing**, the most important finding (lows first, merged from five rules with their likeliest cause:
+  workouts or doses close together), with one button: the first action not already in effect (turn on
+  Going low, the after-workout check, dose suggestions, Learning, calibration, the site map, log insulin),
+  else *Look at it* (the graph over the same 14 days). Then at most 3 more as one-line rows, the rest
+  folded. Every row opens its full card (numbers and source). Not enough data says what to log (3 days
+  of readings; meals on 5 days) with the button. A followed person's Insights show no buttons.
+  Spec: docs/insights-rework.md.
+- **After-workout check** (on by default, You → Alarms → Gentle checks): 30 to 90 minutes after a
+  logged workout ends (own or MyFitnessPal), once, if there's a fresh reading: "After your workout: 92 ↘",
+  plus one line only when falling. Not an alarm; lows keep their own.
+- **Ask**: under the title, what the answers are based on (days, readings and log entries the AI gets:
+  real readings without impossible spikes), or an amber *Demo data* chip when that's all there is. The
+  first suggestion asks about Insights' one thing (not on demo data).

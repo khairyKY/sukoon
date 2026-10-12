@@ -170,6 +170,14 @@ fun SensorCard(
     /** The action the Bluetooth permission prompt was opened for (pairing needs it; so does starting). */
     var afterPermission by remember { mutableStateOf(TapMode.CONNECT) }
     val paired by rememberUpdatedState(onPaired)
+    // A guide link ("Start a new sensor") opens the confirmation straight away.
+    val startAsked by (context.applicationContext as com.sukoon.app.SukoonApp).container.requestedStartSensor.collectAsStateWithLifecycle()
+    LaunchedEffect(startAsked) {
+        if (startAsked) {
+            step = SensorStep.Confirm
+            (context.applicationContext as com.sukoon.app.SukoonApp).container.requestedStartSensor.value = false
+        }
+    }
     // Every outcome is also toasted, so it is seen even if the card is scrolled away.
     fun settle(next: SensorStep, message: String) {
         step = next

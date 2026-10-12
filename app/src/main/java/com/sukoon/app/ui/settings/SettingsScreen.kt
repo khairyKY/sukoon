@@ -358,6 +358,9 @@ fun SettingsScreen(
                             Gap()
                             AlarmSettingsSection(alarmSettings, guarded(onAlarmSettings), onTestAlarm, onPreviewAlarm, onPreviewPack)
                             Gap()
+                            SectionLabel(stringResource(R.string.workout_check_section))
+                            GentleChecks()
+                            Gap()
                             if (!blocked) {
                                 SectionLabel(stringResource(R.string.alarms_reach_title))
                                 AlarmReach(sensorIsSource = true)

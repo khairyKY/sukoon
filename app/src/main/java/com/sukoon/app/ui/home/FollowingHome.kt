@@ -366,10 +366,13 @@ private fun FollowedInsights(sharing: Sharing, person: Followed, modifier: Modif
             delay(Duration.ofMinutes(15).toMillis())
         }
     }
+    // Their readings only (meals and insulin stay on their phone); no buttons: their settings aren't this phone's.
+    val digest = insights?.let { com.sukoon.app.insights.InsightDigestBuilder.build(it, emptyList(), java.time.Instant.now(), java.time.ZoneId.systemDefault()) }
     com.sukoon.app.ui.insights.InsightsScreen(
-        com.sukoon.app.ui.insights.InsightsUiState(acknowledged, insights),
+        com.sukoon.app.ui.insights.InsightsUiState(acknowledged, insights, digest),
         onAcknowledge = { settings.insightsAcknowledged = true; acknowledged = true },
         modifier = modifier,
+        showActions = false,
     )
 }
 

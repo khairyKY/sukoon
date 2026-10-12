@@ -219,6 +219,9 @@ object AiPrompts {
                 "(${insight.days} days) [Evert et al. 2019]."
             is Insight.Rotation -> "Injection sites: ${siteLabel(insight.site)} took ${insight.count} of ${insight.total} " +
                 "${if (insight.longActing) "long-acting" else "rapid"} doses in 2 weeks; using one spot often can cause lipohypertrophy [Frid et al. 2016]."
+            is com.sukoon.app.insights.LowsStory -> "Lows: ${insight.totalLows} in 14 days" +
+                (insight.recurring?.let { ", clustering ${hour(it.fromHour)}–${hour(it.toHour)} on ${it.days} days" } ?: "") +
+                (insight.cause?.let { "; likely cause: ${it.name.lowercase()}" } ?: "") + "."
         }
     }
 

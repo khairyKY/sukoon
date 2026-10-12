@@ -1,0 +1,450 @@
+{
+  "start": [
+    { "title": "Start or connect your sensor", "link": "sensor" },
+    { "title": "Make sure alarms can reach you", "link": "help" },
+    { "title": "Add an emergency contact", "link": "people" }
+  ],
+  "groups": [
+    {
+      "title": "Get started",
+      "topics": [
+        {
+          "id": "sensor", "icon": "ic_sensor",
+          "title": "Start or connect your sensor",
+          "for": "Readings from your Libre 2 or 2 Plus straight into Sukoon, no other app needed.",
+          "summary": "Readings straight into Sukoon, no other app.",
+          "sections": [
+            { "heading": "A new sensor", "steps": [
+              { "text": "Put the sensor on as usual." },
+              { "text": "Start it from the Sensor page.", "path": "You › Sensor › Start a new sensor", "link": "sensor_start" },
+              { "text": "Hold the top of your phone flat on the sensor until it says Started." },
+              { "text": "Wait an hour: Now counts down to the first reading." }
+            ]},
+            { "heading": "Already running", "steps": [
+              { "text": "Pair it again.", "path": "You › Sensor › Pair again", "link": "sensor" },
+              { "text": "Hold the phone on it until it buzzes. The last 8 hours appear at once." }
+            ]}
+          ],
+          "tips": [
+            "A sensor talks to one phone at a time. Pairing Sukoon takes it from LibreLink or DiaBox; scanning it in that app takes it back.",
+            "Check sensor only reads it: its state, its day and its value now.",
+            "“Lost it for a moment”? Keep the phone still; it carries on by itself."
+          ],
+          "fixes": [
+            { "problem": "“Hasn't been started yet”", "fix": "Use Start a new sensor, not Pair again." },
+            { "problem": "“Has ended or failed”", "fix": "It's time for a new sensor." }
+          ],
+          "related": ["running", "now", "alarms"]
+        },
+        {
+          "id": "now", "icon": "ic_drop",
+          "title": "Now: your number at a glance",
+          "for": "Knowing where you are and what to do, in one look.",
+          "summary": "Where you are and what to do, in one look.",
+          "sections": [
+            { "steps": [
+              { "text": "The big number is your newest reading; the arrow is where it's heading.", "path": "Now", "link": "now" },
+              { "text": "The colour says low, in your range or high. The message under it says what matters now, and one next step." },
+              { "text": "The buttons at the top log food and insulin; “u active” is rapid insulin still working." }
+            ]}
+          ],
+          "tips": [
+            "A reading older than 10 minutes turns grey and is never shown as current.",
+            "In a sensor's first hour, any reading shows in grey and counts for nothing: no alarms, reports or AI.",
+            "Pull down to bring in the latest MyFitnessPal meals."
+          ],
+          "related": ["sensor", "meal", "insulin"]
+        },
+        {
+          "id": "running", "icon": "ic_sync",
+          "title": "Keep Sukoon running",
+          "for": "Alarms that reach you at 3 a.m. too.",
+          "summary": "Alarms that reach you at 3 a.m. too.",
+          "sections": [
+            { "steps": [
+              { "text": "Allow everything the setup check lists.", "path": "You › Help & about › Setup check", "link": "help" },
+              { "text": "On Samsung or Xiaomi, open the battery page it links and set Sukoon to Unrestricted or Never sleeping." },
+              { "text": "Leave Sukoon's small notification on: it keeps Sukoon running and shows your number." }
+            ]}
+          ],
+          "tips": [
+            "If the phone stops Sukoon anyway, a watchdog wakes it and the no-readings alarm sounds.",
+            "After a restart or an update it reconnects by itself within a minute or two.",
+            "Keep the phone within a few metres; a body or a wall shortens that. The Connection note on the Sensor page counts the last day's gaps."
+          ],
+          "related": ["alarms", "sensor"]
+        },
+        {
+          "id": "safety", "icon": "ic_help",
+          "title": "Safety first",
+          "for": "What Sukoon is, and isn't.",
+          "summary": "What Sukoon is, and isn't.",
+          "sections": [
+            { "steps": [
+              { "text": "Sukoon is not a medical device. If a number doesn't match how you feel, check with a finger-prick." },
+              { "text": "Follow your care team on treatment. Dose suggestions are a beta: maths on your own numbers, nothing more." },
+              { "text": "In an emergency, call your local emergency number." }
+            ]}
+          ],
+          "related": ["emergency", "insulin"]
+        }
+      ]
+    },
+    {
+      "title": "Alarms and emergencies",
+      "topics": [
+        {
+          "id": "alarms", "icon": "ic_bell",
+          "title": "Alarms",
+          "for": "Hearing about a low or a high before it becomes a problem.",
+          "summary": "Hear about a low or a high early.",
+          "sections": [
+            { "steps": [
+              { "text": "Set your low and high lines, and turn each alarm on or off.", "path": "You › Alarms & sounds", "link": "alarms" },
+              { "text": "Pick a sound pack (Astral, Orbit, Glass, Clear or Bells), or a phone sound or your own file for any alarm.", "path": "You › Alarms & sounds › Sounds", "link": "alarms" },
+              { "text": "Try each one with See and hear each alarm." },
+              { "text": "Check Can alarms reach you? It lists anything blocking them, with a fix for each." }
+            ]}
+          ],
+          "tips": [
+            "Urgent low (under 55) is always on and can't be moved: it fills the screen and repeats every 5 minutes until you answer.",
+            "While a low sounds, the alarm volume is lifted, and put back after.",
+            "I'm treating it starts the 15-minute wait, then checks on you again.",
+            "Highs can stay quiet at night; lows never do."
+          ],
+          "fixes": [
+            { "problem": "An alarm didn't sound", "fix": "Open Can alarms reach you? and What your alarms did, both in You › Alarms & sounds." }
+          ],
+          "related": ["emergency", "running", "range"]
+        },
+        {
+          "id": "emergency", "icon": "ic_phone",
+          "title": "Emergency contacts",
+          "for": "Someone being told when you can't answer.",
+          "summary": "Someone is told when you can't answer.",
+          "sections": [
+            { "heading": "Set it up", "steps": [
+              { "text": "Add a contact from your phone book, or type a number.", "path": "You › People › Emergency contacts", "link": "people" },
+              { "text": "Allow SMS and calls when the setup check asks." },
+              { "text": "Choose how long an urgent low may go unanswered (10 minutes by default)." }
+            ]},
+            { "heading": "What happens", "steps": [
+              { "text": "An urgent low, or lost signal while low, goes unanswered for that long." },
+              { "text": "A 60-second countdown fills the screen, with a loud sound and I'm OK." },
+              { "text": "Everyone gets a text and the first contact gets a call; again after 30 minutes if there's still no answer." },
+              { "text": "Back to 70 or more, they get a “back to normal” text." }
+            ]}
+          ],
+          "tips": [
+            "Any answer, even swiping the alarm away, restarts the clock.",
+            "On Now, Alert my emergency contact texts, WhatsApps or calls them yourself."
+          ],
+          "related": ["alarms", "share"]
+        }
+      ]
+    },
+    {
+      "title": "Food and insulin",
+      "topics": [
+        {
+          "id": "meal", "icon": "ic_food",
+          "title": "Log a meal",
+          "for": "Knowing what went in, so the numbers make sense later.",
+          "summary": "What went in, so the numbers make sense.",
+          "sections": [
+            { "steps": [
+              { "text": "Start a meal from the food button on Now.", "path": "Now › Meal", "link": "entry_carb" },
+              { "text": "Find what you ate: search (yours first, then home dishes, then Open Food Facts), the barcode button, a photo, or just carbs." },
+              { "text": "Set How much? for each food; the plate adds it up." },
+              { "text": "Add the insulin you took for it on the same screen, and save." }
+            ]}
+          ],
+          "tips": [
+            "Ask the AI estimates any dish from its name or photos, with your own Gemini key.",
+            "A barcode that isn't found can be added as your own; the next scan finds it.",
+            "Every entry shows your glucose at that moment; meals show what they did to it afterwards.",
+            "Saved by mistake? Undo on the confirmation."
+          ],
+          "related": ["insulin", "mfp", "trends"]
+        },
+        {
+          "id": "insulin", "icon": "ic_insulin",
+          "title": "Insulin and dose suggestions",
+          "for": "Logging doses quickly, and a suggested dose with its maths if you want one.",
+          "summary": "Quick doses, and the maths if you want it.",
+          "sections": [
+            { "steps": [
+              { "text": "Log a dose: rapid or long-acting, the amount, and Where? if you like.", "path": "Now › Insulin", "link": "entry_insulin" },
+              { "text": "“u active” on Now is rapid insulin still working (5 hours by default)." },
+              { "text": "For dose suggestions (beta), turn them on and fill your ratio per meal, correction factor, target and maximum.", "path": "You › Insulin & logbook", "link": "insulin" }
+            ]}
+          ],
+          "tips": [
+            "A suggestion shows its maths; Use puts it in the amount, and only Save logs it.",
+            "No suggestion under 70, or under 100 and falling: treat that first (15 g).",
+            "Learning from your meals shows what your meals say about your ratios. Nothing changes until you press Use, and then by at most 20%.",
+            "Under 18, suggestions only turn on behind a parent lock."
+          ],
+          "related": ["learning", "sites", "lock"]
+        },
+        {
+          "id": "learning", "icon": "ic_sparkle",
+          "title": "Learning from your meals",
+          "for": "Seeing what your own meals say about your ratios.",
+          "summary": "What your meals say about your ratios.",
+          "sections": [
+            { "steps": [
+              { "text": "Open Learning.", "path": "You › Insulin & logbook › Learning", "link": "learning" },
+              { "text": "Each meal gets a verdict; clean ones teach a ratio per meal time." },
+              { "text": "When a number is ready, Use moves yours toward it, by at most 20% at a time." }
+            ]}
+          ],
+          "tips": [
+            "A meal counts when it has insulin with it, readings before and 4 hours after, and nothing else eaten or injected around it.",
+            "How to make a meal count lists exactly what's needed."
+          ],
+          "related": ["insulin", "meal"]
+        },
+        {
+          "id": "reminder", "icon": "ic_clock",
+          "title": "Long-acting reminder",
+          "for": "Never wondering “did I take it?”.",
+          "summary": "Never wonder “did I take it?”.",
+          "sections": [
+            { "steps": [
+              { "text": "Turn the reminder on and pick your time.", "path": "You › Insulin & logbook › Reminder", "link": "insulin" },
+              { "text": "If no long-acting was logged in the 12 hours before, a notification comes at that time." },
+              { "text": "Took it logs your usual amount; In 30 min waits." }
+            ]}
+          ],
+          "tips": [
+            "It comes back every 30 minutes, 3 times, and goes as soon as the dose is logged anywhere.",
+            "The Insulin widget has Took it too."
+          ],
+          "related": ["insulin", "widgets"]
+        },
+        {
+          "id": "sites", "icon": "ic_eye",
+          "title": "Injection sites",
+          "for": "Moving your injections around, so insulin works the same every time.",
+          "summary": "Move injections around so insulin works evenly.",
+          "sections": [
+            { "steps": [
+              { "text": "When you log insulin, tap Where? and the spot on the body map (your left is on the left)." },
+              { "text": "The dashed ring is the spot that has rested longest: a good next choice." },
+              { "text": "See the last 30 days as a map.", "path": "You › Insulin & logbook", "link": "insulin" }
+            ]}
+          ],
+          "tips": [
+            "The same spot again and again can form lumps under the skin that take up insulin unevenly.",
+            "Belly is fastest (a few centimetres from the navel), then the back of the upper arms, outer thighs and upper outer buttocks."
+          ],
+          "related": ["insulin"]
+        },
+        {
+          "id": "mfp", "icon": "ic_sync",
+          "title": "MyFitnessPal and Health Connect",
+          "for": "Meals you log in MyFitnessPal showing up in Sukoon, with every nutrient.",
+          "summary": "MyFitnessPal meals in Sukoon, every nutrient.",
+          "sections": [
+            { "steps": [
+              { "text": "In MyFitnessPal: More › Apps & Devices › Health Connect › Connect, and allow everything." },
+              { "text": "In Sukoon, allow Health Connect.", "path": "You › Apps & data › Health Connect", "link": "apps" },
+              { "text": "Pull down on Now or the Logbook to bring the latest in." }
+            ]}
+          ],
+          "tips": [
+            "Workouts of 10 minutes or more, steps and water come in the same way; your readings go out to Health Connect.",
+            "MyFitnessPal shares one running total a day, so Sukoon splits it into meals by when you logged them."
+          ],
+          "fixes": [
+            { "problem": "No meals come in", "fix": "You › Apps & data › Resync says how many MyFitnessPal meals Health Connect has. None? Update MyFitnessPal and connect again." }
+          ],
+          "related": ["meal"]
+        }
+      ]
+    },
+    {
+      "title": "Understand your numbers",
+      "topics": [
+        {
+          "id": "trends", "icon": "ic_doc",
+          "title": "Graph, Insights and Report",
+          "for": "Seeing the patterns behind the days.",
+          "summary": "The patterns behind the days.",
+          "sections": [
+            { "steps": [
+              { "text": "Any range from 3 hours to 14 days, any past day, with time in range and GMI (an A1C estimate).", "path": "Trends › Graph", "link": "trends_graph" },
+              { "text": "One thing worth doing, with the button that does it, and a few things worth knowing.", "path": "Trends › Insights", "link": "trends_insights" },
+              { "text": "The one-page summary clinics use, as a PDF to share.", "path": "Trends › Report", "link": "trends_report" }
+            ]}
+          ],
+          "tips": [
+            "Insights are observations, never instructions.",
+            "A sensor's first hour is left out of all three."
+          ],
+          "related": ["range", "ask"]
+        },
+        {
+          "id": "ask", "icon": "ic_sparkle",
+          "title": "Ask Sukoon",
+          "for": "Questions about your own readings and logs, answered in plain words.",
+          "summary": "Your readings and logs, in plain words.",
+          "sections": [
+            { "steps": [
+              { "text": "Add your free Gemini key once.", "path": "You › Apps & data › AI assistant", "link": "apps" },
+              { "text": "Ask anything, or tap a suggestion.", "path": "Trends › Ask", "link": "trends_ask" }
+            ]}
+          ],
+          "tips": [
+            "Answers use your last 7 days of real readings and your logbook; the line under the title says exactly what.",
+            "The key stays on this phone. Not medical advice."
+          ],
+          "related": ["trends"]
+        },
+        {
+          "id": "range", "icon": "ic_contrast",
+          "title": "Your range",
+          "for": "A range that matches your goals.",
+          "summary": "A range that matches your goals.",
+          "sections": [
+            { "steps": [
+              { "text": "Choose the top of your range, 120 to 180 (the bottom stays 70).", "path": "You › Alarms & sounds › Your range", "link": "alarms" },
+              { "text": "Now, the graph's colours and time in range follow it; reports also keep the international 70–180." }
+            ]}
+          ],
+          "tips": [ "Moving the top can move your high alarm with it." ],
+          "related": ["alarms", "trends"]
+        },
+        {
+          "id": "calibration", "icon": "ic_drop",
+          "title": "Calibration",
+          "for": "Nudging the sensor toward your finger-pricks, when it's clearly off.",
+          "summary": "Nudge the sensor toward your finger-pricks.",
+          "sections": [
+            { "steps": [
+              { "text": "Log finger-pricks while your glucose is steady.", "path": "Now › Finger-prick", "link": "entry_fingerstick" },
+              { "text": "Turn calibration on.", "path": "You › Sensor › Calibration", "link": "sensor" }
+            ]}
+          ],
+          "tips": [
+            "Off by default: the sensor's own calibration is usually best.",
+            "It uses up to 4 steady finger-pricks from the last 7 days, stays within ±20 mg/dL and ×0.8–1.25, and never raises a low."
+          ],
+          "related": ["sensor"]
+        }
+      ]
+    },
+    {
+      "title": "People",
+      "topics": [
+        {
+          "id": "share", "icon": "ic_people",
+          "title": "Share with family",
+          "for": "The people who'd want to know, seeing your number live.",
+          "summary": "Family sees your number live.",
+          "sections": [
+            { "steps": [
+              { "text": "Make an account (email and password).", "path": "You › People › Sharing", "link": "people" },
+              { "text": "Invite someone to follow you, then Send: a one-time code (24 hours) with the follow-page link." },
+              { "text": "On Android they enter the code in Sukoon; on an iPhone they open the link, add it to the home screen and enter it there." },
+              { "text": "Choose which of your alarms sound on their phones. Urgent low always does.", "path": "You › People › Alarms your followers get", "link": "people" }
+            ]}
+          ],
+          "tips": [
+            "Only real readings are shared, never demo data. Either side can end a follow.",
+            "On an iPhone, alarms sound only while the follow page is open: keep emergency contacts set too."
+          ],
+          "related": ["follow", "emergency", "lock"]
+        },
+        {
+          "id": "follow", "icon": "ic_people",
+          "title": "Follow someone",
+          "for": "Watching a child's or parent's glucose, with their alarms on your phone.",
+          "summary": "Their glucose and alarms on your phone.",
+          "sections": [
+            { "steps": [
+              { "text": "Enter the code from their invite.", "path": "You › People › Enter a code", "link": "people" },
+              { "text": "Now shows their number, chart and words; Trends shows their graph, insights and report.", "path": "Trends", "link": "trends_graph" },
+              { "text": "Turn on alerts for people you follow, and their alarms sound here with their name.", "path": "You › People", "link": "people" }
+            ]}
+          ],
+          "tips": [ "Answering their alarm only snoozes it on your phone. Emergency texts are never sent from a follower's phone." ],
+          "related": ["share", "libre"]
+        },
+        {
+          "id": "libre", "icon": "ic_link",
+          "title": "LibreLinkUp and Dexcom",
+          "for": "Following people on Abbott's or Dexcom's apps, or using one as your own glucose.",
+          "summary": "Follow people on Abbott's or Dexcom's apps.",
+          "sections": [
+            { "steps": [
+              { "text": "Sign in to LibreLinkUp or Dexcom.", "path": "You › People", "link": "people" },
+              { "text": "LibreLinkUp: in their Libre app, Connected apps › LibreLinkUp › add your email. Dexcom: Share on in their Dexcom app." },
+              { "text": "To make one your own glucose (a Libre 3, say), pick it as the source.", "path": "You › Sensor", "link": "sensor" }
+            ]}
+          ],
+          "tips": [ "Both come through the internet, about a minute (LibreLinkUp) or five (Dexcom) behind the sensor." ],
+          "related": ["follow", "sensor"]
+        },
+        {
+          "id": "lock", "icon": "ic_lock",
+          "title": "Parent lock",
+          "for": "A child's phone where the important settings can't be changed by accident or on purpose.",
+          "summary": "A child can't change what matters.",
+          "sections": [
+            { "steps": [
+              { "text": "Set a 4–8 digit PIN, typed twice.", "path": "You › Insulin & logbook › Parent lock", "link": "insulin" },
+              { "text": "From then on, changing alarms, the range, doses or the profile asks for it, once per visit." }
+            ]}
+          ],
+          "tips": [
+            "It also guards everything that would cut a parent off: which alarms followers get, sharing, removing a follower, signing out and deleting the account.",
+            "It's for children only: from 18 (the age in About you) it no longer applies.",
+            "Removing it needs the PIN."
+          ],
+          "related": ["share", "insulin"]
+        }
+      ]
+    },
+    {
+      "title": "Your phone and your data",
+      "topics": [
+        {
+          "id": "widgets", "icon": "ic_eye",
+          "title": "Widgets",
+          "for": "Your number on the home screen, without opening anything.",
+          "summary": "Your number on the home screen.",
+          "sections": [
+            { "steps": [
+              { "text": "Open the widget maker.", "path": "You › Appearance › Make a widget", "link": "appearance" },
+              { "text": "Pick a style, a size and a background; the preview is the real widget." },
+              { "text": "Add to home screen." }
+            ]}
+          ],
+          "tips": [ "Long-press a widget to edit it. An old reading greys out, never shown as current." ],
+          "related": ["reminder", "now"]
+        },
+        {
+          "id": "backup", "icon": "ic_doc",
+          "title": "Backup, moving phones and your data",
+          "for": "Never losing your history, and knowing where it goes.",
+          "summary": "Never lose your history.",
+          "sections": [
+            { "steps": [
+              { "text": "Back up everything to one private file: readings, logbook, settings, sensor pairing and photos.", "path": "You › Reports › Back up everything", "link": "reports" },
+              { "text": "On a new phone, Restore that file and Sukoon opens as it was (widgets need adding again)." },
+              { "text": "Optional: a daily backup to Drive, OneDrive or Dropbox.", "path": "You › Reports", "link": "reports" }
+            ]}
+          ],
+          "tips": [
+            "Nothing leaves your phone unless you turn it on: Nightscout, the AI with your own key, followers, Health Connect.",
+            "Notices from Sukoon may appear on Now: news about the app, read every 6 hours from Sukoon's site, with nothing about you sent.",
+            "The full list is in the privacy policy, in You › Help & about."
+          ],
+          "related": ["share", "ask"]
+        }
+      ]
+    }
+  ]
+}

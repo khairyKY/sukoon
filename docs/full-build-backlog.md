@@ -106,7 +106,7 @@ Behaviour: docs/behaviour.md §2, §4, §6, §9, §13, §16.
 - ✅ Followers: the wearer chooses which alarms they get (urgent low always); app and follow page. ⬜ Kai runs supabase/migrations/20261012000000_shared_alarms.sql.
 - ✅ Parent lock also guards anything that cuts a follower off; it doesn't apply from 18.
 - ✅ Update check every 6 hours (GitHub at most daily), keeps a downloaded update.
-- 🗓 Designs for the notice card, the Start flow and the check card: Redesign Canvas §4–6 (design session), awaiting Kai.
+- ✅ Redesign built (Kai approved Canvas §4–9): notices banner + sheet, start-sensor flow and check card, follower-alarms card (design session); the Guide (22 topics in 6 groups, search, Start here, steps with Open links, EN/AR/EG from assets/guide), Insights (14-day line, the one thing with one button that skips what's already on, 3 more, the rest folded, not-enough state), the after-workout check (Gentle checks in You → Alarms), Ask (based-on line, Insights chip, demo chip, new bubbles, no-key screen) and the five-tab Trends control.
 - ⏸ Untested on a real sensor until Kai says install.
 
 Rules: no APK builds or installs unless Kai asks (compile + unit tests only); no AI attribution in commits or PRs.

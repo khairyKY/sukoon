@@ -92,6 +92,7 @@ import java.time.Instant
 import com.sukoon.app.ui.reports.ReportViewModel
 import com.sukoon.app.ui.help.GettingStartedCard
 import com.sukoon.app.ui.help.HelpDialog
+import com.sukoon.app.insights.InsightAction
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -134,7 +135,6 @@ enum class SukoonTab(val route: String, @StringRes val labelRes: Int, @DrawableR
 fun MainScaffold() {
     val navController = rememberNavController()
     var showGuide by rememberSaveable { mutableStateOf(false) }
-    if (showGuide) HelpDialog(onClose = { showGuide = false })
     // Health Connect only lets most phones read while Sukoon is on screen: sync on every return.
     val appContainer = (LocalContext.current.applicationContext as SukoonApp).container
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -172,6 +172,44 @@ fun MainScaffold() {
         youOpen = youOpen.first + 1 to page
         navController.navigateToTab(SukoonTab.YOU)
     }
+    // A Trends sub-tab asked for from elsewhere (a guide link), handled once by TrendsHub.
+    var trendsRequest by remember { mutableStateOf<TrendsSubTab?>(null) }
+    fun openTrends(tab: TrendsSubTab) {
+        trendsRequest = tab
+        navController.navigateToTab(SukoonTab.TRENDS)
+    }
+    /** A guide link ("link" in assets/guide) to the screen it names. */
+    fun openLink(link: String) {
+        when (link) {
+            "now" -> navController.navigateToTab(SukoonTab.NOW)
+            "sensor" -> openYou(YouPage.SENSOR)
+            "sensor_start" -> {
+                appContainer.requestedStartSensor.value = true
+                openYou(YouPage.SENSOR)
+            }
+            "alarms" -> openYou(YouPage.ALARMS)
+            "people" -> openYou(YouPage.PEOPLE)
+            "insulin" -> openYou(YouPage.INSULIN)
+            "learning" -> {
+                appContainer.requestedLearning.value = true
+                openYou(YouPage.INSULIN)
+            }
+            "apps" -> openYou(YouPage.APPS)
+            "reports" -> openYou(YouPage.REPORTS)
+            "appearance" -> openYou(YouPage.APPEARANCE)
+            "help" -> openYou(YouPage.HELP)
+            "trends_graph" -> openTrends(TrendsSubTab.GRAPH)
+            "trends_logbook" -> openTrends(TrendsSubTab.LOGBOOK)
+            "trends_insights" -> openTrends(TrendsSubTab.INSIGHTS)
+            "trends_report" -> openTrends(TrendsSubTab.REPORT)
+            "trends_ask" -> openTrends(TrendsSubTab.ASK)
+            "entry_carb" -> appContainer.requestedEntry.value = LogEventType.CARB
+            "entry_insulin" -> appContainer.requestedEntry.value = LogEventType.INSULIN
+            "entry_basal" -> appContainer.requestedEntry.value = LogEventType.BASAL
+            "entry_fingerstick" -> appContainer.requestedEntry.value = LogEventType.FINGERSTICK
+        }
+    }
+    if (showGuide) HelpDialog(onClose = { showGuide = false }, onLink = { showGuide = false; openLink(it) })
     Scaffold(
         bottomBar = { SukoonBottomBar(navController, onYou = { openYou() }) },
     ) { innerPadding ->
@@ -308,11 +346,11 @@ fun MainScaffold() {
                     var startDismissed by remember { mutableStateOf(app.settings.gettingStartedDismissed) }
                     val sensorConnected = app.pairingStore.load() != null
                     val hasContact = app.settings.emergency.contacts.isNotEmpty()
-                    if (!startDismissed && !(sensorConnected && hasContact)) {
+                    val alarmsReach = missingSetup.isEmpty()
+                    if (!startDismissed && !(sensorConnected && hasContact && alarmsReach)) {
                         GettingStartedCard(
-                            sensorConnected = sensorConnected,
-                            hasEmergencyContact = hasContact,
-                            onSetUp = toYou,
+                            done = listOf(sensorConnected, alarmsReach, hasContact),
+                            onStep = ::openLink,
                             onGuide = { showGuide = true },
                             onDismiss = {
                                 app.settings.gettingStartedDismissed = true
@@ -388,12 +426,35 @@ fun MainScaffold() {
                 )
                 val askState by askViewModel.uiState.collectAsStateWithLifecycle()
                 val insightsViewModel: InsightsViewModel = viewModel(
-                    factory = InsightsViewModel.factory(container.glucoseRepository, container.logbookRepository, container.settings),
+                    factory = InsightsViewModel.factory(container.glucoseRepository, container.logbookRepository, container.settings) { container.calibration.enabled },
                 )
                 val insightsState by insightsViewModel.uiState.collectAsStateWithLifecycle()
                 val reportViewModel: ReportViewModel = viewModel(factory = ReportViewModel.factory(container.glucoseRepository))
                 val reportState by reportViewModel.state.collectAsStateWithLifecycle()
+                val trendsContext = LocalContext.current
                 TrendsHub(
+                    requestedSubTab = trendsRequest,
+                    onSubTabHandled = { trendsRequest = null },
+                    onInsightAction = { action ->
+                        when (action) {
+                            InsightAction.TURN_ON_GOING_LOW -> {
+                                container.settings.alarmSettings = container.settings.alarmSettings.copy(goingLowEnabled = true)
+                                trendsContext.toast(trendsContext.getString(R.string.in2_toast_going_low))
+                                insightsViewModel.settingsChanged()
+                            }
+                            InsightAction.TURN_ON_WORKOUT_CHECK -> {
+                                container.settings.afterWorkoutCheck = true
+                                trendsContext.toast(trendsContext.getString(R.string.in2_toast_workout))
+                                insightsViewModel.settingsChanged()
+                            }
+                            InsightAction.OPEN_DOSE_SETUP, InsightAction.OPEN_SITES -> openYou(YouPage.INSULIN)
+                            InsightAction.OPEN_LEARNING -> openLink("learning")
+                            InsightAction.OPEN_CALIBRATION -> openYou(YouPage.SENSOR)
+                            InsightAction.LOG_INSULIN -> container.requestedEntry.value = LogEventType.INSULIN
+                            InsightAction.LOG_MEAL -> container.requestedEntry.value = LogEventType.CARB
+                            InsightAction.REPORT, InsightAction.LOOK_AT -> Unit // TrendsHub switches tabs itself
+                        }
+                    },
                     graphState = graphState,
                     onSelectRange = graphViewModel::selectRange,
                     onGraphDay = graphViewModel::showDay,
@@ -409,7 +470,7 @@ fun MainScaffold() {
                     hasAiKey = askViewModel.hasKey,
                     onAsk = askViewModel::ask,
                     onClearAsk = askViewModel::clear,
-                    onOpenSettings = { openYou() },
+                    onOpenSettings = { openYou(YouPage.APPS) }, // the AI assistant's key lives in Apps & data
                     insightsState = insightsState,
                     onAcknowledgeInsights = insightsViewModel::acknowledge,
                     pendingEntry = pendingEntry,

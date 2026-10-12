@@ -178,6 +178,8 @@ class AppContainer(private val context: Context) {
     val requestedEntry = MutableStateFlow<LogEventType?>(null)
     /** Home's learning notice asked for You → Insulin → Learning. */
     val requestedLearning = MutableStateFlow(false)
+    /** A guide link asked for You → Sensor → Start a new sensor: the Sensor card opens its confirmation. */
+    val requestedStartSensor = MutableStateFlow(false)
 
     init {
         glucoseRepository.start()
@@ -191,6 +193,7 @@ class AppContainer(private val context: Context) {
             }
         }
         notices.start()
+        com.sukoon.app.platform.AfterWorkoutCheck(context, settings, logbookRepository, glucoseRepository, appScope).start()
         // Once: the noise 0.8.1 saved from an unstarted sensor's memory (and any other impossible jump) goes.
         val prefs = context.getSharedPreferences("sukoon_prefs", Context.MODE_PRIVATE)
         if (!prefs.getBoolean(KEY_SPIKES_CLEANED, false)) appScope.launch {

@@ -209,6 +209,11 @@ class SettingsPrefs(context: Context) {
         get() = prefs.getBoolean(KEY_START_DISMISSED, false)
         set(value) = prefs.edit().putBoolean(KEY_START_DISMISSED, value).apply()
 
+    /** Gentle check 30 min after a logged workout: the number and its arrow (You → Alarms → Gentle checks). */
+    var afterWorkoutCheck: Boolean
+        get() = prefs.getBoolean(KEY_AFTER_WORKOUT, true)
+        set(value) = prefs.edit().putBoolean(KEY_AFTER_WORKOUT, value).apply()
+
     /** Trends → Insights stays locked until the user has read and accepted what it is (and isn't). */
     var insightsAcknowledged: Boolean
         get() = prefs.getBoolean(KEY_INSIGHTS_ACK, false)
@@ -218,6 +223,7 @@ class SettingsPrefs(context: Context) {
         val SAVE_INTERVALS = listOf(1, 2, 3, 5, 15)
         val SAVE_INTERVAL_RANGE = 1..60
         private const val KEY_SOURCE = "source_kind"
+        private const val KEY_AFTER_WORKOUT = "after_workout_check"
         private const val KEY_ROLE = "user_role"
         private const val KEY_HOME_STATS = "home_stats"
         private const val KEY_ONBOARDED = "onboarded"
