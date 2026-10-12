@@ -144,6 +144,11 @@
     <string name="sensor_check_not_started">Sensor %1$s hasn\'t been started yet. Tap Start a new sensor to start it.</string>
     <string name="sensor_check_running">Running</string>
     <string name="notice_channel">Notices from Sukoon</string>
+    <string name="sharing_alarms_title">Alarms your followers get</string>
+    <string name="sharing_alarms_body">Their phones sound only these for you. Urgent low always does.</string>
+    <string name="toast_sharing_alarms_saved">Saved. Followers\' phones use it within a minute.</string>
+    <string name="service_warmup">warming up</string>
+    <string name="service_warmup_body">The sensor\'s first hour: not counted, and no alarms yet.</string>
     <string name="sensor_cancel">Cancel</string>
     <string name="sensor_forget">Forget sensor</string>
     <string name="sensor_no_nfc">This phone has no NFC, so it can\'t pair a Libre sensor.</string>

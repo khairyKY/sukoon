@@ -91,21 +91,16 @@ object LibreNfc {
         val mgDl: Int?,
     )
 
-    /**
-     * [retry]: the link or one answer failed, not the sensor's verdict; holding the phone still and
-     * reading again can fix it, so the Sensor card keeps listening instead of giving up.
-     */
-    class NfcException(message: String, val retry: Boolean = false) : IOException(message)
+    /** A final answer, from the sensor or from Sukoon's own checks: reading again won't change it. */
+    class NfcException(message: String) : IOException(message)
 
     /**
-     * A failure worth reading again for (the phone lost the sensor for a moment: TagLost, a tag
-     * Android has since found again, a closed handle), not a final answer from the sensor or Sukoon.
+     * The phone lost the sensor for a moment (TagLost, a tag Android has since found again, a closed
+     * handle). Android finds a lost tag again by itself, so the card keeps listening; any answer from
+     * the sensor, even an error, means it is still there and won't be handed back, so that ends it.
      */
-    fun retryable(e: Throwable): Boolean = when (e) {
-        is NfcException -> e.retry
-        is IOException, is SecurityException, is IllegalStateException -> true
-        else -> false
-    }
+    fun retryable(e: Throwable): Boolean =
+        e !is NfcException && (e is IOException || e is SecurityException || e is IllegalStateException)
 
     /**
      * Why a sensor in [state] can't be taken over (null = it can). A sensor nobody has scanned to
@@ -133,7 +128,7 @@ object LibreNfc {
                     try {
                         val response = it.transceive(command)
                         if (response.isEmpty() || response[0].toInt() and 0x01 != 0) {
-                            throw NfcException("Sensor answered with an error (${response.hex()})", retry = true)
+                            throw NfcException("Sensor answered with an error (${response.hex()})")
                         }
                         return response.copyOfRange(1, response.size)
                     } catch (e: NfcException) {
@@ -150,13 +145,13 @@ object LibreNfc {
                         if (!back) throw e
                     }
                 }
-                throw last ?: NfcException("No response", retry = true)
+                throw last ?: NfcException("No response")
             }
 
             val uid = tag.id
             // Its last two bytes key the memory's encryption and can differ from one tap to the next.
             var patchInfo = send(CMD_PATCH_INFO)
-            if (patchInfo.size < 6) throw NfcException("Unexpected patch info (${patchInfo.hex()})", retry = true)
+            if (patchInfo.size < 6) throw NfcException("Unexpected patch info (${patchInfo.hex()})")
 
             /** Raw FRAM, and the decrypted copy when its CRCs validate. */
             fun readFram(): Pair<ByteArray, ByteArray?> {
@@ -164,7 +159,7 @@ object LibreNfc {
                 for (first in 0 until FRAM_BLOCKS step BLOCKS_PER_READ) {
                     val count = minOf(BLOCKS_PER_READ, FRAM_BLOCKS - first)
                     val blocks = send(readMultipleBlocks(first, count))
-                    if (blocks.size < count * 8) throw NfcException("Short read at block $first", retry = true)
+                    if (blocks.size < count * 8) throw NfcException("Short read at block $first")
                     blocks.copyInto(raw, first * 8, 0, count * 8)
                 }
                 val decrypted = if (Libre2.isLibre1(patchInfo)) raw else Libre2.decryptFram(uid, patchInfo, raw)
@@ -172,6 +167,7 @@ object LibreNfc {
             }
 
             var (rawFram, fram) = readFram()
+            var activated = false
 
             if (start) {
                 if (!Libre2.isLibre2Eu(patchInfo)) throw NfcException("Sukoon can only start Libre 2 EU sensors (patch info ${patchInfo.hex()})")
@@ -185,6 +181,7 @@ object LibreNfc {
                     } catch (e: NfcException) {
                         throw NfcException("The sensor refused to start: ${e.message}")
                     }
+                    activated = true
                     Log.i(TAG, "Activate answered ${answer.hex("")}")
                     // The answer isn't the proof: the sensor's own memory saying it has started is.
                     var started = false
@@ -214,10 +211,10 @@ object LibreNfc {
             val mac = try {
                 send(CMD_PATCH_INFO + Libre2.enableStreamingParameters(uid, patchInfo))
             } catch (e: NfcException) {
-                // The sensor said no (a lost link is retried instead): once started, say it is running.
-                throw NfcException(if (start) STARTED_NOT_PAIRED else "Enable streaming failed: ${e.message}")
+                // The sensor said no (a lost link is retried instead): if this tap started it, say it is running.
+                throw NfcException(if (activated) STARTED_NOT_PAIRED else "Enable streaming failed: ${e.message}")
             }
-            if (mac.size != 6) throw NfcException(if (start) STARTED_NOT_PAIRED else "Enable streaming failed (${mac.hex()})")
+            if (mac.size != 6) throw NfcException(if (activated) STARTED_NOT_PAIRED else "Enable streaming failed (${mac.hex()})")
             // The sensor reports its MAC least-significant byte first.
             return read.copy(bleMac = mac.reversedArray().hex(":"))
         }

@@ -137,6 +137,7 @@ class LibreBleSource(
             }
             // No address yet: unfiltered scan, matched on the advertised UID (some firmware doesn't
             // advertise the FDE3 service UUID, so a service filter can miss the sensor entirely).
+            backgroundAttempt = false
             val scanner = adapter.bluetoothLeScanner
             if (scanner == null) { // Bluetooth is mid-restart: the scanner isn't there yet
                 main.postDelayed(::startScan, RETRY_MS)
@@ -191,6 +192,10 @@ class LibreBleSource(
                 Log.i(TAG, "Found paired sensor ${result.device.address}")
                 store.bleAddress = result.device.address
                 stopScan()
+                attemptStartedAt = System.currentTimeMillis()
+                connectedThisAttempt = false
+                refreshedThisAttempt = false
+                backgroundAttempt = false
                 gatt = result.device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
             }
         }

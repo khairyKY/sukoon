@@ -195,7 +195,7 @@ fun SettingsScreen(
     // The parent lock: while it's on (and not unlocked on this visit), changes ask for the PIN first.
     var unlocked by rememberSaveable { mutableStateOf(false) }
     var askingPin by remember { mutableStateOf(false) }
-    val locked = parentPin != null && !unlocked
+    val locked = parentPin != null && !unlocked && com.sukoon.app.platform.ParentLock.appliesTo(profile.ageYears)
     fun <T> guarded(change: (T) -> Unit): (T) -> Unit = { if (locked) askingPin = true else change(it) }
     if (askingPin) PinDialog(setting = false, stored = parentPin, onDone = { unlocked = true; askingPin = false }, onDismiss = { askingPin = false })
     val context = LocalContext.current
@@ -341,7 +341,7 @@ fun SettingsScreen(
                             Gap()
                         }
                         SectionLabel(stringResource(R.string.sharing_title))
-                        SharingSection(sharing, followerWatch)
+                        SharingSection(sharing, followerWatch, locked = locked, onUnlock = { askingPin = true })
                         Gap()
                         SectionLabel(stringResource(R.string.llu_title))
                         LibreLinkUpSection(sharing.libreLinkUp, sharing, followerWatch)

@@ -48,7 +48,7 @@ class LibreNfcTest {
     fun `a lost link is read again, the sensor's or Sukoon's refusal is final`() {
         assertTrue(LibreNfc.retryable(java.io.IOException("Tag was lost.")))
         assertTrue(LibreNfc.retryable(SecurityException("Tag is out of date")))
-        assertTrue(LibreNfc.retryable(LibreNfc.NfcException("Short read at block 3", retry = true)))
+        assertFalse(LibreNfc.retryable(LibreNfc.NfcException("Sensor answered with an error (01 0F)"))) // still there: Android won't hand it back
         assertFalse(LibreNfc.retryable(LibreNfc.NfcException("This sensor has ended or failed. Put a new one on.")))
         assertFalse(LibreNfc.retryable(LibreNfc.NfcException(LibreNfc.STARTED_NOT_PAIRED)))
     }

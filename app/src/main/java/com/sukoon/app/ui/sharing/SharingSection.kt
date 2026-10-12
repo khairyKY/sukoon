@@ -44,6 +44,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sukoon.app.R
+import com.sukoon.app.alarms.AlarmType
+import com.sukoon.app.alarms.titleRes
 import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.insights.InsightEngine
 import com.sukoon.app.sharing.Followed
@@ -70,7 +72,7 @@ import androidx.compose.ui.res.pluralStringResource
 
 /** You → Sharing: an account, sharing your readings with people you invite, and following others. */
 @Composable
-fun SharingSection(sharing: Sharing, watch: FollowerWatch) {
+fun SharingSection(sharing: Sharing, watch: FollowerWatch, locked: Boolean = false, onUnlock: () -> Unit = {}) {
     val session by sharing.supabase.session.collectAsStateWithLifecycle()
     Column(
         Modifier
@@ -84,7 +86,7 @@ fun SharingSection(sharing: Sharing, watch: FollowerWatch) {
         when {
             !sharing.supabase.configured -> Text(stringResource(R.string.sharing_not_configured), fontSize = 12.5.sp, color = CaptionMuted)
             current == null -> SignIn(sharing, watch)
-            else -> SignedIn(sharing, watch, current)
+            else -> SignedIn(sharing, watch, current, locked, onUnlock)
         }
     }
 }
@@ -150,7 +152,7 @@ private fun SignIn(sharing: Sharing, watch: FollowerWatch) {
 }
 
 @Composable
-private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
+private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session, locked: Boolean, onUnlock: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var shareOn by remember { mutableStateOf(sharing.shareOn) }
@@ -174,6 +176,9 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
             problem = readable(context, e)
         }
     }
+    /** Behind the parent lock: anything that would stop a follower (a parent) getting this child's readings or alarms. */
+    fun guard(change: () -> Unit) = if (locked) onUnlock() else change()
+    var sharedAlarms by remember { mutableStateOf(sharing.sharedAlarms) }
     fun act(block: suspend () -> String?) {
         scope.launch {
             try {
@@ -187,14 +192,16 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(stringResource(R.string.sharing_signed_in_as, session.email), fontSize = 12.5.sp, color = CaptionMuted, modifier = Modifier.weight(1f))
         TextButton(onClick = {
-            sharing.supabase.signOut()
-            watch.refreshNow()
-            context.toast(context.getString(R.string.toast_sharing_signed_out))
+            guard {
+                sharing.supabase.signOut()
+                watch.refreshNow()
+                context.toast(context.getString(R.string.toast_sharing_signed_out))
+            }
         }) { Text(stringResource(R.string.sharing_sign_out), color = StateLow, fontSize = 12.sp) }
     }
     // Deleting the account: it, its readings and every follow, both ways, gone for good (Play requires it in the app).
     var deleting by remember { mutableStateOf(false) }
-    TextButton(onClick = { deleting = true }) { Text(stringResource(R.string.account_delete), color = StateLow, fontSize = 12.sp) }
+    TextButton(onClick = { guard { deleting = true } }) { Text(stringResource(R.string.account_delete), color = StateLow, fontSize = 12.sp) }
     if (deleting) {
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { deleting = false },
@@ -234,12 +241,37 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
         Switch(
             checked = shareOn,
             onCheckedChange = {
-                shareOn = it
-                sharing.shareOn = it
-                if (it) act { sharing.upload(); null }
+                guard {
+                    shareOn = it
+                    sharing.shareOn = it
+                    if (it) act { sharing.upload(); null }
+                }
             },
             colors = SwitchDefaults.colors(checkedTrackColor = Sage),
         )
+    }
+    // Which alarms followers' phones sound for you; urgent low always does.
+    Label(stringResource(R.string.sharing_alarms_title))
+    Text(stringResource(R.string.sharing_alarms_body), fontSize = 12.sp, color = CaptionMuted)
+    AlarmType.entries.forEach { type ->
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(type.titleRes), fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
+            Switch(
+                checked = type in sharedAlarms,
+                enabled = type != AlarmType.URGENT_LOW,
+                onCheckedChange = { on ->
+                    guard {
+                        sharedAlarms = if (on) sharedAlarms + type else sharedAlarms - type
+                        sharing.sharedAlarms = sharedAlarms
+                        act {
+                            sharing.publishSharedAlarms()
+                            context.getString(R.string.toast_sharing_alarms_saved)
+                        }
+                    }
+                },
+                colors = SwitchDefaults.colors(checkedTrackColor = Sage),
+            )
+        }
     }
     Label(stringResource(R.string.sharing_followers))
     val people = followers
@@ -250,10 +282,12 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(person.name.ifBlank { "…" }, fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
                 TextButton(onClick = {
-                    act {
-                        sharing.removeFollower(person.id)
-                        refresh++
-                        context.getString(R.string.toast_sharing_follower_removed, person.name)
+                    guard {
+                        act {
+                            sharing.removeFollower(person.id)
+                            refresh++
+                            context.getString(R.string.toast_sharing_follower_removed, person.name)
+                        }
                     }
                 }) { Text(stringResource(R.string.emergency_remove), color = StateLow, fontSize = 12.sp) }
             }

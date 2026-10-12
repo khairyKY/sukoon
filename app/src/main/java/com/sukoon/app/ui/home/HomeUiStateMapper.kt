@@ -35,7 +35,8 @@ object HomeUiStateMapper {
     ): HomeUiState = when (life) {
         is SensorLife.Ended -> HomeUiState.SensorEnded
         is SensorLife.WarmingUp -> HomeUiState.WarmingUp(life.minutesLeft, provisional(latest, now))
-        else -> byStatus(status, latest, recent, now)
+        // A first-hour reading is never shown as a real one, whatever the countdown says.
+        else -> latest?.takeIf { it.warmup }?.let { provisional(it, now) }?.let { HomeUiState.WarmingUp(0, it) } ?: byStatus(status, latest, recent, now)
     }
 
     private fun byStatus(status: SourceStatus, latest: GlucoseReading?, recent: List<GlucoseReading>, now: Instant): HomeUiState = when (status) {

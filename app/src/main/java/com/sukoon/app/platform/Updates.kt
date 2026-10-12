@@ -67,6 +67,8 @@ class Updates(private val context: Context, private val scope: CoroutineScope) {
     /** [quiet]: a failure stays Idle (the daily check shouldn't show errors). */
     suspend fun check(quiet: Boolean = false) {
         if (_state.value is State.Downloading) return
+        // The background check never throws away a downloaded update or the reinstall explanation.
+        if (quiet && (_state.value is State.Ready || _state.value is State.NeedsReinstall)) return
         _state.value = State.Checking
         _state.value = try {
             val release = withContext(Dispatchers.IO) { parseLatest(JSONObject(get(LATEST))) }

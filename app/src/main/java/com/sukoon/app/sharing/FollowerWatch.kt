@@ -110,7 +110,8 @@ class FollowerWatch(
                 states[person.id] = result.state
                 publish() // before showing: the alert screen checks it as it opens
                 result.cleared.forEach { notifier.cancel(it, person.id) }
-                result.fire.forEach { notifier.show(it, alarmSettings, who = person.name.ifBlank { "…" }, person = person.id) }
+                // Only the alarms they share with followers (urgent low always).
+                result.fire.filter { it.type in person.alarms }.forEach { notifier.show(it, alarmSettings, who = person.name.ifBlank { "…" }, person = person.id) }
             }.onFailure { Log.w(TAG, "Check for ${person.name} failed", it) }
         }
         val followedIds = following.map { it.id }.toSet()

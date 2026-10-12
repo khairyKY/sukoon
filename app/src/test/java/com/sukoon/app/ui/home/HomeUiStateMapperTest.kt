@@ -112,4 +112,11 @@ class HomeUiStateMapperTest {
         assertEquals(104, state.lastGlucoseMgDl)
         assertEquals(12, state.minutesAgo)
     }
+
+    @Test
+    fun `a first-hour reading never shows as a real one, even when the countdown says running`() {
+        val warm = GlucoseReading(now.minusSeconds(60), 62, TrendDirection.FALLING, SourceKind.LIBRE_BLE, warmup = true)
+        val state = HomeUiStateMapper.map(SourceStatus.Connected, warm, emptyList(), now, SensorLife.Running(now.minusSeconds(7200), now.plusSeconds(86_400)))
+        assertEquals(HomeUiState.WarmingUp(0, provisionalMgDl = 62), state)
+    }
 }

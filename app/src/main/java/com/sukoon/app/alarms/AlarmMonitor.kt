@@ -45,6 +45,8 @@ class AlarmMonitor(
     private val enabled: () -> Boolean,
     /** Re-arms [SignalWatchdog] (wake Sukoon after this long without a reading). */
     private val watchdog: (Duration) -> Unit = {},
+    /** The paired sensor is in its first hour: it sends nothing to act on yet, so silence isn't "no readings". */
+    private val warmingUp: () -> Boolean = { false },
 ) {
     private val mutex = Mutex()
     private val restored = store?.load()
@@ -173,14 +175,15 @@ class AlarmMonitor(
         }
         // The newest reading always counts, however old: the 30-minute window alone would forget it and end
         // "no readings" (and its emergency escalation) half an hour after the sensor went quiet.
-        val result = AlarmEngine.evaluate((recent.values + listOfNotNull(newest)).distinct(), now, settings.alarmSettings, state)
+        val alarmSettings = settings.alarmSettings.let { if (warmingUp()) it.copy(signalLossEnabled = false) else it }
+        val result = AlarmEngine.evaluate((recent.values + listOfNotNull(newest)).distinct(), now, alarmSettings, state)
         state = result.state
         _active.value = state.activeSince.keys // before showing: the alert screen checks it as it opens
         result.cleared.forEach {
             notifier.cancel(it)
             log.add(AlarmLog.Entry(now, it, AlarmLog.Kind.RESOLVED))
         }
-        result.fire.forEach { notifier.show(it, settings.alarmSettings) }
+        result.fire.forEach { notifier.show(it, alarmSettings) }
         escalateLocked(now)
     }
 

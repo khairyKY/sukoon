@@ -301,7 +301,14 @@ async function loadPeople() {
   const ids = follows.map((f) => f.owner);
   if (!ids.length) return [];
   const names = await call(`/rest/v1/profiles?id=in.(${ids.join(',')})&select=id,display_name`);
-  return ids.map((id) => ({ id, name: (names.find((n) => n.id === id) || {}).display_name || '…' }));
+  // Which alarms they share with followers; null (everything) if they haven't chosen or the column isn't there yet.
+  let shares = [];
+  try { shares = await call(`/rest/v1/profiles?id=in.(${ids.join(',')})&select=id,shared_alarms`); } catch (e) {}
+  return ids.map((id) => ({
+    id,
+    name: (names.find((n) => n.id === id) || {}).display_name || '…',
+    alarms: (shares.find((s) => s.id === id) || {}).shared_alarms || null,
+  }));
 }
 async function loadReadings(id) {
   const since = new Date(Date.now() - 3 * 3600 * 1000).toISOString();
@@ -384,7 +391,9 @@ function render() {
   else { $('title').textContent = t('steady')(name); $('detail').textContent = ''; }
 
   $('chart').innerHTML = chart(readings);
-  alarm(kind === 'urgent' || kind === 'low' || !!headingIn, kind);
+  // Urgent low always sounds; low and heading low only if they share them with followers.
+  const shares = (type) => !person.alarms || person.alarms.includes(type);
+  alarm(kind === 'urgent' || (kind === 'low' && shares('LOW')) || (!!headingIn && shares('GOING_LOW')), kind);
 }
 
 function chart(readings) {

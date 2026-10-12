@@ -144,6 +144,11 @@
     <string name="sensor_check_not_started">الحساس %1$s لسه متشغّلش. دوس «شغّل حساس جديد» عشان تشغّله.</string>
     <string name="sensor_check_running">شغّال</string>
     <string name="notice_channel">إشعارات من سكون</string>
+    <string name="sharing_alarms_title">التنبيهات اللي بتوصل لمتابعينك</string>
+    <string name="sharing_alarms_body">موبايلاتهم مش هترن ليك غير بالتنبيهات دي. الهبوط الشديد بيوصل دايمًا.</string>
+    <string name="toast_sharing_alarms_saved">اتحفظ. موبايلات متابعينك هتمشي عليه خلال دقيقة.</string>
+    <string name="service_warmup">بيتهيّأ</string>
+    <string name="service_warmup_body">أول ساعة للحساس: مش بتتحسب، ومفيش تنبيهات لسه.</string>
     <string name="sensor_cancel">إلغاء</string>
     <string name="sensor_forget">انسَ الحساس</string>
     <string name="sensor_no_nfc">الموبايل ده مفيهوش NFC، فمش هيقدر يربط حساس Libre.</string>

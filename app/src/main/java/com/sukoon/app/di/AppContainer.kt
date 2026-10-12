@@ -157,6 +157,7 @@ class AppContainer(private val context: Context) {
         scope = appScope,
         enabled = { _sourceKind.value.real },
         watchdog = { SignalWatchdog.arm(context, it) },
+        warmingUp = { sensorLife() is SensorLife.WarmingUp },
     )
 
     val followerWatch = FollowerWatch(context, sharing, settings, notifier, appScope)
@@ -270,7 +271,8 @@ class AppContainer(private val context: Context) {
         val pairing = SensorPairing(read.uid, read.patchInfo, fram, scannedAtMillis - Libre2.sensorInfo(fram).ageMinutes * LibreBleSource.MINUTE_MS)
         pairingStore.save(pairing)
         pairingStore.bleAddress = read.bleMac
-        appScope.launch {
+        // Only a running sensor's memory holds glucose: a just-started one holds noise (LibreNfc.SensorRead.check).
+        if (Libre2.sensorInfo(fram).state == Libre2.State.READY) appScope.launch {
             for (point in Libre2.parseFram(pairing.calibration, fram)) {
                 if (point.mgDl !in LibreBleSource.PLAUSIBLE_MG_DL) continue
                 val at = Instant.ofEpochMilli(pairing.startMillis + point.minute * LibreBleSource.MINUTE_MS)

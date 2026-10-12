@@ -260,7 +260,7 @@ object Libre2 {
             val minute = age - delay - i * 15
             if (minute < 0 || minute >= oldestTrend) null else at(124 + j * 6)?.let { Point(minute, it) }
         }
-        return (history + trend).sortedBy { it.minute }
+        return (history + trend).filter { it.minute >= 0 }.sortedBy { it.minute } // before minute 0 the sensor wasn't running
     }
 
     // --- sensor info -----------------------------------------------------------------------------

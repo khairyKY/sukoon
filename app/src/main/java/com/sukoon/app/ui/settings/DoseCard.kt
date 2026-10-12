@@ -127,7 +127,7 @@ fun DoseCard(
             LockedNotice(onUnlock)
             return@Column
         }
-        ParentLockRow(parentPin, onParentPin)
+        if (com.sukoon.app.platform.ParentLock.appliesTo(profile.ageYears)) ParentLockRow(parentPin, onParentPin) // no lock from 18
         if (!settings.enabled) return@Column
 
         val fromLogbook by produceState<Insight.Formulas?>(null) { value = runCatching { startingPoints() }.getOrNull() }

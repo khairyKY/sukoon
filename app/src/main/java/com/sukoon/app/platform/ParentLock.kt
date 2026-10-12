@@ -11,6 +11,15 @@ import java.util.Base64
  */
 object ParentLock {
 
+    const val ADULT_AGE = 18
+
+    /**
+     * The lock is for children: from [ADULT_AGE] it doesn't apply, even if a PIN was set earlier. An
+     * unknown age keeps it (a child can't skip it by leaving the age empty), and the age itself is
+     * behind the lock, so it can't be raised to get out of it.
+     */
+    fun appliesTo(ageYears: Int?): Boolean = ageYears == null || ageYears < ADULT_AGE
+
     fun valid(pin: String): Boolean = pin.length in 4..8 && pin.all { it.isDigit() }
 
     /** "salt:hash", what's stored. */

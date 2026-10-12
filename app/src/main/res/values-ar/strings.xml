@@ -144,6 +144,11 @@
     <string name="sensor_check_not_started">المستشعر %1$s لم يُشغَّل بعد. اضغط «تشغيل مستشعر جديد» لتشغيله.</string>
     <string name="sensor_check_running">يعمل</string>
     <string name="notice_channel">إشعارات من سكون</string>
+    <string name="sharing_alarms_title">التنبيهات التي تصل متابعيك</string>
+    <string name="sharing_alarms_body">لا تُصدر هواتفهم لك إلا هذه التنبيهات. تنبيه الانخفاض الشديد يصل دائمًا.</string>
+    <string name="toast_sharing_alarms_saved">تم الحفظ. تعمل به هواتف متابعيك خلال دقيقة.</string>
+    <string name="service_warmup">في فترة التهيئة</string>
+    <string name="service_warmup_body">الساعة الأولى للمستشعر: لا تُحتسب، ولا تنبيهات بعد.</string>
     <string name="sensor_cancel">إلغاء</string>
     <string name="sensor_forget">نسيان المستشعر</string>
     <string name="sensor_no_nfc">لا يدعم هذا الهاتف NFC، لذا لا يمكنه ربط مستشعر Libre.</string>

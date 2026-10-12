@@ -24,4 +24,13 @@ class ParentLockTest {
         assertFalse(ParentLock.valid("12a4"))
         assertFalse(ParentLock.valid("123456789"))
     }
+
+    @Test
+    fun `the lock is for children only, and an unknown age keeps it`() {
+        org.junit.Assert.assertTrue(ParentLock.appliesTo(12))
+        org.junit.Assert.assertTrue(ParentLock.appliesTo(17))
+        org.junit.Assert.assertTrue(ParentLock.appliesTo(null))
+        org.junit.Assert.assertFalse(ParentLock.appliesTo(18))
+        org.junit.Assert.assertFalse(ParentLock.appliesTo(45))
+    }
 }
