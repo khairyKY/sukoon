@@ -1780,7 +1780,7 @@
     <string name="in2_ev_nights">%1$d من %2$d ليلة في المدى</string>
     <string name="in2_act_going_low">شغّل «نازل وقرّب يهبط»</string>
     <string name="in2_cap_going_low">بينبّهك قبل الهبوط بحوالي ٢٠ دقيقة.</string>
-    <string name="in2_act_workout">شغّل البصّة بعد التمرين</string>
+    <string name="in2_act_workout">شغّل القراية بعد التمرين</string>
     <string name="in2_cap_workout">بعد التمرين بنص ساعة: رقمك والسهم بتاعه.</string>
     <string name="in2_act_dose">ظبّط اقتراحات الجرعات</string>
     <string name="in2_cap_dose">بتحسب الأنسولين اللي لسه شغّال قبل ما تقترح زيادة.</string>
@@ -1798,7 +1798,7 @@
     <string name="in2_cap_look">بيفتح الرسم البياني على آخر ١٤ يوم.</string>
     <string name="in2_cap_already">ده شغّال أصلًا؛ وأهو على الرسم البياني.</string>
     <string name="in2_toast_going_low">«نازل وقرّب يهبط» اشتغل.</string>
-    <string name="in2_toast_workout">البصّة بعد التمرين اشتغلت.</string>
+    <string name="in2_toast_workout">القراية بعد التمرين اشتغلت.</string>
     <!-- Ask, reworked (Redesign Canvas §9) -->
     <string name="ask2_based_on">آخر %1$d يوم · %2$s قراية · %3$d تسجيل</string>
     <string name="ask2_demo_chip">بيانات تجريبية</string>
@@ -1822,11 +1822,11 @@
     <string name="ask2_q_meter">ليه الحساس والجهاز مش متفقين؟</string>
     <string name="ask2_q_sites">أغيّر أماكن الحقن إزاي؟</string>
     <!-- After-workout check -->
-    <string name="workout_check_channel">بصّات هادية</string>
+    <string name="workout_check_channel">إشعارات خفيفة</string>
     <string name="workout_check_title">بعد التمرين: %1$d %2$s</string>
     <string name="workout_check_falling">بينزل شوية. سناك دلوقتي يخلّيك فوق ٧٠.</string>
-    <string name="workout_check_section">بصّات هادية</string>
-    <string name="workout_check_row">بصّة بعد التمرين</string>
+    <string name="workout_check_section">إشعارات خفيفة</string>
+    <string name="workout_check_row">قراية بعد التمرين</string>
     <string name="workout_check_row_body">بعد نص ساعة من تمرين متسجّل: رقمك والسهم بتاعه. مش منبّه.</string>
     <string name="workout_check_mfp">التمارين اللي بتسجّلها، واللي MyFitnessPal بيجيبها، الاتنين بيتحسبوا.</string>
     <!-- Guide (Redesign Canvas §7) -->

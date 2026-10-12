@@ -1784,7 +1784,7 @@
     <string name="in2_ev_nights">%1$d من أصل %2$d ليلة ضمن النطاق</string>
     <string name="in2_act_going_low">فعّل «انخفاض وشيك»</string>
     <string name="in2_cap_going_low">ينبّهك قبل الهبوط بنحو ٢٠ دقيقة.</string>
-    <string name="in2_act_workout">فعّل النظرة بعد التمرين</string>
+    <string name="in2_act_workout">فعّل القراءة بعد التمرين</string>
     <string name="in2_cap_workout">بعد التمرين بـ ٣٠ دقيقة: رقمك واتجاهه.</string>
     <string name="in2_act_dose">اضبط اقتراحات الجرعات</string>
     <string name="in2_cap_dose">تحسب الأنسولين الذي ما زال فعّالًا قبل أن تقترح المزيد.</string>
@@ -1802,7 +1802,7 @@
     <string name="in2_cap_look">يفتح الرسم البياني على آخر ١٤ يومًا.</string>
     <string name="in2_cap_already">هذا مفعّل بالفعل؛ وهذا هو على الرسم البياني.</string>
     <string name="in2_toast_going_low">«انخفاض وشيك» مفعّل.</string>
-    <string name="in2_toast_workout">النظرة بعد التمرين مفعّلة.</string>
+    <string name="in2_toast_workout">القراءة بعد التمرين مفعّلة.</string>
     <!-- Ask, reworked (Redesign Canvas §9) -->
     <string name="ask2_based_on">آخر %1$d يوم · %2$s قراءة · %3$d تسجيل</string>
     <string name="ask2_demo_chip">بيانات تجريبية</string>
@@ -1826,11 +1826,11 @@
     <string name="ask2_q_meter">لماذا لا يتوافق المستشعر مع جهاز القياس؟</string>
     <string name="ask2_q_sites">كيف أبدّل مواضع الحقن؟</string>
     <!-- After-workout check -->
-    <string name="workout_check_channel">نظرات هادئة</string>
+    <string name="workout_check_channel">إشعارات خفيفة</string>
     <string name="workout_check_title">بعد تمرينك: %1$d %2$s</string>
     <string name="workout_check_falling">ينخفض قليلًا. وجبة خفيفة الآن تُبقيك فوق ٧٠.</string>
-    <string name="workout_check_section">نظرات هادئة</string>
-    <string name="workout_check_row">نظرة بعد التمرين</string>
+    <string name="workout_check_section">إشعارات خفيفة</string>
+    <string name="workout_check_row">قراءة بعد التمرين</string>
     <string name="workout_check_row_body">بعد ٣٠ دقيقة من تمرين مسجّل: رقمك واتجاهه. ليس تنبيهًا.</string>
     <string name="workout_check_mfp">تُحتسب التمارين التي تسجّلها، وتلك التي يجلبها MyFitnessPal أيضًا.</string>
     <!-- Guide (Redesign Canvas §7) -->
