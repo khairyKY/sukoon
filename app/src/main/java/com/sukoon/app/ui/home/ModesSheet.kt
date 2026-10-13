@@ -65,7 +65,7 @@ private val WORKOUT_MINUTES = listOf(60, 90, 120)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ModesSheet(keeper: ModesKeeper, glucose: Int?, onLogKetones: () -> Unit, onDismiss: () -> Unit) {
+fun ModesSheet(keeper: ModesKeeper, glucose: Int?, profile: com.sukoon.app.insulin.Profile, onLogKetones: () -> Unit, onDismiss: () -> Unit) {
     val m by keeper.active.collectAsState()
     SukoonSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(
@@ -74,6 +74,7 @@ fun ModesSheet(keeper: ModesKeeper, glucose: Int?, onLogKetones: () -> Unit, onD
         ) {
             Text(stringResource(R.string.modes_title), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground)
             Text(stringResource(R.string.modes_body), fontSize = 13.5.sp, lineHeight = 19.sp, color = CaptionMuted)
+            BulkCard(keeper, profile)
             WorkoutCard(keeper, m, glucose)
             FastingCard(keeper, m)
             SickCard(keeper, m, onLogKetones)
@@ -105,6 +106,43 @@ private fun Callout(text: String, warn: Boolean = false) = Text(
     color = if (warn) PillLowText else PillHighText,
     modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(if (warn) PillLowBg else PillHighBg).padding(12.dp),
 )
+
+@Composable
+private fun BulkCard(keeper: ModesKeeper, profile: com.sukoon.app.insulin.Profile) = Card {
+    val b by keeper.bulkFlow.collectAsState()
+    Heading(stringResource(R.string.bulk_title), b.on) { keeper.bulk = b.copy(on = it) }
+    if (!b.on) {
+        Note(stringResource(R.string.bulk_body))
+        return@Card
+    }
+    val t = com.sukoon.app.modes.Bulk.targets(profile, b)
+    val n = java.text.NumberFormat.getIntegerInstance()
+    if (t.kcal != null && t.proteinGrams != null) {
+        Text(stringResource(R.string.bulk_targets, n.format(t.kcal), t.proteinGrams), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = SageDeep)
+        t.proteinPerMeal?.let { Note(stringResource(R.string.bulk_per_meal, it.first, it.last)) }
+    } else {
+        Callout(stringResource(R.string.bulk_need_profile))
+    }
+    Text(stringResource(R.string.bulk_protein), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted, modifier = Modifier.padding(top = 4.dp))
+    ChoiceChips(com.sukoon.app.modes.Bulk.PROTEIN_PER_KG, b.proteinPerKg, { stringResource(R.string.bulk_per_kg, it.toString()) }) { keeper.bulk = b.copy(proteinPerKg = it) }
+    Text(stringResource(R.string.bulk_surplus), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted, modifier = Modifier.padding(top = 4.dp))
+    ChoiceChips(com.sukoon.app.modes.Bulk.SURPLUS, b.surplus, { stringResource(R.string.bulk_plus_kcal, it) }) { keeper.bulk = b.copy(surplus = it) }
+    // Maintenance: Sukoon's estimate unless you type your own (empty goes back to the estimate).
+    var typed by remember { mutableStateOf(b.maintenance?.toString().orEmpty()) }
+    androidx.compose.material3.OutlinedTextField(
+        typed,
+        { v -> typed = v.filter(Char::isDigit).take(4); keeper.bulk = b.copy(maintenance = typed.toIntOrNull()?.takeIf { it in 1200..6000 }) },
+        label = { Text(stringResource(R.string.bulk_maintenance)) },
+        placeholder = { com.sukoon.app.modes.Bulk.maintenance(profile)?.let { Text(stringResource(R.string.bulk_maintenance_estimate, n.format(it))) } },
+        singleLine = true,
+        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+        modifier = Modifier.fillMaxWidth(),
+    )
+    Note(stringResource(R.string.bulk_maintenance_how))
+    Note(stringResource(R.string.bulk_rich_meals))
+    Note(stringResource(R.string.bulk_creatine))
+    Note(stringResource(R.string.bulk_sleep))
+}
 
 @Composable
 private fun WorkoutCard(keeper: ModesKeeper, m: ActiveModes, glucose: Int?) = Card {
@@ -197,10 +235,20 @@ private fun SickCard(keeper: ModesKeeper, m: ActiveModes, onLogKetones: () -> Un
 
 /** Now, under the header: the modes that are on, one line each; tap opens Modes. */
 @Composable
-fun ModesBanner(m: ActiveModes, lastKetones: Pair<Double, Instant>?, onClick: () -> Unit) {
-    if (!m.any) return
+fun ModesBanner(
+    m: ActiveModes,
+    lastKetones: Pair<Double, Instant>?,
+    /** While bulking: today's protein and kcal against the targets (null when not bulking). */
+    bulk: Triple<com.sukoon.app.modes.BulkTargets, Double?, Double?>? = null,
+    onClick: () -> Unit,
+) {
+    if (!m.any && bulk == null) return
     val time = TimeFormat.of()
     val lines = buildList {
+        bulk?.let { (t, protein, kcal) ->
+            val n = java.text.NumberFormat.getIntegerInstance()
+            if (t.proteinGrams != null && t.kcal != null) add(stringResource(R.string.bulk_banner, n.format(protein?.toInt() ?: 0), t.proteinGrams, n.format(kcal?.toInt() ?: 0), n.format(t.kcal)))
+        }
         m.workoutUntil?.let { add(stringResource(R.string.modes_banner_workout, time.format(it), Modes.WORKOUT_LOW)) }
         if (m.lateLowWatch) add(stringResource(R.string.modes_banner_late_low, Modes.NIGHT_LOW))
         if (m.fasting.on) add(

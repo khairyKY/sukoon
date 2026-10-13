@@ -2006,4 +2006,20 @@
     <string name="insight_treatments_title">كيف تعالج الهبوط</string>
     <string name="insight_treatments_body">من %1$d هبوطًا سجّلت علاجه، تناولت عادة %2$d غ. احتاج %3$d منها جولة ثانية خلال 30 دقيقة؛ وبعد %4$d تجاوز السكر 180 خلال ساعتين.</string>
     <string name="insight_src_treatments">معايير ADA للرعاية 2026، القسم 6 (15 غ، والفحص بعد 15 دقيقة)؛ الارتداد فوق 180 خلال ساعتين: أشيارولي وزملاؤه 2021.</string>
+    <string name="bulk_title">التضخيم</string>
+    <string name="bulk_body">تضخيم نظيف، من بحثك: فائض صغير يوميًا وبروتين موزّع على وجباتك، يُتابَع على الشاشة الرئيسية مقابل ما يجلبه MyFitnessPal وسجلك.</string>
+    <string name="bulk_targets">نحو %1$s سعرة و%2$d غ بروتين يوميًا</string>
+    <string name="bulk_per_meal">البروتين: %1$d–%2$d غ في كل وجبة من نحو 4 وجبات (0.4–0.5 غ/كغ).</string>
+    <string name="bulk_need_profile">أضف وزنك وطولك وعمرك وجنسك (حسابي ← الأنسولين ← عنك) لتظهر أهدافك، أو اكتب احتياجك اليومي أدناه.</string>
+    <string name="bulk_protein">البروتين يوميًا</string>
+    <string name="bulk_per_kg">%1$s غ/كغ</string>
+    <string name="bulk_surplus">الفائض</string>
+    <string name="bulk_plus_kcal">+%1$d سعرة</string>
+    <string name="bulk_maintenance">احتياجك اليومي (سعرة)، إن كنت تعرفه</string>
+    <string name="bulk_maintenance_estimate">نحو %1$s (تقديري)</string>
+    <string name="bulk_maintenance_how">مقدّر من ملفك (ميفلين–سانت جيور × 1.55، رفع أثقال 3–5 أيام أسبوعيًا). إن ثبت وزنك على كمية معروفة فذلك الرقم أدق: اكتبه.</string>
+    <string name="bulk_rich_meals">طعام التضخيم الدسم (الطحينة والبيض والزيت) يرفع السكر بعد 3–5 ساعات: يعلّمها سكون وجبات دسمة. يقترح بحثك جرعة مقسّمة لها (نصف قبلها ونصف بعد نحو ساعة): اتفق عليها مع طبيبك أولًا.</string>
+    <string name="bulk_creatine">الكرياتين (3–5 غ يوميًا) قد يزيد حساسيتك للأنسولين قليلًا، فانتبه للهبوط، ويرفع الكرياتينين: اطلب فحص سيستاتين-C للكلى بدلًا منه.</string>
+    <string name="bulk_sleep" formatted="false">نم 7–8 ساعات: ليلة قصيرة واحدة تقلل بناء العضلات نحو 18% وحساسية الأنسولين 14–21%.</string>
+    <string name="bulk_banner">تضخيم · بروتين %1$s / %2$d غ · %3$s / %4$s سعرة اليوم</string>
 </resources>

@@ -1878,4 +1878,20 @@
     <string name="insight_treatments_title">How you treat lows</string>
     <string name="insight_treatments_body">Of %1$d lows you logged the treatment for, you usually took %2$d g. %3$d needed a second round within 30 minutes; after %4$d, glucose went over 180 within 2 hours.</string>
     <string name="insight_src_treatments">ADA Standards of Care 2026, section 6 (15 g, check after 15 min); rebound over 180 within 2 h: Acciaroli et al. 2021.</string>
+    <string name="bulk_title">Bulking</string>
+    <string name="bulk_body">A lean bulk, from your research: a small surplus a day and protein spread over your meals, tracked on Now against what MyFitnessPal and your logbook bring in.</string>
+    <string name="bulk_targets">About %1$s kcal and %2$d g of protein a day</string>
+    <string name="bulk_per_meal">Protein: %1$d–%2$d g at each of about 4 meals (0.4–0.5 g/kg).</string>
+    <string name="bulk_need_profile">Add your weight, height, age and sex (You → Insulin → About you) for your targets, or type your maintenance below.</string>
+    <string name="bulk_protein">Protein a day</string>
+    <string name="bulk_per_kg">%1$s g/kg</string>
+    <string name="bulk_surplus">Surplus</string>
+    <string name="bulk_plus_kcal">+%1$d kcal</string>
+    <string name="bulk_maintenance">Your maintenance (kcal), if you know it</string>
+    <string name="bulk_maintenance_estimate">About %1$s (estimated)</string>
+    <string name="bulk_maintenance_how">Estimated from your profile (Mifflin–St Jeor × 1.55, lifting 3–5 days a week). If your weight is steady on a known intake, that number is better: type it.</string>
+    <string name="bulk_rich_meals">Fat-heavy bulking food (tahina, eggs, oil) rises 3–5 hours later: Sukoon marks those as rich meals. Your research suggests a split dose for them (half before, half about an hour later): agree it with your doctor first.</string>
+    <string name="bulk_creatine">Creatine (3–5 g a day) can make you a little more sensitive to insulin, so watch for lows, and it raises creatinine: ask for a cystatin-C kidney test instead.</string>
+    <string name="bulk_sleep" formatted="false">Sleep 7–8 hours: one short night cuts muscle building by about 18% and insulin sensitivity by 14–21%.</string>
+    <string name="bulk_banner">Bulking · protein %1$s / %2$d g · %3$s / %4$s kcal today</string>
 </resources>

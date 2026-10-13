@@ -83,8 +83,10 @@ object AiPrompts {
         insulinAction: InsulinAction = InsulinAction(),
         dose: DoseSettings = DoseSettings(),
         profile: Profile = Profile(),
+        /** Kai's goal right now (a lean bulk and its targets); "" when none. */
+        goal: String = "",
     ): String =
-        listOf(askRules(dose.enabled), PERSONAL_CONTEXT, aboutLine(profile), "DATA\n" + dataBrief(readings, events, now, zone, insulinAction), doseLine(dose))
+        listOf(askRules(dose.enabled), PERSONAL_CONTEXT, aboutLine(profile), goal, "DATA\n" + dataBrief(readings, events, now, zone, insulinAction), doseLine(dose))
             .filter { it.isNotBlank() }
             .joinToString("\n\n")
 

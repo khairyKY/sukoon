@@ -84,6 +84,35 @@ class ModesKeeper(private val context: Context, logbook: LogbookRepository, priv
             refresh()
         }
 
+    /** Bulking: the day's calories and protein to aim for (Bulk). */
+    var bulk: BulkSettings
+        get() = BulkSettings(
+            on = prefs.getBoolean(K_BULK_ON, false),
+            proteinPerKg = prefs.getFloat(K_BULK_PROTEIN, 2.0f).toDouble(),
+            surplus = prefs.getInt(K_BULK_SURPLUS, 250),
+            maintenance = prefs.getInt(K_BULK_MAINTENANCE, 0).takeIf { it > 0 },
+        )
+        set(v) {
+            prefs.edit().putBoolean(K_BULK_ON, v.on).putFloat(K_BULK_PROTEIN, v.proteinPerKg.toFloat()).putInt(K_BULK_SURPLUS, v.surplus)
+                .putInt(K_BULK_MAINTENANCE, v.maintenance ?: 0).apply()
+            _bulk.value = v
+        }
+    private val _bulk = MutableStateFlow(bulk)
+    val bulkFlow: StateFlow<BulkSettings> = _bulk.asStateFlow()
+
+    /** For Ask: the bulk and its targets, or "" when not bulking. */
+    fun bulkLine(profile: com.sukoon.app.insulin.Profile): String {
+        val b = bulk
+        if (!b.on) return ""
+        val t = Bulk.targets(profile, b)
+        return listOfNotNull(
+            "GOAL: a lean bulk with resistance training (Kai's research: +100–300 kcal a day, protein 1.6–2.2 g/kg over ~4 meals).",
+            t.kcal?.let { "Target about $it kcal a day (maintenance ${t.maintenance}${if (t.estimated) " estimated" else ""} + ${b.surplus})." },
+            t.proteinGrams?.let { "Protein ${it} g a day (${b.proteinPerKg} g/kg), ${t.proteinPerMeal?.first}–${t.proteinPerMeal?.last} g a meal." },
+            "Basal is glargine U-300 (can't be cut for one session); fat-heavy bulking meals (tahina, eggs, oil) rise 3–5 h later.",
+        ).joinToString(" ")
+    }
+
     var sickSince: Instant?
         get() = prefs.getLong(K_SICK, 0).takeIf { it > 0 }?.let(Instant::ofEpochMilli)
         private set(v) = prefs.edit().putLong(K_SICK, v?.toEpochMilli() ?: 0).apply()
@@ -162,6 +191,10 @@ class ModesKeeper(private val context: Context, logbook: LogbookRepository, priv
         const val K_SUHOOR = "fasting_suhoor_ends"
         const val K_IFTAR = "fasting_iftar"
         const val K_SICK = "sick_since"
+        const val K_BULK_ON = "bulk_on"
+        const val K_BULK_PROTEIN = "bulk_protein_per_kg"
+        const val K_BULK_SURPLUS = "bulk_surplus"
+        const val K_BULK_MAINTENANCE = "bulk_maintenance"
         const val K_KETONE_REMINDED = "ketone_reminded"
         const val K_SUHOOR_REMINDED = "suhoor_reminded_day"
     }

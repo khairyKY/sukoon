@@ -403,10 +403,12 @@ fun MainScaffold() {
                     // Modes that are on, one line each; tap opens Modes.
                     val modesNow by home.modes.active.collectAsStateWithLifecycle()
                     val lastKetones = recentEvents.lastOrNull { it.logType == LogEventType.KETONE && it.value != null }?.let { it.value!! to Instant.ofEpochMilli(it.timestampMillis) }
-                    com.sukoon.app.ui.home.ModesBanner(modesNow, lastKetones) { showModes = true }
+                    val bulk by home.modes.bulkFlow.collectAsStateWithLifecycle()
+                    val bulkToday = if (bulk.on) Triple(com.sukoon.app.modes.Bulk.targets(home.settings.profile, bulk), stats[com.sukoon.app.ui.home.HomeStat.PROTEIN], stats[com.sukoon.app.ui.home.HomeStat.KCAL]) else null
+                    com.sukoon.app.ui.home.ModesBanner(modesNow, lastKetones, bulkToday) { showModes = true }
                     if (showModes) {
                         com.sukoon.app.ui.home.ModesSheet(
-                            home.modes, latest?.glucoseMgDl,
+                            home.modes, latest?.glucoseMgDl, home.settings.profile,
                             onLogKetones = { showModes = false; home.requestedEntry.value = LogEventType.KETONE },
                             onDismiss = { showModes = false },
                         )
@@ -475,7 +477,7 @@ fun MainScaffold() {
                 val logbookViewModel: LogbookViewModel = viewModel(factory = LogbookViewModel.factory(container.logbookRepository, container.glucoseRepository, container.gemini, container.entryPhotos) { container.settings.insulinAction })
                 val logbookState by logbookViewModel.uiState.collectAsStateWithLifecycle()
                 val askViewModel: AskViewModel = viewModel(
-                    factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini, doseSettings = { container.settings.doseSettings }, profile = { container.settings.profile }) { container.settings.insulinAction },
+                    factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini, doseSettings = { container.settings.doseSettings }, profile = { container.settings.profile }, goal = { container.modes.bulkLine(container.settings.profile) }) { container.settings.insulinAction },
                 )
                 val askState by askViewModel.uiState.collectAsStateWithLifecycle()
                 val insightsViewModel: InsightsViewModel = viewModel(

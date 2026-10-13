@@ -2002,4 +2002,20 @@
     <string name="insight_treatments_title">إزاي بتعالج الهبوط</string>
     <string name="insight_treatments_body">من %1$d هبوط سجلت علاجه، عادةً أخدت %2$d جم. %3$d منهم احتاجوا مرة تانية خلال 30 دقيقة؛ وبعد %4$d السكر عدّى 180 خلال ساعتين.</string>
     <string name="insight_src_treatments">معايير ADA للرعاية 2026، القسم 6 (15 جم، وقيس بعد 15 دقيقة)؛ الطلوع فوق 180 خلال ساعتين: أشيارولي وزمايله 2021.</string>
+    <string name="bulk_title">التضخيم</string>
+    <string name="bulk_body">تضخيم نضيف، من بحثك: زيادة صغيرة كل يوم وبروتين متوزع على أكلاتك، بيتتابع على الشاشة الرئيسية قصاد اللي MyFitnessPal وسجلك بيجيبوه.</string>
+    <string name="bulk_targets">حوالي %1$s سعر و%2$d جم بروتين في اليوم</string>
+    <string name="bulk_per_meal">البروتين: %1$d–%2$d جم في كل أكلة من حوالي 4 أكلات (0.4–0.5 جم/كجم).</string>
+    <string name="bulk_need_profile">ضيف وزنك وطولك وسنك ونوعك (إنت ← الإنسولين ← عنك) عشان أهدافك تظهر، أو اكتب احتياجك اليومي تحت.</string>
+    <string name="bulk_protein">البروتين في اليوم</string>
+    <string name="bulk_per_kg">%1$s جم/كجم</string>
+    <string name="bulk_surplus">الزيادة</string>
+    <string name="bulk_plus_kcal">+%1$d سعر</string>
+    <string name="bulk_maintenance">احتياجك اليومي (سعر)، لو عارفه</string>
+    <string name="bulk_maintenance_estimate">حوالي %1$s (تقديري)</string>
+    <string name="bulk_maintenance_how">متقدّر من بياناتك (ميفلين–سانت جيور × 1.55، حديد 3–5 أيام في الأسبوع). لو وزنك ثابت على كمية معروفة، الرقم ده أدق: اكتبه.</string>
+    <string name="bulk_rich_meals">أكل التضخيم الدسم (الطحينة والبيض والزيت) بيرفع السكر بعد 3–5 ساعات: سكون بيعلّمها أكلات دسمة. بحثك بيقترح جرعة مقسومة ليها (نص قبلها ونص بعد حوالي ساعة): اتفق عليها مع دكتورك الأول.</string>
+    <string name="bulk_creatine">الكرياتين (3–5 جم في اليوم) ممكن يزوّد حساسيتك للإنسولين شوية، فخلي بالك من الهبوط، وبيرفع الكرياتينين: اطلب تحليل سيستاتين-C للكلى بداله.</string>
+    <string name="bulk_sleep" formatted="false">نام 7–8 ساعات: ليلة قصيرة واحدة بتقلل بناء العضل حوالي 18% وحساسية الإنسولين 14–21%.</string>
+    <string name="bulk_banner">تضخيم · بروتين %1$s / %2$d جم · %3$s / %4$s سعر النهارده</string>
 </resources>
