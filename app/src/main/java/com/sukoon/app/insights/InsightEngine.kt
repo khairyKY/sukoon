@@ -151,6 +151,25 @@ sealed interface Insight {
         override val level = if (rebounds * 10 >= lows * 3 || medianGrams > 25) Level.ATTENTION else Level.INFO
     }
 
+    /**
+     * The overnight basal check: on nights without food or rapid insulin after 20:00, without a low,
+     * and (when you log long-acting) with a dose in the 26 h before, glucose at 6 against midnight.
+     * Within 30 mg/dL the long-acting fits; a steady drift beyond it is worth a word with the clinic.
+     */
+    data class BasalDrift(val nights: Int, val drifting: Int, val medianDrift: Int) : Insight {
+        override val level = if (drifting * 2 > nights) Level.ATTENTION else Level.GOOD
+    }
+
+    /** Long-acting over the window: days logged, how far its time of day spreads, and the day after a missed one. */
+    data class BasalHabits(val logged: Int, val days: Int, val spreadMinutes: Int, val meanAfterMissed: Int?, val meanUsual: Int) : Insight {
+        override val level = if (days - logged >= 2 || spreadMinutes > 180) Level.ATTENTION else Level.GOOD
+    }
+
+    /** How each kind of logged activity moves glucose (3+ of a kind), most logged first. */
+    data class ActivityEffects(val kinds: List<KindEffect>) : Insight {
+        override val level = Level.INFO
+    }
+
     /** Lows in the 24 h after a logged workout (Riddell et al., Lancet Diabetes Endocrinol 2017). */
     data class ActivityLows(val followed: Int, val workouts: Int, val overnight: Int) : Insight {
         override val level = Level.ATTENTION
@@ -180,6 +199,9 @@ sealed interface Insight {
         override val level = Level.ATTENTION
     }
 }
+
+/** One kind of activity: [change] from its start to an hour after, that night's lowest against others. */
+data class KindEffect(val kind: String, val count: Int, val change: Int, val nightLowest: Int?, val otherNightsLowest: Int?)
 
 /**
  * Time-weighted share of a stretch of readings in each consensus band (Battelino et al. 2019:
@@ -237,6 +259,9 @@ object InsightEngine {
         rebounds(lows, readings)?.let(out::add)
         treatments(events, readings)?.let(out::add)
         activityLows(events, lows, zone)?.let(out::add)
+        activityEffects(readings, events, zone)?.let(out::add)
+        basalDrift(readings, events, zone)?.let(out::add)
+        basalHabits(readings, events, now, zone)?.let(out::add)
         nights(readings, zone)?.let(out::add)
         carbDays(readings, events, now, zone)?.let(out::add)
         InjectionSites.crowded(events, now, WINDOW_DAYS)?.let { out += Insight.Rotation(it.site, it.count, it.total, it.type == LogEventType.BASAL) }
@@ -558,6 +583,75 @@ object InsightEngine {
         if (lows.size < 3) return null
         val n = lows.count { low -> r.any { it.timestamp > low.end && it.timestamp <= low.end.plus(Duration.ofHours(2)) && it.glucoseMgDl > 180 } }
         return if (n >= 2 && n * 10 >= lows.size * 3) Insight.Rebounds(n, lows.size) else null
+    }
+
+    private fun near(r: List<GlucoseReading>, t: Instant): Int? =
+        r.filter { Duration.between(it.timestamp, t).abs() <= Duration.ofMinutes(15) }.minByOrNull { Duration.between(it.timestamp, t).abs() }?.glucoseMgDl
+
+    /**
+     * Per kind of activity (its note before " · ", as the activity editor writes it): the change from
+     * its start to an hour after it ends, and the lowest the following night (00–06) against nights
+     * after no activity. Riddell et al. 2017: resistance work tends to raise glucose, aerobic to lower it.
+     */
+    internal fun activityEffects(r: List<GlucoseReading>, events: List<EventEntity>, zone: ZoneId): Insight.ActivityEffects? {
+        val acts = events.filter { it.logType == LogEventType.ACTIVITY && !it.note.isNullOrBlank() }
+        if (acts.isEmpty()) return null
+        val nightLow = r.filter { it.timestamp.atZone(zone).hour < 6 }.groupBy { it.timestamp.atZone(zone).toLocalDate() }.mapValues { (_, n) -> n.minOf { it.glucoseMgDl } }
+        fun nightAfter(e: EventEntity) = Instant.ofEpochMilli(e.timestampMillis).atZone(zone).let { if (it.hour < 6) it.toLocalDate() else it.toLocalDate().plusDays(1) }
+        val activeNights = acts.map(::nightAfter).toSet()
+        val other = nightLow.filterKeys { it !in activeNights }.values.toList()
+        val kinds = acts.groupBy { it.note!!.substringBefore(" · ").trim() }.mapNotNull { (kind, list) ->
+            val changes = list.mapNotNull { e ->
+                val t = Instant.ofEpochMilli(e.timestampMillis)
+                val start = near(r, t) ?: return@mapNotNull null
+                val after = near(r, t.plus(Duration.ofMinutes((e.value ?: 0.0).toLong() + 60))) ?: return@mapNotNull null
+                after - start
+            }
+            if (changes.size < 3) return@mapNotNull null
+            val nights = list.mapNotNull { nightLow[nightAfter(it)] }
+            KindEffect(kind, changes.size, median(changes), nights.takeIf { it.size >= 2 }?.let(::median), other.takeIf { it.size >= 2 }?.let(::median))
+        }.sortedByDescending { it.count }
+        return if (kinds.isEmpty()) null else Insight.ActivityEffects(kinds)
+    }
+
+    internal fun basalDrift(r: List<GlucoseReading>, events: List<EventEntity>, zone: ZoneId): Insight.BasalDrift? {
+        val logsBasal = events.any { it.logType == LogEventType.BASAL }
+        fun around(t: Instant) = r.filter { Duration.between(it.timestamp, t).abs() <= Duration.ofMinutes(30) }.takeIf { it.size >= 2 }?.map { it.glucoseMgDl }?.average()
+        val drifts = r.map { it.timestamp.atZone(zone).toLocalDate() }.distinct().mapNotNull { date ->
+            val midnight = date.atStartOfDay(zone).toInstant()
+            val six = midnight.plus(Duration.ofHours(6))
+            val from = midnight.minus(Duration.ofHours(4))
+            val busy = events.any { e -> (e.logType == LogEventType.CARB || e.logType == LogEventType.INSULIN) && Instant.ofEpochMilli(e.timestampMillis).let { it >= from && it <= six } }
+            if (busy || r.any { it.timestamp in midnight..six && it.glucoseMgDl < 70 }) return@mapNotNull null
+            if (logsBasal && events.none { it.logType == LogEventType.BASAL && Instant.ofEpochMilli(it.timestampMillis).let { t -> t <= six && t > six.minus(Duration.ofHours(26)) } }) return@mapNotNull null
+            val a = around(midnight) ?: return@mapNotNull null
+            val b = around(six) ?: return@mapNotNull null
+            (b - a).roundToInt()
+        }
+        if (drifts.size < 3) return null
+        val med = median(drifts)
+        return Insight.BasalDrift(drifts.size, drifts.count { kotlin.math.abs(it) > 30 && (it > 0) == (med > 0) }, med)
+    }
+
+    internal fun basalHabits(r: List<GlucoseReading>, events: List<EventEntity>, now: Instant, zone: ZoneId): Insight.BasalHabits? {
+        val basal = events.filter { it.logType == LogEventType.BASAL }
+        if (basal.size < 5) return null
+        val today = now.atZone(zone).toLocalDate()
+        val days = generateSequence(Instant.ofEpochMilli(basal.first().timestampMillis).atZone(zone).toLocalDate()) { it.plusDays(1) }.takeWhile { it.isBefore(today) }.toList()
+        if (days.size < 5) return null
+        val logged = basal.map { Instant.ofEpochMilli(it.timestampMillis).atZone(zone).toLocalDate() }.toSet()
+        val raw = basal.map { Instant.ofEpochMilli(it.timestampMillis).atZone(zone).let { t -> t.hour * 60 + t.minute } }
+        // Doses around midnight: measured from noon, so 23:50 and 00:10 are 20 minutes apart.
+        val nearMidnight = median(raw).let { it < 180 || it > 1260 }
+        val minutes = raw.map { if (nearMidnight) (it + 720) % 1440 else it }.sorted().let { if (it.size >= 7) it.drop(1).dropLast(1) else it }
+        val usual = median(raw)
+        fun mean(day: java.time.LocalDate): Double? {
+            val s = day.atStartOfDay(zone).plusMinutes(usual.toLong()).toInstant()
+            return r.filter { it.timestamp >= s && it.timestamp < s.plus(Duration.ofHours(24)) }.takeIf { it.size >= 48 }?.map { it.glucoseMgDl }?.average()
+        }
+        val after = days.filter { it !in logged }.mapNotNull(::mean)
+        val usualMeans = days.filter { it in logged }.mapNotNull(::mean)
+        return Insight.BasalHabits(days.count { it in logged }, days.size, minutes.last() - minutes.first(), after.takeIf { it.isNotEmpty() }?.average()?.roundToInt(), usualMeans.takeIf { it.isNotEmpty() }?.average()?.roundToInt() ?: 0)
     }
 
     private fun activityLows(events: List<EventEntity>, lows: List<Episode>, zone: ZoneId): Insight.ActivityLows? {

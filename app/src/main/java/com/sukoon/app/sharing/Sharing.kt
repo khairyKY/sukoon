@@ -35,6 +35,8 @@ data class Followed(
     val latest: GlucoseReading?,
     val via: FollowVia = FollowVia.SUKOON,
     val alarms: Set<AlarmType> = Sharing.ALL_ALARMS,
+    /** Their long-acting is missed: when it was due (null: it isn't, or they don't tell followers). */
+    val basalMissedSince: Instant? = null,
 )
 
 /**
@@ -65,6 +67,26 @@ class Sharing(
     var sharedAlarms: Set<AlarmType>
         get() = prefs.getStringSet(KEY_SHARED_ALARMS, null)?.let(::alarmsFrom) ?: ALL_ALARMS
         set(value) = prefs.edit().putStringSet(KEY_SHARED_ALARMS, alarmsFrom(value.map { it.name }).map { it.name }.toSet()).apply()
+
+    /** Tell followers when long-acting is missed (off until turned on, on the reminder card). */
+    var tellFollowersBasal: Boolean
+        get() = prefs.getBoolean(KEY_TELL_BASAL, false)
+        set(value) = prefs.edit().putBoolean(KEY_TELL_BASAL, value).apply()
+
+    /** Marks long-acting missed since [since] on this profile for followers, or clears it (null). */
+    suspend fun publishBasalMissed(since: Instant?) {
+        if (supabase.session.value == null) return
+        if (since == null && !prefs.getBoolean(KEY_BASAL_MARKED, false)) return
+        val body = JSONObject().put("id", me).put("basal_missed_since", since?.toString() ?: JSONObject.NULL)
+        supabase.post("profiles?on_conflict=id", body.toString(), prefer = "resolution=merge-duplicates,return=minimal")
+        prefs.edit().putBoolean(KEY_BASAL_MARKED, since != null).apply()
+    }
+
+    /** Who among [ids] has long-acting marked missed. Before the 2026-10-14 migration the query fails: nobody. */
+    private suspend fun basalMissedOf(ids: List<String>): Map<String, Instant> = runCatching {
+        val rows = JSONArray(supabase.get("profiles?id=in.(${ids.joinToString(",")})&basal_missed_since=not.is.null&select=id,basal_missed_since"))
+        (0 until rows.length()).associate { i -> rows.getJSONObject(i).let { it.getString("id") to java.time.OffsetDateTime.parse(it.getString("basal_missed_since")).toInstant() } }
+    }.getOrDefault(emptyMap())
 
     /** Puts [sharedAlarms] on this account's profile, where followers' phones read it. */
     suspend fun publishSharedAlarms() {
@@ -148,7 +170,8 @@ class Sharing(
             val ids = column(supabase.get("follows?follower=eq.$me&select=owner"), "owner")
             val names = names(ids)
             val alarms = sharedAlarmsOf(ids)
-            ids.map { Followed(it, names[it].orEmpty(), latestOf(it), alarms = alarms[it] ?: ALL_ALARMS) }
+            val basal = if (ids.isEmpty()) emptyMap() else basalMissedOf(ids)
+            ids.map { Followed(it, names[it].orEmpty(), latestOf(it), alarms = alarms[it] ?: ALL_ALARMS, basalMissedSince = basal[it]) }
         }
         return mine + runCatching { libreLinkUp.followed() }.getOrDefault(emptyList()) + runCatching { dexcom.followed() }.getOrDefault(emptyList())
     }
@@ -192,6 +215,8 @@ class Sharing(
 
     companion object {
         private const val KEY_SHARE = "share_readings_on"
+        private const val KEY_TELL_BASAL = "tell_followers_basal"
+        private const val KEY_BASAL_MARKED = "basal_missed_marked"
         private const val KEY_CURSOR = "share_cursor_"
         private const val KEY_SHARED_ALARMS = "shared_alarms"
 

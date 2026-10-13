@@ -33,6 +33,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -179,7 +181,9 @@ private fun PersonView(sharing: Sharing, settings: SettingsPrefs, person: Follow
         }
     }
 
-    Column(Modifier.fillMaxWidth().padding(top = 22.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    FollowerChips(person)
+
+    Column(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         val v = latest?.glucoseMgDl
         val (pillBg, pillText, pillLabel) = when {
             v == null || !fresh -> Triple(PillNeutralBg, TextMuted, stringResource(R.string.home_pill_signal_lost))
@@ -246,6 +250,44 @@ private fun PersonView(sharing: Sharing, settings: SettingsPrefs, person: Follow
             phone = normalized
             askingPhone = false
         }, onDismiss = { askingPhone = false })
+    }
+}
+
+/**
+ * The chips a wearer has on Now, for a follower: their own alarms paused (tap: back on) or a way to
+ * pause them (followers have no Today sheet), and the person's long-acting not logged.
+ */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun FollowerChips(person: Followed) {
+    val context = LocalContext.current
+    val app = (context.applicationContext as com.sukoon.app.SukoonApp).container
+    val paused by app.alarms.pausedUntil.collectAsState()
+    var pausing by remember { mutableStateOf(false) }
+    val time = com.sukoon.app.platform.TimeFormat.of()
+    val chips = buildList {
+        paused?.let { add(StatusChip(stringResource(R.string.chip_paused, time.format(it)), attention = true) { app.appScope.launch { app.alarms.resumeAll() } }) }
+        person.basalMissedSince?.let { add(StatusChip(stringResource(R.string.chip_follow_basal, time.format(it)), attention = true) {}) }
+        if (paused == null) add(StatusChip(stringResource(R.string.today_pause), attention = false) { pausing = true })
+    }
+    StatusChips(chips, Modifier.padding(top = 6.dp))
+    if (pausing) {
+        com.sukoon.app.ui.components.SukoonSheet(onDismissRequest = { pausing = false }) {
+            Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(R.string.today_pause), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
+                Text(stringResource(R.string.today_pause_note), fontSize = 13.sp, color = CaptionMuted)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(30, 60, 120, 240).forEach { m ->
+                        Text(
+                            lengthLabel(context, m), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.clip(RoundedCornerShape(12.dp)).border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
+                                .clickable { app.appScope.launch { app.alarms.pauseAll(m) }; pausing = false }
+                                .heightIn(min = 44.dp).padding(horizontal = 16.dp, vertical = 12.dp),
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 

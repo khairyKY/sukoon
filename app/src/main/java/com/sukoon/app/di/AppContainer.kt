@@ -94,6 +94,7 @@ class AppContainer(private val context: Context) {
         com.sukoon.app.ui.theme.Themes.current = settings.colorTheme
     }
 
+
     /** Wearer, follower or both (chosen at sign-up): what Home and Trends show. */
     val role = MutableStateFlow(settings.role)
 
@@ -169,6 +170,17 @@ class AppContainer(private val context: Context) {
     val supabase = Supabase(context, BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_KEY)
 
     val sharing = Sharing(context, supabase, glucoseRepository, appScope, libreLinkUp, dexcom)
+
+    init {
+        // A long-acting dose logged after followers were told it was missed: take the mark down.
+        appScope.launch {
+            logbookRepository.latest(com.sukoon.app.data.db.LogEventType.BASAL).collect { e ->
+                if (e != null && java.time.Instant.ofEpochMilli(e.timestampMillis) > java.time.Instant.now().minus(java.time.Duration.ofHours(12))) {
+                    runCatching { sharing.publishBasalMissed(null) }
+                }
+            }
+        }
+    }
 
     /** What the alarms did (You → Alarms). */
     val alarmLog = AlarmLog(context)

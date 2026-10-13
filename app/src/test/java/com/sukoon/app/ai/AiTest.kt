@@ -91,6 +91,8 @@ class AiTest {
     fun `live - gemini answers from the brief and estimates carbs`() = runBlocking {
         val key = System.getenv("GEMINI_API_KEY").orEmpty()
         assumeTrue("GEMINI_API_KEY not set", key.isNotBlank())
+        // Calls Google: only when asked (SUKOON_LIVE_AI=1), so a busy Gemini never fails a build.
+        assumeTrue("set SUKOON_LIVE_AI=1 to run", System.getenv("SUKOON_LIVE_AI") == "1")
         val client = GeminiClient { key }
 
         val system = AiPrompts.askSystemPrompt(readings, emptyList(), now, zone)

@@ -47,6 +47,20 @@ import com.sukoon.app.data.db.logType
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Surface
 
+/** Opt-in: followers hear when long-acting is still not logged 2 hours after it was due. */
+@Composable
+private fun TellFollowers() {
+    val sharing = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.sharing
+    var on by remember { mutableStateOf(sharing.tellFollowersBasal) }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.basal_tell_followers), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.basal_tell_followers_body), fontSize = 12.sp, color = CaptionMuted)
+        }
+        Switch(checked = on, onCheckedChange = { on = it; sharing.tellFollowersBasal = it }, colors = SwitchDefaults.colors(checkedTrackColor = Sage))
+    }
+}
+
 /** The last 14 days as dots, filled when long-acting was logged; today only once it is. */
 @Composable
 private fun LastDays() {
@@ -124,6 +138,7 @@ fun BasalReminderCard(settings: BasalReminderSettings, onChange: (BasalReminderS
         }
         usual?.let { Text(stringResource(R.string.reminder_basal_usual, minuteLabel(it)), fontSize = 12.sp, color = CaptionMuted) }
         LastDays()
+        if (settings.enabled) TellFollowers()
     }
     // What the leaflet says about a late or forgotten dose: the reminder only says when.
     Column(
