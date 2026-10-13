@@ -124,7 +124,7 @@ object HomeBriefs {
         val falling = latest.trend == TrendDirection.FALLING || latest.trend == TrendDirection.FALLING_FAST
         val projected = AlarmEngine.projected(readings.takeLast(60), latest)
         val lastLow = InsightEngine.lowEpisodes(readings.filter { it.timestamp >= ago(180) }).lastOrNull()
-        val meal = events.lastOrNull { it.logType == LogEventType.CARB && (it.value ?: 1.0) > 0 && it.at() in ago(180)..now }
+        val meal = events.lastOrNull { it.logType == LogEventType.CARB && !it.treatment && (it.value ?: 1.0) > 0 && it.at() in ago(180)..now }
 
         val ketones = if (modes.sick) events.lastOrNull { it.logType == LogEventType.KETONE && it.value != null && it.at() in ago(240)..now } else null
         val ketoneBand = ketones?.value?.let(com.sukoon.app.modes.Modes::ketoneBand)

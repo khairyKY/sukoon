@@ -166,7 +166,9 @@ fun LogbookScreen(
     }
     LaunchedEffect(openNewEntry) {
         if (openNewEntry != null) {
-            editor = EditorRequest(openNewEntry)
+            val container = (context.applicationContext as com.sukoon.app.SukoonApp).container
+            editor = EditorRequest(openNewEntry, treatment = openNewEntry == LogEventType.CARB && container.requestedTreatment.value)
+            container.requestedTreatment.value = false
             onOpenedEntry()
         }
     }

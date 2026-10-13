@@ -212,6 +212,7 @@ object AiPrompts {
                 "; meals usually peak ${insight.peakMinutes} min after eating [Hinshaw et al. 2013]."
             is Insight.RichMeals -> "Meals with 20 g+ fat or 25 g+ protein (${insight.rich}) peaked at ${insight.richPeak} min vs ${insight.leanPeak} for " +
                 "others (${insight.lean}), and were ${insight.richAt4h} vs ${insight.leanAt4h} mg/dL from the start 4 h after eating [Bell et al. 2015]."
+            is Insight.LowTreatments -> "Low treatments logged: ${insight.lows} lows, usually ${insight.medianGrams} g; a second round within 30 min after ${insight.secondRounds}; over 180 within 2 h after ${insight.rebounds}."
             is Insight.Rebounds -> "${insight.rebounds} of ${insight.lows} lows were followed by >180 within 2 h (possible over-treatment; 15-15 rule)."
             is Insight.ActivityLows -> "${insight.followed} of ${insight.workouts} workouts were followed by a low within 24 h " +
                 "(${insight.overnight} overnight) [Riddell et al. 2017]."

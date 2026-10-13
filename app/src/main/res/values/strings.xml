@@ -1872,4 +1872,10 @@
     <string name="home_step_extra_insulin">Follow your sick-day plan</string>
     <string name="logbook_type_ketone">Ketones</string>
     <string name="unit_mmol">mmol/L</string>
+    <string name="entry_treating_low">Treating a low</string>
+    <string name="entry_treating_low_body">Not a meal: kept out of meal maths and dose learning, counted in your low treatments.</string>
+    <string name="in2_treatments">You usually treat a low with %1$d g.</string>
+    <string name="insight_treatments_title">How you treat lows</string>
+    <string name="insight_treatments_body">Of %1$d lows you logged the treatment for, you usually took %2$d g. %3$d needed a second round within 30 minutes; after %4$d, glucose went over 180 within 2 hours.</string>
+    <string name="insight_src_treatments">ADA Standards of Care 2026, section 6 (15 g, check after 15 min); rebound over 180 within 2 h: Acciaroli et al. 2021.</string>
 </resources>

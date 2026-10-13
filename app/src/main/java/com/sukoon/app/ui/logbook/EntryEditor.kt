@@ -1,5 +1,7 @@
 package com.sukoon.app.ui.logbook
 
+import com.sukoon.app.ui.theme.PillLowBg
+
 import com.sukoon.app.ui.theme.SageMist
 import androidx.compose.runtime.mutableStateListOf
 import com.sukoon.app.food.PlateItem
@@ -136,12 +138,30 @@ private fun mainField(type: LogEventType): AmountField? = when (type) {
     LogEventType.KETONE -> AmountField.KETONES
 }
 
+/** "Treating a low": carbs for a low, kept out of meal maths and counted in the low-treatment insight. */
+@Composable
+private fun TreatmentToggle(on: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(if (on) PillLowBg else MaterialTheme.colorScheme.surface)
+            .border(1.dp, outline(), RoundedCornerShape(14.dp)).clickable { onChange(!on) }.padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.entry_treating_low), fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold, color = if (on) PillLowText else MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.entry_treating_low_body), fontSize = 12.sp, color = CaptionMuted)
+        }
+        androidx.compose.material3.Switch(checked = on, onCheckedChange = onChange, colors = androidx.compose.material3.SwitchDefaults.colors(checkedTrackColor = PillLowText))
+    }
+}
+
 /** Which editor to open: a new entry (maybe repeating one), an existing one, or insulin for an imported meal. */
 internal data class EditorRequest(
     val type: LogEventType,
     val existing: EventEntity? = null,
     val prefill: EventEntity? = null,
     val forMeal: EventEntity? = null,
+    /** Opened to log what treated a low. */
+    val treatment: Boolean = false,
 )
 
 private val TILES = listOf(LogEventType.CARB, LogEventType.INSULIN, LogEventType.FINGERSTICK, LogEventType.BASAL, LogEventType.ACTIVITY, LogEventType.NOTE)
@@ -298,6 +318,8 @@ private fun EditorContent(
     var site by remember { mutableStateOf(existing?.injectionSite) }
     var siteOpen by remember { mutableStateOf(repeatedDose) }
     var finger by remember { mutableStateOf(existing?.finger) }
+    // Carbs for a low aren't a meal: on when asked for, or when logged while under 70.
+    var treatment by remember { mutableStateOf(existing?.treatment ?: (request.treatment || (glucoseNow?.glucoseMgDl ?: 999) < 70)) }
     var fingerOpen by remember { mutableStateOf(false) }
     var note by remember { mutableStateOf(base?.note ?: "") }
     var preBolus by remember { mutableIntStateOf(0) }
@@ -383,6 +405,7 @@ private fun EditorContent(
                         type == LogEventType.FINGERSTICK -> finger?.name
                         else -> existing.site
                     },
+                    treatment = treatment && type == LogEventType.CARB,
                 ),
                 photos.toList().takeIf { photosChanged },
             )
@@ -405,6 +428,7 @@ private fun EditorContent(
                 nutrients = nutrients.takeIf { isMeal && it != Nutrients() },
                 site = site.takeIf { siteType != null },
                 finger = finger.takeIf { type == LogEventType.FINGERSTICK },
+                treatment = treatment && type == LogEventType.CARB,
             ),
         )
     }
@@ -424,6 +448,7 @@ private fun EditorContent(
 
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             ContextPills(glucoseNow.takeIf { existing == null }, if (type == LogEventType.INSULIN || isMeal || meal != null) insulinOnBoard else 0.0)
+            if (type == LogEventType.CARB && meal == null) TreatmentToggle(treatment) { treatment = it }
             val starting = isMeal && existing == null && plate.isEmpty() && values[AmountField.CARBS].isNullOrEmpty() && active == null
             when {
                 starting -> MealStart(

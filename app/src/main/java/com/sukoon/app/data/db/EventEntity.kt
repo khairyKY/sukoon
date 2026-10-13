@@ -40,6 +40,8 @@ data class EventEntity(
     @ColumnInfo(defaultValue = "0") val timeSet: Boolean = false,
     /** Several meals in one (what another app's day held before Sukoon followed it): no dose suggestion, nothing learned from it. */
     @ColumnInfo(defaultValue = "0") val summary: Boolean = false,
+    /** Carbs taken to treat a low (the alarm's "Log what I ate", or marked in the editor): not a meal. */
+    @ColumnInfo(defaultValue = "0") val treatment: Boolean = false,
 )
 
 /** INSULIN = rapid-acting (bolus, e.g. Apidra); BASAL = long-acting (e.g. Toujeo). Stored by name, so adding one needs no migration. */

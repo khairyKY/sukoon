@@ -196,6 +196,9 @@ class AppContainer(private val context: Context) {
     /** A guide link asked for You → Sensor → Start a new sensor: the Sensor card opens its confirmation. */
     val requestedStartSensor = MutableStateFlow(false)
 
+    /** The next new entry treats a low (a low alarm's "Log what I ate"): its "Treating a low" starts on. */
+    val requestedTreatment = MutableStateFlow(false)
+
     /** Now's "fill the gap": You → Sensor opens ready to read the sensor's memory. */
     val requestedCheckSensor = MutableStateFlow(false)
 

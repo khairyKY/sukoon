@@ -1996,4 +1996,10 @@
     <string name="home_step_extra_insulin">امشي على خطة يوم التعب</string>
     <string name="logbook_type_ketone">الكيتونات</string>
     <string name="unit_mmol">ملمول/ل</string>
+    <string name="entry_treating_low">علاج هبوط</string>
+    <string name="entry_treating_low_body">دي مش أكلة: مش هتدخل في حسابات الأكل وتعلّم الجرعات، وهتتحسب في علاجات الهبوط.</string>
+    <string name="in2_treatments">عادةً بتعالج الهبوط بـ%1$d جم.</string>
+    <string name="insight_treatments_title">إزاي بتعالج الهبوط</string>
+    <string name="insight_treatments_body">من %1$d هبوط سجلت علاجه، عادةً أخدت %2$d جم. %3$d منهم احتاجوا مرة تانية خلال 30 دقيقة؛ وبعد %4$d السكر عدّى 180 خلال ساعتين.</string>
+    <string name="insight_src_treatments">معايير ADA للرعاية 2026، القسم 6 (15 جم، وقيس بعد 15 دقيقة)؛ الطلوع فوق 180 خلال ساعتين: أشيارولي وزمايله 2021.</string>
 </resources>

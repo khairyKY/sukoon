@@ -2000,4 +2000,10 @@
     <string name="home_step_extra_insulin">اتبع خطة يوم المرض</string>
     <string name="logbook_type_ketone">الكيتونات</string>
     <string name="unit_mmol">ملمول/ل</string>
+    <string name="entry_treating_low">علاج هبوط</string>
+    <string name="entry_treating_low_body">ليست وجبة: تُستبعد من حسابات الوجبات وتعلّم الجرعات، وتُحسب في علاجات الهبوط.</string>
+    <string name="in2_treatments">تعالج الهبوط عادة بـ%1$d غ.</string>
+    <string name="insight_treatments_title">كيف تعالج الهبوط</string>
+    <string name="insight_treatments_body">من %1$d هبوطًا سجّلت علاجه، تناولت عادة %2$d غ. احتاج %3$d منها جولة ثانية خلال 30 دقيقة؛ وبعد %4$d تجاوز السكر 180 خلال ساعتين.</string>
+    <string name="insight_src_treatments">معايير ADA للرعاية 2026، القسم 6 (15 غ، والفحص بعد 15 دقيقة)؛ الارتداد فوق 180 خلال ساعتين: أشيارولي وزملاؤه 2021.</string>
 </resources>

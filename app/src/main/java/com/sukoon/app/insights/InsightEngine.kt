@@ -146,6 +146,11 @@ sealed interface Insight {
         override val level = Level.ATTENTION
     }
 
+    /** What you treat lows with (carbs marked "Treating a low"): [lows] treated, the usual grams, second rounds and rebounds over 180. */
+    data class LowTreatments(val lows: Int, val medianGrams: Int, val secondRounds: Int, val rebounds: Int) : Insight {
+        override val level = if (rebounds * 10 >= lows * 3 || medianGrams > 25) Level.ATTENTION else Level.INFO
+    }
+
     /** Lows in the 24 h after a logged workout (Riddell et al., Lancet Diabetes Endocrinol 2017). */
     data class ActivityLows(val followed: Int, val workouts: Int, val overnight: Int) : Insight {
         override val level = Level.ATTENTION
@@ -230,6 +235,7 @@ object InsightEngine {
         carbResponse(meals)?.let(out::add)
         richMeals(meals)?.let(out::add)
         rebounds(lows, readings)?.let(out::add)
+        treatments(events, readings)?.let(out::add)
         activityLows(events, lows, zone)?.let(out::add)
         nights(readings, zone)?.let(out::add)
         carbDays(readings, events, now, zone)?.let(out::add)
@@ -420,7 +426,7 @@ object InsightEngine {
     }
 
     internal fun mealResults(r: List<GlucoseReading>, events: List<EventEntity>, zone: ZoneId): List<MealResult> =
-        events.filter { it.logType == LogEventType.CARB && !it.summary && (it.value ?: 0.0) > 0 }.mapNotNull { meal ->
+        events.filter { it.logType == LogEventType.CARB && !it.summary && !it.treatment && (it.value ?: 0.0) > 0 }.mapNotNull { meal ->
             val t = Instant.ofEpochMilli(meal.timestampMillis)
             fun nearest(at: Instant, tolerance: Duration) = r.filter { abs(Duration.between(it.timestamp, at).seconds) <= tolerance.seconds }
                 .minByOrNull { abs(Duration.between(it.timestamp, at).seconds) }
@@ -527,6 +533,25 @@ object InsightEngine {
         val leanLater = lean.mapNotNull { it.change4h }
         if (rich.size < 3 || lean.size < 3 || richLater.size < 2 || leanLater.size < 2) return null
         return Insight.RichMeals(rich.size, lean.size, median(rich.map { it.peakMinutes.toInt() }), median(lean.map { it.peakMinutes.toInt() }), median(richLater), median(leanLater))
+    }
+
+    /**
+     * Carbs logged as low treatments (3 or more in the window): the usual amount, how often a second
+     * round was needed within 30 min (the 15-15 rule's repeat), and how often glucose went over 180
+     * within 2 h (a rebound: Acciaroli et al., J Diabetes Sci Technol 2021).
+     */
+    internal fun treatments(events: List<EventEntity>, r: List<GlucoseReading>): Insight.LowTreatments? {
+        val treatments = events.filter { it.logType == LogEventType.CARB && it.treatment && (it.value ?: 0.0) > 0 }.sortedBy { it.timestampMillis }
+        if (treatments.size < 3) return null
+        val grams = treatments.map { it.value!! }.sorted()
+        val median = grams[grams.size / 2]
+        val firsts = treatments.filterIndexed { i, t -> i == 0 || t.timestampMillis - treatments[i - 1].timestampMillis > Duration.ofMinutes(30).toMillis() }
+        val seconds = firsts.count { first -> treatments.any { it !== first && it.timestampMillis > first.timestampMillis && it.timestampMillis - first.timestampMillis <= Duration.ofMinutes(30).toMillis() } }
+        val rebounds = firsts.count { t ->
+            val at = Instant.ofEpochMilli(t.timestampMillis)
+            r.any { it.timestamp > at && it.timestamp <= at.plus(Duration.ofHours(2)) && it.glucoseMgDl > 180 }
+        }
+        return Insight.LowTreatments(firsts.size, median.roundToInt(), seconds, rebounds)
     }
 
     private fun rebounds(lows: List<Episode>, r: List<GlucoseReading>): Insight.Rebounds? {

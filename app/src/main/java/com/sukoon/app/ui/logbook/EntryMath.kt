@@ -39,6 +39,8 @@ data class EntryDraft(
     val finger: Finger? = null,
     /** Insulin for an imported meal: that meal's id, so the dose stays with it whatever the times say. */
     val mealId: Long? = null,
+    /** Carbs that treated a low. */
+    val treatment: Boolean = false,
 )
 
 /** The amount pad: digits, one decimal place where the unit allows it, delete. */
