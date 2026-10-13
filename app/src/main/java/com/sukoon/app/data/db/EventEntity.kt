@@ -45,7 +45,7 @@ data class EventEntity(
 )
 
 /** INSULIN = rapid-acting (bolus, e.g. Apidra); BASAL = long-acting (e.g. Toujeo). Stored by name, so adding one needs no migration. */
-enum class LogEventType { CARB, INSULIN, BASAL, FINGERSTICK, ACTIVITY, NOTE, /** Blood ketones, mmol/L (sick days). */ KETONE }
+enum class LogEventType { CARB, INSULIN, BASAL, FINGERSTICK, ACTIVITY, NOTE, /** Blood ketones, mmol/L (sick days). */ KETONE, /** Body weight, kg (You → Fitness & food). */ WEIGHT }
 
 /** Tolerant parse so a corrupt/future-build row can't crash the Logbook Flow (mirrors ReadingMappers.safeEnum). */
 val EventEntity.logType: LogEventType
@@ -65,6 +65,10 @@ interface EventDao {
 
     @Query("DELETE FROM events WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    /** The latest entry of one type (its [EventEntity.type] name), or null. */
+    @Query("SELECT * FROM events WHERE type = :type ORDER BY timestampMillis DESC LIMIT 1")
+    fun latest(type: String): Flow<EventEntity?>
 
     @Query("SELECT * FROM events WHERE id = :id")
     suspend fun byId(id: Long): EventEntity?

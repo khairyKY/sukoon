@@ -2,6 +2,8 @@ package com.sukoon.app.modes
 
 import com.sukoon.app.insulin.Profile
 import com.sukoon.app.insulin.Sex
+import java.time.Duration
+import java.time.Instant
 import kotlin.math.roundToInt
 
 /** What you're eating for (You → Fitness & food). */
@@ -18,6 +20,12 @@ data class GoalSettings(
     val change: Int? = null,
     val maintenance: Int? = null,
 )
+
+/** Your weight's direction: [kgPerWeek] over [days] of weigh-ins. */
+data class WeightTrend(val kgPerWeek: Double, val days: Int)
+
+/** The trend against the goal's weekly rate: too slow, on track, too fast. */
+enum class Pace { SLOW, ON_TRACK, FAST }
 
 data class GoalTargets(
     /** Calories a day: maintenance + change; null without a maintenance. */
@@ -73,6 +81,34 @@ object Goals {
             GoalKind.BULK -> w * 0.0025..w * 0.005
             GoalKind.CUT -> w * 0.005..w * 0.01
             else -> null
+        }
+    }
+
+    /**
+     * kg a week: the least-squares slope through the weigh-ins of the last 28 days. Null under 3
+     * weigh-ins or under 10 days from first to last: water swings a kilo or two from day to day and
+     * hides anything shorter.
+     */
+    fun trend(weighIns: List<Pair<Instant, Double>>, now: Instant): WeightTrend? {
+        val recent = weighIns.filter { it.first > now.minus(Duration.ofDays(28)) && it.first <= now }.sortedBy { it.first }
+        if (recent.size < 3) return null
+        val x = recent.map { Duration.between(recent.first().first, it.first).toMinutes() / 1440.0 }
+        if (x.last() < 10) return null
+        val y = recent.map { it.second }
+        val mx = x.average()
+        val my = y.average()
+        val slope = x.indices.sumOf { (x[it] - mx) * (y[it] - my) } / x.sumOf { (it - mx) * (it - mx) }
+        return WeightTrend(slope * 7, x.last().roundToInt())
+    }
+
+    /** How [t] compares with the goal's rate; null when maintaining. Losing counts toward a cut. */
+    fun pace(kind: GoalKind, weightKg: Double?, t: WeightTrend): Pace? {
+        val r = weeklyRate(kind, weightKg) ?: return null
+        val toward = if (kind == GoalKind.CUT) -t.kgPerWeek else t.kgPerWeek
+        return when {
+            toward < r.start -> Pace.SLOW
+            toward > r.endInclusive -> Pace.FAST
+            else -> Pace.ON_TRACK
         }
     }
 

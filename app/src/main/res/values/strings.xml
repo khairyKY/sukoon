@@ -1900,4 +1900,14 @@
     <string name="fitness_rate_gain">Aim to gain %1$s–%2$s kg a week.</string>
     <string name="fitness_rate_lose">Aim to lose %1$s–%2$s kg a week.</string>
     <string name="fitness_cut_note">Eating less usually means less insulin: watch for lows and review your doses with your clinic.</string>
+    <string name="logbook_type_weight">Weight</string>
+    <string name="fitness_weight">Weight</string>
+    <string name="fitness_log_weight">Log weight</string>
+    <string name="fitness_weight_need">Weigh in 2–3 times a week, after waking: your trend shows after 10 days.</string>
+    <string name="fitness_weight_trend">%1$s kg a week, over %2$d days</string>
+    <string name="fitness_pace_on">On track.</string>
+    <string name="fitness_pace_bulk_slow">Slower than the target: add about 100 kcal a day.</string>
+    <string name="fitness_pace_bulk_fast">Faster than the target, so more of it is fat: about 100 kcal less a day.</string>
+    <string name="fitness_pace_cut_slow">Slower than the target: about 100 kcal less a day.</string>
+    <string name="fitness_pace_cut_fast">Faster than the target risks muscle: about 100 kcal more a day.</string>
 </resources>

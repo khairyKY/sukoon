@@ -126,6 +126,7 @@ internal enum class AmountField(val decimals: Boolean, val maxWhole: Int, val qu
     FAT(false, 3, emptyList()),
     KCAL(false, 4, emptyList()),
     KETONES(true, 1, emptyList()),
+    WEIGHT(true, 3, emptyList()),
 }
 
 private fun mainField(type: LogEventType): AmountField? = when (type) {
@@ -136,6 +137,7 @@ private fun mainField(type: LogEventType): AmountField? = when (type) {
     LogEventType.ACTIVITY -> AmountField.MINUTES
     LogEventType.NOTE -> null
     LogEventType.KETONE -> AmountField.KETONES
+    LogEventType.WEIGHT -> AmountField.WEIGHT
 }
 
 /** "Treating a low": carbs for a low, kept out of meal maths and counted in the low-treatment insight. */
@@ -228,6 +230,7 @@ private fun TypeTile(type: LogEventType, filled: Boolean, modifier: Modifier, on
         LogEventType.ACTIVITY -> R.drawable.ic_walk to PillHighText
         LogEventType.NOTE -> R.drawable.ic_note to CaptionMuted
         LogEventType.KETONE -> R.drawable.ic_drop to PillHighText
+        LogEventType.WEIGHT -> R.drawable.ic_scale to SageDeep
     }
     Column(
         modifier
@@ -375,6 +378,7 @@ private fun EditorContent(
         meal != null -> rapid != null
         type == LogEventType.NOTE -> note.isNotBlank()
         type == LogEventType.FINGERSTICK -> amount != null && amount in 20.0..600.0 // meters read LO/HI outside this
+        type == LogEventType.WEIGHT -> amount != null && amount in 20.0..300.0 // the profile's range
         type == LogEventType.KETONE -> amount != null && amount in 0.0..8.0 // blood ketone meters read up to 8 mmol/L
         else -> amount != null
     }

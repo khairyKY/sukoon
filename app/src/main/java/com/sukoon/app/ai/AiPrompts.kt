@@ -172,6 +172,7 @@ object AiPrompts {
                     LogEventType.ACTIVITY -> " min activity"
                     LogEventType.NOTE -> ""
                     LogEventType.KETONE -> " mmol/L blood ketones"
+                    LogEventType.WEIGHT -> " kg body weight"
                 }
                 "${if (v % 1.0 == 0.0) v.toLong() else v}$unit"
             }.orEmpty()

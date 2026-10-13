@@ -2024,4 +2024,14 @@
     <string name="fitness_rate_gain">استهدف تزيد %1$s–%2$s كجم في الأسبوع.</string>
     <string name="fitness_rate_lose">استهدف تخس %1$s–%2$s كجم في الأسبوع.</string>
     <string name="fitness_cut_note">أكل أقل يعني غالبًا إنسولين أقل: خلي بالك من الهبوط وراجع جرعاتك مع العيادة.</string>
+    <string name="logbook_type_weight">الوزن</string>
+    <string name="fitness_weight">الوزن</string>
+    <string name="fitness_log_weight">سجّل وزنك</string>
+    <string name="fitness_weight_need">اتوزن 2–3 مرات في الأسبوع أول ما تصحى: اتجاه وزنك هيبان بعد 10 أيام.</string>
+    <string name="fitness_weight_trend">%1$s كجم في الأسبوع، على مدار %2$d يوم</string>
+    <string name="fitness_pace_on">ماشي صح.</string>
+    <string name="fitness_pace_bulk_slow">أبطأ من الهدف: زوّد حوالي 100 سعر في اليوم.</string>
+    <string name="fitness_pace_bulk_fast">أسرع من الهدف، يعني أغلبه دهون: قلّل حوالي 100 سعر في اليوم.</string>
+    <string name="fitness_pace_cut_slow">أبطأ من الهدف: قلّل حوالي 100 سعر في اليوم.</string>
+    <string name="fitness_pace_cut_fast">أسرع من الهدف وده بيضر العضل: زوّد حوالي 100 سعر في اليوم.</string>
 </resources>

@@ -33,7 +33,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sukoon.app.R
 import com.sukoon.app.insulin.Profile
+import com.sukoon.app.data.db.LogEventType
+import com.sukoon.app.data.db.logType
 import com.sukoon.app.modes.GoalKind
+import com.sukoon.app.modes.Pace
 import com.sukoon.app.modes.Goals
 import com.sukoon.app.modes.Modes
 import com.sukoon.app.modes.ModesKeeper
@@ -106,6 +109,8 @@ fun FitnessPage(keeper: ModesKeeper, profile: Profile, onEditProfile: () -> Unit
         )
     }
 
+    WeightSection(goal.kind, profile)
+
     Label(stringResource(R.string.fitness_training))
     var cut by remember { mutableStateOf(keeper.afterWorkoutCut) }
     Small(stringResource(R.string.fitness_after_meal))
@@ -128,6 +133,43 @@ fun FitnessPage(keeper: ModesKeeper, profile: Profile, onEditProfile: () -> Unit
         stringResource(R.string.today_why_link), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = SageDeep,
         modifier = Modifier.padding(top = 16.dp).clip(RoundedCornerShape(10.dp)).clickable(onClick = onWhy).padding(vertical = 8.dp),
     )
+}
+
+/**
+ * Your weight, its weekly trend from the logbook's weigh-ins and, with a bulk or cut, whether that's
+ * on pace. Logging opens the logbook's weight entry; the profile follows the latest weigh-in.
+ */
+@Composable
+private fun WeightSection(kind: GoalKind, profile: Profile) {
+    val container = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container
+    val since = remember { java.time.Instant.now().minus(java.time.Duration.ofDays(28)).toEpochMilli() }
+    val events by remember { container.logbookRepository.eventsSince(since) }.collectAsState(emptyList())
+    val weighIns = events.filter { it.logType == LogEventType.WEIGHT && it.value != null }.map { java.time.Instant.ofEpochMilli(it.timestampMillis) to it.value!! }
+    val trend = Goals.trend(weighIns, java.time.Instant.now())
+    val kg = NumberFormat.getNumberInstance().apply { maximumFractionDigits = 1 }
+
+    Label(stringResource(R.string.fitness_weight))
+    Card {
+        profile.weightKg?.let { Big(kg.format(it), stringResource(R.string.profile_kg)) }
+        if (trend == null) {
+            Text(stringResource(R.string.fitness_weight_need), fontSize = 12.5.sp, color = CaptionMuted)
+        } else {
+            val signed = (if (trend.kgPerWeek >= 0) "+" else "−") + NumberFormat.getNumberInstance().apply { maximumFractionDigits = 2; minimumFractionDigits = 1 }.format(kotlin.math.abs(trend.kgPerWeek))
+            Text(stringResource(R.string.fitness_weight_trend, signed, trend.days), fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onBackground)
+            Goals.pace(kind, profile.weightKg, trend)?.let { pace ->
+                val text = when (pace) {
+                    Pace.ON_TRACK -> R.string.fitness_pace_on
+                    Pace.SLOW -> if (kind == GoalKind.CUT) R.string.fitness_pace_cut_slow else R.string.fitness_pace_bulk_slow
+                    Pace.FAST -> if (kind == GoalKind.CUT) R.string.fitness_pace_cut_fast else R.string.fitness_pace_bulk_fast
+                }
+                Text(stringResource(text), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (pace == Pace.ON_TRACK) SageDeep else com.sukoon.app.ui.theme.PillHighText)
+            }
+        }
+        Text(
+            stringResource(R.string.fitness_log_weight), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = SageDeep,
+            modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable { container.requestedEntry.value = LogEventType.WEIGHT }.padding(vertical = 6.dp),
+        )
+    }
 }
 
 /** The goal's name, for chips and the You hub. */

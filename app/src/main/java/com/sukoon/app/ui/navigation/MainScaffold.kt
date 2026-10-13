@@ -561,7 +561,8 @@ fun MainScaffold() {
                 var insulinAction by remember { mutableStateOf(container.settings.insulinAction) }
                 var basalReminder by remember { mutableStateOf(container.settings.basalReminder) }
                 var doseSettings by remember { mutableStateOf(container.settings.doseSettings) }
-                var profile by remember { mutableStateOf(container.settings.profile) }
+                val lastWeighIn by container.lastWeighIn.collectAsStateWithLifecycle()
+                var profile by remember(lastWeighIn) { mutableStateOf(container.settings.profile) }
                 var parentPin by remember { mutableStateOf(container.settings.parentPin) }
                 var targetHigh by remember { mutableIntStateOf(container.settings.targetHigh) }
                 val youContext = LocalContext.current

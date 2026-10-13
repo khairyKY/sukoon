@@ -52,6 +52,9 @@ import com.sukoon.app.insulin.InsulinOnBoard
 import java.time.Duration
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
 import com.sukoon.app.data.repository.EntryPhotos
 import com.sukoon.app.alarms.AlarmLog
 import com.sukoon.app.alarms.SignalWatchdog
@@ -121,6 +124,21 @@ class AppContainer(private val context: Context) {
 
     /** Workout, fasting and sick-day modes: what alarms, dose suggestions and Now adjust for. */
     val modes = com.sukoon.app.modes.ModesKeeper(context, logbookRepository, appScope)
+
+    /**
+     * The latest weigh-in. Each new one (or an edit of it) becomes the profile's weight before this
+     * emits it, so the goal's targets follow your weight.
+     */
+    val lastWeighIn: StateFlow<com.sukoon.app.data.db.EventEntity?> = logbookRepository.latest(LogEventType.WEIGHT)
+        .onEach { e ->
+            val kg = e?.value ?: return@onEach
+            val key = "${e.id}:$kg"
+            if (settings.weighInApplied != key) {
+                settings.weighInApplied = key
+                settings.profile = settings.profile.copy(weightKg = kg)
+            }
+        }
+        .stateIn(appScope, SharingStarted.Eagerly, null)
 
     val entryPhotos = EntryPhotos(context.filesDir)
 

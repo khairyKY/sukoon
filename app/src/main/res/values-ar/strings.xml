@@ -2028,4 +2028,14 @@
     <string name="fitness_rate_gain">استهدف زيادة %1$s–%2$s كغ أسبوعيًا.</string>
     <string name="fitness_rate_lose">استهدف خسارة %1$s–%2$s كغ أسبوعيًا.</string>
     <string name="fitness_cut_note">الأكل الأقل يعني عادة أنسولينًا أقل: انتبه للهبوط وراجع جرعاتك مع عيادتك.</string>
+    <string name="logbook_type_weight">الوزن</string>
+    <string name="fitness_weight">الوزن</string>
+    <string name="fitness_log_weight">سجّل وزنك</string>
+    <string name="fitness_weight_need">تَوزَّن 2–3 مرات أسبوعيًا بعد الاستيقاظ: يظهر اتجاه وزنك بعد 10 أيام.</string>
+    <string name="fitness_weight_trend">%1$s كغ أسبوعيًا، خلال %2$d يومًا</string>
+    <string name="fitness_pace_on">على المسار.</string>
+    <string name="fitness_pace_bulk_slow">أبطأ من الهدف: أضف نحو 100 سعرة يوميًا.</string>
+    <string name="fitness_pace_bulk_fast">أسرع من الهدف، فأكثره دهون: نحو 100 سعرة أقل يوميًا.</string>
+    <string name="fitness_pace_cut_slow">أبطأ من الهدف: نحو 100 سعرة أقل يوميًا.</string>
+    <string name="fitness_pace_cut_fast">أسرع من الهدف ويهدد العضل: نحو 100 سعرة أكثر يوميًا.</string>
 </resources>

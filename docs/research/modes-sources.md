@@ -53,6 +53,9 @@ fat-heavy meals rise 3–5 h later).
   adjust glucose-lowering medication to avoid lows when cutting calories; avoid very-low-carb diets
   with SGLT2 inhibitors. So the cut says to watch for lows and review doses with the clinic, and dose
   suggestions are not changed by the goal.
+- **Weight trend**: daily weight swings 1–2 kg with water and food, so the trend is a slope over
+  weigh-ins of 10+ days (Helms 2014 and Iraki 2019 both judge progress by the weekly rate). Off pace,
+  Sukoon suggests about 100 kcal a day either way: a practical step, not a cited number.
 - **Maintenance estimate**: Mifflin–St Jeor (Am J Clin Nutr 1990;51:241–247) × 1.55, "moderately
   active".
 

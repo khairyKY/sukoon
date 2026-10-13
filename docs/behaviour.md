@@ -451,6 +451,12 @@ Where things live, so no screen carries more text than it needs:
 Maintenance is yours, or estimated: Mifflin–St Jeor × 1.55 (lifting 3–5 days a week), to 10 kcal.
 Protein per meal: 0.4–0.5 g/kg over about 4 meals. Ask gets the goal and its targets.
 
+**Weight**: *Log weight* (Fitness & food) adds a weight entry to the logbook (20–300 kg); the profile's
+weight follows the latest one, so the targets do too (a weight typed in the profile stays until the
+next weigh-in). From 3 weigh-ins spanning 10+ days in the last 28, the page shows the trend (kg a week,
+least squares) and, for a bulk or cut, the pace against the rate above: on track, or about 100 kcal a
+day more or less.
+
 Every number below is sourced in `docs/research/modes-sources.md`.
 
 | Mode | While it's on | Dose suggestions (beta) |
