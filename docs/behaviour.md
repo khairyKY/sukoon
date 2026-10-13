@@ -97,6 +97,8 @@ a high 10 below its line.
 | **Going low** | Heading under your low line within 20 min | On | On/off | Once per episode | Alarm stream, 8 s, volume lifted to at least 50% |
 | **High** | Over your high line | 180 | Line 120 to 400, on/off, quiet hours | After its snooze (60 min) | Notification stream, 8 s |
 | **No readings** | No reading for N min (held while the paired sensor warms up: it sends nothing to act on yet) | 20 min | 10 to 120, on/off | Every 30 min | Notification stream, 8 s |
+| **Falling fast** | Dropping 2+ a minute (3 or 4 to choose) while still under your high line, and no low coming yet | On | Rate, on/off | Once per episode | Alarm stream, 8 s |
+| **Rising fast** | Climbing that fast, not already high | Off (meals do it) | Rate, on/off | Once per episode | Notification stream, 8 s |
 
 - Sounds come from a pack (You → Alarms → Sounds): Astral by default, Orbit, Glass, Clear or Bells, one sound per alarm and one for the long-acting reminder. An alarm given its own phone sound or file keeps it.
 - Every alarm also vibrates in its own pattern, for as long as its sound plays, so a phone in a pocket says which alarm it is: urgent low **SOS**, low **Pulse**, going low **Rising**, high **Heartbeat**, no readings **Tap** (You → Alarms → each alarm → Vibration: also Off, except for urgent low). Sukoon vibrates itself, not the notification channel (Android fixes a channel's pattern for good once it's made). Lows vibrate as alarms (through silent mode), highs and no-readings as notifications.
@@ -425,3 +427,27 @@ only for half-unit pens, and suggestions round down to the pen.
 - **Ask**: under the title, what the answers are based on (days, readings and log entries the AI gets:
   real readings without impossible spikes), or an amber *Demo data* chip when that's all there is. The
   first suggestion asks about Insights' one thing (not on demo data).
+
+## 18. Modes: workout, fasting, sick day
+
+Now's header has **Modes** (the three sliders). Every number below is sourced in
+`docs/research/modes-sources.md`; what's on shows as one line each on Now.
+
+| Mode | While it's on | Dose suggestions (beta) |
+|---|---|---|
+| **Workout** (1, 1½ or 2 h from Modes, or any logged workout) | Low alarm at **100** (Moser 2020). Before starting, by glucose: under 90 "10–20 g and wait", 90–125 "about 10 g", over 270 "check ketones first" (Riddell 2017) | Corrections during and 2 h after: **half** (lifting rises). The meal within 2 h after: **−50%** by default, or −25% / as usual. Nothing cut before lifting |
+| **After a workout** (24 h from its end) | Low alarm at **80** overnight, 22:00–07:00 (Moser 2020; lows "for at least 24 hours", Riddell 2017) | — |
+| **Fasting** (your suhoor-end and iftar times) | Now: under 70 *break the fast now*; 70–90 *check again within the hour*; over 300 *break the fast, correct, check ketones* (IDF-DAR 2021). A suhoor reminder 45 min before Fajr | Suhoor meal **−30%** (IDF-DAR 30–50%); none suggested during the fast; iftar as usual. Basal: the sheet quotes IDF-DAR (take it at iftar, −30–40%; −15–30% for Toujeo) and leaves it to Kai's doctor |
+| **Sick day** | A reminder every 2 h to check ketones and drink; Now names the last reading's band (ISPAD 2022: < 0.6 normal, 0.6–1.4 raised, 1.5–2.9 high, ≥ 3.0 urgent care); high alarms repeat hourly | — |
+
+Ketones are a logbook entry (mmol/L, 0–8); their tile shows on a sick day or above 250.
+
+## 19. Filling gaps, and low treatments
+
+- **Gaps**: the sensor keeps 8 hours of readings (every 15 min). Any NFC tap (pairing, starting,
+  *Check sensor*) fills what Bluetooth missed and says how many it added. When readings are missing for
+  30 minutes or more within those 8 hours, Now offers the tap; it opens You → Sensor ready to read.
+- **Low treatments**: carbs marked *Treating a low* (on by itself from a low alarm's *Log what I ate*,
+  or when logged under 70; a switch in the carbs editor) are not a meal: no meal dose, nothing learned
+  from them, not an "after a meal" message. Insights reports, from 3 treated lows: the usual grams, how
+  many needed a second round within 30 minutes, and how many went over 180 within 2 hours (a rebound).
