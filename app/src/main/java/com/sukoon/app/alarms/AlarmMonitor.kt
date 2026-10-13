@@ -275,6 +275,6 @@ class AlarmMonitor(
     private companion object {
         val WINDOW: Duration = Duration.ofMinutes(30)
         const val WATCHDOG_SLACK_MINUTES = 2L
-        val TEST_VALUES = mapOf(AlarmType.URGENT_LOW to 52, AlarmType.LOW to 64, AlarmType.GOING_LOW to 82, AlarmType.HIGH to 262)
+        val TEST_VALUES = mapOf(AlarmType.URGENT_LOW to 52, AlarmType.LOW to 64, AlarmType.GOING_LOW to 82, AlarmType.HIGH to 262, AlarmType.FALLING_FAST to 118, AlarmType.RISING_FAST to 196)
     }
 }

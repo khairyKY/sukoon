@@ -19,6 +19,10 @@ enum class HapticPattern(@StringRes val nameRes: Int, private val steps: List<Pa
     HEARTBEAT(R.string.haptic_heartbeat, listOf(90L to 255, 110L to 0, 140L to 180, 1000L to 0)),
     /** Four buzzes, each stronger (equal on phones that can't vary strength). */
     RISING(R.string.haptic_rising, listOf(220L to 60, 110L to 0, 220L to 120, 110L to 0, 220L to 190, 110L to 0, 220L to 255, 800L to 0)),
+    /** Four buzzes, each weaker: dropping. */
+    FALLING(R.string.haptic_falling, listOf(220L to 255, 110L to 0, 220L to 190, 110L to 0, 220L to 120, 110L to 0, 220L to 60, 800L to 0)),
+    /** Two long buzzes, then rest. */
+    DOUBLE(R.string.haptic_double, listOf(400L to 220, 250L to 0, 400L to 220, 1200L to 0)),
     /** One light tap every two seconds. */
     TAP(R.string.haptic_tap, listOf(60L to 180, 1940L to 0)),
     OFF(R.string.haptic_off, emptyList());
@@ -46,6 +50,8 @@ enum class HapticPattern(@StringRes val nameRes: Int, private val steps: List<Pa
             AlarmType.GOING_LOW -> RISING
             AlarmType.HIGH -> HEARTBEAT
             AlarmType.SIGNAL_LOSS -> TAP
+            AlarmType.FALLING_FAST -> FALLING
+            AlarmType.RISING_FAST -> DOUBLE
         }
 
         /** What each alarm may be set to: urgent low always vibrates. */

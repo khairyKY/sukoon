@@ -287,7 +287,6 @@ fun AlarmSettingsSection(
             open = open == AlarmType.SIGNAL_LOSS,
             onOpen = { toggleOpen(AlarmType.SIGNAL_LOSS) },
             onToggle = { onChange(settings.copy(signalLossEnabled = it)) },
-            last = true,
         ) {
             Label(R.string.alarms_signal_after)
             NumberChips(SIGNAL_MINUTES, settings.signalLossMinutes, 10..120, { pluralStringResource(R.plurals.alarms_after_minutes, it.toInt(), it) }, enabled = settings.signalLossEnabled) {
@@ -295,6 +294,39 @@ fun AlarmSettingsSection(
             }
             Sound(AlarmType.SIGNAL_LOSS, settings.signalLossEnabled)
             Haptic(AlarmType.SIGNAL_LOSS, settings.signalLossEnabled)
+        }
+        AlarmRow(
+            AlarmType.FALLING_FAST,
+            stringResource(R.string.alarms_sum_fast, settings.fastRate, soundName(AlarmType.FALLING_FAST)),
+            on = settings.fastFallEnabled,
+            open = open == AlarmType.FALLING_FAST,
+            onOpen = { toggleOpen(AlarmType.FALLING_FAST) },
+            onToggle = { onChange(settings.copy(fastFallEnabled = it)) },
+        ) {
+            Text(stringResource(R.string.alarms_falling_fast_body), fontSize = 12.5.sp, color = CaptionMuted)
+            Label(R.string.alarms_fast_rate)
+            ChoiceChips(FAST_RATES, settings.fastRate, { stringResource(R.string.alarms_rate, it) }, enabled = settings.fastFallEnabled || settings.fastRiseEnabled) {
+                onChange(settings.copy(fastRate = it))
+            }
+            Sound(AlarmType.FALLING_FAST, settings.fastFallEnabled)
+            Haptic(AlarmType.FALLING_FAST, settings.fastFallEnabled)
+        }
+        AlarmRow(
+            AlarmType.RISING_FAST,
+            stringResource(R.string.alarms_sum_fast, settings.fastRate, soundName(AlarmType.RISING_FAST)),
+            on = settings.fastRiseEnabled,
+            open = open == AlarmType.RISING_FAST,
+            onOpen = { toggleOpen(AlarmType.RISING_FAST) },
+            onToggle = { onChange(settings.copy(fastRiseEnabled = it)) },
+            last = true,
+        ) {
+            Text(stringResource(R.string.alarms_rising_fast_body), fontSize = 12.5.sp, color = CaptionMuted)
+            Label(R.string.alarms_fast_rate)
+            ChoiceChips(FAST_RATES, settings.fastRate, { stringResource(R.string.alarms_rate, it) }, enabled = settings.fastFallEnabled || settings.fastRiseEnabled) {
+                onChange(settings.copy(fastRate = it))
+            }
+            Sound(AlarmType.RISING_FAST, settings.fastRiseEnabled)
+            Haptic(AlarmType.RISING_FAST, settings.fastRiseEnabled)
         }
     }
     Spacer(Modifier.height(12.dp))
@@ -331,6 +363,9 @@ fun AlarmSettingsSection(
 
     if (previewing) SeeAndHear(onDismiss = { previewing = false }, onHear = onPreview, onSee = { previewing = false; onTest(it) })
 }
+
+/** What "fast" can mean, mg/dL a minute. */
+private val FAST_RATES = listOf(2, 3, 4)
 
 /** How long "pause all alarms" can last. */
 private val PAUSES = listOf(30, 60, 120, 240)
@@ -413,8 +448,8 @@ private fun AlarmRow(
 @Composable
 private fun AlarmDot(type: AlarmType) {
     val color = when (type) {
-        AlarmType.URGENT_LOW, AlarmType.LOW, AlarmType.GOING_LOW -> StateLow
-        AlarmType.HIGH -> StateHigh
+        AlarmType.URGENT_LOW, AlarmType.LOW, AlarmType.GOING_LOW, AlarmType.FALLING_FAST -> StateLow
+        AlarmType.HIGH, AlarmType.RISING_FAST -> StateHigh
         AlarmType.SIGNAL_LOSS -> TextMuted
     }
     val dot = Modifier.size(10.dp).clip(CircleShape)
@@ -550,6 +585,8 @@ private fun alarmLabel(type: AlarmType) = when (type) {
     AlarmType.GOING_LOW -> R.string.alarms_going_low
     AlarmType.HIGH -> R.string.alarms_high
     AlarmType.SIGNAL_LOSS -> R.string.alarms_signal
+    AlarmType.FALLING_FAST -> R.string.alarms_falling_fast
+    AlarmType.RISING_FAST -> R.string.alarms_rising_fast
 }
 
 /** The picked file's name without its extension, for showing under the alarm. */

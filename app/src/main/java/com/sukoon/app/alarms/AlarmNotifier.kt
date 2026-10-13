@@ -34,6 +34,8 @@ internal val AlarmType.titleRes: Int
         AlarmType.GOING_LOW -> R.string.alarm_going_low_title
         AlarmType.HIGH -> R.string.alarm_high_title
         AlarmType.SIGNAL_LOSS -> R.string.alarm_signal_title
+        AlarmType.FALLING_FAST -> R.string.alarm_falling_fast_title
+        AlarmType.RISING_FAST -> R.string.alarm_rising_fast_title
     }
 
 /** The alarm's message; about [who] when it's someone this phone follows. */
@@ -47,6 +49,8 @@ internal fun alarmBody(context: Context, type: AlarmType, minutesSinceReading: L
         AlarmType.HIGH -> context.getString(R.string.alarm_high_body)
         AlarmType.SIGNAL_LOSS -> if (!com.sukoon.app.ui.components.bluetoothOn(context)) context.getString(R.string.alarm_signal_bt_off)
         else context.resources.getQuantityString(R.plurals.alarm_signal_body, (minutesSinceReading ?: 0).toInt(), minutesSinceReading ?: 0)
+        AlarmType.FALLING_FAST -> context.getString(R.string.alarm_falling_fast_body)
+        AlarmType.RISING_FAST -> context.getString(R.string.alarm_rising_fast_body)
     }
 }
 
@@ -57,6 +61,7 @@ internal fun AlarmType.defaultSnooze(settings: AlarmSettings): Int = when (this)
     AlarmType.GOING_LOW -> 30
     AlarmType.HIGH -> settings.highSnoozeMinutes
     AlarmType.SIGNAL_LOSS -> 30
+    AlarmType.FALLING_FAST, AlarmType.RISING_FAST -> 30
 }
 
 /**
@@ -296,8 +301,8 @@ class AlarmNotifier(private val context: Context, private val log: AlarmLog) {
         val dnd = manager.isNotificationPolicyAccessGranted
         return when (type) {
             AlarmType.URGENT_LOW -> ensure("alarm4_urgent" + if (dnd) "_dnd" else "", R.string.alarm_channel_urgent, NotificationManager.IMPORTANCE_HIGH, bypassDnd = dnd)
-            AlarmType.LOW, AlarmType.GOING_LOW -> ensure("alarm4_low" + if (dnd) "_dnd" else "", R.string.alarm_channel_low, NotificationManager.IMPORTANCE_HIGH, bypassDnd = dnd)
-            AlarmType.HIGH -> ensure("alarm4_high", R.string.alarm_channel_high, NotificationManager.IMPORTANCE_HIGH, bypassDnd = false)
+            AlarmType.LOW, AlarmType.GOING_LOW, AlarmType.FALLING_FAST -> ensure("alarm4_low" + if (dnd) "_dnd" else "", R.string.alarm_channel_low, NotificationManager.IMPORTANCE_HIGH, bypassDnd = dnd)
+            AlarmType.HIGH, AlarmType.RISING_FAST -> ensure("alarm4_high", R.string.alarm_channel_high, NotificationManager.IMPORTANCE_HIGH, bypassDnd = false)
             AlarmType.SIGNAL_LOSS -> ensure("alarm4_signal", R.string.alarm_channel_signal, NotificationManager.IMPORTANCE_HIGH, bypassDnd = false)
         }
     }
@@ -330,7 +335,7 @@ class AlarmNotifier(private val context: Context, private val log: AlarmLog) {
         private fun soundFor(type: AlarmType): Long = when (type) {
             AlarmType.URGENT_LOW -> URGENT_SOUND_MS
             AlarmType.LOW -> 30_000L
-            AlarmType.GOING_LOW, AlarmType.HIGH, AlarmType.SIGNAL_LOSS -> 8_000L
+            AlarmType.GOING_LOW, AlarmType.HIGH, AlarmType.SIGNAL_LOSS, AlarmType.FALLING_FAST, AlarmType.RISING_FAST -> 8_000L
         }
         private const val PREVIEW_MS = 5_000L
         private const val COUNTDOWN_ID = 2000

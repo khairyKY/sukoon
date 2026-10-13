@@ -1924,4 +1924,17 @@
         <item quantity="many">اتملت %1$d قراية ناقصة من ذاكرة الحساس</item>
         <item quantity="other">اتملت %1$d قراية ناقصة من ذاكرة الحساس</item>
     </plurals>
+    <string name="alarm_falling_fast_title">نازل بسرعة</string>
+    <string name="alarm_falling_fast_body">إنت نازل بسرعة، حتى لو لسه مش واطي. قيس، وجهّز سكريات سريعة.</string>
+    <string name="alarm_rising_fast_title">طالع بسرعة</string>
+    <string name="alarm_rising_fast_body">إنت طالع بسرعة.</string>
+    <string name="alarms_falling_fast">نازل بسرعة</string>
+    <string name="alarms_rising_fast">طالع بسرعة</string>
+    <string name="alarms_sum_fast">%1$d+ في الدقيقة · %2$s</string>
+    <string name="alarms_falling_fast_body">وإنت لسه في المعدل بتاعك، لما السكر ينزل بالسرعة دي: تنبيه قبل ما يبقى هبوط. ولما الهبوط يقرّب، تنبيهات الهبوط هي اللي تشتغل.</string>
+    <string name="alarms_rising_fast_body">لما السكر يطلع بالسرعة دي. مقفول من الأول: أغلب الأكلات بتعمل كده.</string>
+    <string name="alarms_fast_rate">السرعة يعني</string>
+    <string name="alarms_rate">%1$d في الدقيقة</string>
+    <string name="haptic_falling">بيقل</string>
+    <string name="haptic_double">مزدوج</string>
 </resources>

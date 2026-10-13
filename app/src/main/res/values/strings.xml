@@ -1800,4 +1800,17 @@
         <item quantity="one">Filled %1$d missing reading from the sensor\'s memory</item>
         <item quantity="other">Filled %1$d missing readings from the sensor\'s memory</item>
     </plurals>
+    <string name="alarm_falling_fast_title">Falling fast</string>
+    <string name="alarm_falling_fast_body">You\'re dropping fast, though not low yet. Check, and have fast carbs ready.</string>
+    <string name="alarm_rising_fast_title">Rising fast</string>
+    <string name="alarm_rising_fast_body">You\'re climbing fast.</string>
+    <string name="alarms_falling_fast">Falling fast</string>
+    <string name="alarms_rising_fast">Rising fast</string>
+    <string name="alarms_sum_fast">%1$d+ a minute · %2$s</string>
+    <string name="alarms_falling_fast_body">While you\'re still in your range, when glucose drops this fast: a warning before it\'s a low. Once a low is coming, the low alarms take over.</string>
+    <string name="alarms_rising_fast_body">When glucose climbs this fast. Off by default: most meals do it.</string>
+    <string name="alarms_fast_rate">Fast means</string>
+    <string name="alarms_rate">%1$d a minute</string>
+    <string name="haptic_falling">Falling</string>
+    <string name="haptic_double">Double</string>
 </resources>

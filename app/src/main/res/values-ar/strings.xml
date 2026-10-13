@@ -1928,4 +1928,17 @@
         <item quantity="many">مُلئت %1$d قراءة ناقصة من ذاكرة المستشعر</item>
         <item quantity="other">مُلئت %1$d قراءة ناقصة من ذاكرة المستشعر</item>
     </plurals>
+    <string name="alarm_falling_fast_title">انخفاض سريع</string>
+    <string name="alarm_falling_fast_body">تنخفض بسرعة، وإن لم تكن منخفضًا بعد. افحص، وجهّز سكريات سريعة.</string>
+    <string name="alarm_rising_fast_title">ارتفاع سريع</string>
+    <string name="alarm_rising_fast_body">ترتفع بسرعة.</string>
+    <string name="alarms_falling_fast">انخفاض سريع</string>
+    <string name="alarms_rising_fast">ارتفاع سريع</string>
+    <string name="alarms_sum_fast">%1$d+ في الدقيقة · %2$s</string>
+    <string name="alarms_falling_fast_body">ما دمت ضمن نطاقك، حين ينخفض السكر بهذه السرعة: تنبيه قبل أن يصير هبوطًا. وحين يقترب الهبوط تتولى تنبيهات الهبوط.</string>
+    <string name="alarms_rising_fast_body">حين يرتفع السكر بهذه السرعة. متوقف افتراضيًا: معظم الوجبات تفعل ذلك.</string>
+    <string name="alarms_fast_rate">السرعة تعني</string>
+    <string name="alarms_rate">%1$d في الدقيقة</string>
+    <string name="haptic_falling">متناقص</string>
+    <string name="haptic_double">مزدوج</string>
 </resources>

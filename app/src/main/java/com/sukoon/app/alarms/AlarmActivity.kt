@@ -230,8 +230,8 @@ private fun lockedAlarms(container: com.sukoon.app.di.AppContainer): Boolean =
 /** Lows in the alarm red, highs in deep amber, lost signal in the dark canvas: white text reads on all three. */
 private val AlarmType.screenColor: Color
     get() = when (this) {
-        AlarmType.URGENT_LOW, AlarmType.LOW, AlarmType.GOING_LOW -> StateUrgent
-        AlarmType.HIGH -> Color(0xFF8A5A1E) // deep amber
+        AlarmType.URGENT_LOW, AlarmType.LOW, AlarmType.GOING_LOW, AlarmType.FALLING_FAST -> StateUrgent
+        AlarmType.HIGH, AlarmType.RISING_FAST -> Color(0xFF8A5A1E) // deep amber
         AlarmType.SIGNAL_LOSS -> CanvasDark
     }
 
@@ -239,7 +239,7 @@ private val AlarmType.screenColor: Color
 private val AlarmType.snoozeChoices: List<Int>
     get() = when (this) {
         AlarmType.URGENT_LOW -> listOf(5)
-        AlarmType.LOW, AlarmType.GOING_LOW -> listOf(15, 30, 60)
+        AlarmType.LOW, AlarmType.GOING_LOW, AlarmType.FALLING_FAST, AlarmType.RISING_FAST -> listOf(15, 30, 60)
         AlarmType.HIGH -> listOf(30, 60, 120, 240)
         AlarmType.SIGNAL_LOSS -> listOf(15, 30, 60, 120)
     }

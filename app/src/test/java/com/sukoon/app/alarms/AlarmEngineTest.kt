@@ -30,6 +30,23 @@ class AlarmEngineTest {
     }
 
     @Test
+    fun `falling fast warns once while still in range, and hands over to the low alarms`() {
+        // 160 falling 3 a minute: fast, in range, not yet "going low" (20 min ahead is still over 70).
+        val falling = (0..12).map { 160 - 3 * it }
+        val fired = run(falling)
+        assertEquals(1, fired.count { AlarmType.FALLING_FAST in it.second }) // once per episode
+        // Already heading low: going low takes it, falling fast stays quiet.
+        val near = run((0..8).map { 110 - 3 * it })
+        assertTrue(near.none { AlarmType.FALLING_FAST in it.second })
+        assertTrue(near.any { AlarmType.GOING_LOW in it.second })
+        // Steady, or slow (1 a minute): nothing.
+        assertTrue(run((0..12).map { 150 - it }).none { AlarmType.FALLING_FAST in it.second })
+        // Rising fast is off unless asked for.
+        assertTrue(run((0..12).map { 100 + 3 * it }).none { AlarmType.RISING_FAST in it.second })
+        assertEquals(1, run((0..12).map { 100 + 3 * it }, settings.copy(fastRiseEnabled = true)).count { AlarmType.RISING_FAST in it.second })
+    }
+
+    @Test
     fun `a pause holds back every alarm but urgent low, and what was held back fires when it ends`() {
         val until = at(60)
         fun fired(v: Int, minute: Long, state: AlarmState = AlarmState()) =
