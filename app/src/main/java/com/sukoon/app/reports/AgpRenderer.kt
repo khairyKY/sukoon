@@ -37,11 +37,17 @@ object AgpRenderer {
         }
         listOf(54, 70, 180, 250).forEach { level ->
             canvas.drawLine(plot.left, y(level), plot.right, y(level), if (level == 70 || level == 180) target else grid)
-            canvas.drawText(String.format(Locale.getDefault(), "%d", level), area.left, y(level) + look.textSize / 3, text)
         }
+        // 70 and 180 always; 54 and 250 only where they don't touch them (on a phone, 54 sat on 70).
+        listOf(70, 180, 54, 250).filter { level -> level == 70 || level == 180 || kotlin.math.abs(y(level) - y(if (level == 54) 70 else 180)) >= look.textSize * 1.1f }
+            .forEach { level -> canvas.drawText(String.format(Locale.getDefault(), "%d", level), area.left, y(level) + look.textSize / 3, text) }
+        // Every 3 hours when the labels fit with room to spare, else every 6: never touching.
+        val labelWidth = text.measureText("00:00")
+        val step = if (plot.width() / 8 >= labelWidth * 1.6f) 3 else 6
         (0..8).forEach { i ->
             val minute = i * 180
             canvas.drawLine(x(minute), plot.top, x(minute), plot.bottom, grid)
+            if ((i * 3) % step != 0) return@forEach
             val label = String.format(Locale.getDefault(), "%02d:00", (i * 3) % 24)
             val width = text.measureText(label)
             canvas.drawText(label, (x(minute) - width / 2).coerceIn(plot.left, area.right - width), area.bottom - look.textSize * 0.3f, text)

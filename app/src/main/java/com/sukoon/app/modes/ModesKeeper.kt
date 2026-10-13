@@ -92,15 +92,23 @@ class ModesKeeper(private val context: Context, logbook: LogbookRepository, priv
             proteinPerKg = prefs.getFloat(K_GOAL_PROTEIN, 0f).takeIf { it > 0 }?.toDouble(),
             change = if (prefs.contains(K_GOAL_CHANGE)) prefs.getInt(K_GOAL_CHANGE, 0) else null,
             maintenance = prefs.getInt(K_GOAL_MAINTENANCE, 0).takeIf { it > 0 },
+            gymDays = prefs.getStringSet(K_GOAL_GYM, emptySet()).orEmpty().mapNotNull { n -> java.time.DayOfWeek.entries.firstOrNull { it.name == n } }.toSet(),
         )
         set(v) {
             prefs.edit().putString(K_GOAL, v.kind.name).putFloat(K_GOAL_PROTEIN, v.proteinPerKg?.toFloat() ?: 0f)
                 .apply { if (v.change == null) remove(K_GOAL_CHANGE) else putInt(K_GOAL_CHANGE, v.change) }
-                .putInt(K_GOAL_MAINTENANCE, v.maintenance ?: 0).remove(K_BULK_ON).apply()
+                .putInt(K_GOAL_MAINTENANCE, v.maintenance ?: 0).putStringSet(K_GOAL_GYM, v.gymDays.map { it.name }.toSet()).remove(K_BULK_ON).apply()
             _goal.value = v
         }
     private val _goal = MutableStateFlow(goal)
     val goalFlow: StateFlow<GoalSettings> = _goal.asStateFlow()
+
+    /** A gym day: one of your gym days, or a workout today (logged, or started from Today). */
+    fun gymToday(now: Instant = Instant.now(), zone: java.time.ZoneId = java.time.ZoneId.systemDefault()): Boolean {
+        val today = now.atZone(zone).toLocalDate()
+        val m = active.value
+        return today.dayOfWeek in goal.gymDays || m.workoutUntil != null || m.lastWorkoutEnd?.atZone(zone)?.toLocalDate() == today
+    }
 
     /** For Ask: the goal and its targets, or "" without one. */
     fun goalLine(profile: com.sukoon.app.insulin.Profile): String {
@@ -203,6 +211,7 @@ class ModesKeeper(private val context: Context, logbook: LogbookRepository, priv
         const val K_GOAL_PROTEIN = "goal_protein_per_kg"
         const val K_GOAL_CHANGE = "goal_change"
         const val K_GOAL_MAINTENANCE = "goal_maintenance"
+        const val K_GOAL_GYM = "goal_gym_days"
         const val K_KETONE_REMINDED = "ketone_reminded"
         const val K_SUHOOR_REMINDED = "suhoor_reminded_day"
     }

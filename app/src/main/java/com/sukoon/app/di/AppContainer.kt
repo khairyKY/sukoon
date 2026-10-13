@@ -52,6 +52,7 @@ import com.sukoon.app.insulin.InsulinOnBoard
 import java.time.Duration
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
@@ -130,6 +131,9 @@ class AppContainer(private val context: Context) {
     /** Workout, fasting and sick-day modes: what alarms, dose suggestions and Now adjust for. */
     val modes = com.sukoon.app.modes.ModesKeeper(context, logbookRepository, appScope)
 
+    /** Pens left and the insurance pickup (You → Supplies); checked daily at 10:00. */
+    val supplies = com.sukoon.app.supplies.SuppliesStore(context).also { com.sukoon.app.supplies.SuppliesReminder.schedule(context) }
+
     /**
      * The latest weigh-in. Each new one (or an edit of it) becomes the profile's weight before this
      * emits it, so the goal's targets follow your weight.
@@ -203,6 +207,26 @@ class AppContainer(private val context: Context) {
 
     val followerWatch = FollowerWatch(context, sharing, settings, notifier, appScope)
 
+    init {
+        // Followers see what you're doing: sent when it changes (not every minute), cleared when sharing it is off.
+        appScope.launch {
+            var workoutFrom: java.time.Instant? = null
+            kotlinx.coroutines.flow.combine(modes.active, alarms.pausedUntil, logbookRepository.latest(com.sukoon.app.data.db.LogEventType.KETONE)) { m, paused, k ->
+                if (m.workoutUntil == null) workoutFrom = null else if (workoutFrom == null) workoutFrom = java.time.Instant.now()
+                com.sukoon.app.sharing.SharedModes(
+                    workoutFrom = workoutFrom, workoutUntil = m.workoutUntil, nightLow = m.nightWatch,
+                    suhoorEnds = m.fasting.suhoorEnds.takeIf { m.fasting.on }, iftar = m.fasting.iftar.takeIf { m.fasting.on },
+                    sickSince = m.sickSince,
+                    ketones = k?.value.takeIf { m.sick }, ketonesAt = k?.let { java.time.Instant.ofEpochMilli(it.timestampMillis) }.takeIf { m.sick },
+                    pausedUntil = paused,
+                )
+            }.distinctUntilChanged().collect { shared ->
+                val on = sharing.shareModes && (shared.workoutUntil != null || shared.nightLow || shared.iftar != null || shared.sickSince != null || shared.pausedUntil != null)
+                runCatching { sharing.publishModes(if (on) shared.copy(at = java.time.Instant.now()) else null) }
+            }
+        }
+    }
+
     val healthConnect = HealthConnectSync(context, glucoseRepository, logbookRepository, appScope)
 
     /** The paired sensor's life while it's the source (null on demo data or with no sensor). */
@@ -270,6 +294,7 @@ class AppContainer(private val context: Context) {
         newFollowers.start(appScope)
         followerWatch.start()
         healthConnect.start()
+        com.sukoon.app.platform.WearSync(context, glucoseRepository, appScope).start()
         calibration.start()
         cloudBackup.start(appScope)
         // The sensor's ongoing notification shows the newest reading; re-drawn each minute for its age.

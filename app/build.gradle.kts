@@ -23,8 +23,8 @@ android {
         // and foreground-service behavior we need for continuous BLE collection anyway.
         minSdk = 26
         targetSdk = 36
-        versionCode = 17
-        versionName = "0.12.0"
+        versionCode = 18
+        versionName = "0.13.0"
 
         // Followers backend (Supabase): URL + publishable key from the gitignored local.properties.
         buildConfigField("String", "SUPABASE_URL", "\"${localProps.getProperty("supabase.url", "")}\"")
@@ -119,6 +119,7 @@ dependencies {
     implementation(libs.zxing.core) // the invite QR code (ML Kit only reads codes)
     implementation(libs.guava) // already in the app through another library; CameraX hands its camera over as a ListenableFuture
     implementation(libs.androidx.health.connect) // MyFitnessPal meals in, glucose out (health/)
+    implementation(libs.play.services.wearable) // each reading to the Sukoon watch app (platform/WearSync.kt, wear/)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)

@@ -19,6 +19,8 @@ data class GoalSettings(
     val proteinPerKg: Double? = null,
     val change: Int? = null,
     val maintenance: Int? = null,
+    /** Gym days: more on them, less on the others, the same week. Empty: every day alike. */
+    val gymDays: Set<java.time.DayOfWeek> = emptySet(),
 )
 
 /** Your weight's direction: [kgPerWeek] over [days] of weigh-ins. */
@@ -110,6 +112,19 @@ object Goals {
             toward > r.endInclusive -> Pace.FAST
             else -> Pace.ON_TRACK
         }
+    }
+
+    /** Extra kcal on a gym day; the rest days give it back so the week's total stays the same. */
+    const val GYM_SHIFT = 200
+
+    /**
+     * Today's kcal for a [gym] or rest day: [kcal] + [GYM_SHIFT] on a gym day, and on a rest day
+     * minus the week's gym extra spread over the rest days (to 10). Unchanged without gym days.
+     */
+    fun dayKcal(kcal: Int, s: GoalSettings, gym: Boolean): Int {
+        val n = s.gymDays.size
+        if (n == 0 || n == 7) return kcal
+        return if (gym) kcal + GYM_SHIFT else kcal - (GYM_SHIFT * n / (7 - n) / 10.0).roundToInt() * 10
     }
 
     /** Lifting 3–5 days a week ("moderately active"). */

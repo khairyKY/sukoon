@@ -394,6 +394,17 @@ fun MainScaffold() {
                     val modesNow by home.modes.active.collectAsStateWithLifecycle()
                     val alarmsPaused by home.alarms.pausedUntil.collectAsStateWithLifecycle()
                     val goal by home.modes.goalFlow.collectAsStateWithLifecycle()
+                    val supplyStock by home.supplies.stock.collectAsStateWithLifecycle()
+                    val supplyPickup by home.supplies.pickup.collectAsStateWithLifecycle()
+                    val supplySince = remember { System.currentTimeMillis() - Duration.ofDays(120).toMillis() }
+                    val supplyEvents by remember { home.logbookRepository.eventsSince(supplySince) }.collectAsStateWithLifecycle(initialValue = emptyList())
+                    // Steps so far today from Health Connect, every 5 minutes (null: not allowed or none).
+                    val steps by produceState<Long?>(null) {
+                        while (true) {
+                            value = runCatching { home.healthConnect.today().steps }.getOrNull()
+                            kotlinx.coroutines.delay(5 * 60_000L)
+                        }
+                    }
                     val lastBasal by remember { home.logbookRepository.latest(LogEventType.BASAL) }.collectAsStateWithLifecycle(initialValue = null)
                     val lastKetoneEvent = recentEvents.lastOrNull { it.logType == LogEventType.KETONE && it.value != null }
                     val lastKetones = lastKetoneEvent?.let { it.value!! to Instant.ofEpochMilli(it.timestampMillis) }
@@ -401,7 +412,21 @@ fun MainScaffold() {
                     val chips = com.sukoon.app.ui.home.statusChips(
                         m = modesNow,
                         paused = alarmsPaused,
-                        goal = com.sukoon.app.modes.Goals.targets(home.settings.profile, goal)?.let { it to (stats[com.sukoon.app.ui.home.HomeStat.PROTEIN] to stats[com.sukoon.app.ui.home.HomeStat.KCAL]) },
+                        goal = com.sukoon.app.modes.Goals.targets(home.settings.profile, goal)?.let { t ->
+                            val gym = home.modes.gymToday()
+                            val day = if (goal.gymDays.isEmpty()) t else t.copy(kcal = t.kcal?.let { com.sukoon.app.modes.Goals.dayKcal(it, goal, gym) })
+                            day to (stats[com.sukoon.app.ui.home.HomeStat.PROTEIN] to stats[com.sukoon.app.ui.home.HomeStat.KCAL])
+                        },
+                        gymDay = if (goal.gymDays.isEmpty()) null else home.modes.gymToday(),
+                        lowSupply = supplyStock.mapNotNull { (k, s) ->
+                            s ?: return@mapNotNull null
+                            com.sukoon.app.supplies.Supply.daysLeft(com.sukoon.app.supplies.Supply.remaining(s, supplyEvents, k), com.sukoon.app.supplies.Supply.perDay(supplyEvents, k, Instant.now(), java.time.ZoneId.systemDefault()))
+                                ?.takeIf { it <= com.sukoon.app.supplies.Supply.LOW_DAYS }?.let { context.getString(com.sukoon.app.ui.settings.kindName(k)) to it }
+                        },
+                        pickup = com.sukoon.app.supplies.Supply.daysToPickup(supplyPickup, java.time.LocalDate.now())?.takeIf { it <= supplyPickup.remindDays }
+                            ?.let { com.sukoon.app.supplies.SuppliesReminder.pickupLine(context, it, supplyPickup.next!!) },
+                        onSupplies = { openYou(YouPage.SUPPLIES) },
+                        steps = steps,
                         gap = if (source == SourceKind.LIBRE_BLE) com.sukoon.app.domain.metrics.MemoryGap.fillable(lastReadings, Instant.now()) else null,
                         ketonesDue = ketonesDue,
                         onResume = { scope.launch { home.alarms.resumeAll(); context.toast(context.getString(R.string.toast_alarms_back)) } },

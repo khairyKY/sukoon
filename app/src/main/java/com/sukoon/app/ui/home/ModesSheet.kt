@@ -237,6 +237,14 @@ fun statusChips(
     /** Long-acting: when it was due and how late it is now (BasalReminder.overdue). */
     basal: Pair<Instant, java.time.Duration>? = null,
     onBasal: () -> Unit = {},
+    /** With gym days set: whether today is one (the kcal chip says which). */
+    gymDay: Boolean? = null,
+    steps: Long? = null,
+    /** Kinds of insulin down to a few days: (kind name, days). */
+    lowSupply: List<Pair<String, Int>> = emptyList(),
+    /** The pickup line ("Pickup Sunday"), within its reminder days. */
+    pickup: String? = null,
+    onSupplies: () -> Unit = {},
 ): List<StatusChip> {
     val time = TimeFormat.of()
     val n = NumberFormat.getIntegerInstance()
@@ -247,15 +255,21 @@ fun statusChips(
         else stringResource(R.string.chip_basal_due, time.format(due))
         list += StatusChip(text, attention = true, onClick = onBasal)
     }
+    pickup?.let { list += StatusChip(it, attention = true, onClick = onSupplies) }
+    lowSupply.forEach { (name, days) -> list += StatusChip(stringResource(R.string.chip_supply_low, name, days), attention = true, onClick = onSupplies) }
     m.workoutUntil?.let { list += StatusChip(stringResource(R.string.chip_workout, time.format(it)), onClick = onToday) }
     if (m.workoutUntil == null && m.nightWatch) list += StatusChip(stringResource(R.string.chip_late_low, Modes.NIGHT_LOW), onClick = onToday)
     if (m.fastingNow) list += StatusChip(stringResource(R.string.chip_fasting, time.format(m.fasting.iftar)), onClick = onToday)
     if (m.sick) list += StatusChip(stringResource(if (ketonesDue) R.string.chip_ketones_due else R.string.chip_sick), attention = ketonesDue, onClick = onToday)
     goal?.let { (t, today) ->
         val (protein, kcal) = today
-        if (t.kcal != null) list += StatusChip(stringResource(R.string.chip_kcal, n.format(kcal?.toInt() ?: 0), n.format(t.kcal)), onClick = onFitness)
+        if (t.kcal != null) {
+            val text = stringResource(R.string.chip_kcal, n.format(kcal?.toInt() ?: 0), n.format(t.kcal))
+            list += StatusChip(gymDay?.let { stringResource(if (it) R.string.chip_gym_day else R.string.chip_rest_day, text) } ?: text, onClick = onFitness)
+        }
         if (t.proteinGrams != null) list += StatusChip(stringResource(R.string.chip_protein, n.format(protein?.toInt() ?: 0), t.proteinGrams), onClick = onFitness)
     }
+    steps?.takeIf { it > 0 }?.let { list += StatusChip(stringResource(R.string.chip_steps, n.format(it)), onClick = onFitness) }
     gap?.let { (from, to) -> list += StatusChip(stringResource(R.string.chip_gap, time.format(from), time.format(to)), onClick = onFillGap) }
     return list
 }

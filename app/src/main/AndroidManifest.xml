@@ -226,6 +226,10 @@
             android:exported="false" />
 
         <receiver
+            android:name=".supplies.SuppliesReminder"
+            android:exported="false" />
+
+        <receiver
             android:name=".platform.BootReceiver"
             android:exported="false">
             <intent-filter>

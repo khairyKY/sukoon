@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Sukoon</string>
+    <!-- The tile's and the complication's name in the watch's pickers. -->
+    <string name="glucose_label">Glucose</string>
+    <string name="no_readings">No readings yet. Sukoon on your phone sends them here.</string>
+    <string name="no_current_reading">No current reading</string>
+    <string name="now">now</string>
+    <string name="mg_dl">mg/dL</string>
+    <string name="glucose_description">Glucose %1$d mg/dL</string>
+    <plurals name="minutes_ago">
+        <item quantity="one">%1$d min ago</item>
+        <item quantity="other">%1$d min ago</item>
+    </plurals>
+</resources>

@@ -316,6 +316,14 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session, l
             }
         }
     }
+    var shareModes by remember { mutableStateOf(sharing.shareModes) }
+    Row(Modifier.padding(top = 12.dp).heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.sharing_modes), fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.sharing_modes_body), fontSize = 12.sp, color = CaptionMuted)
+        }
+        Switch(checked = shareModes, onCheckedChange = { shareModes = it; sharing.shareModes = it }, colors = SwitchDefaults.colors(checkedTrackColor = Sage))
+    }
     Label(stringResource(R.string.sharing_followers))
     val people = followers
     when {

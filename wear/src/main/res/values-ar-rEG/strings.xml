@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">سكون</string>
+    <string name="glucose_label">السكر</string>
+    <string name="no_readings">لسه مفيش قرايات. سكون اللي على موبايلك بيبعتها هنا.</string>
+    <string name="no_current_reading">مفيش قراية دلوقتي</string>
+    <string name="now">دلوقتي</string>
+    <string name="mg_dl">مجم/دل</string>
+    <string name="glucose_description">السكر %1$d مجم/دل</string>
+    <plurals name="minutes_ago">
+        <item quantity="zero">من %1$d دقيقة</item>
+        <item quantity="one">من دقيقة</item>
+        <item quantity="two">من دقيقتين</item>
+        <item quantity="few">من %1$d دقايق</item>
+        <item quantity="many">من %1$d دقيقة</item>
+        <item quantity="other">من %1$d دقيقة</item>
+    </plurals>
+</resources>

@@ -14,4 +14,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Sukoon"
-include(":app")
+include(":app", ":wear")

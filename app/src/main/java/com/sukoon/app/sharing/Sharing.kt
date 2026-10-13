@@ -37,6 +37,8 @@ data class Followed(
     val alarms: Set<AlarmType> = Sharing.ALL_ALARMS,
     /** Their long-acting is missed: when it was due (null: it isn't, or they don't tell followers). */
     val basalMissedSince: Instant? = null,
+    /** What they're doing (workout, fast, sick day, alarms paused), when they share it. */
+    val modes: SharedModes? = null,
 )
 
 /**
@@ -67,6 +69,23 @@ class Sharing(
     var sharedAlarms: Set<AlarmType>
         get() = prefs.getStringSet(KEY_SHARED_ALARMS, null)?.let(::alarmsFrom) ?: ALL_ALARMS
         set(value) = prefs.edit().putStringSet(KEY_SHARED_ALARMS, alarmsFrom(value.map { it.name }).map { it.name }.toSet()).apply()
+
+    /** Show followers what you're doing: workouts, fasts, sick days, alarms paused (on unless turned off). */
+    var shareModes: Boolean
+        get() = prefs.getBoolean(KEY_SHARE_MODES, true)
+        set(value) = prefs.edit().putBoolean(KEY_SHARE_MODES, value).apply()
+
+    /** Puts [m] on this profile for followers (null clears it). Before the migration this fails quietly. */
+    suspend fun publishModes(m: SharedModes?) {
+        if (supabase.session.value == null) return
+        val body = JSONObject().put("id", me).put("modes", m?.toJson() ?: JSONObject.NULL)
+        supabase.post("profiles?on_conflict=id", body.toString(), prefer = "resolution=merge-duplicates,return=minimal")
+    }
+
+    private suspend fun modesOf(ids: List<String>): Map<String, SharedModes> = runCatching {
+        val rows = JSONArray(supabase.get("profiles?id=in.(${ids.joinToString(",")})&modes=not.is.null&select=id,modes"))
+        (0 until rows.length()).associate { i -> rows.getJSONObject(i).let { it.getString("id") to SharedModes.fromJson(it.getJSONObject("modes")) } }
+    }.getOrDefault(emptyMap())
 
     /** Tell followers when long-acting is missed (off until turned on, on the reminder card). */
     var tellFollowersBasal: Boolean
@@ -171,7 +190,8 @@ class Sharing(
             val names = names(ids)
             val alarms = sharedAlarmsOf(ids)
             val basal = if (ids.isEmpty()) emptyMap() else basalMissedOf(ids)
-            ids.map { Followed(it, names[it].orEmpty(), latestOf(it), alarms = alarms[it] ?: ALL_ALARMS, basalMissedSince = basal[it]) }
+            val modes = if (ids.isEmpty()) emptyMap() else modesOf(ids)
+            ids.map { Followed(it, names[it].orEmpty(), latestOf(it), alarms = alarms[it] ?: ALL_ALARMS, basalMissedSince = basal[it], modes = modes[it]) }
         }
         return mine + runCatching { libreLinkUp.followed() }.getOrDefault(emptyList()) + runCatching { dexcom.followed() }.getOrDefault(emptyList())
     }
@@ -216,6 +236,7 @@ class Sharing(
     companion object {
         private const val KEY_SHARE = "share_readings_on"
         private const val KEY_TELL_BASAL = "tell_followers_basal"
+        private const val KEY_SHARE_MODES = "share_modes_on"
         private const val KEY_BASAL_MARKED = "basal_missed_marked"
         private const val KEY_CURSOR = "share_cursor_"
         private const val KEY_SHARED_ALARMS = "shared_alarms"
