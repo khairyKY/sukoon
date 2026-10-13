@@ -50,6 +50,14 @@ class GoalTest {
     }
 
     @Test
+    fun `gym days get more and rest days give it back over the week`() {
+        val s = GoalSettings(GoalKind.BULK, gymDays = setOf(java.time.DayOfWeek.MONDAY, java.time.DayOfWeek.WEDNESDAY, java.time.DayOfWeek.FRIDAY, java.time.DayOfWeek.SATURDAY))
+        assertEquals(3180, Goals.dayKcal(2980, s, gym = true))
+        assertEquals(2710, Goals.dayKcal(2980, s, gym = false)) // 4 × 200 back over 3 days
+        assertEquals(2980, Goals.dayKcal(2980, GoalSettings(GoalKind.BULK), gym = true))
+    }
+
+    @Test
     fun `your own maintenance wins, and a missing profile says nothing`() {
         val t = Goals.targets(kai, GoalSettings(GoalKind.BULK, maintenance = 2500, change = 200))!!
         assertEquals(2700, t.kcal)

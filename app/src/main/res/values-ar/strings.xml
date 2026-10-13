@@ -2088,4 +2088,17 @@
     <string name="follow_basal_title">لم يسجّل %1$s طويل المفعول</string>
     <string name="follow_basal_body">كان موعده %1$s. رسالة أو مكالمة قد تساعد.</string>
     <string name="chip_follow_basal">لم يُسجَّل طويل المفعول · موعده %1$s</string>
+    <string name="report_findings">ما وجدته الملاحظات</string>
+    <string name="report_findings_note">من الأيام نفسها، لعيادتك: طويل المفعول ليلًا وعاداته، الهبوط وعلاجه، النشاط، الصباح والوجبات. لا تغيّر الجرعات بناءً على هذا وحده.</string>
+    <string name="chip_gym_day">يوم تمرين · %1$s</string>
+    <string name="chip_rest_day">يوم راحة · %1$s</string>
+    <string name="chip_steps">%1$s خطوة</string>
+    <string name="fitness_gym_days">أيام التمرين</string>
+    <string name="fitness_gym_day">يوم تمرين</string>
+    <string name="fitness_rest_day">يوم راحة</string>
+    <string name="fitness_gym_note">يبقى متوسط أسبوعك %1$s. التمرين المسجّل أو الذي بدأته من «اليوم» يجعل أي يوم يوم تمرين.</string>
+    <string name="fitness_gym_hint">اضغط أيام تمرينك: أيام التمرين تأخذ أكثر، وأيام الراحة تعوّض.</string>
+    <string name="fitness_steps">خطوات اليوم</string>
+    <string name="fitness_steps_unit">خطوة</string>
+    <string name="fitness_steps_note">من Health Connect. المشي يُحسب نشاطًا خفيفًا.</string>
 </resources>

@@ -186,7 +186,7 @@ object AiPrompts {
         }
     }.trim()
 
-    private fun insightLine(insight: Insight): String {
+    internal fun insightLine(insight: Insight): String {
         fun hour(h: Int) = String.format(Locale.US, "%02d:00", h)
         return when (insight) {
             is Insight.NotEnoughData -> "Not enough data for patterns yet (${insight.daysWithData} days, ${insight.coveragePercent}% coverage)."

@@ -30,7 +30,8 @@ object AgpPdf {
     private val BANDS = listOf(0xFFA23F35, 0xFFC9564B, 0xFF3E7A63, 0xFFC88A3E, 0xFF8A5A1E).map { it.toInt() }
 
     /** Writes the PDF into the app's cache (shared through the FileProvider) and returns it. */
-    fun write(context: Context, report: AgpReport, name: String): File {
+    /** [findings]: what Insights found, one plain sentence each, for a second page (none: one page). */
+    fun write(context: Context, report: AgpReport, name: String, findings: List<String> = emptyList()): File {
         val document = PdfDocument()
         val page = document.startPage(PdfDocument.PageInfo.Builder(WIDTH, HEIGHT, 1).create())
         val c = page.canvas
@@ -106,6 +107,22 @@ object AgpPdf {
 
         paragraph(c, context.getString(R.string.report_pdf_footer), MARGIN, HEIGHT - 64f, content, small)
         document.finishPage(page)
+
+        if (findings.isNotEmpty()) {
+            val second = document.startPage(PdfDocument.PageInfo.Builder(WIDTH, HEIGHT, 2).create())
+            val c2 = second.canvas
+            var y2 = 56f
+            c2.drawText(context.getString(R.string.report_findings), MARGIN, y2, title)
+            y2 += 14f
+            y2 += paragraph(c2, context.getString(R.string.report_findings_note), MARGIN, y2, content, small) + 10f
+            findings.forEach { f ->
+                if (y2 > HEIGHT - 90f) return@forEach
+                c2.drawCircle(MARGIN + 3f, y2 + 6f, 2f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = DARK })
+                y2 += paragraph(c2, f, MARGIN + 12f, y2, content - 12f, body) + 8f
+            }
+            paragraph(c2, context.getString(R.string.report_pdf_footer), MARGIN, HEIGHT - 64f, content, small)
+            document.finishPage(second)
+        }
 
         val file = File(context.cacheDir, "reports").apply { mkdirs() }.resolve("sukoon-report-${report.to}.pdf")
         file.outputStream().use { document.writeTo(it) }

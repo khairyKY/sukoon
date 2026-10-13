@@ -2084,4 +2084,17 @@
     <string name="follow_basal_title">%1$s مسجلش طويل المفعول</string>
     <string name="follow_basal_body">كان ميعاده %1$s. رسالة أو مكالمة ممكن تفرق.</string>
     <string name="chip_follow_basal">طويل المفعول متسجلش · ميعاده %1$s</string>
+    <string name="report_findings">الملاحظات لقت إيه</string>
+    <string name="report_findings_note">من نفس الأيام، للعيادة: طويل المفعول بالليل وعاداته، الهبوط وعلاجه، النشاط، الصبح والأكل. متغيرش جرعات على ده لوحده.</string>
+    <string name="chip_gym_day">يوم جيم · %1$s</string>
+    <string name="chip_rest_day">يوم راحة · %1$s</string>
+    <string name="chip_steps">%1$s خطوة</string>
+    <string name="fitness_gym_days">أيام الجيم</string>
+    <string name="fitness_gym_day">يوم جيم</string>
+    <string name="fitness_rest_day">يوم راحة</string>
+    <string name="fitness_gym_note">متوسط أسبوعك فاضل %1$s. أي تمرين متسجل أو بدأته من «النهارده» يخلي اليوم يوم جيم.</string>
+    <string name="fitness_gym_hint">دوس على أيام الجيم: أيام الجيم بتاخد أكتر، وأيام الراحة بتعوّض.</string>
+    <string name="fitness_steps">خطوات النهارده</string>
+    <string name="fitness_steps_unit">خطوة</string>
+    <string name="fitness_steps_note">من Health Connect. المشي بيتحسب نشاط خفيف.</string>
 </resources>

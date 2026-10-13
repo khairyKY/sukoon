@@ -1960,4 +1960,17 @@
     <string name="follow_basal_title">%1$s hasn\'t logged long-acting</string>
     <string name="follow_basal_body">It was due at %1$s. A message or a call might help.</string>
     <string name="chip_follow_basal">Long-acting not logged · due %1$s</string>
+    <string name="report_findings">What Insights found</string>
+    <string name="report_findings_note">From the same days, for your clinic: long-acting overnight and habits, lows and how they were treated, activity, mornings and meals. Never change doses from this alone.</string>
+    <string name="chip_gym_day">Gym day · %1$s</string>
+    <string name="chip_rest_day">Rest day · %1$s</string>
+    <string name="chip_steps">%1$s steps</string>
+    <string name="fitness_gym_days">Gym days</string>
+    <string name="fitness_gym_day">Gym day</string>
+    <string name="fitness_rest_day">Rest day</string>
+    <string name="fitness_gym_note">Your week still averages %1$s. A workout logged or started from Today makes any day a gym day.</string>
+    <string name="fitness_gym_hint">Tap the days you train: gym days get more, rest days give it back.</string>
+    <string name="fitness_steps">Steps today</string>
+    <string name="fitness_steps_unit">steps</string>
+    <string name="fitness_steps_note">From Health Connect. Walking counts as easy activity.</string>
 </resources>

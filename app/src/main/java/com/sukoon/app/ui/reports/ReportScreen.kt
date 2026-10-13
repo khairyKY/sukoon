@@ -52,6 +52,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import androidx.compose.ui.res.pluralStringResource
 
@@ -116,7 +117,7 @@ fun ReportScreen(state: ReportUiState, name: String, onSelectDays: (Int) -> Unit
                     making = true
                     scope.launch {
                         try {
-                            share(context, withContext(Dispatchers.IO) { AgpPdf.write(context, report, name) })
+                            share(context, withContext(Dispatchers.IO) { AgpPdf.write(context, report, name, clinicFindings(context, report.days.toInt())) })
                         } catch (e: Exception) {
                             context.toast(context.getString(R.string.toast_report_failed, e.message ?: e.javaClass.simpleName), long = true)
                         } finally {
@@ -160,3 +161,24 @@ private fun Metric(label: String, value: String) {
         Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
     }
 }
+
+/**
+ * For the clinic: what Insights finds over the report's days that a doctor adjusts doses from —
+ * long-acting overnight and habits, lows and their treatment, activity, dawn and meals — as the
+ * plain sentences Ask gets.
+ */
+private suspend fun clinicFindings(context: android.content.Context, days: Int): List<String> = runCatching {
+    val app = (context.applicationContext as com.sukoon.app.SukoonApp).container
+    val since = System.currentTimeMillis() - java.util.concurrent.TimeUnit.DAYS.toMillis(days.toLong())
+    val readings = app.glucoseRepository.readingsSince(since).first()
+    val events = app.logbookRepository.eventsSince(since).first()
+    com.sukoon.app.insights.InsightEngine.analyze(readings, events, java.time.Instant.now(), java.time.ZoneId.systemDefault())
+        .filter {
+            it is com.sukoon.app.insights.Insight.BasalDrift || it is com.sukoon.app.insights.Insight.BasalHabits || it is com.sukoon.app.insights.Insight.DawnRise ||
+                it is com.sukoon.app.insights.Insight.RecurringLows || it is com.sukoon.app.insights.Insight.Nights || it is com.sukoon.app.insights.Insight.LowTreatments ||
+                it is com.sukoon.app.insights.Insight.Rebounds || it is com.sukoon.app.insights.Insight.ActivityEffects || it is com.sukoon.app.insights.Insight.ActivityLows ||
+                it is com.sukoon.app.insights.Insight.MealOutcomes || it is com.sukoon.app.insights.Insight.Stacking
+        }
+        .map { com.sukoon.app.ai.AiPrompts.insightLine(it) }
+}.getOrDefault(emptyList())
+

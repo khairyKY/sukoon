@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -109,6 +110,8 @@ fun FitnessPage(keeper: ModesKeeper, profile: Profile, onEditProfile: () -> Unit
         )
     }
 
+    if (targets?.kcal != null) GymDays(keeper, goal, targets.kcal)
+    StepsToday()
     WeightSection(goal.kind, profile)
 
     Label(stringResource(R.string.fitness_training))
@@ -169,6 +172,63 @@ private fun WeightSection(kind: GoalKind, profile: Profile) {
             stringResource(R.string.fitness_log_weight), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = SageDeep,
             modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable { container.requestedEntry.value = LogEventType.WEIGHT }.padding(vertical = 6.dp),
         )
+    }
+}
+
+/** Gym days: tap the days you train; gym and rest days then get their own calories, the week the same. */
+@Composable
+private fun GymDays(keeper: ModesKeeper, goal: com.sukoon.app.modes.GoalSettings, kcal: Int) {
+    val n = NumberFormat.getIntegerInstance()
+    Label(stringResource(R.string.fitness_gym_days))
+    val first = java.time.temporal.WeekFields.of(java.util.Locale.getDefault()).firstDayOfWeek
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        (0L until 7L).map { first.plus(it) }.forEach { d ->
+            val on = d in goal.gymDays
+            Box(
+                Modifier.weight(1f).heightIn(min = 44.dp).clip(RoundedCornerShape(12.dp))
+                    .background(if (on) Sage else MaterialTheme.colorScheme.surface)
+                    .border(1.dp, outline(), RoundedCornerShape(12.dp))
+                    .clickable { keeper.goal = goal.copy(gymDays = if (on) goal.gymDays - d else goal.gymDays + d) },
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(d.getDisplayName(java.time.format.TextStyle.NARROW, java.util.Locale.getDefault()), fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                    color = if (on) androidx.compose.ui.graphics.Color.White else MaterialTheme.colorScheme.onBackground)
+            }
+        }
+    }
+    if (goal.gymDays.isNotEmpty() && goal.gymDays.size < 7) {
+        val gym = Goals.dayKcal(kcal, goal, true)
+        val rest = Goals.dayKcal(kcal, goal, false)
+        Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            DayCard(stringResource(R.string.fitness_gym_day), n.format(gym), "+" + (gym - kcal), true, Modifier.weight(1f))
+            DayCard(stringResource(R.string.fitness_rest_day), n.format(rest), "−" + (kcal - rest), false, Modifier.weight(1f))
+        }
+        Small(stringResource(R.string.fitness_gym_note, n.format(kcal)), muted = true)
+    } else {
+        Small(stringResource(R.string.fitness_gym_hint), muted = true)
+    }
+}
+
+@Composable
+private fun DayCard(label: String, kcal: String, change: String, gym: Boolean, modifier: Modifier) = Column(
+    modifier.clip(RoundedCornerShape(18.dp)).background(if (gym) com.sukoon.app.ui.theme.SageMist else MaterialTheme.colorScheme.surface)
+        .border(1.dp, outline(), RoundedCornerShape(18.dp)).padding(14.dp),
+) {
+    Text(label.uppercase(), fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp, color = if (gym) SageDeep else CaptionMuted)
+    Text(kcal, fontFamily = HeadlineSerifFontFamily, fontSize = 30.sp, color = MaterialTheme.colorScheme.onBackground)
+    Text(stringResource(R.string.fitness_kcal_change, change), fontSize = 12.sp, color = CaptionMuted)
+}
+
+/** Steps so far today, from Health Connect: they count as easy activity. */
+@Composable
+private fun StepsToday() {
+    val health = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.healthConnect
+    val steps by androidx.compose.runtime.produceState<Long?>(null) { value = runCatching { health.today().steps }.getOrNull() }
+    val s = steps ?: return
+    Label(stringResource(R.string.fitness_steps))
+    Card {
+        Big(NumberFormat.getIntegerInstance().format(s), stringResource(R.string.fitness_steps_unit))
+        Text(stringResource(R.string.fitness_steps_note), fontSize = 12.5.sp, color = CaptionMuted)
     }
 }
 
