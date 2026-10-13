@@ -31,10 +31,16 @@ data class AlarmSettings(
     val sounds: Map<AlarmType, AlarmSound> = emptyMap(),
     /** Sukoon's own sounds, as a set. */
     val soundPack: SoundPack = SoundPack.ASTRAL,
+    /** Per-alarm vibration; absent = [HapticPattern.defaultFor]. Read it through [hapticFor]. */
+    val haptics: Map<AlarmType, HapticPattern> = emptyMap(),
     /** Local hours with no high alarm (wrapping midnight); -1 = off. Lows are never quiet. */
     val quietHighsFrom: Int = -1,
     val quietHighsTo: Int = -1,
 ) {
+    /** The pattern [type] vibrates with: urgent low never [HapticPattern.OFF]. */
+    fun hapticFor(type: AlarmType): HapticPattern =
+        haptics[type]?.takeIf { it in HapticPattern.choicesFor(type) } ?: HapticPattern.defaultFor(type)
+
     fun quietAt(hour: Int): Boolean {
         if (quietHighsFrom !in 0..23 || quietHighsTo !in 0..23 || quietHighsFrom == quietHighsTo) return false
         return if (quietHighsFrom < quietHighsTo) hour in quietHighsFrom until quietHighsTo else hour >= quietHighsFrom || hour < quietHighsTo
@@ -88,8 +94,11 @@ object AlarmEngine {
     private const val HIGH_HYSTERESIS = 10
     private const val PROJECTION_MINUTES = 20.0
 
-    /** [recent] = the last ~30 min of live readings, any order. */
-    fun evaluate(recent: List<GlucoseReading>, now: Instant, settings: AlarmSettings, state: AlarmState, zone: ZoneId = ZoneId.systemDefault()): Evaluation {
+    /**
+     * [recent] = the last ~30 min of live readings, any order. [pausedUntil]: "pause all alarms";
+     * until then nothing fires but urgent low, and what was held back fires once the pause ends.
+     */
+    fun evaluate(recent: List<GlucoseReading>, now: Instant, settings: AlarmSettings, state: AlarmState, zone: ZoneId = ZoneId.systemDefault(), pausedUntil: Instant? = null): Evaluation {
         val latest = recent.maxByOrNull { it.timestamp }
         val age = latest?.let { Duration.between(it.timestamp, now) }
         val fresh = age != null && age <= HomeUiStateMapper.STALE_AFTER
@@ -128,6 +137,7 @@ object AlarmEngine {
                 if (type == AlarmType.LOW && was(AlarmType.URGENT_LOW)) lastAlertAt[type] = now
             }
             if (snoozedUntil[type]?.isAfter(now) == true) continue
+            if (type != AlarmType.URGENT_LOW && pausedUntil?.isAfter(now) == true) continue
             val last = lastAlertAt[type]
             if (last == null || Duration.between(last, now) >= repeatFor(type, settings)) {
                 lastAlertAt[type] = now

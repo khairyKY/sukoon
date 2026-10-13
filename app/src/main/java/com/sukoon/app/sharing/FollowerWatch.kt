@@ -106,7 +106,7 @@ class FollowerWatch(
             // A person whose service is down (LibreLinkUp, Dexcom) is skipped this minute; the rest are still checked.
             runCatching {
                 val recent = (sharing.readingsOf(person.id, now.minus(WINDOW).toEpochMilli()) + listOfNotNull(person.latest)).distinctBy { it.timestamp }
-                val result = AlarmEngine.evaluate(recent, now, alarmSettings, states[person.id] ?: AlarmState())
+                val result = AlarmEngine.evaluate(recent, now, alarmSettings, states[person.id] ?: AlarmState(), pausedUntil = settings.alarmsPausedUntil)
                 states[person.id] = result.state
                 publish() // before showing: the alert screen checks it as it opens
                 result.cleared.forEach { notifier.cancel(it, person.id) }

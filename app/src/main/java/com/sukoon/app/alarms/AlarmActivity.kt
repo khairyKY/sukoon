@@ -146,6 +146,10 @@ class AlarmActivity : ComponentActivity() {
                             snoozes = s.type.snoozeChoices,
                             onSnooze = { snooze(it, treated = false) },
                             secondary = if (treatable && !s.test) stringResource(R.string.alarm_action_log_food) else null,
+                            // Your own alarms, not urgent low, and not behind the parent lock.
+                            pauseAll = if (s.person == null && !s.test && s.type != AlarmType.URGENT_LOW && !lockedAlarms(container)) {
+                                { answer { container.alarms.pauseAll(PAUSE_FROM_ALARM_MINUTES) } }
+                            } else null,
                             onSecondary = {
                                 startActivity(com.sukoon.app.MainActivity.logTreatment(this@AlarmActivity))
                                 finish()
@@ -216,6 +220,13 @@ class AlarmActivity : ComponentActivity() {
     }
 }
 
+/** "Pause all alarms" from an alarm's screen: an hour. */
+private const val PAUSE_FROM_ALARM_MINUTES = 60
+
+/** The parent lock guards alarms for under-18s: then pausing them needs the PIN, in You → Alarms. */
+private fun lockedAlarms(container: com.sukoon.app.di.AppContainer): Boolean =
+    container.settings.parentPin != null && com.sukoon.app.platform.ParentLock.appliesTo(container.settings.profile.ageYears)
+
 /** Lows in the alarm red, highs in deep amber, lost signal in the dark canvas: white text reads on all three. */
 private val AlarmType.screenColor: Color
     get() = when (this) {
@@ -245,6 +256,8 @@ private fun Takeover(
     /** A second, outlined button under the main one (a low's "Log what I ate"). */
     secondary: String? = null,
     onSecondary: () -> Unit = {},
+    /** "Pause all alarms for 1 h", as a link at the bottom; null hides it. */
+    pauseAll: (() -> Unit)? = null,
     onAction: () -> Unit,
 ) {
     // Motion spec: scales in from 93 % over 560 ms; the reading breathes with the live-dot rhythm.
@@ -321,6 +334,16 @@ private fun Takeover(
                     }
                 }
             }
+        }
+        pauseAll?.let {
+            Spacer(Modifier.height(16.dp))
+            Text(
+                stringResource(R.string.alarm_pause_all),
+                color = Color.White,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = it).padding(horizontal = 12.dp, vertical = 12.dp),
+            )
         }
     }
 }

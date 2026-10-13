@@ -161,6 +161,32 @@ class AlarmMonitor(
     /** You → Alarms → See and hear: [type]'s real path (sound, notification, full screen) with a sample value, marked as a test. */
     fun test(type: AlarmType) = notifier.show(Alert(type, TEST_VALUES[type], 25), settings.alarmSettings, test = true)
 
+    private val _pausedUntil = MutableStateFlow(settings.alarmsPausedUntil?.takeIf { it.isAfter(Instant.now()) })
+
+    /** "Pause all alarms": until when, while it lasts (null when not paused). Now and You → Alarms show it. */
+    val pausedUntil: StateFlow<Instant?> = _pausedUntil.asStateFlow()
+
+    /** Every alarm but urgent low stays quiet for [minutes]; what's sounding now stops (urgent low keeps going). */
+    suspend fun pauseAll(minutes: Int) {
+        val until = Instant.now().plus(Duration.ofMinutes(minutes.toLong()))
+        settings.alarmsPausedUntil = until
+        _pausedUntil.value = until
+        mutex.withLock {
+            state.activeSince.keys.filter { it != AlarmType.URGENT_LOW }.forEach(notifier::cancel)
+            evaluateLocked()
+        }
+    }
+
+    /** Back on now: anything still true fires straight away. */
+    suspend fun resumeAll() {
+        settings.alarmsPausedUntil = null
+        _pausedUntil.value = null
+        mutex.withLock { evaluateLocked() }
+    }
+
+    /** You → Alarms → a vibration pattern: feel it for a few seconds. */
+    fun feel(pattern: HapticPattern, type: AlarmType) = notifier.feel(pattern, type.loud)
+
     /** You → Alarms → a sound's "Play it". */
     fun preview(type: AlarmType) = notifier.preview(type, settings.alarmSettings)
 
@@ -192,7 +218,9 @@ class AlarmMonitor(
         // The newest reading always counts, however old: the 30-minute window alone would forget it and end
         // "no readings" (and its emergency escalation) half an hour after the sensor went quiet.
         val alarmSettings = settings.alarmSettings.let { if (warmingUp()) it.copy(signalLossEnabled = false) else it }
-        val result = AlarmEngine.evaluate((recent.values + listOfNotNull(newest)).distinct(), now, alarmSettings, state)
+        // A pause that has run out: alarms are back (and anything still true fires below).
+        if (_pausedUntil.value?.isAfter(now) == false) _pausedUntil.value = null
+        val result = AlarmEngine.evaluate((recent.values + listOfNotNull(newest)).distinct(), now, alarmSettings, state, pausedUntil = _pausedUntil.value)
         state = result.state
         _active.value = state.activeSince.keys // before showing: the alert screen checks it as it opens
         result.cleared.forEach {

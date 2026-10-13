@@ -118,6 +118,7 @@ import com.sukoon.app.ui.sharing.LibreLinkUpSection
 import com.sukoon.app.sharing.LibreLinkUp
 import androidx.compose.runtime.produceState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 import com.sukoon.app.ui.sharing.DexcomSection
 import com.sukoon.app.platform.Updates
 import androidx.compose.ui.res.pluralStringResource
@@ -356,7 +357,13 @@ fun SettingsScreen(
                             }
                             RangeCard(targetHigh, guarded(onTargetHigh))
                             Gap()
-                            AlarmSettingsSection(alarmSettings, guarded(onAlarmSettings), onTestAlarm, onPreviewAlarm, onPreviewPack)
+                            AlarmSettingsSection(
+                                alarmSettings, guarded(onAlarmSettings), onTestAlarm, onPreviewAlarm, onPreviewPack,
+                                onPause = guarded { minutes: Int ->
+                                    val app = (context.applicationContext as com.sukoon.app.SukoonApp).container
+                                    app.appScope.launch { app.alarms.pauseAll(minutes) }
+                                },
+                            )
                             Gap()
                             SectionLabel(stringResource(R.string.workout_check_section))
                             GentleChecks()

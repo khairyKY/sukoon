@@ -1905,4 +1905,18 @@
     <string name="new_follower_remove">أزل</string>
     <string name="new_follower_removed">%1$s لم يعد يتابعك</string>
     <string name="new_follower_remove_failed">تعذّرت إزالة %1$s. افتح سكون ← حسابي ← الأشخاص.</string>
+    <string name="haptic_label">الاهتزاز</string>
+    <string name="haptic_sos">استغاثة</string>
+    <string name="haptic_pulse">نبض</string>
+    <string name="haptic_heartbeat">دقات القلب</string>
+    <string name="haptic_rising">متصاعد</string>
+    <string name="haptic_tap">نقرة</string>
+    <string name="haptic_off">إيقاف</string>
+    <string name="pause_title">إيقاف التنبيهات مؤقتًا</string>
+    <string name="pause_body">تصمت كل التنبيهات عدا الهبوط الشديد (تحت %1$d)، ثم تعود كلها وحدها.</string>
+    <string name="pause_until">التنبيهات متوقفة حتى %1$s</string>
+    <string name="pause_urgent_still">الهبوط الشديد (تحت %1$d) ما زال يرن.</string>
+    <string name="pause_resume">استئناف</string>
+    <string name="home_alarms_paused">التنبيهات متوقفة حتى %1$s · اضغط لإعادتها</string>
+    <string name="alarm_pause_all">أوقف كل التنبيهات لمدة ساعة</string>
 </resources>

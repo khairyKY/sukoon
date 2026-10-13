@@ -1781,4 +1781,18 @@
     <string name="new_follower_remove">Remove</string>
     <string name="new_follower_removed">%1$s no longer follows you</string>
     <string name="new_follower_remove_failed">Couldn\'t remove %1$s. Open Sukoon → You → People.</string>
+    <string name="haptic_label">Vibration</string>
+    <string name="haptic_sos">SOS</string>
+    <string name="haptic_pulse">Pulse</string>
+    <string name="haptic_heartbeat">Heartbeat</string>
+    <string name="haptic_rising">Rising</string>
+    <string name="haptic_tap">Tap</string>
+    <string name="haptic_off">Off</string>
+    <string name="pause_title">Pause alarms</string>
+    <string name="pause_body">Every alarm except urgent low (under %1$d) stays quiet, then they all come back by themselves.</string>
+    <string name="pause_until">Alarms paused until %1$s</string>
+    <string name="pause_urgent_still">Urgent low (under %1$d) still sounds.</string>
+    <string name="pause_resume">Resume</string>
+    <string name="home_alarms_paused">Alarms paused until %1$s · tap to turn them back on</string>
+    <string name="alarm_pause_all">Pause all alarms for 1 h</string>
 </resources>

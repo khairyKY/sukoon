@@ -78,6 +78,9 @@ class AlarmNotifier(private val context: Context, private val log: AlarmLog) {
     private var playing: AlarmType? = null
     private var playingFor: String? = null // whose alarm is sounding: a followed person's id, or null for this phone's own
     private val audio = context.getSystemService(AudioManager::class.java)
+    private val vibrator: android.os.Vibrator =
+        if (Build.VERSION.SDK_INT >= 31) context.getSystemService(android.os.VibratorManager::class.java).defaultVibrator
+        else @Suppress("DEPRECATION") context.getSystemService(android.os.Vibrator::class.java)
     private var restoreVolume: Int? = null // the alarm volume before a low raised it
     private val wakeLock = context.getSystemService(PowerManager::class.java)
         .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "sukoon:emergency")
@@ -199,9 +202,18 @@ class AlarmNotifier(private val context: Context, private val log: AlarmLog) {
         if (type == playing && person == playingFor) stopSound()
     }
 
+    /** You → Alarms → a vibration: a few seconds of [pattern], as a low ([loud]) or a high would feel it. */
+    @Synchronized
+    fun feel(pattern: HapticPattern, loud: Boolean) {
+        stopSound()
+        vibrate(pattern, loud)
+        main.postDelayed(::stopSound, PREVIEW_MS)
+    }
+
     @Synchronized
     fun stopSound() {
         main.removeCallbacksAndMessages(null)
+        runCatching { vibrator.cancel() }
         player?.release()
         player = null
         playing = null
@@ -228,10 +240,28 @@ class AlarmNotifier(private val context: Context, private val log: AlarmLog) {
         // Your choice, else this alarm's sound from your pack, else the phone's: one always plays.
         val candidates = (listOfNotNull(settings.sounds[type]?.uri?.let(Uri::parse), SukoonSounds.uri(context, settings.soundPack, SoundRole.of(type))) + defaults).distinct()
         player = candidates.firstNotNullOfOrNull { start(context, it, attributes, loop) }
+        vibrate(settings.hapticFor(type), type.loud)
         playing = type
         playingFor = person
         main.postDelayed(::stopSound, durationMs)
         return player != null
+    }
+
+    /**
+     * [pattern], repeating until [stopSound]. Lows vibrate as alarms (through silent mode and DND's
+     * "alarms"); highs and signal loss as notifications, like their sounds.
+     */
+    private fun vibrate(pattern: HapticPattern, loud: Boolean) {
+        if (!vibrator.hasVibrator()) return
+        val effect = pattern.effect(vibrator.hasAmplitudeControl()) ?: return
+        runCatching {
+            if (Build.VERSION.SDK_INT >= 33) {
+                vibrator.vibrate(effect, android.os.VibrationAttributes.createForUsage(if (loud) android.os.VibrationAttributes.USAGE_ALARM else android.os.VibrationAttributes.USAGE_NOTIFICATION))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(effect, AudioAttributes.Builder().setUsage(if (loud) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_NOTIFICATION_EVENT).build())
+            }
+        }.onFailure { Log.w(TAG, "Can't vibrate", it) }
     }
 
     /**
@@ -260,19 +290,19 @@ class AlarmNotifier(private val context: Context, private val log: AlarmLog) {
     /**
      * Channels are immutable once created, and DND bypass only sticks if DND access was granted
      * at creation — so the urgent/low channel ids carry a suffix and are recreated once access is.
-     * The channels are silent (vibration only): [play] makes the sound.
+     * The channels neither sound nor vibrate: [play] does both, with the alarm's own sound and pattern.
      */
     private fun channelFor(type: AlarmType): String {
         val dnd = manager.isNotificationPolicyAccessGranted
         return when (type) {
-            AlarmType.URGENT_LOW -> ensure("alarm2_urgent" + if (dnd) "_dnd" else "", R.string.alarm_channel_urgent, NotificationManager.IMPORTANCE_HIGH, bypassDnd = dnd, vibration = URGENT_VIBRATION)
-            AlarmType.LOW, AlarmType.GOING_LOW -> ensure("alarm2_low" + if (dnd) "_dnd" else "", R.string.alarm_channel_low, NotificationManager.IMPORTANCE_HIGH, bypassDnd = dnd, vibration = LOW_VIBRATION)
-            AlarmType.HIGH -> ensure("alarm2_high", R.string.alarm_channel_high, NotificationManager.IMPORTANCE_HIGH, bypassDnd = false, vibration = LOW_VIBRATION)
-            AlarmType.SIGNAL_LOSS -> ensure("alarm3_signal", R.string.alarm_channel_signal, NotificationManager.IMPORTANCE_HIGH, bypassDnd = false, vibration = null)
+            AlarmType.URGENT_LOW -> ensure("alarm4_urgent" + if (dnd) "_dnd" else "", R.string.alarm_channel_urgent, NotificationManager.IMPORTANCE_HIGH, bypassDnd = dnd)
+            AlarmType.LOW, AlarmType.GOING_LOW -> ensure("alarm4_low" + if (dnd) "_dnd" else "", R.string.alarm_channel_low, NotificationManager.IMPORTANCE_HIGH, bypassDnd = dnd)
+            AlarmType.HIGH -> ensure("alarm4_high", R.string.alarm_channel_high, NotificationManager.IMPORTANCE_HIGH, bypassDnd = false)
+            AlarmType.SIGNAL_LOSS -> ensure("alarm4_signal", R.string.alarm_channel_signal, NotificationManager.IMPORTANCE_HIGH, bypassDnd = false)
         }
     }
 
-    private fun ensure(id: String, nameRes: Int, importance: Int, bypassDnd: Boolean, vibration: LongArray?): String {
+    private fun ensure(id: String, nameRes: Int, importance: Int, bypassDnd: Boolean): String {
         if (manager.getNotificationChannel(id) == null) {
             // Drop the pre-DND-access twin so the user doesn't see two copies in settings, and the
             // first-generation channels, which played their own (fixed) sound.
@@ -281,10 +311,7 @@ class AlarmNotifier(private val context: Context, private val log: AlarmLog) {
             manager.createNotificationChannel(
                 NotificationChannel(id, context.getString(nameRes), importance).apply {
                     setSound(null, null)
-                    if (vibration != null) {
-                        enableVibration(true)
-                        vibrationPattern = vibration
-                    }
+                    enableVibration(false)
                     setBypassDnd(bypassDnd)
                     lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
                 },
@@ -309,9 +336,11 @@ class AlarmNotifier(private val context: Context, private val log: AlarmLog) {
         private const val COUNTDOWN_ID = 2000
         private const val SENT_ID = 2001
         private val TIME: DateTimeFormatter get() = TimeFormat.of()
-        private val URGENT_VIBRATION = longArrayOf(0, 800, 400, 800, 400, 800, 400, 1600)
-        private val LOW_VIBRATION = longArrayOf(0, 600, 300, 600)
-        private val LEGACY_CHANNELS = listOf("alarm_urgent", "alarm_urgent_dnd", "alarm_low", "alarm_low_dnd", "alarm_high", "alarm_signal", "alarm2_signal")
+        private val LEGACY_CHANNELS = listOf(
+            "alarm_urgent", "alarm_urgent_dnd", "alarm_low", "alarm_low_dnd", "alarm_high", "alarm_signal", "alarm2_signal",
+            // vibrated with a fixed pattern of their own, before the per-alarm patterns
+            "alarm2_urgent", "alarm2_urgent_dnd", "alarm2_low", "alarm2_low_dnd", "alarm2_high", "alarm3_signal",
+        )
 
         /** A started player for [uri], or null if it can't play (missing file, lost permission, unsupported format). */
         private fun start(context: Context, uri: Uri, attributes: AudioAttributes, loop: Boolean): MediaPlayer? {
