@@ -2132,4 +2132,22 @@
     <string name="supply_low_rapid">سريع المفعول: فاضل حوالي %1$d أيام</string>
     <string name="chip_supply_low">%1$s: فاضل %2$d أيام</string>
     <string name="supply_channel">المستلزمات والاستلام</string>
+    <string name="sharing_modes">ورّي متابعيني أنا بعمل إيه</string>
+    <string name="sharing_modes_body">التمرين والصيام وأيام التعب والتنبيهات الواقفة، على شاشتهم.</string>
+    <string name="follow_paused">%1$s وقّف التنبيهات · لحد %2$s</string>
+    <string name="follow_mode_workout">%1$s بيتمرن</string>
+    <string name="follow_mode_workout_sub">لحد %1$s · تنبيه الهبوط على 100</string>
+    <string name="follow_mode_ends">بيخلص %1$s</string>
+    <string name="follow_mode_workout_means">تنبيه الهبوط على 100 لحد %1$s، وبعدين على %2$d الليلة. الحديد ممكن يعلّي السكر دلوقتي وينزّله بعدين.</string>
+    <string name="follow_mode_fasting">%1$s صايم</string>
+    <string name="follow_mode_fasting_sub">الفطار %1$s</string>
+    <string name="follow_mode_fajr">الفجر %1$s</string>
+    <string name="follow_mode_maghrib">المغرب %1$s</string>
+    <string name="follow_mode_fasting_means">الصيام بيتكسر تحت 70 أو فوق 300. بين 70 و90 يقيس تاني خلال ساعة.</string>
+    <string name="follow_mode_sick">%1$s تعبان</string>
+    <string name="follow_mode_sick_sub">يوم تعب من %1$s</string>
+    <string name="follow_mode_ketones">الكيتونات %1$s الساعة %2$s</string>
+    <string name="follow_mode_no_ketones">لسه مفيش كيتونات متسجلة</string>
+    <string name="follow_mode_next_check">القياس الجاي %1$s</string>
+    <string name="follow_mode_sick_means">الكيتونات كل ساعتين، وتنبيهات العالي كل ساعة. 0.6 لـ 1.4 عالية؛ 1.5 أو أكتر محتاجة إنسولين زيادة؛ 3.0 طوارئ.</string>
 </resources>

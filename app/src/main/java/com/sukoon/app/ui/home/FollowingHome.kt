@@ -182,6 +182,7 @@ private fun PersonView(sharing: Sharing, settings: SettingsPrefs, person: Follow
     }
 
     FollowerChips(person)
+    person.modes?.let { ModeCards(name, it) }
 
     Column(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         val v = latest?.glucoseMgDl
@@ -268,6 +269,11 @@ private fun FollowerChips(person: Followed) {
     val chips = buildList {
         paused?.let { add(StatusChip(stringResource(R.string.chip_paused, time.format(it)), attention = true) { app.appScope.launch { app.alarms.resumeAll() } }) }
         person.basalMissedSince?.let { add(StatusChip(stringResource(R.string.chip_follow_basal, time.format(it)), attention = true) {}) }
+        person.modes?.let { m ->
+            val now = Instant.now()
+            if (m.paused(now)) add(StatusChip(stringResource(R.string.follow_paused, person.name.ifBlank { "…" }, time.format(m.pausedUntil!!)), attention = true) {})
+            if (m.nightLow && !m.working(now)) add(StatusChip(stringResource(R.string.chip_late_low, com.sukoon.app.modes.Modes.NIGHT_LOW)) {})
+        }
         if (paused == null) add(StatusChip(stringResource(R.string.today_pause), attention = false) { pausing = true })
     }
     StatusChips(chips, Modifier.padding(top = 6.dp))
@@ -288,6 +294,81 @@ private fun FollowerChips(person: Followed) {
                 }
             }
         }
+    }
+}
+
+/**
+ * What they're doing, big (design: "Followers see your modes"): a card per mode with its picture,
+ * a bar for how far along it is, and what it means for their alarms.
+ */
+@Composable
+private fun ModeCards(name: String, m: com.sukoon.app.sharing.SharedModes) {
+    val now by produceState(Instant.now()) { while (true) { delay(30_000); value = Instant.now() } }
+    val time = com.sukoon.app.platform.TimeFormat.of()
+    val dark = com.sukoon.app.ui.theme.LocalDarkTheme.current
+    if (m.working(now)) {
+        val from = m.workoutFrom ?: m.workoutUntil!!.minus(Duration.ofHours(1))
+        ModeCard(
+            R.drawable.ic_walk, PillHighBg, PillHighText,
+            stringResource(R.string.follow_mode_workout, name), stringResource(R.string.follow_mode_workout_sub, time.format(m.workoutUntil!!)),
+            fraction(from, m.workoutUntil, now), time.format(from), stringResource(R.string.follow_mode_ends, time.format(m.workoutUntil)),
+            stringResource(R.string.follow_mode_workout_means, time.format(m.workoutUntil), com.sukoon.app.modes.Modes.NIGHT_LOW),
+        )
+    }
+    if (m.fasting(now)) {
+        val zone = ZoneId.systemDefault()
+        val today = java.time.LocalDate.now(zone)
+        val s = m.suhoorEnds!!.atDate(today).atZone(zone).toInstant()
+        val i = m.iftar!!.atDate(today).atZone(zone).toInstant()
+        ModeCard(
+            R.drawable.ic_moon, if (dark) androidx.compose.ui.graphics.Color(0xFF2E2A44) else androidx.compose.ui.graphics.Color(0xFFE0DCF2),
+            if (dark) androidx.compose.ui.graphics.Color(0xFFB0A8E0) else androidx.compose.ui.graphics.Color(0xFF4B4285),
+            stringResource(R.string.follow_mode_fasting, name), stringResource(R.string.follow_mode_fasting_sub, time.format(m.iftar)),
+            fraction(s, i, now), stringResource(R.string.follow_mode_fajr, time.format(m.suhoorEnds)), stringResource(R.string.follow_mode_maghrib, time.format(m.iftar)),
+            stringResource(R.string.follow_mode_fasting_means),
+        )
+    }
+    m.sickSince?.let { since ->
+        val last = m.ketonesAt ?: since
+        val next = last.plus(com.sukoon.app.modes.Modes.KETONES_EVERY)
+        ModeCard(
+            R.drawable.ic_drop, PillLowBg, PillLowText,
+            stringResource(R.string.follow_mode_sick, name), stringResource(R.string.follow_mode_sick_sub, time.format(since)),
+            fraction(last, next, now),
+            m.ketones?.let { stringResource(R.string.follow_mode_ketones, com.sukoon.app.ui.logbook.formatAmountLocalized(it), time.format(m.ketonesAt!!)) } ?: stringResource(R.string.follow_mode_no_ketones),
+            stringResource(R.string.follow_mode_next_check, time.format(next)),
+            stringResource(R.string.follow_mode_sick_means),
+        )
+    }
+}
+
+private fun fraction(from: Instant, to: Instant, now: Instant): Float =
+    (Duration.between(from, now).toMillis().toFloat() / Duration.between(from, to).toMillis().coerceAtLeast(1)).coerceIn(0f, 1f)
+
+@Composable
+private fun ModeCard(icon: Int, bg: androidx.compose.ui.graphics.Color, ink: androidx.compose.ui.graphics.Color, title: String, sub: String, progress: Float, left: String, right: String, means: String) {
+    Column(
+        Modifier.fillMaxWidth().padding(top = 12.dp).clip(RoundedCornerShape(24.dp)).background(bg).padding(18.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            Box(Modifier.size(56.dp).clip(RoundedCornerShape(18.dp)).background(ink.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+                Icon(painterResource(icon), contentDescription = null, tint = ink, modifier = Modifier.size(30.dp))
+            }
+            Column {
+                Text(title, fontFamily = HeadlineSerifFontFamily, fontSize = 23.sp, lineHeight = 26.sp, color = ink)
+                Text(sub, fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground)
+            }
+        }
+        Box(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(50)).background(ink.copy(alpha = 0.18f))) {
+            Box(Modifier.fillMaxWidth(progress).height(8.dp).clip(RoundedCornerShape(50)).background(ink))
+        }
+        Row(Modifier.fillMaxWidth()) {
+            Text(left, fontSize = 12.5.sp, color = CaptionMuted, modifier = Modifier.weight(1f))
+            Text(right, fontSize = 12.5.sp, color = CaptionMuted)
+        }
+        Text(means, fontSize = 13.5.sp, lineHeight = 19.sp, color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(ink.copy(alpha = 0.10f)).padding(horizontal = 12.dp, vertical = 10.dp))
     }
 }
 

@@ -2136,4 +2136,22 @@
     <string name="supply_low_rapid">سريع المفعول: نحو %1$d أيام متبقية</string>
     <string name="chip_supply_low">%1$s: %2$d أيام متبقية</string>
     <string name="supply_channel">المستلزمات والاستلام</string>
+    <string name="sharing_modes">أظهر لمتابعيّ ما أفعله</string>
+    <string name="sharing_modes_body">التمرين والصيام وأيام المرض والتنبيهات الموقوفة، على شاشتهم.</string>
+    <string name="follow_paused">أوقف %1$s التنبيهات · حتى %2$s</string>
+    <string name="follow_mode_workout">%1$s يتمرّن</string>
+    <string name="follow_mode_workout_sub">حتى %1$s · تنبيه الهبوط عند 100</string>
+    <string name="follow_mode_ends">ينتهي %1$s</string>
+    <string name="follow_mode_workout_means">تنبيه الهبوط عند 100 حتى %1$s، ثم عند %2$d الليلة. رفع الأثقال قد يرفع السكر الآن ويخفضه لاحقًا.</string>
+    <string name="follow_mode_fasting">%1$s صائم</string>
+    <string name="follow_mode_fasting_sub">الإفطار %1$s</string>
+    <string name="follow_mode_fajr">الفجر %1$s</string>
+    <string name="follow_mode_maghrib">المغرب %1$s</string>
+    <string name="follow_mode_fasting_means">يُكسر الصيام تحت 70 أو فوق 300. بين 70 و90 يُعاد الفحص خلال ساعة.</string>
+    <string name="follow_mode_sick">%1$s متوعك</string>
+    <string name="follow_mode_sick_sub">يوم مرض منذ %1$s</string>
+    <string name="follow_mode_ketones">الكيتونات %1$s الساعة %2$s</string>
+    <string name="follow_mode_no_ketones">لم تُسجَّل كيتونات بعد</string>
+    <string name="follow_mode_next_check">الفحص التالي %1$s</string>
+    <string name="follow_mode_sick_means">الكيتونات كل ساعتين، وتنبيهات الارتفاع كل ساعة. 0.6 إلى 1.4 مرتفعة؛ 1.5 فأكثر تحتاج أنسولينًا إضافيًا؛ 3.0 رعاية عاجلة.</string>
 </resources>
