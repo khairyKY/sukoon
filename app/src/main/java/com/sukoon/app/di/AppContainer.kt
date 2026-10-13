@@ -90,6 +90,10 @@ class AppContainer(private val context: Context) {
     /** You → Appearance, applied at once by MainActivity. */
     val themeMode = MutableStateFlow(settings.themeMode)
 
+    init {
+        com.sukoon.app.ui.theme.Themes.current = settings.colorTheme
+    }
+
     /** Wearer, follower or both (chosen at sign-up): what Home and Trends show. */
     val role = MutableStateFlow(settings.role)
 

@@ -42,7 +42,37 @@ import com.sukoon.app.ui.theme.Sage
 import com.sukoon.app.ui.theme.SageDeep
 import java.util.Locale
 import androidx.compose.ui.window.Dialog
+import androidx.compose.runtime.collectAsState
+import com.sukoon.app.data.db.logType
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Surface
+
+/** The last 14 days as dots, filled when long-acting was logged; today only once it is. */
+@Composable
+private fun LastDays() {
+    val logbook = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.logbookRepository
+    val zone = java.time.ZoneId.systemDefault()
+    val today = java.time.LocalDate.now(zone)
+    val since = remember { today.minusDays(14).atStartOfDay(zone).toInstant().toEpochMilli() }
+    val events by remember { logbook.eventsSince(since) }.collectAsState(initial = emptyList())
+    val days = events.filter { it.logType == com.sukoon.app.data.db.LogEventType.BASAL }
+        .map { java.time.Instant.ofEpochMilli(it.timestampMillis).atZone(zone).toLocalDate() }.toSet()
+    val end = if (today in days) today else today.minusDays(1)
+    val shown = (13 downTo 0).map { end.minusDays(it.toLong()) }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            shown.forEach { d ->
+                val on = d in days
+                androidx.compose.foundation.layout.Box(
+                    Modifier.size(14.dp).clip(androidx.compose.foundation.shape.CircleShape)
+                        .background(if (on) SageDeep else androidx.compose.ui.graphics.Color.Transparent)
+                        .border(1.5.dp, if (on) SageDeep else com.sukoon.app.ui.theme.PlaceholderMuted, androidx.compose.foundation.shape.CircleShape),
+                )
+            }
+        }
+        Text(stringResource(R.string.basal_days, shown.count { it in days }, shown.size), fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground)
+    }
+}
 
 /** "22:30" for a minute of the day. */
 fun minuteLabel(minuteOfDay: Int): String = String.format(Locale.getDefault(), "%02d:%02d", minuteOfDay / 60, minuteOfDay % 60)
@@ -93,6 +123,17 @@ fun BasalReminderCard(settings: BasalReminderSettings, onChange: (BasalReminderS
             )
         }
         usual?.let { Text(stringResource(R.string.reminder_basal_usual, minuteLabel(it)), fontSize = 12.sp, color = CaptionMuted) }
+        LastDays()
+    }
+    // What the leaflet says about a late or forgotten dose: the reminder only says when.
+    Column(
+        Modifier.fillMaxWidth().padding(top = 10.dp).clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, outline(), RoundedCornerShape(18.dp)).padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text(stringResource(R.string.basal_late_title), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+        Text(stringResource(R.string.basal_late_body), fontSize = 13.5.sp, lineHeight = 19.sp, color = MaterialTheme.colorScheme.onBackground)
+        Text(stringResource(R.string.basal_late_source), fontSize = 12.sp, color = CaptionMuted)
     }
 
     if (picking) {

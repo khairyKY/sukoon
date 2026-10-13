@@ -204,6 +204,14 @@ class SettingsPrefs(context: Context) {
         get() = ThemeMode.entries.firstOrNull { it.name == prefs.getString(KEY_THEME, null) } ?: ThemeMode.AUTO
         set(value) = prefs.edit().putString(KEY_THEME, value.name).apply()
 
+    /** You → Appearance → Colour. Setting it applies it at once ([com.sukoon.app.ui.theme.Themes]). */
+    var colorTheme: com.sukoon.app.ui.theme.ColorTheme
+        get() = com.sukoon.app.ui.theme.ColorTheme.entries.firstOrNull { it.name == prefs.getString(KEY_COLOR_THEME, null) } ?: com.sukoon.app.ui.theme.ColorTheme.SAGE
+        set(value) {
+            prefs.edit().putString(KEY_COLOR_THEME, value.name).apply()
+            com.sukoon.app.ui.theme.Themes.current = value
+        }
+
     /** What this person uses Sukoon for, chosen at sign-up (onboarding's role step). */
     var role: UserRole
         get() = UserRole.entries.firstOrNull { it.name == prefs.getString(KEY_ROLE, null) } ?: UserRole.WEARER
@@ -297,6 +305,7 @@ class SettingsPrefs(context: Context) {
         private const val KEY_FAST_RATE = "alarm_fast_rate"
         private const val KEY_ALARMS_PAUSED = "alarms_paused_until"
         private const val KEY_THEME = "theme_mode"
+        private const val KEY_COLOR_THEME = "color_theme"
         private const val KEY_TIME_FORMAT = "time_format"
         private const val KEY_INSULIN_DURATION = "insulin_duration_minutes"
         private const val KEY_EMERGENCY_NAME = "emergency_your_name"

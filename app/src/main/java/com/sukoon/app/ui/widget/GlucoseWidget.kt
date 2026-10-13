@@ -541,7 +541,7 @@ private fun rangeColor(mgDl: Int?, stale: Boolean, palette: Palette): ColorProvi
     stale || mgDl == null -> palette.muted
     mgDl < 70 -> ColorProvider(StateLow)
     mgDl > TargetRange.high -> ColorProvider(StateHigh)
-    else -> ColorProvider(Sage)
+    else -> ColorProvider(com.sukoon.app.ui.theme.InRange)
 }
 
 @Composable

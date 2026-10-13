@@ -394,6 +394,7 @@ fun MainScaffold() {
                     val modesNow by home.modes.active.collectAsStateWithLifecycle()
                     val alarmsPaused by home.alarms.pausedUntil.collectAsStateWithLifecycle()
                     val goal by home.modes.goalFlow.collectAsStateWithLifecycle()
+                    val lastBasal by remember { home.logbookRepository.latest(LogEventType.BASAL) }.collectAsStateWithLifecycle(initialValue = null)
                     val lastKetoneEvent = recentEvents.lastOrNull { it.logType == LogEventType.KETONE && it.value != null }
                     val lastKetones = lastKetoneEvent?.let { it.value!! to Instant.ofEpochMilli(it.timestampMillis) }
                     val ketonesDue = modesNow.sick && (lastKetones?.second ?: modesNow.sickSince!!) <= Instant.now().minus(com.sukoon.app.modes.Modes.KETONES_EVERY)
@@ -407,6 +408,8 @@ fun MainScaffold() {
                         onToday = { showModes = true },
                         onFitness = { openYou(YouPage.FITNESS) },
                         onFillGap = { home.requestedCheckSensor.value = true; openYou(YouPage.SENSOR) },
+                        basal = com.sukoon.app.reminders.BasalReminder.overdue(listOfNotNull(lastBasal), home.settings.basalReminder, java.time.ZonedDateTime.now()),
+                        onBasal = { home.requestedEntry.value = LogEventType.BASAL },
                     )
                     // Under the parent lock, pausing alarms asks for the PIN first.
                     var pinFor by remember { mutableStateOf<(() -> Unit)?>(null) }

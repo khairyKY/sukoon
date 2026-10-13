@@ -2038,4 +2038,27 @@
     <string name="fitness_pace_bulk_fast">أسرع من الهدف، فأكثره دهون: نحو 100 سعرة أقل يوميًا.</string>
     <string name="fitness_pace_cut_slow">أبطأ من الهدف: نحو 100 سعرة أقل يوميًا.</string>
     <string name="fitness_pace_cut_fast">أسرع من الهدف ويهدد العضل: نحو 100 سعرة أكثر يوميًا.</string>
+    <string name="you_colour">اللون</string>
+    <string name="colour_note">ألوان الطبيعي والارتفاع والهبوط ثابتة في كل الألوان.</string>
+    <string name="colour_sage">مريمية</string>
+    <string name="colour_rose">وردي</string>
+    <string name="colour_tide">بحري</string>
+    <string name="colour_dusk">غسق</string>
+    <string name="colour_lagoon">بحيرة</string>
+    <string name="colour_slate">رمادي</string>
+    <string name="chip_basal_due">موعد طويل المفعول · %1$s</string>
+    <string name="chip_basal_late">طويل المفعول متأخر %1$d س</string>
+    <string name="basal_already_title">مسجّل بالفعل: %1$s وحدة الساعة %2$s</string>
+    <string name="basal_already_body">إن لم تكن متأكدًا أنك أخذته فلا تأخذ جرعة أخرى: الجرعة المضاعفة من طويل المفعول قد تسبب هبوطًا ليوم أو أكثر.</string>
+    <string name="basal_days">سُجّل في %1$d من آخر %2$d يومًا</string>
+    <string name="basal_late_title">إن تأخرت</string>
+    <string name="basal_late_body">يمكن أخذ توجيو حتى 3 ساعات قبل موعدك المعتاد أو بعده. نسيته؟ افحص السكر، وخذ الجرعة التالية في موعدك المعتاد، ولا تضاعف الجرعة أبدًا.</string>
+    <string name="basal_late_source">نشرة توجيو (SmPC 4.2). لكل أنسولين طويل المفعول قواعده: راجع نشرتك.</string>
+    <string name="activity_what">النشاط</string>
+    <string name="activity_effort">الشدة</string>
+    <string name="effort_easy">خفيف</string>
+    <string name="effort_moderate">متوسط</string>
+    <string name="effort_hard">شاق</string>
+    <string name="activity_after">عند الحفظ: يكون تنبيه الهبوط عند %1$d الليلة، واقتراح جرعة الوجبة التالية أقل بـ%2$d%%.</string>
+    <string name="activity_after_no_cut">عند الحفظ: يكون تنبيه الهبوط عند %1$d الليلة.</string>
 </resources>

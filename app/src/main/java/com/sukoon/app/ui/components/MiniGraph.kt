@@ -83,6 +83,6 @@ internal fun homeBars(readings: List<GlucoseReading>, now: Instant, count: Int =
 
 private fun colorFor(mgDl: Int): Color = when {
     mgDl < 70 -> StateLow
-    mgDl <= TargetRange.high -> Sage
+    mgDl <= TargetRange.high -> com.sukoon.app.ui.theme.InRange
     else -> StateHigh
 }
