@@ -130,6 +130,9 @@ class AppContainer(private val context: Context) {
     /** Workout, fasting and sick-day modes: what alarms, dose suggestions and Now adjust for. */
     val modes = com.sukoon.app.modes.ModesKeeper(context, logbookRepository, appScope)
 
+    /** Pens left and the insurance pickup (You → Supplies); checked daily at 10:00. */
+    val supplies = com.sukoon.app.supplies.SuppliesStore(context).also { com.sukoon.app.supplies.SuppliesReminder.schedule(context) }
+
     /**
      * The latest weigh-in. Each new one (or an edit of it) becomes the profile's weight before this
      * emits it, so the goal's targets follow your weight.

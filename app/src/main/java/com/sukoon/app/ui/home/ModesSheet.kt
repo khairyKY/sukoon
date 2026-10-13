@@ -240,6 +240,11 @@ fun statusChips(
     /** With gym days set: whether today is one (the kcal chip says which). */
     gymDay: Boolean? = null,
     steps: Long? = null,
+    /** Kinds of insulin down to a few days: (kind name, days). */
+    lowSupply: List<Pair<String, Int>> = emptyList(),
+    /** The pickup line ("Pickup Sunday"), within its reminder days. */
+    pickup: String? = null,
+    onSupplies: () -> Unit = {},
 ): List<StatusChip> {
     val time = TimeFormat.of()
     val n = NumberFormat.getIntegerInstance()
@@ -250,6 +255,8 @@ fun statusChips(
         else stringResource(R.string.chip_basal_due, time.format(due))
         list += StatusChip(text, attention = true, onClick = onBasal)
     }
+    pickup?.let { list += StatusChip(it, attention = true, onClick = onSupplies) }
+    lowSupply.forEach { (name, days) -> list += StatusChip(stringResource(R.string.chip_supply_low, name, days), attention = true, onClick = onSupplies) }
     m.workoutUntil?.let { list += StatusChip(stringResource(R.string.chip_workout, time.format(it)), onClick = onToday) }
     if (m.workoutUntil == null && m.nightWatch) list += StatusChip(stringResource(R.string.chip_late_low, Modes.NIGHT_LOW), onClick = onToday)
     if (m.fastingNow) list += StatusChip(stringResource(R.string.chip_fasting, time.format(m.fasting.iftar)), onClick = onToday)

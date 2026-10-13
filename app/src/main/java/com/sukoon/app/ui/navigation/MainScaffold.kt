@@ -394,6 +394,10 @@ fun MainScaffold() {
                     val modesNow by home.modes.active.collectAsStateWithLifecycle()
                     val alarmsPaused by home.alarms.pausedUntil.collectAsStateWithLifecycle()
                     val goal by home.modes.goalFlow.collectAsStateWithLifecycle()
+                    val supplyStock by home.supplies.stock.collectAsStateWithLifecycle()
+                    val supplyPickup by home.supplies.pickup.collectAsStateWithLifecycle()
+                    val supplySince = remember { System.currentTimeMillis() - Duration.ofDays(120).toMillis() }
+                    val supplyEvents by remember { home.logbookRepository.eventsSince(supplySince) }.collectAsStateWithLifecycle(initialValue = emptyList())
                     // Steps so far today from Health Connect, every 5 minutes (null: not allowed or none).
                     val steps by produceState<Long?>(null) {
                         while (true) {
@@ -414,6 +418,14 @@ fun MainScaffold() {
                             day to (stats[com.sukoon.app.ui.home.HomeStat.PROTEIN] to stats[com.sukoon.app.ui.home.HomeStat.KCAL])
                         },
                         gymDay = if (goal.gymDays.isEmpty()) null else home.modes.gymToday(),
+                        lowSupply = supplyStock.mapNotNull { (k, s) ->
+                            s ?: return@mapNotNull null
+                            com.sukoon.app.supplies.Supply.daysLeft(com.sukoon.app.supplies.Supply.remaining(s, supplyEvents, k), com.sukoon.app.supplies.Supply.perDay(supplyEvents, k, Instant.now(), java.time.ZoneId.systemDefault()))
+                                ?.takeIf { it <= com.sukoon.app.supplies.Supply.LOW_DAYS }?.let { context.getString(com.sukoon.app.ui.settings.kindName(k)) to it }
+                        },
+                        pickup = com.sukoon.app.supplies.Supply.daysToPickup(supplyPickup, java.time.LocalDate.now())?.takeIf { it <= supplyPickup.remindDays }
+                            ?.let { com.sukoon.app.supplies.SuppliesReminder.pickupLine(context, it, supplyPickup.next!!) },
+                        onSupplies = { openYou(YouPage.SUPPLIES) },
                         steps = steps,
                         gap = if (source == SourceKind.LIBRE_BLE) com.sukoon.app.domain.metrics.MemoryGap.fillable(lastReadings, Instant.now()) else null,
                         ketonesDue = ketonesDue,

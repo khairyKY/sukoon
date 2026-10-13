@@ -133,6 +133,7 @@ enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
     ALARMS(R.string.you_alarms, R.drawable.ic_bell),
     PEOPLE(R.string.you_people, R.drawable.ic_people),
     INSULIN(R.string.you_insulin, R.drawable.ic_insulin),
+    SUPPLIES(R.string.you_supplies, R.drawable.ic_stat_insulin),
     FITNESS(R.string.you_fitness, R.drawable.ic_walk),
     APPS(R.string.you_apps, R.drawable.ic_link),
     REPORTS(R.string.you_reports, R.drawable.ic_doc),
@@ -267,6 +268,7 @@ fun SettingsScreen(
                         YouPage.PEOPLE to emergency.contacts.take(2).joinToString { it.name }.ifBlank { stringResource(R.string.you_people_none) },
                         YouPage.INSULIN to stringResource(R.string.you_insulin_summary, insulinAction.peakMinutes, formatHours(insulinAction.durationMinutes)),
                         YouPage.FITNESS to fitnessSummary(),
+                        YouPage.SUPPLIES to suppliesSummary(),
                         YouPage.APPS to stringResource(R.string.you_apps_summary),
                         YouPage.REPORTS to stringResource(R.string.you_reports_summary),
                         YouPage.APPEARANCE to "${themeLabel(themeMode)} · ${stringResource(colourName(com.sukoon.app.ui.theme.Themes.current))} · ${languageLabel()}",
@@ -400,6 +402,7 @@ fun SettingsScreen(
                             Gap()
                             DoseCard(doseSettings, guarded(onDoseSettings), doseStartingPoints, learningReport, insulinAction.durationMinutes / 60, profile, guarded(onProfile), locked, { askingPin = true }, parentPin, onParentPin, openLearning, onOpenedLearning)
                         }
+                        YouPage.SUPPLIES -> SuppliesPage()
                         YouPage.FITNESS -> FitnessPage(
                             (context.applicationContext as com.sukoon.app.SukoonApp).container.modes,
                             profile,
@@ -579,6 +582,23 @@ private fun NeedsYou(count: Int, first: String, onClick: () -> Unit) {
         )
         Text(stringResource(R.string.you_fix), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = PillHighText)
     }
+}
+
+/** You hub: "Long-acting 4 days · pickup Sunday", or that nothing's set up. */
+@Composable
+private fun suppliesSummary(): String {
+    val app = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container
+    val stock by app.supplies.stock.collectAsStateWithLifecycle()
+    val pickup by app.supplies.pickup.collectAsStateWithLifecycle()
+    val since = remember { java.time.Instant.now().minus(java.time.Duration.ofDays(120)).toEpochMilli() }
+    val events by remember { app.logbookRepository.eventsSince(since) }.collectAsStateWithLifecycle(initialValue = emptyList())
+    val now = java.time.Instant.now()
+    val parts = stock.mapNotNull { (k, s) ->
+        s ?: return@mapNotNull null
+        com.sukoon.app.supplies.Supply.daysLeft(com.sukoon.app.supplies.Supply.remaining(s, events, k), com.sukoon.app.supplies.Supply.perDay(events, k, now, java.time.ZoneId.systemDefault()))
+            ?.let { stringResource(R.string.supply_summary_days, stringResource(kindName(k)), it) }
+    } + listOfNotNull(pickup.next?.let { stringResource(R.string.supply_summary_pickup, it.format(java.time.format.DateTimeFormatter.ofPattern("d MMM"))) })
+    return parts.joinToString(" · ").ifEmpty { stringResource(R.string.supply_summary_none) }
 }
 
 /** You hub: "Lean bulk · 2,980 kcal", or that there's no goal. */
