@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">سكون</string>
+    <string name="glucose_label">سكر الدم</string>
+    <string name="no_readings">لا توجد قراءات بعد. يرسلها سكون من هاتفك إلى هنا.</string>
+    <string name="no_current_reading">لا توجد قراءة حالية</string>
+    <string name="now">الآن</string>
+    <string name="mg_dl">مجم/دل</string>
+    <string name="glucose_description">سكر الدم %1$d مجم/دل</string>
+    <plurals name="minutes_ago">
+        <item quantity="zero">قبل %1$d دقيقة</item>
+        <item quantity="one">قبل %1$d دقيقة</item>
+        <item quantity="two">قبل %1$d دقيقة</item>
+        <item quantity="few">قبل %1$d دقائق</item>
+        <item quantity="many">قبل %1$d دقيقة</item>
+        <item quantity="other">قبل %1$d دقيقة</item>
+    </plurals>
+</resources>

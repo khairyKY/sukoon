@@ -153,6 +153,10 @@ Someone who only follows sees a simpler app: no sensor, insulin or dose settings
 - ✅ **Nightscout upload** (readings, treatments and finger-pricks), **CSV export**, and **Backup**: one zip with the database, every setting, the sensor pairing and the meal photos, restored in one step.
 - 🌱 **Daily backup to your own cloud** (opt-in): pick a file in Google Drive, OneDrive, Dropbox or any cloud app on the phone with Android's own *save to*, and Sukoon refreshes it once a day. *Back up now* and *Stop* in You → Reports.
 
+### On your watch (Wear OS)
+
+- 🌱 **A tile and a complication.** The tile shows your number big in its range colour (green in range, amber high, red low), the arrow and how many minutes ago; it greys out after 10 minutes so an old number never passes for a current one. The complication puts the number and arrow on any watch face, as short text or on a 40–400 arc. The watch app ([`wear/`](wear/)) needs Sukoon on the paired phone: the phone sends each real reading over Google's Wear Data Layer (no demo data, nothing from a sensor's first hour), and the watch has no sensor connection of its own. Wear OS 3 and up. **Untested on hardware:** it builds, but nobody has run it on a watch yet.
+
 ### Everything else
 
 - ✅ **Your sensor at a glance.** You → Sensor says *Live*, *Reconnecting* or *No signal* from the last reading, puts what needs you on top in red or amber (Bluetooth off, no readings, sensor ending, ended) with the fix one tap away, and shows the sensor's life as a bar that turns amber 3 days before the end. *Connection* lists the last 24 hours' drops: when, how long the link had lasted, why Android says it dropped, and how soon it came back. Bluetooth off also shows on Home, and a notice comes 3 days, 1 day and 1 hour before the sensor stops.
@@ -325,6 +329,7 @@ Nothing, unless you turn it on. There are no analytics, no ads and no tracking o
 | Readings out, meals in | Health Connect, on the phone | you grant Health Connect access |
 | Your live readings, and which alarms your followers get | Your Supabase account, readable only by people you approved (row-level security) | you sign in and invite a follower |
 | Your LibreLinkUp or Dexcom login | Abbott's or Dexcom's servers, to fetch the readings you're allowed to see | you sign in to follow someone there, or use it as your glucose |
+| Your newest reading | Your Wear OS watch, through Google Play Services' Data Layer (which can relay through Google when the watch is out of Bluetooth range) | always on a phone with Play Services; it only reaches a watch with Sukoon installed |
 | Readings and treatments | Your own Nightscout site | you add its address and token |
 | Summaries of your data, your profile and dose settings, meal photos, a dish you ask about | Google Gemini, with your own API key | you add a key and ask a question or for an estimate |
 | What you type in food search, or a barcode you scan | Open Food Facts (free, open data), to find the food | you search or scan |
@@ -388,6 +393,7 @@ sukoon/
 │  ├─ insulin/ calibration/ reminders/ ai/
 │  └─ ui/                  Now · Trends · You, logbook, onboarding, guide, widgets, theme
 ├─ app/src/test/           162 unit tests
+├─ wear/                   the Wear OS tile and complication, fed by the phone (platform/WearSync.kt)
 ├─ web/                    the follow page (any browser, iPhone included), published to GitHub Pages
 ├─ supabase/migrations/    followers schema with row-level security
 ├─ tools/                  Libre test-vector reference in Python, and the alarm-sound synthesizer
