@@ -1,12 +1,12 @@
 package com.sukoon.app.ui.home
 
-import android.app.TimePickerDialog
-import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -23,19 +23,21 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sukoon.app.R
+import com.sukoon.app.alarms.AlarmMonitor
 import com.sukoon.app.modes.ActiveModes
+import com.sukoon.app.modes.GoalTargets
 import com.sukoon.app.modes.Modes
 import com.sukoon.app.modes.ModesKeeper
 import com.sukoon.app.platform.TimeFormat
@@ -47,231 +49,205 @@ import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
 import com.sukoon.app.ui.theme.PillHighBg
 import com.sukoon.app.ui.theme.PillHighText
-import com.sukoon.app.ui.theme.PillLowBg
-import com.sukoon.app.ui.theme.PillLowText
 import com.sukoon.app.ui.theme.Sage
 import com.sukoon.app.ui.theme.SageDeep
 import com.sukoon.app.ui.theme.SageMist
+import java.text.NumberFormat
 import java.time.Instant
-import java.time.LocalTime
+import kotlinx.coroutines.launch
 
-/** How long a workout started from Modes runs. */
+/** How long a workout started from Today runs, and how long alarms can pause. */
 private val WORKOUT_MINUTES = listOf(60, 90, 120)
+private val PAUSE_MINUTES = listOf(30, 60, 120, 240)
 
 /**
- * Modes, from Now's header: a workout (low alarm at 100 during it, a day of watching for late lows),
- * fasting (suhoor and iftar times, when to break the fast) and a sick day (ketones every 2 h). Every
- * rule and number is from docs/research/modes-sources.md; the lines here say where each comes from.
+ * Today (Now's sliders button): what you switch on for a while. One row each, no explanations:
+ * the why and the sources are a Guide topic ([onGuide]); the lasting settings are You → Fitness
+ * & food ([onFitness]).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ModesSheet(keeper: ModesKeeper, glucose: Int?, profile: com.sukoon.app.insulin.Profile, onLogKetones: () -> Unit, onDismiss: () -> Unit) {
+fun TodaySheet(
+    keeper: ModesKeeper,
+    alarms: AlarmMonitor,
+    glucose: Int?,
+    lastKetones: Pair<Double, Instant>?,
+    /** Under the parent lock: pausing asks for the PIN first. */
+    askPin: ((() -> Unit) -> Unit)?,
+    onLogKetones: () -> Unit,
+    onFitness: () -> Unit,
+    onGuide: () -> Unit,
+    onDismiss: () -> Unit,
+) {
     val m by keeper.active.collectAsState()
+    val paused by alarms.pausedUntil.collectAsState()
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val time = TimeFormat.of()
     SukoonSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(
-            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text(stringResource(R.string.modes_title), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground)
-            Text(stringResource(R.string.modes_body), fontSize = 13.5.sp, lineHeight = 19.sp, color = CaptionMuted)
-            BulkCard(keeper, profile)
-            WorkoutCard(keeper, m, glucose)
-            FastingCard(keeper, m)
-            SickCard(keeper, m, onLogKetones)
+            Text(stringResource(R.string.today_title), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground)
+
+            // Pause alarms
+            val pausedAt = paused
+            TodayRow(stringResource(R.string.today_pause), if (pausedAt != null) stringResource(R.string.today_pause_until, time.format(pausedAt)) else stringResource(R.string.today_pause_note)) {
+                if (pausedAt != null) Action(stringResource(R.string.today_resume)) { scope.launch { alarms.resumeAll() } }
+            }
+            if (pausedAt == null) {
+                val durations = remember(context) { PAUSE_MINUTES.associateWith { lengthLabel(context, it) } }
+                ChoiceChips(PAUSE_MINUTES, -1, { durations.getValue(it) }) { minutes ->
+                    val pause: () -> Unit = { scope.launch { alarms.pauseAll(minutes) } }
+                    if (askPin != null) askPin(pause) else pause()
+                }
+            }
+
+            // Workout
+            val until = m.workoutUntil
+            TodayRow(
+                stringResource(R.string.today_workout),
+                when {
+                    until != null -> stringResource(R.string.today_workout_until, time.format(until), Modes.WORKOUT_LOW)
+                    m.lateLowWatch -> stringResource(R.string.today_late_low, Modes.NIGHT_LOW)
+                    else -> null
+                },
+            ) { if (until != null) Action(stringResource(R.string.today_end)) { keeper.endWorkout() } }
+            if (until == null) {
+                Modes.beforeWorkout(glucose)?.let { advice ->
+                    Callout(
+                        stringResource(
+                            when (advice) {
+                                Modes.BeforeWorkout.CARBS_AND_WAIT -> R.string.before_carbs_wait
+                                Modes.BeforeWorkout.SMALL_CARBS -> R.string.before_small_carbs
+                                Modes.BeforeWorkout.KETONES_FIRST -> R.string.before_ketones
+                            },
+                            glucose ?: 0,
+                        ),
+                    )
+                }
+                val durations = remember(context) { WORKOUT_MINUTES.associateWith { lengthLabel(context, it) } }
+                ChoiceChips(WORKOUT_MINUTES, -1, { durations.getValue(it) }) { keeper.startWorkout(it) }
+            }
+
+            // Fasting
+            val f = m.fasting
+            TodayRow(stringResource(R.string.today_fasting), if (f.on) stringResource(R.string.today_fasting_times, time.format(f.suhoorEnds), time.format(f.iftar)) else null) {
+                Switch(checked = f.on, onCheckedChange = { keeper.fasting = f.copy(on = it) }, colors = SwitchDefaults.colors(checkedTrackColor = Sage))
+            }
+
+            // Sick day
+            TodayRow(
+                stringResource(R.string.today_sick),
+                if (m.sick) lastKetones?.let { (mmol, at) -> stringResource(R.string.today_last_ketones, String.format(java.util.Locale.getDefault(), "%.1f", mmol), time.format(at)) } else null,
+            ) { Switch(checked = m.sick, onCheckedChange = { keeper.setSick(it) }, colors = SwitchDefaults.colors(checkedTrackColor = Sage)) }
+            if (m.sick) Action(stringResource(R.string.modes_log_ketones), filled = true, onClick = onLogKetones)
+
+            Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                Link(stringResource(R.string.today_goal_link), onFitness)
+                Link(stringResource(R.string.today_why_link), onGuide)
+            }
         }
     }
 }
 
-@Composable
-private fun Card(content: @Composable () -> Unit) = Column(
-    Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, outline(), RoundedCornerShape(18.dp)).padding(14.dp),
-    verticalArrangement = Arrangement.spacedBy(8.dp),
-) { content() }
+/** "1 h", "90 min", "2 h": whole hours as hours (durationText rounds anything else to the hour). */
+internal fun lengthLabel(context: android.content.Context, minutes: Int): String =
+    if (minutes % 60 == 0) durationText(context, minutes.toLong()) else context.resources.getQuantityString(R.plurals.life_in_minutes, minutes, minutes)
 
+/** A Today row: title, one line under it (or none), and its control at the end. */
 @Composable
-private fun Heading(text: String, on: Boolean? = null, onToggle: (Boolean) -> Unit = {}) = Row(verticalAlignment = Alignment.CenterVertically) {
-    Text(text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
-    if (on != null) Switch(checked = on, onCheckedChange = onToggle, colors = SwitchDefaults.colors(checkedTrackColor = Sage))
+private fun TodayRow(title: String, line: String?, control: @Composable () -> Unit = {}) = Row(
+    Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, outline(), RoundedCornerShape(16.dp))
+        .heightIn(min = 60.dp).padding(horizontal = 14.dp, vertical = 10.dp),
+    verticalAlignment = Alignment.CenterVertically,
+) {
+    Column(Modifier.weight(1f)) {
+        Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+        line?.let { Text(it, fontSize = 13.sp, color = CaptionMuted, modifier = Modifier.padding(top = 2.dp)) }
+    }
+    control()
 }
 
 @Composable
-private fun Note(text: String) = Text(text, fontSize = 12.5.sp, lineHeight = 17.sp, color = CaptionMuted)
-
-@Composable
-private fun Callout(text: String, warn: Boolean = false) = Text(
-    text,
-    fontSize = 13.5.sp,
-    lineHeight = 19.sp,
+private fun Action(label: String, filled: Boolean = false, onClick: () -> Unit) = Text(
+    label,
+    fontSize = 14.sp,
     fontWeight = FontWeight.SemiBold,
-    color = if (warn) PillLowText else PillHighText,
-    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(if (warn) PillLowBg else PillHighBg).padding(12.dp),
+    color = if (filled) SageDeep else Sage,
+    modifier = Modifier.clip(RoundedCornerShape(12.dp)).then(if (filled) Modifier.background(SageMist) else Modifier).clickable(onClick = onClick)
+        .padding(horizontal = 12.dp, vertical = 10.dp),
 )
 
 @Composable
-private fun BulkCard(keeper: ModesKeeper, profile: com.sukoon.app.insulin.Profile) = Card {
-    val b by keeper.bulkFlow.collectAsState()
-    Heading(stringResource(R.string.bulk_title), b.on) { keeper.bulk = b.copy(on = it) }
-    if (!b.on) {
-        Note(stringResource(R.string.bulk_body))
-        return@Card
-    }
-    val t = com.sukoon.app.modes.Bulk.targets(profile, b)
-    val n = java.text.NumberFormat.getIntegerInstance()
-    if (t.kcal != null && t.proteinGrams != null) {
-        Text(stringResource(R.string.bulk_targets, n.format(t.kcal), t.proteinGrams), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = SageDeep)
-        t.proteinPerMeal?.let { Note(stringResource(R.string.bulk_per_meal, it.first, it.last)) }
-    } else {
-        Callout(stringResource(R.string.bulk_need_profile))
-    }
-    Text(stringResource(R.string.bulk_protein), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted, modifier = Modifier.padding(top = 4.dp))
-    ChoiceChips(com.sukoon.app.modes.Bulk.PROTEIN_PER_KG, b.proteinPerKg, { stringResource(R.string.bulk_per_kg, it.toString()) }) { keeper.bulk = b.copy(proteinPerKg = it) }
-    Text(stringResource(R.string.bulk_surplus), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted, modifier = Modifier.padding(top = 4.dp))
-    ChoiceChips(com.sukoon.app.modes.Bulk.SURPLUS, b.surplus, { stringResource(R.string.bulk_plus_kcal, it) }) { keeper.bulk = b.copy(surplus = it) }
-    // Maintenance: Sukoon's estimate unless you type your own (empty goes back to the estimate).
-    var typed by remember { mutableStateOf(b.maintenance?.toString().orEmpty()) }
-    androidx.compose.material3.OutlinedTextField(
-        typed,
-        { v -> typed = v.filter(Char::isDigit).take(4); keeper.bulk = b.copy(maintenance = typed.toIntOrNull()?.takeIf { it in 1200..6000 }) },
-        label = { Text(stringResource(R.string.bulk_maintenance)) },
-        placeholder = { com.sukoon.app.modes.Bulk.maintenance(profile)?.let { Text(stringResource(R.string.bulk_maintenance_estimate, n.format(it))) } },
-        singleLine = true,
-        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
-        modifier = Modifier.fillMaxWidth(),
-    )
-    Note(stringResource(R.string.bulk_maintenance_how))
-    Note(stringResource(R.string.bulk_rich_meals))
-    Note(stringResource(R.string.bulk_creatine))
-    Note(stringResource(R.string.bulk_sleep))
-}
+private fun Link(label: String, onClick: () -> Unit) = Text(
+    label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = SageDeep,
+    modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = onClick).padding(vertical = 8.dp),
+)
 
 @Composable
-private fun WorkoutCard(keeper: ModesKeeper, m: ActiveModes, glucose: Int?) = Card {
-    val time = TimeFormat.of()
-    Heading(stringResource(R.string.modes_workout))
-    val until = m.workoutUntil
-    if (until != null) {
-        Text(stringResource(R.string.modes_workout_on, time.format(until), Modes.WORKOUT_LOW), fontSize = 14.sp, color = SageDeep, fontWeight = FontWeight.SemiBold)
-        Text(
-            stringResource(R.string.modes_workout_end),
-            fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = SageDeep,
-            modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable { keeper.endWorkout() }.padding(vertical = 8.dp),
-        )
-    } else {
-        Note(stringResource(R.string.modes_workout_body, Modes.WORKOUT_LOW))
-        Modes.beforeWorkout(glucose)?.let { advice ->
-            Callout(
-                stringResource(
-                    when (advice) {
-                        Modes.BeforeWorkout.CARBS_AND_WAIT -> R.string.modes_before_carbs_wait
-                        Modes.BeforeWorkout.SMALL_CARBS -> R.string.modes_before_small_carbs
-                        Modes.BeforeWorkout.KETONES_FIRST -> R.string.modes_before_ketones
-                    },
-                    glucose ?: 0,
-                ),
-                warn = advice != Modes.BeforeWorkout.SMALL_CARBS,
+private fun Callout(text: String) = Text(
+    text, fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = PillHighText,
+    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(PillHighBg).padding(horizontal = 12.dp, vertical = 10.dp),
+)
+
+/** One state on Now: [attention] tints it amber (something to do), else it's a quiet outline. */
+class StatusChip(val text: String, val attention: Boolean = false, val onClick: () -> Unit)
+
+/**
+ * Now, under the header: what's on, as chips (alarms paused, a workout, fasting, a sick day, the
+ * goal's progress, missing readings). Replaces a stack of banners; each opens or does its one thing.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun StatusChips(chips: List<StatusChip>) {
+    if (chips.isEmpty()) return
+    FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        chips.forEach { c ->
+            Text(
+                c.text,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (c.attention) PillHighText else SageDeep,
+                maxLines = 1,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(if (c.attention) PillHighBg else Color.Transparent)
+                    .border(1.dp, if (c.attention) Color.Transparent else outline(), RoundedCornerShape(50))
+                    .clickable(onClick = c.onClick)
+                    .padding(horizontal = 12.dp, vertical = 7.dp),
             )
         }
-        val context = LocalContext.current
-        // Whole hours as hours, 90 as "90 min" (durationText rounds to the hour above 60).
-        ChoiceChips(WORKOUT_MINUTES, -1, {
-            val length = if (it % 60 == 0) durationText(context, it.toLong()) else context.resources.getQuantityString(R.plurals.life_in_minutes, it, it)
-            stringResource(R.string.modes_workout_start, length)
-        }) { keeper.startWorkout(it) }
-    }
-    if (m.lateLowWatch) Callout(stringResource(R.string.modes_late_low, Modes.NIGHT_LOW, time.format(m.lastWorkoutEnd!!.plus(Modes.LATE_LOW))))
-    var cut by remember { mutableStateOf(keeper.afterWorkoutCut) }
-    Text(stringResource(R.string.modes_after_meal), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted, modifier = Modifier.padding(top = 4.dp))
-    ChoiceChips(listOf(0, 25, 50), cut, { if (it == 0) stringResource(R.string.modes_cut_none) else stringResource(R.string.modes_cut, it) }) {
-        cut = it
-        keeper.afterWorkoutCut = it
-    }
-    Note(stringResource(R.string.modes_workout_sources))
-}
-
-@Composable
-private fun FastingCard(keeper: ModesKeeper, m: ActiveModes) = Card {
-    val f = m.fasting
-    Heading(stringResource(R.string.modes_fasting), f.on) { keeper.fasting = f.copy(on = it) }
-    if (!f.on) {
-        Note(stringResource(R.string.modes_fasting_body))
-        return@Card
-    }
-    TimeRow(stringResource(R.string.modes_suhoor_ends), f.suhoorEnds) { keeper.fasting = f.copy(suhoorEnds = it) }
-    TimeRow(stringResource(R.string.modes_iftar), f.iftar) { keeper.fasting = f.copy(iftar = it) }
-    Callout(stringResource(R.string.modes_break_fast, Modes.FAST_BREAK_LOW, Modes.FAST_BREAK_HIGH), warn = true)
-    Note(stringResource(R.string.modes_fasting_doses, Modes.SUHOOR_CUT_PERCENT))
-    Note(stringResource(R.string.modes_fasting_basal))
-}
-
-@Composable
-private fun TimeRow(label: String, value: LocalTime, onPick: (LocalTime) -> Unit) {
-    val context = LocalContext.current
-    Row(
-        Modifier.fillMaxWidth().heightIn(min = 44.dp).clip(RoundedCornerShape(12.dp)).clickable {
-            TimePickerDialog(context, { _, h, min -> onPick(LocalTime.of(h, min)) }, value.hour, value.minute, DateFormat.is24HourFormat(context)).show()
-        },
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(label, fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
-        Text(TimeFormat.of().format(value), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Sage)
     }
 }
 
+/** Now's chips from what's on. */
 @Composable
-private fun SickCard(keeper: ModesKeeper, m: ActiveModes, onLogKetones: () -> Unit) = Card {
-    Heading(stringResource(R.string.modes_sick), m.sick) { keeper.setSick(it) }
-    if (!m.sick) {
-        Note(stringResource(R.string.modes_sick_body))
-        return@Card
-    }
-    Callout(stringResource(R.string.modes_sick_rules))
-    Text(
-        stringResource(R.string.modes_log_ketones),
-        fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = SageDeep,
-        modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(SageMist).clickable(onClick = onLogKetones).padding(horizontal = 14.dp, vertical = 10.dp),
-    )
-    Note(stringResource(R.string.modes_ketone_bands))
-}
-
-/** Now, under the header: the modes that are on, one line each; tap opens Modes. */
-@Composable
-fun ModesBanner(
+fun statusChips(
     m: ActiveModes,
-    lastKetones: Pair<Double, Instant>?,
-    /** While bulking: today's protein and kcal against the targets (null when not bulking). */
-    bulk: Triple<com.sukoon.app.modes.BulkTargets, Double?, Double?>? = null,
-    onClick: () -> Unit,
-) {
-    if (!m.any && bulk == null) return
+    paused: Instant?,
+    goal: Pair<GoalTargets, Pair<Double?, Double?>>?,
+    gap: Pair<Instant, Instant>?,
+    ketonesDue: Boolean,
+    onResume: () -> Unit,
+    onToday: () -> Unit,
+    onFitness: () -> Unit,
+    onFillGap: () -> Unit,
+): List<StatusChip> {
     val time = TimeFormat.of()
-    val lines = buildList {
-        bulk?.let { (t, protein, kcal) ->
-            val n = java.text.NumberFormat.getIntegerInstance()
-            if (t.proteinGrams != null && t.kcal != null) add(stringResource(R.string.bulk_banner, n.format(protein?.toInt() ?: 0), t.proteinGrams, n.format(kcal?.toInt() ?: 0), n.format(t.kcal)))
-        }
-        m.workoutUntil?.let { add(stringResource(R.string.modes_banner_workout, time.format(it), Modes.WORKOUT_LOW)) }
-        if (m.lateLowWatch) add(stringResource(R.string.modes_banner_late_low, Modes.NIGHT_LOW))
-        if (m.fasting.on) add(
-            if (m.fastingNow) stringResource(R.string.modes_banner_fasting, time.format(m.fasting.iftar))
-            else stringResource(R.string.modes_banner_fasting_off, time.format(m.fasting.suhoorEnds)),
-        )
-        if (m.sick) add(
-            lastKetones?.let { (mmol, at) -> stringResource(R.string.modes_banner_sick_last, String.format(java.util.Locale.getDefault(), "%.1f", mmol), time.format(at)) }
-                ?: stringResource(R.string.modes_banner_sick),
-        )
+    val n = NumberFormat.getIntegerInstance()
+    val list = mutableListOf<StatusChip>()
+    paused?.let { list += StatusChip(stringResource(R.string.chip_paused, time.format(it)), attention = true, onClick = onResume) }
+    m.workoutUntil?.let { list += StatusChip(stringResource(R.string.chip_workout, time.format(it)), onClick = onToday) }
+    if (m.workoutUntil == null && m.nightWatch) list += StatusChip(stringResource(R.string.chip_late_low, Modes.NIGHT_LOW), onClick = onToday)
+    if (m.fastingNow) list += StatusChip(stringResource(R.string.chip_fasting, time.format(m.fasting.iftar)), onClick = onToday)
+    if (m.sick) list += StatusChip(stringResource(if (ketonesDue) R.string.chip_ketones_due else R.string.chip_sick), attention = ketonesDue, onClick = onToday)
+    goal?.let { (t, today) ->
+        val (protein, kcal) = today
+        if (t.kcal != null) list += StatusChip(stringResource(R.string.chip_kcal, n.format(kcal?.toInt() ?: 0), n.format(t.kcal)), onClick = onFitness)
+        if (t.proteinGrams != null) list += StatusChip(stringResource(R.string.chip_protein, n.format(protein?.toInt() ?: 0), t.proteinGrams), onClick = onFitness)
     }
-    Text(
-        lines.joinToString("\n"),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(SageMist)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        fontSize = 13.5.sp,
-        lineHeight = 19.sp,
-        fontWeight = FontWeight.SemiBold,
-        color = SageDeep,
-    )
+    gap?.let { (from, to) -> list += StatusChip(stringResource(R.string.chip_gap, time.format(from), time.format(to)), onClick = onFillGap) }
+    return list
 }

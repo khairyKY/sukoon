@@ -131,8 +131,10 @@ fun HomeScreen(
     onEnterCodeManually: () -> Unit = {},
     onAddFood: () -> Unit = {},
     onAddInsulin: () -> Unit = {},
-    /** Opens Modes (workout, fasting, sick day). */
+    /** Opens Today (pause alarms, workout, fasting, sick day). */
     onModes: () -> Unit = {},
+    /** What's on, as chips under the header (StatusChips). */
+    status: List<StatusChip> = emptyList(),
     /** Rapid insulin still active, shown beside the shortcuts when there is any. */
     insulinOnBoard: Double = 0.0,
     /** Today's numbers, and which of them the user chose to see. */
@@ -151,7 +153,7 @@ fun HomeScreen(
     mealDose: Pair<EventEntity, DoseAdvice.Suggestion>? = null,
     onMealDose: (EventEntity) -> Unit = {},
 ) {
-    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss, mealDose, onMealDose, onModes)) {
+    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss, mealDose, onMealDose, onModes, status)) {
         PullToSync(onSync, modifier) {
             HomeContent(state, brief, Modifier.fillMaxSize(), onTreated, onSnooze, onAlertEmergencyContact, onTroubleshoot, onPairSensor, onEnterCodeManually)
         }
@@ -173,6 +175,7 @@ private class Shortcuts(
     val mealDose: Pair<EventEntity, DoseAdvice.Suggestion>? = null,
     val onMealDose: (EventEntity) -> Unit = {},
     val onModes: () -> Unit = {},
+    val status: List<StatusChip> = emptyList(),
 )
 private val LocalShortcuts = staticCompositionLocalOf { Shortcuts({}, {}) }
 
@@ -248,6 +251,7 @@ private fun HomeStatusBar(statusLabel: String, dotColor: Color, pulsing: Boolean
 private fun HomeAppBar(dimmed: Boolean = false) {
     Column {
         HomeAppBarRow(dimmed)
+        StatusChips(LocalShortcuts.current.status)
         // A notice from Sukoon, under the bar on the calm screens (not on a low or urgent one).
         NoticeBanner(Modifier.padding(horizontal = 16.dp).padding(top = 12.dp))
     }
@@ -282,7 +286,7 @@ private fun HomeAppBarRow(dimmed: Boolean) {
                     color = CaptionMuted,
                 )
             }
-            ShortcutIcon(R.drawable.ic_modes, stringResource(R.string.modes_title), shortcuts.onModes)
+            ShortcutIcon(R.drawable.ic_modes, stringResource(R.string.today_title), shortcuts.onModes)
             ShortcutIcon(R.drawable.ic_food, stringResource(R.string.home_add_food), shortcuts.onFood)
             ShortcutIcon(R.drawable.ic_insulin, stringResource(R.string.home_add_insulin), shortcuts.onInsulin)
         }

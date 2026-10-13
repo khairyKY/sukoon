@@ -44,43 +44,6 @@ fun SensorEndingBanner(life: SensorLife.Running, onClick: () -> Unit) {
     )
 }
 
-/** Now: readings missing in the last 8 hours, which one tap on the sensor fills from its memory. */
-@Composable
-fun MemoryGapBanner(from: java.time.Instant, to: java.time.Instant, onClick: () -> Unit) {
-    val time = com.sukoon.app.platform.TimeFormat.of()
-    Text(
-        stringResource(R.string.home_gap_fill, time.format(from), time.format(to)),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(com.sukoon.app.ui.theme.SageMist)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        fontSize = 14.sp,
-        fontWeight = FontWeight.SemiBold,
-        color = com.sukoon.app.ui.theme.SageDeep,
-    )
-}
-
-/** Now, while alarms are paused: until when; tap to bring them back. */
-@Composable
-fun AlarmsPausedBanner(until: java.time.Instant, onResume: () -> Unit) {
-    Text(
-        stringResource(R.string.home_alarms_paused, com.sukoon.app.platform.TimeFormat.of().format(until)),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(com.sukoon.app.ui.theme.PillHighBg)
-            .clickable(onClick = onResume)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        fontSize = 14.sp,
-        fontWeight = FontWeight.SemiBold,
-        color = com.sukoon.app.ui.theme.PillHighText,
-    )
-}
-
 /** Home, while Bluetooth is off and the sensor is the source: nothing can arrive. Tap → Android's "Turn on Bluetooth?". */
 @Composable
 fun BluetoothOffBanner(onClick: () -> Unit) {

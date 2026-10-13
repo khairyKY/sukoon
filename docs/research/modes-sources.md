@@ -38,6 +38,24 @@ fat-heavy meals rise 3–5 h later).
   - **Overnight after exercise: low alert 80 mg/dL**; lows "typically occur within 6 to 15 h after".
   - Resistance training rise: **50% of the usual correction**.
 
+## Your goal: maintain, lean bulk, cut
+
+- **Lean bulk**: Kai's research (above): +200–300 kcal a day, 1.6–2.2 g/kg protein. **Iraki et al.,
+  Sports (Basel) 2019;7:154**: gain about 0.25–0.5% of bodyweight a week to limit fat gain.
+- **Cut**: **Murphy & Koehler, Scand J Med Sci Sports 2022;32:125–137** (meta-analysis): a deficit
+  over about 500 kcal a day blunts lean-mass gains. **Helms et al., JISSN 2014;11:20**: lose
+  0.5–1% of bodyweight a week. Protein: **Hector & Phillips, IJSNEM 2018;28:170–177** (1.6–2.4,
+  higher when leaner); **ISSN position stand, Jäger et al. 2017** (2.3–3.1 g/kg of lean mass in a
+  deficit). Sukoon offers 2.0–2.6 g/kg, default 2.2.
+- **Maintain**: **ISSN 2017** (1.4–2.0 g/kg for active people); **Morton et al., BJSM 2018;52:376–384**
+  (gains plateau around 1.6 g/kg, upper CI 2.2). Default 1.6.
+- **Type 1 and dieting**: no guideline gives a percentage. ADA Standards of Care 2026, section 5:
+  adjust glucose-lowering medication to avoid lows when cutting calories; avoid very-low-carb diets
+  with SGLT2 inhibitors. So the cut says to watch for lows and review doses with the clinic, and dose
+  suggestions are not changed by the goal.
+- **Maintenance estimate**: Mifflin–St Jeor (Am J Clin Nutr 1990;51:241–247) × 1.55, "moderately
+  active".
+
 Sukoon's workout mode: low alarm at 100 during the workout; the next 24 h a late-low watch with the
 low alarm at 80 overnight (22:00–07:00); corrections during and within 2 h after at 50%; the meal
 after a workout (within 2 h) at −50% by default (0, 25 or 50% to choose); no cut before lifting.

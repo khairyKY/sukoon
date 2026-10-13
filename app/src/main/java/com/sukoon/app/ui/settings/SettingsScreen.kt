@@ -133,6 +133,7 @@ enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
     ALARMS(R.string.you_alarms, R.drawable.ic_bell),
     PEOPLE(R.string.you_people, R.drawable.ic_people),
     INSULIN(R.string.you_insulin, R.drawable.ic_insulin),
+    FITNESS(R.string.you_fitness, R.drawable.ic_walk),
     APPS(R.string.you_apps, R.drawable.ic_link),
     REPORTS(R.string.you_reports, R.drawable.ic_doc),
     APPEARANCE(R.string.you_appearance, R.drawable.ic_contrast),
@@ -158,6 +159,8 @@ fun SettingsScreen(
     onTestAlarm: (AlarmType) -> Unit,
     onPreviewAlarm: (AlarmType) -> Unit,
     onPreviewPack: (SoundPack) -> Unit = {},
+    /** Opens the Guide on one topic. */
+    onOpenGuideTopic: (String) -> Unit = {},
     emergency: EmergencySettings,
     emergencyAlerts: EmergencyAlerts,
     onEmergency: (EmergencySettings) -> Unit,
@@ -263,6 +266,7 @@ fun SettingsScreen(
                         YouPage.ALARMS to alarmsSummary(alarmSettings),
                         YouPage.PEOPLE to emergency.contacts.take(2).joinToString { it.name }.ifBlank { stringResource(R.string.you_people_none) },
                         YouPage.INSULIN to stringResource(R.string.you_insulin_summary, insulinAction.peakMinutes, formatHours(insulinAction.durationMinutes)),
+                        YouPage.FITNESS to fitnessSummary(),
                         YouPage.APPS to stringResource(R.string.you_apps_summary),
                         YouPage.REPORTS to stringResource(R.string.you_reports_summary),
                         YouPage.APPEARANCE to "${themeLabel(themeMode)} · ${languageLabel()}",
@@ -357,13 +361,7 @@ fun SettingsScreen(
                             }
                             RangeCard(targetHigh, guarded(onTargetHigh))
                             Gap()
-                            AlarmSettingsSection(
-                                alarmSettings, guarded(onAlarmSettings), onTestAlarm, onPreviewAlarm, onPreviewPack,
-                                onPause = guarded { minutes: Int ->
-                                    val app = (context.applicationContext as com.sukoon.app.SukoonApp).container
-                                    app.appScope.launch { app.alarms.pauseAll(minutes) }
-                                },
-                            )
+                            AlarmSettingsSection(alarmSettings, guarded(onAlarmSettings), onTestAlarm, onPreviewAlarm, onPreviewPack)
                             Gap()
                             SectionLabel(stringResource(R.string.workout_check_section))
                             GentleChecks()
@@ -402,6 +400,12 @@ fun SettingsScreen(
                             Gap()
                             DoseCard(doseSettings, guarded(onDoseSettings), doseStartingPoints, learningReport, insulinAction.durationMinutes / 60, profile, guarded(onProfile), locked, { askingPin = true }, parentPin, onParentPin, openLearning, onOpenedLearning)
                         }
+                        YouPage.FITNESS -> FitnessPage(
+                            (context.applicationContext as com.sukoon.app.SukoonApp).container.modes,
+                            profile,
+                            onEditProfile = { page = YouPage.INSULIN },
+                            onWhy = { onOpenGuideTopic("modes") },
+                        )
                         YouPage.APPS -> {
                             HealthConnectSection(healthConnect)
                             Spacer(Modifier.height(10.dp))
@@ -571,6 +575,19 @@ private fun NeedsYou(count: Int, first: String, onClick: () -> Unit) {
             modifier = Modifier.weight(1f),
         )
         Text(stringResource(R.string.you_fix), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = PillHighText)
+    }
+}
+
+/** You hub: "Lean bulk · 2,980 kcal", or that there's no goal. */
+@Composable
+private fun fitnessSummary(): String {
+    val container = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container
+    val goal by container.modes.goalFlow.collectAsStateWithLifecycle()
+    val kcal = com.sukoon.app.modes.Goals.targets(container.settings.profile, goal)?.kcal
+    return when {
+        goal.kind == com.sukoon.app.modes.GoalKind.NONE -> stringResource(R.string.you_fitness_none)
+        kcal != null -> stringResource(R.string.you_fitness_summary, stringResource(goalName(goal.kind)), java.text.NumberFormat.getIntegerInstance().format(kcal))
+        else -> stringResource(goalName(goal.kind))
     }
 }
 

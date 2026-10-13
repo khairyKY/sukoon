@@ -68,10 +68,10 @@ import com.sukoon.app.ui.theme.StateHigh
  * screen they name ([onLink]), tips, fixes and related topics.
  */
 @Composable
-fun HelpDialog(onClose: () -> Unit, onLink: (String) -> Unit = {}) {
+fun HelpDialog(onClose: () -> Unit, onLink: (String) -> Unit = {}, startTopic: String? = null) {
     val context = LocalContext.current
     val guide = remember { GuideContent.load(context) }
-    var openId by rememberSaveable { mutableStateOf<String?>(null) }
+    var openId by rememberSaveable { mutableStateOf(startTopic) }
     val topic = openId?.let(guide::topic)
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {

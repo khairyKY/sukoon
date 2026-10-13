@@ -117,8 +117,6 @@ fun AlarmSettingsSection(
     onTest: (AlarmType) -> Unit,
     onPreview: (AlarmType) -> Unit,
     onPreviewPack: (SoundPack) -> Unit = {},
-    /** Pause all alarms for this many minutes (behind the parent lock, like any alarm change). */
-    onPause: (Int) -> Unit = {},
 ) {
     val context = LocalContext.current
     val alarms = (context.applicationContext as com.sukoon.app.SukoonApp).container.alarms
@@ -196,10 +194,6 @@ fun AlarmSettingsSection(
     }
     @Composable
     fun soundName(type: AlarmType) = settings.sounds[type]?.name ?: stringResource(settings.soundPack.nameRes)
-
-    val pausedUntil by alarms.pausedUntil.collectAsState()
-    PauseCard(pausedUntil, onPause = onPause, onResume = { scope.launch { alarms.resumeAll() } })
-    Spacer(Modifier.height(12.dp))
 
     Row(
         Modifier
@@ -366,32 +360,6 @@ fun AlarmSettingsSection(
 
 /** What "fast" can mean, mg/dL a minute. */
 private val FAST_RATES = listOf(2, 3, 4)
-
-/** How long "pause all alarms" can last. */
-private val PAUSES = listOf(30, 60, 120, 240)
-
-/**
- * Pause all alarms: everything but urgent low stays quiet for a while, then comes back by itself.
- * While paused it says until when, with Resume.
- */
-@Composable
-private fun PauseCard(pausedUntil: Instant?, onPause: (Int) -> Unit, onResume: () -> Unit) = ListCard {
-    Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (pausedUntil != null) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.pause_until, com.sukoon.app.platform.TimeFormat.of().format(pausedUntil)), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = PillHighText)
-                    Text(stringResource(R.string.pause_urgent_still, AlarmSettings.URGENT_LOW_MG_DL), fontSize = 12.5.sp, color = CaptionMuted, modifier = Modifier.padding(top = 2.dp))
-                }
-                PillButton(stringResource(R.string.pause_resume), filled = true, onClick = onResume)
-            }
-        } else {
-            Text(stringResource(R.string.pause_title), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-            Text(stringResource(R.string.pause_body, AlarmSettings.URGENT_LOW_MG_DL), fontSize = 12.5.sp, lineHeight = 17.sp, color = CaptionMuted)
-            ChoiceChips(PAUSES, -1, { snoozeLabel(it) }) { onPause(it) }
-        }
-    }
-}
 
 /** "15 min", "1 h", "2 h": how long an alarm stays quiet after its snooze. */
 @Composable

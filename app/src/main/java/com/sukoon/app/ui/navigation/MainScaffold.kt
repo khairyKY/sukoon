@@ -135,6 +135,8 @@ enum class SukoonTab(val route: String, @StringRes val labelRes: Int, @DrawableR
 fun MainScaffold() {
     val navController = rememberNavController()
     var showGuide by rememberSaveable { mutableStateOf(false) }
+    /** The Guide opens on this topic (null: its hub). */
+    var guideTopic by rememberSaveable { mutableStateOf<String?>(null) }
     // Health Connect only lets most phones read while Sukoon is on screen: sync on every return.
     val appContainer = (LocalContext.current.applicationContext as SukoonApp).container
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -189,6 +191,7 @@ fun MainScaffold() {
             }
             "alarms" -> openYou(YouPage.ALARMS)
             "people" -> openYou(YouPage.PEOPLE)
+            "fitness" -> openYou(YouPage.FITNESS)
             "insulin" -> openYou(YouPage.INSULIN)
             "learning" -> {
                 appContainer.requestedLearning.value = true
@@ -209,7 +212,7 @@ fun MainScaffold() {
             "entry_fingerstick" -> appContainer.requestedEntry.value = LogEventType.FINGERSTICK
         }
     }
-    if (showGuide) HelpDialog(onClose = { showGuide = false }, onLink = { showGuide = false; openLink(it) })
+    if (showGuide) HelpDialog(onClose = { showGuide = false; guideTopic = null }, onLink = { showGuide = false; guideTopic = null; openLink(it) }, startTopic = guideTopic)
     // An invite link tapped (sukoon://follow): follow in one tap, or sign in first and it comes back.
     val pendingInvite by appContainer.pendingInvite.collectAsStateWithLifecycle()
     val account by appContainer.sharing.supabase.session.collectAsStateWithLifecycle()
@@ -386,35 +389,41 @@ fun MainScaffold() {
                     val life by homeViewModel.sensorLife.collectAsStateWithLifecycle()
                     val source by home.sourceKind.collectAsStateWithLifecycle()
                     if (source == SourceKind.LIBRE_BLE && !rememberBluetoothOn()) BluetoothOffBanner { turnOnBluetooth(context) }
-                    // Readings missing in the last 8 h: one tap on the sensor fills them from its memory.
-                    if (source == SourceKind.LIBRE_BLE) {
-                        val lastReadings by remember { repository.recentReadings(600) }.collectAsStateWithLifecycle(initialValue = emptyList())
-                        var dismissedGap by rememberSaveable { mutableStateOf(0L) }
-                        com.sukoon.app.domain.metrics.MemoryGap.fillable(lastReadings, Instant.now())
-                            ?.takeIf { it.first.toEpochMilli() != dismissedGap }
-                            ?.let { (from, to) ->
-                                com.sukoon.app.ui.home.MemoryGapBanner(from, to) {
-                                    dismissedGap = from.toEpochMilli()
-                                    home.requestedCheckSensor.value = true
-                                    openYou(YouPage.SENSOR)
-                                }
-                            }
-                    }
-                    // Modes that are on, one line each; tap opens Modes.
+                    // What's on, as chips under Now's header; Today (the sliders button) switches things on.
+                    val lastReadings by remember { repository.recentReadings(600) }.collectAsStateWithLifecycle(initialValue = emptyList())
                     val modesNow by home.modes.active.collectAsStateWithLifecycle()
-                    val lastKetones = recentEvents.lastOrNull { it.logType == LogEventType.KETONE && it.value != null }?.let { it.value!! to Instant.ofEpochMilli(it.timestampMillis) }
-                    val bulk by home.modes.bulkFlow.collectAsStateWithLifecycle()
-                    val bulkToday = if (bulk.on) Triple(com.sukoon.app.modes.Bulk.targets(home.settings.profile, bulk), stats[com.sukoon.app.ui.home.HomeStat.PROTEIN], stats[com.sukoon.app.ui.home.HomeStat.KCAL]) else null
-                    com.sukoon.app.ui.home.ModesBanner(modesNow, lastKetones, bulkToday) { showModes = true }
+                    val alarmsPaused by home.alarms.pausedUntil.collectAsStateWithLifecycle()
+                    val goal by home.modes.goalFlow.collectAsStateWithLifecycle()
+                    val lastKetoneEvent = recentEvents.lastOrNull { it.logType == LogEventType.KETONE && it.value != null }
+                    val lastKetones = lastKetoneEvent?.let { it.value!! to Instant.ofEpochMilli(it.timestampMillis) }
+                    val ketonesDue = modesNow.sick && (lastKetones?.second ?: modesNow.sickSince!!) <= Instant.now().minus(com.sukoon.app.modes.Modes.KETONES_EVERY)
+                    val chips = com.sukoon.app.ui.home.statusChips(
+                        m = modesNow,
+                        paused = alarmsPaused,
+                        goal = com.sukoon.app.modes.Goals.targets(home.settings.profile, goal)?.let { it to (stats[com.sukoon.app.ui.home.HomeStat.PROTEIN] to stats[com.sukoon.app.ui.home.HomeStat.KCAL]) },
+                        gap = if (source == SourceKind.LIBRE_BLE) com.sukoon.app.domain.metrics.MemoryGap.fillable(lastReadings, Instant.now()) else null,
+                        ketonesDue = ketonesDue,
+                        onResume = { scope.launch { home.alarms.resumeAll(); context.toast(context.getString(R.string.toast_alarms_back)) } },
+                        onToday = { showModes = true },
+                        onFitness = { openYou(YouPage.FITNESS) },
+                        onFillGap = { home.requestedCheckSensor.value = true; openYou(YouPage.SENSOR) },
+                    )
+                    // Under the parent lock, pausing alarms asks for the PIN first.
+                    var pinFor by remember { mutableStateOf<(() -> Unit)?>(null) }
+                    val lockedAlarms = home.settings.parentPin != null && com.sukoon.app.platform.ParentLock.appliesTo(home.settings.profile.ageYears)
+                    pinFor?.let { action ->
+                        com.sukoon.app.ui.settings.PinDialog(setting = false, stored = home.settings.parentPin, onDone = { action(); pinFor = null }, onDismiss = { pinFor = null })
+                    }
                     if (showModes) {
-                        com.sukoon.app.ui.home.ModesSheet(
-                            home.modes, latest?.glucoseMgDl, home.settings.profile,
+                        com.sukoon.app.ui.home.TodaySheet(
+                            home.modes, home.alarms, latest?.glucoseMgDl, lastKetones,
+                            askPin = if (lockedAlarms) { action -> pinFor = action } else null,
                             onLogKetones = { showModes = false; home.requestedEntry.value = LogEventType.KETONE },
+                            onFitness = { showModes = false; openYou(YouPage.FITNESS) },
+                            onGuide = { showModes = false; guideTopic = "modes"; showGuide = true },
                             onDismiss = { showModes = false },
                         )
                     }
-                    val alarmsPaused by home.alarms.pausedUntil.collectAsStateWithLifecycle()
-                    alarmsPaused?.let { com.sukoon.app.ui.home.AlarmsPausedBanner(it) { scope.launch { home.alarms.resumeAll() } } }
                     (life as? SensorLife.Running)
                         ?.takeIf { Duration.between(Instant.now(), it.endsAt) <= Duration.ofHours(24) }
                         ?.let { SensorEndingBanner(it, onClick = toSensor) }
@@ -440,6 +449,7 @@ fun MainScaffold() {
                         onAddFood = { pendingEntry = LogEventType.CARB; navController.navigateToTab(SukoonTab.TRENDS) },
                         onAddInsulin = { pendingEntry = LogEventType.INSULIN; navController.navigateToTab(SukoonTab.TRENDS) },
                         onModes = { showModes = true },
+                        status = chips,
                         insulinOnBoard = insulinOnBoard,
                         correction = correction,
                         mealDose = mealDose,
@@ -477,7 +487,7 @@ fun MainScaffold() {
                 val logbookViewModel: LogbookViewModel = viewModel(factory = LogbookViewModel.factory(container.logbookRepository, container.glucoseRepository, container.gemini, container.entryPhotos) { container.settings.insulinAction })
                 val logbookState by logbookViewModel.uiState.collectAsStateWithLifecycle()
                 val askViewModel: AskViewModel = viewModel(
-                    factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini, doseSettings = { container.settings.doseSettings }, profile = { container.settings.profile }, goal = { container.modes.bulkLine(container.settings.profile) }) { container.settings.insulinAction },
+                    factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini, doseSettings = { container.settings.doseSettings }, profile = { container.settings.profile }, goal = { container.modes.goalLine(container.settings.profile) }) { container.settings.insulinAction },
                 )
                 val askState by askViewModel.uiState.collectAsStateWithLifecycle()
                 val insightsViewModel: InsightsViewModel = viewModel(
@@ -595,6 +605,7 @@ fun MainScaffold() {
                     healthConnect = container.healthConnect,
                     calibration = container.calibration,
                     onOpenGuide = { showGuide = true },
+                    onOpenGuideTopic = { guideTopic = it; showGuide = true },
                     updates = container.updates,
                     themeMode = themeMode,
                     onThemeMode = { mode ->

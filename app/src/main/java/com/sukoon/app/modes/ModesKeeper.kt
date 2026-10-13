@@ -84,32 +84,39 @@ class ModesKeeper(private val context: Context, logbook: LogbookRepository, priv
             refresh()
         }
 
-    /** Bulking: the day's calories and protein to aim for (Bulk). */
-    var bulk: BulkSettings
-        get() = BulkSettings(
-            on = prefs.getBoolean(K_BULK_ON, false),
-            proteinPerKg = prefs.getFloat(K_BULK_PROTEIN, 2.0f).toDouble(),
-            surplus = prefs.getInt(K_BULK_SURPLUS, 250),
-            maintenance = prefs.getInt(K_BULK_MAINTENANCE, 0).takeIf { it > 0 },
+    /** Your goal (You → Fitness & food): maintain, lean bulk or cut, with its targets (Goals). */
+    var goal: GoalSettings
+        get() = GoalSettings(
+            // Before goals there was only "bulking on": it carries over.
+            kind = GoalKind.entries.firstOrNull { it.name == prefs.getString(K_GOAL, null) } ?: if (prefs.getBoolean(K_BULK_ON, false)) GoalKind.BULK else GoalKind.NONE,
+            proteinPerKg = prefs.getFloat(K_GOAL_PROTEIN, 0f).takeIf { it > 0 }?.toDouble(),
+            change = if (prefs.contains(K_GOAL_CHANGE)) prefs.getInt(K_GOAL_CHANGE, 0) else null,
+            maintenance = prefs.getInt(K_GOAL_MAINTENANCE, 0).takeIf { it > 0 },
         )
         set(v) {
-            prefs.edit().putBoolean(K_BULK_ON, v.on).putFloat(K_BULK_PROTEIN, v.proteinPerKg.toFloat()).putInt(K_BULK_SURPLUS, v.surplus)
-                .putInt(K_BULK_MAINTENANCE, v.maintenance ?: 0).apply()
-            _bulk.value = v
+            prefs.edit().putString(K_GOAL, v.kind.name).putFloat(K_GOAL_PROTEIN, v.proteinPerKg?.toFloat() ?: 0f)
+                .apply { if (v.change == null) remove(K_GOAL_CHANGE) else putInt(K_GOAL_CHANGE, v.change) }
+                .putInt(K_GOAL_MAINTENANCE, v.maintenance ?: 0).remove(K_BULK_ON).apply()
+            _goal.value = v
         }
-    private val _bulk = MutableStateFlow(bulk)
-    val bulkFlow: StateFlow<BulkSettings> = _bulk.asStateFlow()
+    private val _goal = MutableStateFlow(goal)
+    val goalFlow: StateFlow<GoalSettings> = _goal.asStateFlow()
 
-    /** For Ask: the bulk and its targets, or "" when not bulking. */
-    fun bulkLine(profile: com.sukoon.app.insulin.Profile): String {
-        val b = bulk
-        if (!b.on) return ""
-        val t = Bulk.targets(profile, b)
+    /** For Ask: the goal and its targets, or "" without one. */
+    fun goalLine(profile: com.sukoon.app.insulin.Profile): String {
+        val g = goal
+        val t = Goals.targets(profile, g) ?: return ""
+        val what = when (g.kind) {
+            GoalKind.BULK -> "a lean bulk with resistance training (+100–300 kcal a day)"
+            GoalKind.CUT -> "a cut (fat loss) keeping muscle, with resistance training"
+            else -> "maintaining weight, with resistance training"
+        }
         return listOfNotNull(
-            "GOAL: a lean bulk with resistance training (Kai's research: +100–300 kcal a day, protein 1.6–2.2 g/kg over ~4 meals).",
-            t.kcal?.let { "Target about $it kcal a day (maintenance ${t.maintenance}${if (t.estimated) " estimated" else ""} + ${b.surplus})." },
-            t.proteinGrams?.let { "Protein ${it} g a day (${b.proteinPerKg} g/kg), ${t.proteinPerMeal?.first}–${t.proteinPerMeal?.last} g a meal." },
-            "Basal is glargine U-300 (can't be cut for one session); fat-heavy bulking meals (tahina, eggs, oil) rise 3–5 h later.",
+            "GOAL: $what.",
+            t.kcal?.let { "About $it kcal a day (maintenance ${t.maintenance}${if (t.estimated) " estimated" else ""}${if (t.change != 0) " ${if (t.change > 0) "+" else ""}${t.change}" else ""})." },
+            t.proteinGrams?.let { "Protein $it g a day (${t.proteinPerKg} g/kg), ${t.proteinPerMeal?.first}–${t.proteinPerMeal?.last} g a meal." },
+            "Basal is glargine U-300 (can't be cut for one session); fat-heavy meals (tahina, eggs, oil) rise 3–5 h later.",
+            if (g.kind == GoalKind.CUT) "Eating less usually means less insulin: watch for lows and review ratios." else null,
         ).joinToString(" ")
     }
 
@@ -191,10 +198,11 @@ class ModesKeeper(private val context: Context, logbook: LogbookRepository, priv
         const val K_SUHOOR = "fasting_suhoor_ends"
         const val K_IFTAR = "fasting_iftar"
         const val K_SICK = "sick_since"
-        const val K_BULK_ON = "bulk_on"
-        const val K_BULK_PROTEIN = "bulk_protein_per_kg"
-        const val K_BULK_SURPLUS = "bulk_surplus"
-        const val K_BULK_MAINTENANCE = "bulk_maintenance"
+        const val K_BULK_ON = "bulk_on" // before goals
+        const val K_GOAL = "goal"
+        const val K_GOAL_PROTEIN = "goal_protein_per_kg"
+        const val K_GOAL_CHANGE = "goal_change"
+        const val K_GOAL_MAINTENANCE = "goal_maintenance"
         const val K_KETONE_REMINDED = "ketone_reminded"
         const val K_SUHOOR_REMINDED = "suhoor_reminded_day"
     }
