@@ -60,6 +60,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -138,6 +139,75 @@ private fun mainField(type: LogEventType): AmountField? = when (type) {
     LogEventType.NOTE -> null
     LogEventType.KETONE -> AmountField.KETONES
     LogEventType.WEIGHT -> AmountField.WEIGHT
+}
+
+private val KINDS = listOf(R.string.workout_strength, R.string.workout_walk, R.string.workout_run, R.string.workout_bike, R.string.workout_swim, R.string.workout_hiit, R.string.workout_football, R.string.workout_yoga, R.string.workout_other)
+private val EFFORTS = listOf(R.string.effort_easy, R.string.effort_moderate, R.string.effort_hard)
+
+/**
+ * An activity: what and how hard (kept in its note as "Strength training · Hard", the way workouts
+ * from MyFitnessPal arrive), a word before starting from the glucose now, and what saving it changes.
+ */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun ActivityPanel(note: String, glucose: Int?, onNote: (String) -> Unit) {
+    val kinds = KINDS.map { stringResource(it) }
+    val efforts = EFFORTS.map { stringResource(it) }
+    val parts = note.split(" · ")
+    val kind = parts.firstOrNull()?.takeIf { it in kinds }
+    val effort = parts.getOrNull(1)?.takeIf { it in efforts }
+    fun set(k: String?, e: String?) = onNote(listOfNotNull(k, e).joinToString(" · "))
+    @Composable
+    fun Chips(options: List<String>, picked: String?, onPick: (String) -> Unit) =
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            options.forEach { o ->
+                val on = o == picked
+                Text(
+                    o, fontSize = 14.sp, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
+                    color = if (on) Color.White else MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.clip(RoundedCornerShape(12.dp)).then(if (on) Modifier.background(Sage) else Modifier.border(1.dp, outline(), RoundedCornerShape(12.dp)))
+                        .clickable { onPick(o) }.heightIn(min = 40.dp).padding(horizontal = 14.dp, vertical = 10.dp),
+                )
+            }
+        }
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Eyebrow(stringResource(R.string.activity_what), Modifier.padding(top = 4.dp))
+        Chips(kinds, kind) { set(it, effort) }
+        Eyebrow(stringResource(R.string.activity_effort))
+        Chips(efforts, effort) { set(kind ?: kinds.last(), it) }
+        com.sukoon.app.modes.Modes.beforeWorkout(glucose)?.let { b ->
+            val text = when (b) {
+                com.sukoon.app.modes.Modes.BeforeWorkout.CARBS_AND_WAIT -> R.string.before_carbs_wait
+                com.sukoon.app.modes.Modes.BeforeWorkout.SMALL_CARBS -> R.string.before_small_carbs
+                com.sukoon.app.modes.Modes.BeforeWorkout.KETONES_FIRST -> R.string.before_ketones
+            }
+            Text(stringResource(text, glucose ?: 0), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = PillHighText,
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(PillHighBg).padding(horizontal = 14.dp, vertical = 12.dp))
+        }
+        val cut = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.modes.afterWorkoutCut
+        Text(
+            if (cut > 0) stringResource(R.string.activity_after, com.sukoon.app.modes.Modes.NIGHT_LOW, cut) else stringResource(R.string.activity_after_no_cut, com.sukoon.app.modes.Modes.NIGHT_LOW),
+            fontSize = 13.sp, lineHeight = 18.sp, color = CaptionMuted,
+        )
+    }
+}
+
+/** Logging long-acting with one logged in the last 8 hours: the double-dose guard. */
+@Composable
+private fun AlreadyTaken() {
+    val logbook = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.logbookRepository
+    val last by remember { logbook.latest(LogEventType.BASAL) }.collectAsState(initial = null as EventEntity?)
+    val e = last?.let { com.sukoon.app.reminders.BasalReminder.recent(listOf(it), Instant.now()) } ?: return
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(PillHighBg).padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            stringResource(R.string.basal_already_title, formatAmountLocalized(e.value ?: 0.0), com.sukoon.app.platform.TimeFormat.of().format(Instant.ofEpochMilli(e.timestampMillis))),
+            fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold, color = PillHighText,
+        )
+        Text(stringResource(R.string.basal_already_body), fontSize = 13.sp, lineHeight = 18.sp, color = MaterialTheme.colorScheme.onBackground)
+    }
 }
 
 /** "Treating a low": carbs for a low, kept out of meal maths and counted in the low-treatment insight. */
@@ -453,6 +523,7 @@ private fun EditorContent(
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             ContextPills(glucoseNow.takeIf { existing == null }, if (type == LogEventType.INSULIN || isMeal || meal != null) insulinOnBoard else 0.0)
             if (type == LogEventType.CARB && meal == null) TreatmentToggle(treatment) { treatment = it }
+            if (type == LogEventType.BASAL && existing == null) AlreadyTaken()
             val starting = isMeal && existing == null && plate.isEmpty() && values[AmountField.CARBS].isNullOrEmpty() && active == null
             when {
                 starting -> MealStart(
@@ -477,6 +548,7 @@ private fun EditorContent(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
+            if (type == LogEventType.ACTIVITY) ActivityPanel(note, glucoseNow?.glucoseMgDl) { note = it }
             advice?.let { a ->
                 DoseLine(a) { units ->
                     values[AmountField.RAPID] = formatAmount(units)

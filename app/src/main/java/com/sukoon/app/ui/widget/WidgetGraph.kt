@@ -36,7 +36,7 @@ object WidgetGraph {
             strokeWidth = stroke
             strokeCap = Paint.Cap.ROUND
         }
-        paint.color = (if (dark) SageLight else Sage).toArgb()
+        paint.color = (if (dark) com.sukoon.app.ui.theme.InRangeLight else com.sukoon.app.ui.theme.InRange).toArgb()
         paint.alpha = if (dark) 50 else 40
         canvas.drawArc(box, 0f, 360f, false, paint)
         if (percent != null && percent > 0) {
@@ -67,12 +67,12 @@ object WidgetGraph {
         val span = (to.toEpochMilli() - from.toEpochMilli()).coerceAtLeast(1).toFloat()
         fun x(at: Instant) = (at.toEpochMilli() - from.toEpochMilli()) / span * (w - margin * 2) + margin
 
-        val band = Paint().apply { color = (if (dark) SageLight else Sage).toArgb(); alpha = if (dark) 40 else 30 }
+        val band = Paint().apply { color = (if (dark) com.sukoon.app.ui.theme.InRangeLight else com.sukoon.app.ui.theme.InRange).toArgb(); alpha = if (dark) 40 else 30 }
         canvas.drawRect(0f, y(180), w.toFloat(), y(70), band)
 
         if (samples.isEmpty()) return bitmap
         val line = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = (if (dark) SageLight else Sage).toArgb()
+            color = (if (dark) com.sukoon.app.ui.theme.InRangeLight else com.sukoon.app.ui.theme.InRange).toArgb()
             style = Paint.Style.STROKE
             strokeWidth = stroke
             strokeJoin = Paint.Join.ROUND

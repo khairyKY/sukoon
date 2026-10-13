@@ -269,7 +269,7 @@ fun SettingsScreen(
                         YouPage.FITNESS to fitnessSummary(),
                         YouPage.APPS to stringResource(R.string.you_apps_summary),
                         YouPage.REPORTS to stringResource(R.string.you_reports_summary),
-                        YouPage.APPEARANCE to "${themeLabel(themeMode)} · ${languageLabel()}",
+                        YouPage.APPEARANCE to "${themeLabel(themeMode)} · ${stringResource(colourName(com.sukoon.app.ui.theme.Themes.current))} · ${languageLabel()}",
                         YouPage.HELP to stringResource(R.string.you_help_summary),
                     )
                     (if (wears) YouPage.entries else FOLLOWER_PAGES).chunked(2).forEach { row ->
@@ -449,6 +449,9 @@ fun SettingsScreen(
                         YouPage.APPEARANCE -> {
                             SectionLabel(stringResource(R.string.you_theme))
                             ThemeCards(themeMode, onThemeMode)
+                            Gap()
+                            SectionLabel(stringResource(R.string.you_colour))
+                            ColourChoice()
                             Gap()
                             SectionLabel(stringResource(R.string.you_language))
                             LanguageChoice()
@@ -763,6 +766,50 @@ private fun MiniScreen(dark: Boolean, modifier: Modifier) {
         Box(Modifier.fillMaxWidth(0.7f).height(6.dp).clip(RoundedCornerShape(3.dp)).background(if (dark) OnCanvasDark else OnCanvasLight))
         Box(Modifier.fillMaxWidth().height(24.dp).clip(RoundedCornerShape(6.dp)).background(if (dark) SurfaceDark else SurfaceLight))
         Box(Modifier.fillMaxWidth().height(14.dp).clip(RoundedCornerShape(5.dp)).background(if (dark) SageLight else Sage))
+    }
+}
+
+/** The theme's name, for the picker and the You hub. */
+private fun colourName(t: com.sukoon.app.ui.theme.ColorTheme): Int = when (t) {
+    com.sukoon.app.ui.theme.ColorTheme.SAGE -> R.string.colour_sage
+    com.sukoon.app.ui.theme.ColorTheme.ROSE -> R.string.colour_rose
+    com.sukoon.app.ui.theme.ColorTheme.TIDE -> R.string.colour_tide
+    com.sukoon.app.ui.theme.ColorTheme.DUSK -> R.string.colour_dusk
+    com.sukoon.app.ui.theme.ColorTheme.LAGOON -> R.string.colour_lagoon
+    com.sukoon.app.ui.theme.ColorTheme.SLATE -> R.string.colour_slate
+}
+
+/** Six colour themes, three to a row: each tile shows its accent and light tone. */
+@Composable
+private fun ColourChoice() {
+    val settings = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.settings
+    val current = com.sukoon.app.ui.theme.Themes.current
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        com.sukoon.app.ui.theme.ColorTheme.entries.chunked(3).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                row.forEach { t ->
+                    val on = t == current
+                    Column(
+                        Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.surface)
+                            .border(if (on) 2.dp else 1.dp, if (on) Sage else outline(), RoundedCornerShape(16.dp))
+                            .clickable { settings.colorTheme = t }
+                            .padding(vertical = 12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Row(Modifier.size(40.dp).clip(androidx.compose.foundation.shape.CircleShape)) {
+                            Box(Modifier.weight(1f).fillMaxSize().background(t.accent))
+                            Box(Modifier.weight(1f).fillMaxSize().background(t.light))
+                        }
+                        Text(stringResource(colourName(t)), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                    }
+                }
+            }
+        }
+        Text(stringResource(R.string.colour_note), fontSize = 12.5.sp, color = CaptionMuted)
     }
 }
 

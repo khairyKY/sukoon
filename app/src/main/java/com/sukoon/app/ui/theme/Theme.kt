@@ -8,24 +8,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 
-private val DarkColors = darkColorScheme(
-    primary = SageLight,
-    onPrimary = SurfaceDark,
-    secondary = Sage,
-    background = CanvasDark,
+private fun darkColors(t: ColorTheme) = darkColorScheme(
+    primary = t.light,
+    onPrimary = t.surfaceDark,
+    secondary = t.accent,
+    background = t.canvasDark,
     onBackground = OnCanvasDark,
-    surface = SurfaceDark,
+    surface = t.surfaceDark,
     onSurface = OnCanvasDark,
     error = StateUrgent,
 )
 
-private val LightColors = lightColorScheme(
-    primary = Color(0xFF2E5C4A), // SageDeep's light tone
-    onPrimary = SurfaceLight,
-    secondary = Sage,
-    background = CanvasLight,
+private fun lightColors(t: ColorTheme) = lightColorScheme(
+    primary = t.deep,
+    onPrimary = t.surfaceLight,
+    secondary = t.accent,
+    background = t.canvasLight,
     onBackground = OnCanvasLight,
-    surface = SurfaceLight,
+    surface = t.surfaceLight,
     onSurface = OnCanvasLight,
     error = StateUrgent,
 )
@@ -35,7 +35,8 @@ fun SukoonTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    val colors = if (darkTheme) DarkColors else LightColors
+    val theme = Themes.current
+    val colors = androidx.compose.runtime.remember(theme, darkTheme) { if (darkTheme) darkColors(theme) else lightColors(theme) }
     CompositionLocalProvider(LocalDarkTheme provides darkTheme) {
         MaterialTheme(
             colorScheme = colors,

@@ -1910,4 +1910,27 @@
     <string name="fitness_pace_bulk_fast">Faster than the target, so more of it is fat: about 100 kcal less a day.</string>
     <string name="fitness_pace_cut_slow">Slower than the target: about 100 kcal less a day.</string>
     <string name="fitness_pace_cut_fast">Faster than the target risks muscle: about 100 kcal more a day.</string>
+    <string name="you_colour">Colour</string>
+    <string name="colour_note">In range, high and low keep their colours in every theme.</string>
+    <string name="colour_sage">Sage</string>
+    <string name="colour_rose">Rose</string>
+    <string name="colour_tide">Tide</string>
+    <string name="colour_dusk">Dusk</string>
+    <string name="colour_lagoon">Lagoon</string>
+    <string name="colour_slate">Slate</string>
+    <string name="chip_basal_due">Long-acting due · %1$s</string>
+    <string name="chip_basal_late">Long-acting %1$d h late</string>
+    <string name="basal_already_title">Already logged: %1$s u at %2$s</string>
+    <string name="basal_already_body">If you\'re not sure you took it, don\'t take another: a double dose of long-acting can bring lows for a day or more.</string>
+    <string name="basal_days">%1$d of the last %2$d days logged</string>
+    <string name="basal_late_title">If you\'re late</string>
+    <string name="basal_late_body">Toujeo can be taken up to 3 hours before or after your usual time. Forgot it? Check your glucose, take the next one at your usual time, and never a double dose.</string>
+    <string name="basal_late_source">Toujeo leaflet (SmPC 4.2). Other long-acting insulins have their own rules: check yours.</string>
+    <string name="activity_what">What</string>
+    <string name="activity_effort">How hard</string>
+    <string name="effort_easy">Easy</string>
+    <string name="effort_moderate">Moderate</string>
+    <string name="effort_hard">Hard</string>
+    <string name="activity_after">Saving it: the low alarm sits at %1$d tonight, and the next meal\'s dose suggestion is %2$d%% lower.</string>
+    <string name="activity_after_no_cut">Saving it: the low alarm sits at %1$d tonight.</string>
 </resources>

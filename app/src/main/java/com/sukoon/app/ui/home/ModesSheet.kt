@@ -234,11 +234,19 @@ fun statusChips(
     onToday: () -> Unit,
     onFitness: () -> Unit,
     onFillGap: () -> Unit,
+    /** Long-acting: when it was due and how late it is now (BasalReminder.overdue). */
+    basal: Pair<Instant, java.time.Duration>? = null,
+    onBasal: () -> Unit = {},
 ): List<StatusChip> {
     val time = TimeFormat.of()
     val n = NumberFormat.getIntegerInstance()
     val list = mutableListOf<StatusChip>()
     paused?.let { list += StatusChip(stringResource(R.string.chip_paused, time.format(it)), attention = true, onClick = onResume) }
+    basal?.let { (due, late) ->
+        val text = if (late >= com.sukoon.app.reminders.BasalReminder.LATE) stringResource(R.string.chip_basal_late, late.toHours().toInt())
+        else stringResource(R.string.chip_basal_due, time.format(due))
+        list += StatusChip(text, attention = true, onClick = onBasal)
+    }
     m.workoutUntil?.let { list += StatusChip(stringResource(R.string.chip_workout, time.format(it)), onClick = onToday) }
     if (m.workoutUntil == null && m.nightWatch) list += StatusChip(stringResource(R.string.chip_late_low, Modes.NIGHT_LOW), onClick = onToday)
     if (m.fastingNow) list += StatusChip(stringResource(R.string.chip_fasting, time.format(m.fasting.iftar)), onClick = onToday)

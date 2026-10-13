@@ -294,7 +294,7 @@ internal fun GlucoseChart(
             fun y(mgDl: Int) = plotHeight * (1f - (mgDl.coerceIn(Y_MIN, yMax) - Y_MIN).toFloat() / (yMax - Y_MIN))
 
             // Target band; its two edges are the only y-axis numbers.
-            drawRect(Sage.copy(alpha = 0.10f), topLeft = Offset(0f, y(HIGH)), size = Size(size.width, y(LOW) - y(HIGH)))
+            drawRect(com.sukoon.app.ui.theme.InRange.copy(alpha = 0.10f), topLeft = Offset(0f, y(HIGH)), size = Size(size.width, y(LOW) - y(HIGH)))
             val dash = PathEffect.dashPathEffect(floatArrayOf(8f, 8f))
             listOf(LOW, HIGH).forEach { level ->
                 drawLine(onBg.copy(alpha = 0.15f), Offset(0f, y(level)), Offset(size.width, y(level)), strokeWidth = 1.dp.toPx(), pathEffect = dash)
@@ -319,11 +319,11 @@ internal fun GlucoseChart(
             val stroke = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
             val drawn = size.width * reveal.value
             clipRect(right = drawn, bottom = y(HIGH)) { drawPath(path, StateHigh, style = stroke) }
-            clipRect(right = drawn, top = y(HIGH), bottom = y(LOW)) { drawPath(path, Sage, style = stroke) }
+            clipRect(right = drawn, top = y(HIGH), bottom = y(LOW)) { drawPath(path, com.sukoon.app.ui.theme.InRange, style = stroke) }
             clipRect(right = drawn, top = y(LOW)) { drawPath(path, StateLow, style = stroke) }
             // A reading with no neighbour on either side would be an invisible path segment: dot it.
             points.indices.filter { !joined(it) && !(it + 1 < points.size && joined(it + 1)) }.forEach { i ->
-                drawCircle(valueColor(points[i].glucoseMgDl, Sage), radius = 2.dp.toPx(), center = Offset(x(points[i].timestamp.toEpochMilli()), y(points[i].glucoseMgDl)))
+                drawCircle(valueColor(points[i].glucoseMgDl, com.sukoon.app.ui.theme.InRange), radius = 2.dp.toPx(), center = Offset(x(points[i].timestamp.toEpochMilli()), y(points[i].glucoseMgDl)))
             }
 
             // Logged events: dots along the top; finger-pricks as rings at their own value.
@@ -345,13 +345,13 @@ internal fun GlucoseChart(
             points.lastOrNull()?.takeIf { reveal.value >= 1f }?.let { r ->
                 val c = Offset(x(r.timestamp.toEpochMilli()), y(r.glucoseMgDl))
                 drawCircle(background, radius = 6.dp.toPx(), center = c)
-                drawCircle(valueColor(r.glucoseMgDl, Sage), radius = 4.dp.toPx(), center = c)
+                drawCircle(valueColor(r.glucoseMgDl, com.sukoon.app.ui.theme.InRange), radius = 4.dp.toPx(), center = c)
             }
 
             selected?.let { r ->
                 val sx = x(r.timestamp.toEpochMilli())
                 drawLine(onBg.copy(alpha = 0.3f), Offset(sx, 0f), Offset(sx, plotHeight), strokeWidth = 1.dp.toPx())
-                drawCircle(valueColor(r.glucoseMgDl, Sage), radius = 5.dp.toPx(), center = Offset(sx, y(r.glucoseMgDl)))
+                drawCircle(valueColor(r.glucoseMgDl, com.sukoon.app.ui.theme.InRange), radius = 5.dp.toPx(), center = Offset(sx, y(r.glucoseMgDl)))
             }
         }
     }
@@ -389,7 +389,7 @@ internal fun RangeStats(summary: RangeSummary, title: String, showGmi: Boolean) 
     val bands = listOf(
         Triple(String.format(Locale.getDefault(), "<%d", 54), summary.veryLow, PillLowText),
         Triple(String.format(Locale.getDefault(), "%d–%d", 54, 69), summary.low, StateLow),
-        Triple(String.format(Locale.getDefault(), "%d–%d", 70, 180), summary.inRange, Sage),
+        Triple(String.format(Locale.getDefault(), "%d–%d", 70, 180), summary.inRange, com.sukoon.app.ui.theme.InRange),
         Triple(String.format(Locale.getDefault(), "%d–%d", 181, 250), summary.high, StateHigh),
         Triple(String.format(Locale.getDefault(), ">%d", 250), summary.veryHigh, PillHighText),
     )

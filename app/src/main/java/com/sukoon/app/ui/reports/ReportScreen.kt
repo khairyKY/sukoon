@@ -91,10 +91,10 @@ fun ReportScreen(state: ReportUiState, name: String, onSelectDays: (Int) -> Unit
         Card {
             Text(stringResource(R.string.report_profile), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
             val look = AgpRenderer.Look(
-                outer = Sage.copy(alpha = 0.22f).toArgb(),
-                inner = Sage.copy(alpha = 0.5f).toArgb(),
+                outer = com.sukoon.app.ui.theme.InRange.copy(alpha = 0.22f).toArgb(),
+                inner = com.sukoon.app.ui.theme.InRange.copy(alpha = 0.5f).toArgb(),
                 median = MaterialTheme.colorScheme.onBackground.toArgb(),
-                target = Sage.toArgb(),
+                target = com.sukoon.app.ui.theme.InRange.toArgb(),
                 grid = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f).toArgb(),
                 text = CaptionMuted.toArgb(),
                 textSize = 0f,

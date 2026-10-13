@@ -164,8 +164,8 @@ private fun FourteenDays(digest: InsightDigest, insights: List<Insight>) {
                 Text(
                     (if (up) "↑ " else "↓ ") + abs(change),
                     fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-                    color = if (up) SageDeep else PillHighText,
-                    modifier = Modifier.clip(RoundedCornerShape(50)).background(if (up) SageMist else StateHigh.copy(alpha = 0.18f)).padding(horizontal = 8.dp, vertical = 3.dp),
+                    color = if (up) com.sukoon.app.ui.theme.InRangeDeep else PillHighText,
+                    modifier = Modifier.clip(RoundedCornerShape(50)).background(if (up) com.sukoon.app.ui.theme.InRangeMist else StateHigh.copy(alpha = 0.18f)).padding(horizontal = 8.dp, vertical = 3.dp),
                 )
             }
             if (digest.targets != null) Icon(painterResource(R.drawable.ic_chevron), null, tint = CaptionMuted, modifier = Modifier.size(16.dp).rotate(if (open) 90f else 0f).autoMirror())
@@ -565,7 +565,7 @@ private fun Compare(label: String, value: String, delta: Int, higherIsBetter: Bo
             fontWeight = FontWeight.SemiBold,
             color = when {
                 delta == 0 -> CaptionMuted
-                better -> SageDeep
+                better -> com.sukoon.app.ui.theme.InRangeDeep
                 else -> PillLowText
             },
         )
@@ -586,7 +586,7 @@ internal fun slot(slot: MealSlot) = stringResource(
 @Composable
 private fun Card(level: Level, content: @Composable () -> Unit) {
     val accent = when (level) {
-        Level.GOOD -> Sage
+        Level.GOOD -> com.sukoon.app.ui.theme.InRange
         Level.INFO -> CaptionMuted
         Level.ATTENTION -> StateHigh
         Level.URGENT -> StateLow
@@ -608,7 +608,7 @@ private fun Card(level: Level, content: @Composable () -> Unit) {
 private fun TargetRow(labelRes: Int, percent: Int, goal: String, met: Boolean) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(stringResource(labelRes), fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
-        Text(String.format(Locale.getDefault(), "%d%%", percent), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (met) Sage else StateLow)
+        Text(String.format(Locale.getDefault(), "%d%%", percent), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (met) com.sukoon.app.ui.theme.InRange else StateLow)
         Spacer(Modifier.width(8.dp))
         Text(goal, fontSize = 11.sp, color = CaptionMuted)
     }

@@ -185,7 +185,7 @@ private fun PersonView(sharing: Sharing, settings: SettingsPrefs, person: Follow
             v == null || !fresh -> Triple(PillNeutralBg, TextMuted, stringResource(R.string.home_pill_signal_lost))
             v < 70 -> Triple(PillLowBg, PillLowText, stringResource(R.string.home_pill_low))
             v > 180 -> Triple(PillHighBg, PillHighText, stringResource(R.string.home_pill_high))
-            else -> Triple(SageMist, SageDeep, stringResource(R.string.home_pill_in_range))
+            else -> Triple(com.sukoon.app.ui.theme.InRangeMist, com.sukoon.app.ui.theme.InRangeDeep, stringResource(R.string.home_pill_in_range))
         }
         Text(pillLabel, modifier = Modifier.clip(RoundedCornerShape(50)).background(pillBg).padding(horizontal = 12.dp, vertical = 5.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = pillText)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
@@ -416,7 +416,7 @@ fun FollowingStrip(sharing: Sharing, onOpen: (Followed) -> Unit) {
                             !fresh -> TextMuted
                             r!!.glucoseMgDl < 70 -> PillLowText
                             r.glucoseMgDl > 180 -> PillHighText
-                            else -> Sage
+                            else -> com.sukoon.app.ui.theme.InRange
                         },
                     ),
                 )

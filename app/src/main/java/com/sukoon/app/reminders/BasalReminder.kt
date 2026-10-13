@@ -50,7 +50,8 @@ class BasalReminder : BroadcastReceiver() {
                 val events = container.logbookRepository.eventsSince(now.minus(Duration.ofDays(30)).toEpochMilli()).first()
                 when (intent.action) {
                     ACTION_TOOK -> {
-                        lastDose(events)?.let { container.logbookRepository.log(LogEventType.BASAL, it) }
+                        // From the widget too: never a second entry for a dose logged in the last 8 hours.
+                        if (recent(events, now) == null) lastDose(events)?.let { container.logbookRepository.log(LogEventType.BASAL, it) }
                         dismiss(context)
                     }
                     ACTION_LATER -> {
@@ -117,6 +118,27 @@ class BasalReminder : BroadcastReceiver() {
         /** A long-acting dose in the last 12 hours counts as today's. */
         internal fun taken(events: List<EventEntity>, now: Instant): Boolean =
             events.any { it.logType == LogEventType.BASAL && Instant.ofEpochMilli(it.timestampMillis).let { t -> t > now.minus(TAKEN_WITHIN) && t <= now } }
+
+        /** From this late, Toujeo's leaflet no longer covers it (up to 3 h either side, SmPC 4.2). */
+        val LATE: Duration = Duration.ofHours(3)
+        private val DOUBLE_WITHIN: Duration = Duration.ofHours(8)
+
+        /**
+         * When long-acting was due and how late it is now; null when the reminder is off, it isn't
+         * due yet, it's logged (12 h), or it's 12 hours past (tomorrow's comes round).
+         */
+        internal fun overdue(last: List<EventEntity>, settings: BasalReminderSettings, now: ZonedDateTime): Pair<Instant, Duration>? {
+            if (!settings.enabled) return null
+            val due = nextAt(now, settings.minuteOfDay).minusDays(1)
+            val late = Duration.between(due, now)
+            if (late >= TAKEN_WITHIN || taken(last, now.toInstant())) return null
+            return due.toInstant() to late
+        }
+
+        /** A long-acting dose logged in the last 8 hours: a second one now would likely be a double. */
+        internal fun recent(events: List<EventEntity>, now: Instant): EventEntity? =
+            events.filter { it.logType == LogEventType.BASAL && Instant.ofEpochMilli(it.timestampMillis).let { t -> t > now.minus(DOUBLE_WITHIN) && t <= now } }
+                .maxByOrNull { it.timestampMillis }
 
         /** The last long-acting amount logged: what "Took it" logs again. */
         internal fun lastDose(events: List<EventEntity>): Double? =

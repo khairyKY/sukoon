@@ -2034,4 +2034,27 @@
     <string name="fitness_pace_bulk_fast">أسرع من الهدف، يعني أغلبه دهون: قلّل حوالي 100 سعر في اليوم.</string>
     <string name="fitness_pace_cut_slow">أبطأ من الهدف: قلّل حوالي 100 سعر في اليوم.</string>
     <string name="fitness_pace_cut_fast">أسرع من الهدف وده بيضر العضل: زوّد حوالي 100 سعر في اليوم.</string>
+    <string name="you_colour">اللون</string>
+    <string name="colour_note">ألوان الطبيعي والعالي والواطي ثابتة في كل الألوان.</string>
+    <string name="colour_sage">ميرمية</string>
+    <string name="colour_rose">بمبي</string>
+    <string name="colour_tide">بحري</string>
+    <string name="colour_dusk">غروب</string>
+    <string name="colour_lagoon">بحيرة</string>
+    <string name="colour_slate">رصاصي</string>
+    <string name="chip_basal_due">ميعاد طويل المفعول · %1$s</string>
+    <string name="chip_basal_late">طويل المفعول متأخر %1$d س</string>
+    <string name="basal_already_title">متسجل خلاص: %1$s وحدة الساعة %2$s</string>
+    <string name="basal_already_body">لو مش متأكد إنك خدته متاخدش تاني: الجرعة الدبل من طويل المفعول ممكن تعمل هبوط يوم أو أكتر.</string>
+    <string name="basal_days">اتسجل في %1$d من آخر %2$d يوم</string>
+    <string name="basal_late_title">لو اتأخرت</string>
+    <string name="basal_late_body">التوجيو ينفع يتاخد لحد 3 ساعات قبل ميعادك أو بعده. نسيته؟ قيس السكر، وخد اللي بعدها في ميعادك العادي، وعمرك ما تاخد جرعة دبل.</string>
+    <string name="basal_late_source">نشرة التوجيو (SmPC 4.2). كل إنسولين طويل المفعول ليه قواعده: شوف نشرتك.</string>
+    <string name="activity_what">النشاط</string>
+    <string name="activity_effort">المجهود</string>
+    <string name="effort_easy">خفيف</string>
+    <string name="effort_moderate">متوسط</string>
+    <string name="effort_hard">جامد</string>
+    <string name="activity_after">لما تحفظ: تنبيه الهبوط هيبقى عند %1$d الليلة، واقتراح جرعة الأكلة الجاية أقل %2$d%%.</string>
+    <string name="activity_after_no_cut">لما تحفظ: تنبيه الهبوط هيبقى عند %1$d الليلة.</string>
 </resources>

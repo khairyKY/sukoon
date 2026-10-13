@@ -414,7 +414,7 @@ private fun ColumnScope.InRangeContent(state: HomeUiState.InRange, brief: Brief?
         HomeStatusBar(stringResource(R.string.home_status_live), Sage, pulsing = true)
         HomeAppBar()
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 20.dp)) {
-            StatusPill(stringResource(R.string.home_pill_in_range), Sage, SageMist, com.sukoon.app.ui.theme.SageDeep)
+            StatusPill(stringResource(R.string.home_pill_in_range), com.sukoon.app.ui.theme.InRange, com.sukoon.app.ui.theme.InRangeMist, com.sukoon.app.ui.theme.InRangeDeep)
             Spacer(Modifier.height(8.dp))
             HeroNumber(countUp(state.glucoseMgDl).toString(), state.trend, MaterialTheme.colorScheme.onBackground)
             Text(
