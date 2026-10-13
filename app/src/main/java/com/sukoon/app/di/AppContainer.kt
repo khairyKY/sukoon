@@ -270,6 +270,7 @@ class AppContainer(private val context: Context) {
         newFollowers.start(appScope)
         followerWatch.start()
         healthConnect.start()
+        com.sukoon.app.platform.WearSync(context, glucoseRepository, appScope).start()
         calibration.start()
         cloudBackup.start(appScope)
         // The sensor's ongoing notification shows the newest reading; re-drawn each minute for its age.
