@@ -4,6 +4,7 @@ import com.sukoon.app.platform.TimeFormat
 import com.sukoon.app.domain.metrics.TargetRange
 import android.content.Context
 import com.sukoon.app.alarms.AlarmSettings
+import com.sukoon.app.alarms.HapticPattern
 import com.sukoon.app.data.source.SourceKind
 import com.sukoon.app.alarms.AlarmSound
 import com.sukoon.app.alarms.AlarmType
@@ -63,6 +64,9 @@ class SettingsPrefs(context: Context) {
                 prefs.getString(KEY_SOUND + type.name, null)?.let { uri -> type to AlarmSound(uri, prefs.getString(KEY_SOUND_NAME + type.name, null).orEmpty()) }
             }.toMap(),
             soundPack = SoundPack.entries.firstOrNull { it.name == prefs.getString(KEY_SOUND_PACK, null) } ?: AlarmSettings().soundPack,
+            haptics = AlarmType.entries.mapNotNull { type ->
+                HapticPattern.entries.firstOrNull { it.name == prefs.getString(KEY_HAPTIC + type.name, null) }?.let { type to it }
+            }.toMap(),
         ).sanitized()
         set(value) {
             val edit = prefs.edit()
@@ -79,6 +83,7 @@ class SettingsPrefs(context: Context) {
                 .putInt(KEY_QUIET_TO, value.quietHighsTo)
                 .putString(KEY_SOUND_PACK, value.soundPack.name)
             AlarmType.entries.forEach { type ->
+                value.haptics[type]?.let { edit.putString(KEY_HAPTIC + type.name, it.name) } ?: edit.remove(KEY_HAPTIC + type.name)
                 val sound = value.sounds[type]
                 if (sound == null) {
                     edit.remove(KEY_SOUND + type.name).remove(KEY_SOUND_NAME + type.name)
@@ -88,6 +93,11 @@ class SettingsPrefs(context: Context) {
             }
             edit.apply()
         }
+
+    /** "Pause all alarms" (You → Alarms, an alarm's screen): until then only urgent low sounds. Null = not paused. */
+    var alarmsPausedUntil: java.time.Instant?
+        get() = prefs.getLong(KEY_ALARMS_PAUSED, 0L).takeIf { it > 0 }?.let(java.time.Instant::ofEpochMilli)
+        set(value) = prefs.edit().putLong(KEY_ALARMS_PAUSED, value?.toEpochMilli() ?: 0L).apply()
 
     /** You → Emergency contacts. Contacts are a small JSON list; a corrupt value reads as none. */
     var emergency: EmergencySettings
@@ -269,6 +279,8 @@ class SettingsPrefs(context: Context) {
         private const val KEY_QUIET_FROM = "alarm_quiet_highs_from"
         private const val KEY_QUIET_TO = "alarm_quiet_highs_to"
         private const val KEY_SOUND_PACK = "alarm_sound_pack"
+        private const val KEY_HAPTIC = "alarm_haptic_"
+        private const val KEY_ALARMS_PAUSED = "alarms_paused_until"
         private const val KEY_THEME = "theme_mode"
         private const val KEY_TIME_FORMAT = "time_format"
         private const val KEY_INSULIN_DURATION = "insulin_duration_minutes"

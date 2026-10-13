@@ -382,6 +382,8 @@ fun MainScaffold() {
                     val life by homeViewModel.sensorLife.collectAsStateWithLifecycle()
                     val source by home.sourceKind.collectAsStateWithLifecycle()
                     if (source == SourceKind.LIBRE_BLE && !rememberBluetoothOn()) BluetoothOffBanner { turnOnBluetooth(context) }
+                    val alarmsPaused by home.alarms.pausedUntil.collectAsStateWithLifecycle()
+                    alarmsPaused?.let { com.sukoon.app.ui.home.AlarmsPausedBanner(it) { scope.launch { home.alarms.resumeAll() } } }
                     (life as? SensorLife.Running)
                         ?.takeIf { Duration.between(Instant.now(), it.endsAt) <= Duration.ofHours(24) }
                         ?.let { SensorEndingBanner(it, onClick = toSensor) }

@@ -99,6 +99,7 @@ a high 10 below its line.
 | **No readings** | No reading for N min (held while the paired sensor warms up: it sends nothing to act on yet) | 20 min | 10 to 120, on/off | Every 30 min | Notification stream, 8 s |
 
 - Sounds come from a pack (You → Alarms → Sounds): Astral by default, Orbit, Glass, Clear or Bells, one sound per alarm and one for the long-acting reminder. An alarm given its own phone sound or file keeps it.
+- Every alarm also vibrates in its own pattern, for as long as its sound plays, so a phone in a pocket says which alarm it is: urgent low **SOS**, low **Pulse**, going low **Rising**, high **Heartbeat**, no readings **Tap** (You → Alarms → each alarm → Vibration: also Off, except for urgent low). Sukoon vibrates itself, not the notification channel (Android fixes a channel's pattern for good once it's made). Lows vibrate as alarms (through silent mode), highs and no-readings as notifications.
 - Urgent low takes over from low, and low from going low. Easing out of an urgent low into a low is the same episode, not a new alarm.
 - Each alarm, every time: a notification, the full-screen alert (over the lock screen, or over any app with "display over other apps"), and its sound. The volume goes back to where it was once the sound stops.
 - Lows sound even if notifications are blocked. Highs and no-readings stay silent if you blocked their notifications.
@@ -116,6 +117,10 @@ a high 10 below its line.
 | **See and hear each alarm** | You → Alarms | *Hear* plays an alarm's sound for 5 s; *See* runs its real path (sound, notification, full screen) with a sample value, marked TEST. Answering it never touches a real alarm |
 
 The alert screen closes by itself once its alarm is over (back in range, signal back).
+
+### Pausing every alarm
+
+*Pause alarms* (You → Alarms, top: 30 min, 1 h, 2 h or 4 h; or *Pause all alarms for 1 h* on any of your own alarm screens except urgent low) keeps every alarm quiet, your own and the ones for people you follow, **except urgent low**, which nothing silences. What's sounding stops at once. While paused, Now shows *Alarms paused until …* (tap to bring them back) and You → Alarms has *Resume*. When the pause ends, any alarm that is still true fires straight away. Under the parent lock (a PIN, under 18) pausing needs the PIN and the alarm screens don't offer it.
 
 ### What your alarms did
 

@@ -30,6 +30,19 @@ class AlarmEngineTest {
     }
 
     @Test
+    fun `a pause holds back every alarm but urgent low, and what was held back fires when it ends`() {
+        val until = at(60)
+        fun fired(v: Int, minute: Long, state: AlarmState = AlarmState()) =
+            AlarmEngine.evaluate(listOf(r(minute, v)), at(minute), settings, state, ZoneOffset.UTC, pausedUntil = until)
+        assertTrue(fired(250, 0).fire.isEmpty()) // high: held back
+        assertTrue(fired(65, 0).fire.isEmpty()) // low: held back
+        assertEquals(setOf(AlarmType.URGENT_LOW), fired(50, 0).fire.map { it.type }.toSet()) // urgent low: never
+        val held = fired(250, 30)
+        assertEquals(setOf(AlarmType.HIGH), held.state.activeSince.keys) // still known to be on
+        assertEquals(setOf(AlarmType.HIGH), fired(250, 61, held.state).fire.map { it.type }.toSet()) // pause over: it fires
+    }
+
+    @Test
     fun `quiet hours hold back highs but never lows`() {
         val quiet = settings.copy(quietHighsFrom = 22, quietHighsTo = 7) // t0 is 03:00 UTC: inside
         assertTrue(AlarmEngine.evaluate(listOf(r(0, 300)), at(0), quiet, AlarmState(), ZoneOffset.UTC).fire.isEmpty())

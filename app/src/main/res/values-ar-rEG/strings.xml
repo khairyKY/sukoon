@@ -1901,4 +1901,18 @@
     <string name="new_follower_remove">شيله</string>
     <string name="new_follower_removed">%1$s مبقاش بيتابعك</string>
     <string name="new_follower_remove_failed">معرفناش نشيل %1$s. افتح سكون ← إنت ← الناس.</string>
+    <string name="haptic_label">الهزاز</string>
+    <string name="haptic_sos">استغاثة</string>
+    <string name="haptic_pulse">نبض</string>
+    <string name="haptic_heartbeat">دقة قلب</string>
+    <string name="haptic_rising">بيعلى</string>
+    <string name="haptic_tap">نقرة</string>
+    <string name="haptic_off">مقفول</string>
+    <string name="pause_title">وقّف التنبيهات شوية</string>
+    <string name="pause_body">كل التنبيهات هتسكت ما عدا الهبوط الشديد (تحت %1$d)، وبعدين هترجع كلها لوحدها.</string>
+    <string name="pause_until">التنبيهات واقفة لحد %1$s</string>
+    <string name="pause_urgent_still">الهبوط الشديد (تحت %1$d) لسه بيرن.</string>
+    <string name="pause_resume">رجّعها</string>
+    <string name="home_alarms_paused">التنبيهات واقفة لحد %1$s · دوس عشان ترجّعها</string>
+    <string name="alarm_pause_all">وقّف كل التنبيهات لمدة ساعة</string>
 </resources>

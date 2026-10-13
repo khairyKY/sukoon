@@ -27,6 +27,12 @@ import com.sukoon.app.R
 import com.sukoon.app.alarms.AlarmSettings
 import com.sukoon.app.data.prefs.SettingsPrefs
 import com.sukoon.app.ui.components.NumberChips
+import com.sukoon.app.ui.components.ChoiceChips
+import com.sukoon.app.alarms.HapticPattern
+import com.sukoon.app.ui.theme.PillHighText
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.Sage
 import android.app.Activity
@@ -105,8 +111,17 @@ private val HIGH_SNOOZES = listOf(30, 60, 120)
 
 /** You → Alarms. Urgent low is shown but not editable: it's always on at 55. Every alarm can have its own sound. */
 @Composable
-fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> Unit, onTest: (AlarmType) -> Unit, onPreview: (AlarmType) -> Unit, onPreviewPack: (SoundPack) -> Unit = {}) {
+fun AlarmSettingsSection(
+    settings: AlarmSettings,
+    onChange: (AlarmSettings) -> Unit,
+    onTest: (AlarmType) -> Unit,
+    onPreview: (AlarmType) -> Unit,
+    onPreviewPack: (SoundPack) -> Unit = {},
+    /** Pause all alarms for this many minutes (behind the parent lock, like any alarm change). */
+    onPause: (Int) -> Unit = {},
+) {
     val context = LocalContext.current
+    val alarms = (context.applicationContext as com.sukoon.app.SukoonApp).container.alarms
     var pickingFor by rememberSaveable { mutableStateOf<AlarmType?>(null) }
     fun setSound(type: AlarmType, sound: AlarmSound?) {
         onChange(settings.copy(sounds = if (sound == null) settings.sounds - type else settings.sounds + (type to sound)))
@@ -163,13 +178,28 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
         onPlay = { onPreview(type) },
     )
 
+    /** "Vibration": the alarm's pattern; picking one plays it for a few seconds. */
+    @Composable
+    fun Haptic(type: AlarmType, enabled: Boolean = true) {
+        Label(R.string.haptic_label)
+        ChoiceChips(HapticPattern.choicesFor(type), settings.hapticFor(type), { stringResource(it.nameRes) }, enabled) { pattern ->
+            onChange(settings.copy(haptics = settings.haptics + (type to pattern)))
+            alarms.feel(pattern, type)
+        }
+    }
+
     var open by rememberSaveable { mutableStateOf<AlarmType?>(null) }
     var previewing by rememberSaveable { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     fun toggleOpen(type: AlarmType) {
         open = if (open == type) null else type
     }
     @Composable
     fun soundName(type: AlarmType) = settings.sounds[type]?.name ?: stringResource(settings.soundPack.nameRes)
+
+    val pausedUntil by alarms.pausedUntil.collectAsState()
+    PauseCard(pausedUntil, onPause = onPause, onResume = { scope.launch { alarms.resumeAll() } })
+    Spacer(Modifier.height(12.dp))
 
     Row(
         Modifier
@@ -198,6 +228,7 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
         ) {
             Text(stringResource(R.string.alarms_urgent_body, AlarmSettings.URGENT_LOW_MG_DL), fontSize = 12.5.sp, color = CaptionMuted)
             Sound(AlarmType.URGENT_LOW)
+            Haptic(AlarmType.URGENT_LOW)
         }
         AlarmRow(
             AlarmType.LOW,
@@ -216,6 +247,7 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
                 onChange(settings.copy(lowSnoozeMinutes = it))
             }
             Sound(AlarmType.LOW, settings.lowEnabled)
+            Haptic(AlarmType.LOW, settings.lowEnabled)
         }
         AlarmRow(
             AlarmType.GOING_LOW,
@@ -227,6 +259,7 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
         ) {
             Text(stringResource(R.string.alarms_going_low_body), fontSize = 12.5.sp, color = CaptionMuted)
             Sound(AlarmType.GOING_LOW, settings.goingLowEnabled)
+            Haptic(AlarmType.GOING_LOW, settings.goingLowEnabled)
         }
         AlarmRow(
             AlarmType.HIGH,
@@ -245,6 +278,7 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
                 onChange(settings.copy(highSnoozeMinutes = it))
             }
             Sound(AlarmType.HIGH, settings.highEnabled)
+            Haptic(AlarmType.HIGH, settings.highEnabled)
         }
         AlarmRow(
             AlarmType.SIGNAL_LOSS,
@@ -260,6 +294,7 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
                 onChange(settings.copy(signalLossMinutes = it))
             }
             Sound(AlarmType.SIGNAL_LOSS, settings.signalLossEnabled)
+            Haptic(AlarmType.SIGNAL_LOSS, settings.signalLossEnabled)
         }
     }
     Spacer(Modifier.height(12.dp))
@@ -295,6 +330,32 @@ fun AlarmSettingsSection(settings: AlarmSettings, onChange: (AlarmSettings) -> U
     }
 
     if (previewing) SeeAndHear(onDismiss = { previewing = false }, onHear = onPreview, onSee = { previewing = false; onTest(it) })
+}
+
+/** How long "pause all alarms" can last. */
+private val PAUSES = listOf(30, 60, 120, 240)
+
+/**
+ * Pause all alarms: everything but urgent low stays quiet for a while, then comes back by itself.
+ * While paused it says until when, with Resume.
+ */
+@Composable
+private fun PauseCard(pausedUntil: Instant?, onPause: (Int) -> Unit, onResume: () -> Unit) = ListCard {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (pausedUntil != null) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.pause_until, com.sukoon.app.platform.TimeFormat.of().format(pausedUntil)), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = PillHighText)
+                    Text(stringResource(R.string.pause_urgent_still, AlarmSettings.URGENT_LOW_MG_DL), fontSize = 12.5.sp, color = CaptionMuted, modifier = Modifier.padding(top = 2.dp))
+                }
+                PillButton(stringResource(R.string.pause_resume), filled = true, onClick = onResume)
+            }
+        } else {
+            Text(stringResource(R.string.pause_title), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.pause_body, AlarmSettings.URGENT_LOW_MG_DL), fontSize = 12.5.sp, lineHeight = 17.sp, color = CaptionMuted)
+            ChoiceChips(PAUSES, -1, { snoozeLabel(it) }) { onPause(it) }
+        }
+    }
 }
 
 /** "15 min", "1 h", "2 h": how long an alarm stays quiet after its snooze. */
