@@ -134,7 +134,11 @@ private fun WorkoutCard(keeper: ModesKeeper, m: ActiveModes, glucose: Int?) = Ca
             )
         }
         val context = LocalContext.current
-        ChoiceChips(WORKOUT_MINUTES, -1, { stringResource(R.string.modes_workout_start, durationText(context, it.toLong())) }) { keeper.startWorkout(it) }
+        // Whole hours as hours, 90 as "90 min" (durationText rounds to the hour above 60).
+        ChoiceChips(WORKOUT_MINUTES, -1, {
+            val length = if (it % 60 == 0) durationText(context, it.toLong()) else context.resources.getQuantityString(R.plurals.life_in_minutes, it, it)
+            stringResource(R.string.modes_workout_start, length)
+        }) { keeper.startWorkout(it) }
     }
     if (m.lateLowWatch) Callout(stringResource(R.string.modes_late_low, Modes.NIGHT_LOW, time.format(m.lastWorkoutEnd!!.plus(Modes.LATE_LOW))))
     var cut by remember { mutableStateOf(keeper.afterWorkoutCut) }
