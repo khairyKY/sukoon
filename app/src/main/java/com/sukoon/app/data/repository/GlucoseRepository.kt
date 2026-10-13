@@ -103,6 +103,16 @@ class GlucoseRepository(
     /** For readings that arrive outside the collector — the NFC pairing tap's 8-hour backfill. */
     suspend fun ingest(reading: GlucoseReading) = readingDao.insert(reading.toEntity())
 
+    /** Saves [readings] (already-saved times are skipped); returns how many are new. */
+    suspend fun fill(readings: List<GlucoseReading>): Int {
+        if (readings.isEmpty()) return 0
+        val from = readings.minOf { it.timestamp }.toEpochMilli()
+        val to = readings.maxOf { it.timestamp }.toEpochMilli()
+        val before = readingDao.countBetween(from, to)
+        readings.forEach { readingDao.insert(it.toEntity()) }
+        return readingDao.countBetween(from, to) - before
+    }
+
     /**
      * Starts the persist-to-Room collector for whichever source is active, restarting it on every
      * switch (collectLatest cancels the old collection; disconnect stops a hot source's own job).

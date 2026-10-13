@@ -1919,4 +1919,13 @@
     <string name="pause_resume">استئناف</string>
     <string name="home_alarms_paused">التنبيهات متوقفة حتى %1$s · اضغط لإعادتها</string>
     <string name="alarm_pause_all">أوقف كل التنبيهات لمدة ساعة</string>
+    <string name="home_gap_fill">قراءات ناقصة %1$s–%2$s · ضع هاتفك على المستشعر لتملأها من ذاكرته</string>
+    <plurals name="sensor_filled">
+        <item quantity="zero">لم تُملأ أي قراءات</item>
+        <item quantity="one">مُلئت قراءة ناقصة واحدة من ذاكرة المستشعر</item>
+        <item quantity="two">مُلئت قراءتان ناقصتان من ذاكرة المستشعر</item>
+        <item quantity="few">مُلئت %1$d قراءات ناقصة من ذاكرة المستشعر</item>
+        <item quantity="many">مُلئت %1$d قراءة ناقصة من ذاكرة المستشعر</item>
+        <item quantity="other">مُلئت %1$d قراءة ناقصة من ذاكرة المستشعر</item>
+    </plurals>
 </resources>

@@ -1915,4 +1915,13 @@
     <string name="pause_resume">رجّعها</string>
     <string name="home_alarms_paused">التنبيهات واقفة لحد %1$s · دوس عشان ترجّعها</string>
     <string name="alarm_pause_all">وقّف كل التنبيهات لمدة ساعة</string>
+    <string name="home_gap_fill">قرايات ناقصة %1$s–%2$s · حط موبايلك على الحساس عشان تملاها من ذاكرته</string>
+    <plurals name="sensor_filled">
+        <item quantity="zero">مفيش قرايات اتملت</item>
+        <item quantity="one">اتملت قراية ناقصة من ذاكرة الحساس</item>
+        <item quantity="two">اتملت قرايتين ناقصين من ذاكرة الحساس</item>
+        <item quantity="few">اتملت %1$d قرايات ناقصة من ذاكرة الحساس</item>
+        <item quantity="many">اتملت %1$d قراية ناقصة من ذاكرة الحساس</item>
+        <item quantity="other">اتملت %1$d قراية ناقصة من ذاكرة الحساس</item>
+    </plurals>
 </resources>

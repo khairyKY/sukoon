@@ -1,5 +1,7 @@
 package com.sukoon.app.ui.settings
 
+import kotlinx.coroutines.launch
+
 import com.sukoon.app.ui.theme.SageDeep
 import com.sukoon.app.ui.theme.PillNeutralBg
 import com.sukoon.app.ui.theme.UiFontFamily
@@ -170,6 +172,14 @@ fun SensorCard(
     /** The action the Bluetooth permission prompt was opened for (pairing needs it; so does starting). */
     var afterPermission by remember { mutableStateOf(TapMode.CONNECT) }
     val paired by rememberUpdatedState(onPaired)
+    // Now's "fill the gap": ready to read the sensor's memory.
+    val checkAsked by (context.applicationContext as com.sukoon.app.SukoonApp).container.requestedCheckSensor.collectAsStateWithLifecycle()
+    LaunchedEffect(checkAsked) {
+        if (checkAsked) {
+            step = SensorStep.Holding(TapMode.CHECK)
+            (context.applicationContext as com.sukoon.app.SukoonApp).container.requestedCheckSensor.value = false
+        }
+    }
     // A guide link ("Start a new sensor") opens the confirmation straight away.
     val startAsked by (context.applicationContext as com.sukoon.app.SukoonApp).container.requestedStartSensor.collectAsStateWithLifecycle()
     LaunchedEffect(startAsked) {
@@ -239,6 +249,14 @@ fun SensorCard(
                                 }
                             } else {
                                 val check = read.check()
+                                // A look is also a chance to fill what Bluetooth missed, from the sensor's own memory.
+                                if (check != null) {
+                                    val container = (context.applicationContext as com.sukoon.app.SukoonApp).container
+                                    container.appScope.launch {
+                                        val filled = container.fillFromMemory(read, scannedAt)
+                                        if (filled > 0) activity.runOnUiThread { context.toast(context.resources.getQuantityString(R.plurals.sensor_filled, filled, filled)) }
+                                    }
+                                }
                                 when {
                                     check != null -> settle(SensorStep.Checked(check), describe(context, check))
                                     !read.supported -> context.getString(R.string.sensor_unsupported, read.patchInfo.hex()).let { settle(SensorStep.Refused(it), it) }

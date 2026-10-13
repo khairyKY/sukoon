@@ -382,6 +382,20 @@ fun MainScaffold() {
                     val life by homeViewModel.sensorLife.collectAsStateWithLifecycle()
                     val source by home.sourceKind.collectAsStateWithLifecycle()
                     if (source == SourceKind.LIBRE_BLE && !rememberBluetoothOn()) BluetoothOffBanner { turnOnBluetooth(context) }
+                    // Readings missing in the last 8 h: one tap on the sensor fills them from its memory.
+                    if (source == SourceKind.LIBRE_BLE) {
+                        val lastReadings by remember { repository.recentReadings(600) }.collectAsStateWithLifecycle(initialValue = emptyList())
+                        var dismissedGap by rememberSaveable { mutableStateOf(0L) }
+                        com.sukoon.app.domain.metrics.MemoryGap.fillable(lastReadings, Instant.now())
+                            ?.takeIf { it.first.toEpochMilli() != dismissedGap }
+                            ?.let { (from, to) ->
+                                com.sukoon.app.ui.home.MemoryGapBanner(from, to) {
+                                    dismissedGap = from.toEpochMilli()
+                                    home.requestedCheckSensor.value = true
+                                    openYou(YouPage.SENSOR)
+                                }
+                            }
+                    }
                     val alarmsPaused by home.alarms.pausedUntil.collectAsStateWithLifecycle()
                     alarmsPaused?.let { com.sukoon.app.ui.home.AlarmsPausedBanner(it) { scope.launch { home.alarms.resumeAll() } } }
                     (life as? SensorLife.Running)

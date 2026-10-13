@@ -192,6 +192,9 @@ class AppContainer(private val context: Context) {
     /** A guide link asked for You → Sensor → Start a new sensor: the Sensor card opens its confirmation. */
     val requestedStartSensor = MutableStateFlow(false)
 
+    /** Now's "fill the gap": You → Sensor opens ready to read the sensor's memory. */
+    val requestedCheckSensor = MutableStateFlow(false)
+
     init {
         glucoseRepository.start()
         BasalReminder.schedule(context, settings.basalReminder)
@@ -296,15 +299,29 @@ class AppContainer(private val context: Context) {
         val pairing = SensorPairing(read.uid, read.patchInfo, fram, scannedAtMillis - Libre2.sensorInfo(fram).ageMinutes * LibreBleSource.MINUTE_MS)
         pairingStore.save(pairing)
         pairingStore.bleAddress = read.bleMac
-        // Only a running sensor's memory holds glucose: a just-started one holds noise (LibreNfc.SensorRead.check).
-        if (Libre2.sensorInfo(fram).state == Libre2.State.READY) appScope.launch {
-            for (point in Libre2.parseFram(pairing.calibration, fram)) {
-                if (point.mgDl !in LibreBleSource.PLAUSIBLE_MG_DL) continue
-                val at = Instant.ofEpochMilli(pairing.startMillis + point.minute * LibreBleSource.MINUTE_MS)
-                glucoseRepository.ingest(GlucoseReading(at, point.mgDl, TrendDirection.STEADY, SourceKind.LIBRE_BLE, warmup = point.minute < LibreBleSource.WARMUP_MINUTES))
-            }
-        }
+        appScope.launch { fillFromMemory(read, scannedAtMillis) }
         selectSource(SourceKind.LIBRE_BLE)
+    }
+
+    /**
+     * The sensor's memory (the last 8 h every 15 min, the last 16 min every minute) into the readings,
+     * filling what Bluetooth missed. Any tap: pairing, starting, or "Check sensor". Only a running
+     * sensor's memory holds glucose (a just-started one holds noise); minute 0 is the paired sensor's
+     * own when it's the same sensor, else this tap's. Returns how many readings were new.
+     */
+    suspend fun fillFromMemory(read: LibreNfc.SensorRead, scannedAtMillis: Long): Int {
+        val fram = read.fram ?: return 0
+        val info = Libre2.sensorInfo(fram)
+        if (info.state != Libre2.State.READY) return 0
+        val pairing = pairingStore.load()?.takeIf { it.uid.contentEquals(read.uid) }
+            ?: SensorPairing(read.uid, read.patchInfo, fram, scannedAtMillis - info.ageMinutes * LibreBleSource.MINUTE_MS)
+        val readings = Libre2.parseFram(pairing.calibration, fram).filter { it.mgDl in LibreBleSource.PLAUSIBLE_MG_DL }.map { point ->
+            GlucoseReading(
+                Instant.ofEpochMilli(pairing.startMillis + point.minute * LibreBleSource.MINUTE_MS), point.mgDl, TrendDirection.STEADY, SourceKind.LIBRE_BLE,
+                warmup = point.minute < LibreBleSource.WARMUP_MINUTES,
+            )
+        }
+        return glucoseRepository.fill(readings)
     }
 
     private companion object {
