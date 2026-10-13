@@ -54,6 +54,13 @@ class BasalReminder : BroadcastReceiver() {
                         if (recent(events, now) == null) lastDose(events)?.let { container.logbookRepository.log(LogEventType.BASAL, it) }
                         dismiss(context)
                     }
+                    ACTION_FOLLOWERS -> {
+                        schedule(context, settings) // tomorrow's
+                        if (settings.enabled && container.sharing.tellFollowersBasal && !taken(events, now)) {
+                            val due = nextAt(ZonedDateTime.now(), settings.minuteOfDay).minusDays(1).toInstant()
+                            runCatching { container.sharing.publishBasalMissed(due) }
+                        }
+                    }
                     ACTION_LATER -> {
                         context.getSystemService(NotificationManager::class.java).cancel(NOTIFICATION_ID)
                         at(context, now.plus(NAG_EVERY), nag(context, intent.getIntExtra(EXTRA_NAG, 0)))
@@ -80,6 +87,9 @@ class BasalReminder : BroadcastReceiver() {
         private const val ACTION_CHECK = "com.sukoon.app.reminders.BASAL_CHECK"
         private const val ACTION_TOOK = "com.sukoon.app.reminders.BASAL_TOOK"
         private const val ACTION_LATER = "com.sukoon.app.reminders.BASAL_LATER"
+        private const val ACTION_FOLLOWERS = "com.sukoon.app.reminders.BASAL_FOLLOWERS"
+        /** Followers hear about a missed dose this long after it was due (after the three reminders). */
+        private const val FOLLOWERS_AFTER_MINUTES = 120
         private const val EXTRA_NAG = "nag"
         // Channels keep their first sound, so each pack has its own; the others are removed when it changes.
         private fun channel(pack: SoundPack) = "reminder_${pack.key}"
@@ -91,13 +101,16 @@ class BasalReminder : BroadcastReceiver() {
         /** Sets (or, when off, cancels) the daily check. Safe to call any time: it replaces itself. */
         fun schedule(context: Context, settings: BasalReminderSettings) {
             val daily = pending(context, 0, Intent(context, BasalReminder::class.java).setAction(ACTION_CHECK))
+            val followers = pending(context, 4, Intent(context, BasalReminder::class.java).setAction(ACTION_FOLLOWERS))
             if (!settings.enabled) {
+                context.getSystemService(AlarmManager::class.java).cancel(followers)
                 context.getSystemService(AlarmManager::class.java).cancel(daily)
                 context.getSystemService(AlarmManager::class.java).cancel(nag(context, 1))
                 dismiss(context)
                 return
             }
             at(context, nextAt(ZonedDateTime.now(), settings.minuteOfDay).toInstant(), daily)
+            at(context, nextAt(ZonedDateTime.now(), (settings.minuteOfDay + FOLLOWERS_AFTER_MINUTES) % 1440).toInstant(), followers)
         }
 
         /** What "Took it" sends: from the notification, and from the Insulin widget. */

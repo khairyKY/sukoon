@@ -114,10 +114,38 @@ class FollowerWatch(
                 result.fire.filter { it.type in person.alarms }.forEach { notifier.show(it, alarmSettings, who = person.name.ifBlank { "…" }, person = person.id) }
             }.onFailure { Log.w(TAG, "Check for ${person.name} failed", it) }
         }
+        following.forEach { basalNotice(it) }
         val followedIds = following.map { it.id }.toSet()
         (states.keys - followedIds).forEach { id -> states.remove(id)?.activeSince?.keys?.forEach { notifier.cancel(it, id) } }
         publish()
         FollowService.update(context, following.joinToString("\n") { line(it) })
+    }
+
+    /** Once per missed dose: "Kai hasn't logged long-acting". A gentle notification, not an alarm. */
+    private fun basalNotice(person: Followed) {
+        val since = person.basalMissedSince ?: return
+        val key = "basal_notified_${person.id}"
+        if (prefs.getString(key, null) == since.toString()) return
+        prefs.edit().putString(key, since.toString()).apply()
+        val manager = context.getSystemService(android.app.NotificationManager::class.java)
+        if (manager.getNotificationChannel(BASAL_CHANNEL) == null) {
+            manager.createNotificationChannel(android.app.NotificationChannel(BASAL_CHANNEL, context.getString(R.string.follow_basal_channel), android.app.NotificationManager.IMPORTANCE_DEFAULT))
+        }
+        val open = android.app.PendingIntent.getActivity(
+            context, 40, android.content.Intent(context, com.sukoon.app.MainActivity::class.java).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val name = person.name.ifBlank { "…" }
+        val body = context.getString(R.string.follow_basal_body, com.sukoon.app.platform.TimeFormat.of().format(since))
+        val n = androidx.core.app.NotificationCompat.Builder(context, BASAL_CHANNEL)
+            .setSmallIcon(R.drawable.ic_stat_insulin)
+            .setContentTitle(context.getString(R.string.follow_basal_title, name))
+            .setContentText(body)
+            .setStyle(androidx.core.app.NotificationCompat.BigTextStyle().bigText(body))
+            .setContentIntent(open)
+            .setAutoCancel(true)
+            .build()
+        runCatching { manager.notify(("basal" + person.id).hashCode(), n) }
     }
 
     private fun line(person: Followed): String {
@@ -130,6 +158,7 @@ class FollowerWatch(
 
     private companion object {
         const val TAG = "FollowerWatch"
+        const val BASAL_CHANNEL = "follow_basal"
         const val KEY_ALERTS = "follow_alerts_on"
         val WINDOW: Duration = Duration.ofMinutes(30)
     }

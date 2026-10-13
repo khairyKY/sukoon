@@ -333,6 +333,20 @@ private fun words(f: Finding): Pair<String, String> {
         } to stringResource(R.string.in2_ev_meals, i.meals)
         is Insight.RecurringHighs -> stringResource(R.string.in2_highs, clock(i.fromHour), clock(i.toHour)) to stringResource(R.string.in2_ev_percent_days, i.percentOfDays)
         is Insight.Rebounds -> stringResource(R.string.in2_rebound) to stringResource(R.string.in2_ev_of_lows, i.rebounds, i.lows)
+        is Insight.BasalDrift -> stringResource(
+            when {
+                i.level == Level.GOOD -> R.string.in2_basal_ok
+                i.medianDrift > 0 -> R.string.in2_basal_up
+                else -> R.string.in2_basal_down
+            },
+            kotlin.math.abs(i.medianDrift),
+        ) to stringResource(R.string.in2_ev_basal, i.drifting, i.nights)
+        is Insight.BasalHabits -> when {
+            i.meanAfterMissed != null && i.days - i.logged >= 2 -> stringResource(R.string.in2_basal_missed, i.meanAfterMissed, i.meanUsual)
+            i.spreadMinutes > 180 -> stringResource(R.string.in2_basal_spread, i.spreadMinutes / 60)
+            else -> stringResource(R.string.in2_basal_steady)
+        } to stringResource(R.string.in2_ev_basal_days, i.logged, i.days)
+        is Insight.ActivityEffects -> i.kinds.first().let { k -> stringResource(R.string.in2_activity, k.kind, signed(k.change)) to stringResource(R.string.in2_ev_activity, k.count) }
         is Insight.LowTreatments -> stringResource(R.string.in2_treatments, i.medianGrams) to stringResource(R.string.in2_ev_of_lows, i.rebounds, i.lows)
         is Insight.MeterAgreement -> stringResource(if (i.level == Level.GOOD) R.string.in2_meter_ok else R.string.in2_meter_off) to stringResource(R.string.in2_ev_checks, i.agreeing, i.checks)
         is Insight.DawnRise -> stringResource(R.string.in2_dawn, i.medianRise) to stringResource(R.string.in2_ev_mornings, i.nightsWithRise, i.nights)
@@ -507,6 +521,28 @@ private fun InsightCard(insight: Insight) {
                 Body(stringResource(R.string.insight_rich_body, insight.richPeak, insight.leanPeak, signed(insight.richAt4h), signed(insight.leanAt4h), insight.rich))
                 if (insight.level == Level.ATTENTION) Discuss(stringResource(R.string.insight_rich_discuss))
                 Source(stringResource(R.string.insight_src_rich))
+            }
+            is Insight.BasalDrift -> {
+                Title(stringResource(R.string.insight_basal_title))
+                Body(stringResource(R.string.insight_basal_body, insight.nights, signed(insight.medianDrift), insight.drifting))
+                if (insight.level == Level.ATTENTION) Discuss(stringResource(R.string.insight_basal_discuss))
+                Source(stringResource(R.string.insight_src_basal))
+            }
+            is Insight.BasalHabits -> {
+                Title(stringResource(R.string.insight_basal_habits_title))
+                Body(stringResource(R.string.insight_basal_habits_body, insight.logged, insight.days, insight.spreadMinutes / 60, insight.spreadMinutes % 60))
+                insight.meanAfterMissed?.let { Body(stringResource(R.string.insight_basal_missed_body, it, insight.meanUsual)) }
+                Source(stringResource(R.string.basal_late_source))
+            }
+            is Insight.ActivityEffects -> {
+                Title(stringResource(R.string.insight_effects_title))
+                insight.kinds.forEach { k ->
+                    Body(
+                        stringResource(R.string.insight_activity_line, k.kind, k.count, signed(k.change)) +
+                            (k.nightLowest?.let { n -> " " + stringResource(R.string.insight_activity_night, n, k.otherNightsLowest ?: n) } ?: ""),
+                    )
+                }
+                Source(stringResource(R.string.insight_src_activity))
             }
             is Insight.LowTreatments -> {
                 Title(stringResource(R.string.insight_treatments_title))

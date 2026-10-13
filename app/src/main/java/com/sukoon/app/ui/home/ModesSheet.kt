@@ -201,9 +201,9 @@ class StatusChip(val text: String, val attention: Boolean = false, val onClick: 
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun StatusChips(chips: List<StatusChip>) {
+fun StatusChips(chips: List<StatusChip>, modifier: Modifier = Modifier.padding(horizontal = 16.dp)) {
     if (chips.isEmpty()) return
-    FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    FlowRow(modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         chips.forEach { c ->
             Text(
                 c.text,

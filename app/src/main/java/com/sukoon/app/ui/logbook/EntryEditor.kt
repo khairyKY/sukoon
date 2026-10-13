@@ -192,6 +192,17 @@ private fun ActivityPanel(note: String, glucose: Int?, onNote: (String) -> Unit)
     }
 }
 
+/** Under a dose suggestion: long-acting not logged for 26 h (when you log it at all), so highs may keep coming. */
+@Composable
+private fun NoBasalLately() {
+    val logbook = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.logbookRepository
+    val last by remember { logbook.latest(LogEventType.BASAL) }.collectAsState(initial = null as EventEntity?)
+    val hours = last?.let { java.time.Duration.between(Instant.ofEpochMilli(it.timestampMillis), Instant.now()).toHours() } ?: return
+    if (hours < 26) return
+    Text(stringResource(R.string.basal_caution, hours.toInt()), fontSize = 13.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold, color = PillHighText,
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(PillHighBg).padding(horizontal = 14.dp, vertical = 12.dp))
+}
+
 /** Logging long-acting with one logged in the last 8 hours: the double-dose guard. */
 @Composable
 private fun AlreadyTaken() {
@@ -549,6 +560,7 @@ private fun EditorContent(
                 )
             }
             if (type == LogEventType.ACTIVITY) ActivityPanel(note, glucoseNow?.glucoseMgDl) { note = it }
+            if (advice != null) NoBasalLately()
             advice?.let { a ->
                 DoseLine(a) { units ->
                     values[AmountField.RAPID] = formatAmount(units)
