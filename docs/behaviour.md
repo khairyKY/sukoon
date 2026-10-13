@@ -97,6 +97,8 @@ a high 10 below its line.
 | **Going low** | Heading under your low line within 20 min | On | On/off | Once per episode | Alarm stream, 8 s, volume lifted to at least 50% |
 | **High** | Over your high line | 180 | Line 120 to 400, on/off, quiet hours | After its snooze (60 min) | Notification stream, 8 s |
 | **No readings** | No reading for N min (held while the paired sensor warms up: it sends nothing to act on yet) | 20 min | 10 to 120, on/off | Every 30 min | Notification stream, 8 s |
+| **Falling fast** | Dropping 2+ a minute (3 or 4 to choose) while still under your high line, and no low coming yet | On | Rate, on/off | Once per episode | Alarm stream, 8 s |
+| **Rising fast** | Climbing that fast, not already high | Off (meals do it) | Rate, on/off | Once per episode | Notification stream, 8 s |
 
 - Sounds come from a pack (You → Alarms → Sounds): Astral by default, Orbit, Glass, Clear or Bells, one sound per alarm and one for the long-acting reminder. An alarm given its own phone sound or file keeps it.
 - Every alarm also vibrates in its own pattern, for as long as its sound plays, so a phone in a pocket says which alarm it is: urgent low **SOS**, low **Pulse**, going low **Rising**, high **Heartbeat**, no readings **Tap** (You → Alarms → each alarm → Vibration: also Off, except for urgent low). Sukoon vibrates itself, not the notification channel (Android fixes a channel's pattern for good once it's made). Lows vibrate as alarms (through silent mode), highs and no-readings as notifications.
@@ -120,7 +122,7 @@ The alert screen closes by itself once its alarm is over (back in range, signal 
 
 ### Pausing every alarm
 
-*Pause alarms* (You → Alarms, top: 30 min, 1 h, 2 h or 4 h; or *Pause all alarms for 1 h* on any of your own alarm screens except urgent low) keeps every alarm quiet, your own and the ones for people you follow, **except urgent low**, which nothing silences. What's sounding stops at once. While paused, Now shows *Alarms paused until …* (tap to bring them back) and You → Alarms has *Resume*. When the pause ends, any alarm that is still true fires straight away. Under the parent lock (a PIN, under 18) pausing needs the PIN and the alarm screens don't offer it.
+*Pause alarms* (Now → Today: 30 min, 1 h, 2 h or 4 h; or *Pause all alarms for 1 h* on any of your own alarm screens except urgent low) keeps every alarm quiet, your own and the ones for people you follow, **except urgent low**, which nothing silences. What's sounding stops at once. While paused, Now shows an *Alarms paused · until …* chip (tap to bring them back) and Today has *Resume*. When the pause ends, any alarm that is still true fires straight away. Under the parent lock (a PIN, under 18) pausing needs the PIN and the alarm screens don't offer it.
 
 ### What your alarms did
 
@@ -425,3 +427,53 @@ only for half-unit pens, and suggestions round down to the pen.
 - **Ask**: under the title, what the answers are based on (days, readings and log entries the AI gets:
   real readings without impossible spikes), or an amber *Demo data* chip when that's all there is. The
   first suggestion asks about Insights' one thing (not on demo data).
+
+## 18. Today, and your goal
+
+Where things live, so no screen carries more text than it needs:
+
+- **Now** shows *state* only: one row of chips under the header (alarms paused, workout, the night's
+  low alarm after one, fasting with iftar time, sick day, ketones due, missing readings to fill, and
+  with a goal, today's kcal and protein so far). Each chip opens where you change it.
+- **Today** (Now's sliders button) switches temporary things on, one line each: *Pause alarms*
+  (behind the parent lock's PIN), *Workout*, *Fasting today*, *Sick day*. Links: *Goal & training*
+  and *Why these numbers*.
+- **You → Fitness & food** holds what lasts: the **goal** (none, maintain, lean bulk, cut) with its
+  daily kcal and protein, the meal after a workout, and the Ramadan times.
+- **The Guide's** *Workouts, fasting, sick days and your goal* holds the reasons and the citations.
+
+| Goal | Calories | Protein | Rate |
+|---|---|---|---|
+| **Maintain** | maintenance | 1.4–2.0 g/kg (default 1.6) | — |
+| **Lean bulk** | +200 / **+250** / +300 | 1.6–2.2 g/kg (default 2.0) | gain 0.25–0.5% of weight a week |
+| **Cut** | −300 / **−400** / −500 | 2.0–2.6 g/kg (default 2.2) | lose 0.5–1% a week; "eating less usually means less insulin: review your doses with your clinic" |
+
+Maintenance is yours, or estimated: Mifflin–St Jeor × 1.55 (lifting 3–5 days a week), to 10 kcal.
+Protein per meal: 0.4–0.5 g/kg over about 4 meals. Ask gets the goal and its targets.
+
+**Weight**: *Log weight* (Fitness & food) adds a weight entry to the logbook (20–300 kg); the profile's
+weight follows the latest one, so the targets do too (a weight typed in the profile stays until the
+next weigh-in). From 3 weigh-ins spanning 10+ days in the last 28, the page shows the trend (kg a week,
+least squares) and, for a bulk or cut, the pace against the rate above: on track, or about 100 kcal a
+day more or less.
+
+Every number below is sourced in `docs/research/modes-sources.md`.
+
+| Mode | While it's on | Dose suggestions (beta) |
+|---|---|---|
+| **Workout** (1, 1½ or 2 h from Today, or any logged workout) | Low alarm at **100** (Moser 2020). Before starting, by glucose: under 90 "10–20 g and wait", 90–125 "about 10 g", over 270 "check ketones first" (Riddell 2017) | Corrections during and 2 h after: **half** (lifting rises). The meal within 2 h after: **−50%** by default, or −25% / as usual. Nothing cut before lifting |
+| **After a workout** (24 h from its end) | Low alarm at **80** overnight, 22:00–07:00 (Moser 2020; lows "for at least 24 hours", Riddell 2017) | — |
+| **Fasting** (your suhoor-end and iftar times) | Now: under 70 *break the fast now*; 70–90 *check again within the hour*; over 300 *break the fast, correct, check ketones* (IDF-DAR 2021). A suhoor reminder 45 min before Fajr. The times are set once in Fitness & food | Suhoor meal **−30%** (IDF-DAR 30–50%); none suggested during the fast; iftar as usual. Basal: the sheet quotes IDF-DAR (take it at iftar, −30–40%; −15–30% for Toujeo) and leaves it to Kai's doctor |
+| **Sick day** | A reminder every 2 h to check ketones and drink; Now names the last reading's band (ISPAD 2022: < 0.6 normal, 0.6–1.4 raised, 1.5–2.9 high, ≥ 3.0 urgent care); high alarms repeat hourly | — |
+
+Ketones are a logbook entry (mmol/L, 0–8); their tile shows on a sick day or above 250.
+
+## 19. Filling gaps, and low treatments
+
+- **Gaps**: the sensor keeps 8 hours of readings (every 15 min). Any NFC tap (pairing, starting,
+  *Check sensor*) fills what Bluetooth missed and says how many it added. When readings are missing for
+  30 minutes or more within those 8 hours, Now offers the tap; it opens You → Sensor ready to read.
+- **Low treatments**: carbs marked *Treating a low* (on by itself from a low alarm's *Log what I ate*,
+  or when logged under 70; a switch in the carbs editor) are not a meal: no meal dose, nothing learned
+  from them, not an "after a meal" message. Insights reports, from 3 treated lows: the usual grams, how
+  many needed a second round within 30 minutes, and how many went over 180 within 2 hours (a rebound).

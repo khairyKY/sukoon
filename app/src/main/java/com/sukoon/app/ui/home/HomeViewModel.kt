@@ -38,6 +38,8 @@ class HomeViewModel(
     private val actionOf: () -> InsulinAction = { InsulinAction() },
     /** Today's steps and water from Health Connect (absent: not allowed or nothing logged). */
     private val healthToday: (suspend () -> Map<HomeStat, Double>)? = null,
+    /** Workout, fasting, sick day: Now's message takes them into account. */
+    private val modesOf: () -> com.sukoon.app.modes.ActiveModes = { com.sukoon.app.modes.ActiveModes() },
 ) : ViewModel() {
 
     // Re-evaluates freshness when no new reading arrives — otherwise a silent source would leave
@@ -72,7 +74,7 @@ class HomeViewModel(
     private val dayEvents = (logbook?.eventsSince(since) ?: flowOf(emptyList())).shareIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), replay = 1)
 
     val brief: StateFlow<Brief?> = combine(dayReadings, dayEvents, treatedAt, ticker) { readings, events, treated, _ ->
-        HomeBriefs.of(readings, events, Instant.now(), ZoneId.systemDefault(), actionOf(), lifeOf(), treated)
+        HomeBriefs.of(readings, events, Instant.now(), ZoneId.systemDefault(), actionOf(), lifeOf(), treated, modesOf())
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     /** Health Connect's steps and water, asked again every few minutes (they come from other apps). */
@@ -107,8 +109,9 @@ class HomeViewModel(
             treatedAt: Flow<Instant?> = flowOf(null),
             actionOf: () -> InsulinAction = { InsulinAction() },
             healthToday: (suspend () -> Map<HomeStat, Double>)? = null,
+            modesOf: () -> com.sukoon.app.modes.ActiveModes = { com.sukoon.app.modes.ActiveModes() },
         ) = viewModelFactory {
-            initializer { HomeViewModel(repository, lifeOf, logbook, treatedAt, actionOf, healthToday) }
+            initializer { HomeViewModel(repository, lifeOf, logbook, treatedAt, actionOf, healthToday, modesOf) }
         }
     }
 }

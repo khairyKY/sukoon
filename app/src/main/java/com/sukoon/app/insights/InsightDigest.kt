@@ -155,6 +155,7 @@ object InsightDigestBuilder {
             when (i) {
                 is Insight.RecurringHighs -> out += Finding(i, 55, listOf(InsightAction.LOOK_AT))
                 is Insight.Rebounds -> out += Finding(i, 58, listOf(InsightAction.LOOK_AT))
+                is Insight.LowTreatments -> if (i.level == Level.ATTENTION) out += Finding(i, 57, listOf(InsightAction.LOOK_AT))
                 is Insight.MeterAgreement -> out += Finding(i, if (i.level == Level.GOOD) 5 else 52, listOf(InsightAction.OPEN_CALIBRATION, InsightAction.LOOK_AT))
                 is Insight.DawnRise -> out += Finding(i, 50, listOf(InsightAction.LOOK_AT, InsightAction.REPORT))
                 is Insight.Variability -> out += Finding(i, if (i.level == Level.GOOD) 8 else 45, listOf(InsightAction.LOOK_AT))

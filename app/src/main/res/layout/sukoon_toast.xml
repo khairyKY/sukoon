@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A Sukoon toast (ui/components/Toasts.kt): the mark, then the message, on the canvas colour. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/toast_bg"
+    android:gravity="center_vertical"
+    android:minHeight="48dp"
+    android:orientation="horizontal"
+    android:paddingStart="14dp"
+    android:paddingTop="12dp"
+    android:paddingEnd="18dp"
+    android:paddingBottom="12dp">
+
+    <ImageView
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_stat_sukoon"
+        android:tint="#FF82BBA0" />
+
+    <TextView
+        android:id="@+id/toast_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:fontFamily="@font/hanken_grotesk"
+        android:lineSpacingExtra="2sp"
+        android:maxWidth="300dp"
+        android:textColor="#FFF4F1EA"
+        android:textSize="14sp" />
+</LinearLayout>

@@ -15,8 +15,22 @@ class SukoonApp : Application() {
     lateinit var container: AppContainer
         private set
 
+    /** Some Sukoon screen is showing: toasts can be Sukoon's own (ui/components/Toasts.kt). */
+    @Volatile var inFront = false
+        private set
+    private var started = 0
+
     override fun onCreate() {
         super.onCreate()
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityStarted(activity: android.app.Activity) { started++; inFront = true }
+            override fun onActivityStopped(activity: android.app.Activity) { started = maxOf(0, started - 1); inFront = started > 0 }
+            override fun onActivityCreated(activity: android.app.Activity, state: android.os.Bundle?) = Unit
+            override fun onActivityResumed(activity: android.app.Activity) = Unit
+            override fun onActivityPaused(activity: android.app.Activity) = Unit
+            override fun onActivitySaveInstanceState(activity: android.app.Activity, state: android.os.Bundle) = Unit
+            override fun onActivityDestroyed(activity: android.app.Activity) = Unit
+        })
         Backup.applyStaged(this) // a restore waiting from the last run: in place before anything opens it
         container = AppContainer(this)
         TargetRange.high = container.settings.targetHigh

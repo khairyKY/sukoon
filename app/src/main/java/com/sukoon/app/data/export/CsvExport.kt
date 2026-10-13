@@ -36,6 +36,8 @@ object CsvExport {
                 LogEventType.FINGERSTICK -> row(ts, "fingerstick", glucose = amount, notes = e.note, extra = extra)
                 LogEventType.ACTIVITY -> row(ts, "activity", glucose = glucose, notes = listOfNotNull(e.value?.let { "${number(it)} min" }, e.note).joinToString(" · "), extra = extra)
                 LogEventType.NOTE -> row(ts, "note", glucose = glucose, notes = e.note, extra = extra)
+                LogEventType.WEIGHT -> row(ts, "weight", glucose = glucose, notes = listOfNotNull(e.value?.let { "${number(it)} kg" }, e.note).joinToString(" · "), extra = extra)
+                LogEventType.KETONE -> row(ts, "ketones", glucose = glucose, notes = listOfNotNull(e.value?.let { "${number(it)} mmol/L" }, e.note).joinToString(" · "), extra = extra)
             }
         }
         return (listOf(HEADER) + rows.sortedBy { it.first }.map { it.second }).joinToString("\n", postfix = "\n")

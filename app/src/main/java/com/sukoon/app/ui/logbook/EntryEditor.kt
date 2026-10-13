@@ -1,5 +1,7 @@
 package com.sukoon.app.ui.logbook
 
+import com.sukoon.app.ui.theme.PillLowBg
+
 import com.sukoon.app.ui.theme.SageMist
 import androidx.compose.runtime.mutableStateListOf
 import com.sukoon.app.food.PlateItem
@@ -123,6 +125,8 @@ internal enum class AmountField(val decimals: Boolean, val maxWhole: Int, val qu
     PROTEIN(false, 3, emptyList()),
     FAT(false, 3, emptyList()),
     KCAL(false, 4, emptyList()),
+    KETONES(true, 1, emptyList()),
+    WEIGHT(true, 3, emptyList()),
 }
 
 private fun mainField(type: LogEventType): AmountField? = when (type) {
@@ -132,6 +136,24 @@ private fun mainField(type: LogEventType): AmountField? = when (type) {
     LogEventType.FINGERSTICK -> AmountField.METER
     LogEventType.ACTIVITY -> AmountField.MINUTES
     LogEventType.NOTE -> null
+    LogEventType.KETONE -> AmountField.KETONES
+    LogEventType.WEIGHT -> AmountField.WEIGHT
+}
+
+/** "Treating a low": carbs for a low, kept out of meal maths and counted in the low-treatment insight. */
+@Composable
+private fun TreatmentToggle(on: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(if (on) PillLowBg else MaterialTheme.colorScheme.surface)
+            .border(1.dp, outline(), RoundedCornerShape(14.dp)).clickable { onChange(!on) }.padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.entry_treating_low), fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold, color = if (on) PillLowText else MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.entry_treating_low_body), fontSize = 12.sp, color = CaptionMuted)
+        }
+        androidx.compose.material3.Switch(checked = on, onCheckedChange = onChange, colors = androidx.compose.material3.SwitchDefaults.colors(checkedTrackColor = PillLowText))
+    }
 }
 
 /** Which editor to open: a new entry (maybe repeating one), an existing one, or insulin for an imported meal. */
@@ -140,6 +162,8 @@ internal data class EditorRequest(
     val existing: EventEntity? = null,
     val prefill: EventEntity? = null,
     val forMeal: EventEntity? = null,
+    /** Opened to log what treated a low. */
+    val treatment: Boolean = false,
 )
 
 private val TILES = listOf(LogEventType.CARB, LogEventType.INSULIN, LogEventType.FINGERSTICK, LogEventType.BASAL, LogEventType.ACTIVITY, LogEventType.NOTE)
@@ -157,6 +181,8 @@ internal fun AddSheet(
     mealsFromApps: Boolean,
     onPick: (LogEventType, EventEntity?) -> Unit,
     onDismiss: () -> Unit,
+    /** A sick day, or high for a while: ketones get a tile too. */
+    showKetones: Boolean = false,
 ) {
     SukoonSheet(
         onDismissRequest = onDismiss,
@@ -178,7 +204,7 @@ internal fun AddSheet(
             }
             Eyebrow(stringResource(R.string.entry_new), Modifier.padding(top = 18.dp))
             Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                TILES.chunked(3).forEach { row ->
+                (if (showKetones) TILES + LogEventType.KETONE else TILES).chunked(3).forEach { row ->
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         row.forEach { type -> TypeTile(type, filled = type == LogEventType.CARB, Modifier.weight(1f)) { onPick(type, null) } }
                     }
@@ -203,6 +229,8 @@ private fun TypeTile(type: LogEventType, filled: Boolean, modifier: Modifier, on
         LogEventType.BASAL -> R.drawable.ic_moon to SageDeep
         LogEventType.ACTIVITY -> R.drawable.ic_walk to PillHighText
         LogEventType.NOTE -> R.drawable.ic_note to CaptionMuted
+        LogEventType.KETONE -> R.drawable.ic_drop to PillHighText
+        LogEventType.WEIGHT -> R.drawable.ic_scale to SageDeep
     }
     Column(
         modifier
@@ -293,6 +321,8 @@ private fun EditorContent(
     var site by remember { mutableStateOf(existing?.injectionSite) }
     var siteOpen by remember { mutableStateOf(repeatedDose) }
     var finger by remember { mutableStateOf(existing?.finger) }
+    // Carbs for a low aren't a meal: on when asked for, or when logged while under 70.
+    var treatment by remember { mutableStateOf(existing?.treatment ?: (request.treatment || (glucoseNow?.glucoseMgDl ?: 999) < 70)) }
     var fingerOpen by remember { mutableStateOf(false) }
     var note by remember { mutableStateOf(base?.note ?: "") }
     var preBolus by remember { mutableIntStateOf(0) }
@@ -337,7 +367,10 @@ private fun EditorContent(
     val advice = if (doseSettings.enabled && existing == null && (meal != null || isMeal || type == LogEventType.INSULIN)) {
         val carbs = if (meal != null) meal.value.takeUnless { meal.summary } else if (isMeal) value(AmountField.CARBS) else null
         val hour = (if (meal != null) Instant.ofEpochMilli(meal.timestampMillis) else at()).atZone(ZoneId.systemDefault()).hour
-        Dose.advise(doseSettings, InsightEngine.slotFor(hour), carbs, glucoseNow?.glucoseMgDl, glucoseNow?.trend, insulinOnBoard, lowAt)
+        val keeper = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.modes
+        val mealAt = if (meal != null) Instant.ofEpochMilli(meal.timestampMillis) else if (isMeal) at() else null
+        val change = com.sukoon.app.modes.Modes.doseChange(keeper.now(), Instant.now(), mealAt, ZoneId.systemDefault(), keeper.afterWorkoutCut)
+        Dose.advise(doseSettings, InsightEngine.slotFor(hour), carbs, glucoseNow?.glucoseMgDl, glucoseNow?.trend, insulinOnBoard, lowAt, change = change)
     } else {
         null
     }
@@ -345,6 +378,8 @@ private fun EditorContent(
         meal != null -> rapid != null
         type == LogEventType.NOTE -> note.isNotBlank()
         type == LogEventType.FINGERSTICK -> amount != null && amount in 20.0..600.0 // meters read LO/HI outside this
+        type == LogEventType.WEIGHT -> amount != null && amount in 20.0..300.0 // the profile's range
+        type == LogEventType.KETONE -> amount != null && amount in 0.0..8.0 // blood ketone meters read up to 8 mmol/L
         else -> amount != null
     }
     val units = stringResource(R.string.logbook_unit_units)
@@ -374,6 +409,7 @@ private fun EditorContent(
                         type == LogEventType.FINGERSTICK -> finger?.name
                         else -> existing.site
                     },
+                    treatment = treatment && type == LogEventType.CARB,
                 ),
                 photos.toList().takeIf { photosChanged },
             )
@@ -396,6 +432,7 @@ private fun EditorContent(
                 nutrients = nutrients.takeIf { isMeal && it != Nutrients() },
                 site = site.takeIf { siteType != null },
                 finger = finger.takeIf { type == LogEventType.FINGERSTICK },
+                treatment = treatment && type == LogEventType.CARB,
             ),
         )
     }
@@ -415,6 +452,7 @@ private fun EditorContent(
 
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             ContextPills(glucoseNow.takeIf { existing == null }, if (type == LogEventType.INSULIN || isMeal || meal != null) insulinOnBoard else 0.0)
+            if (type == LogEventType.CARB && meal == null) TreatmentToggle(treatment) { treatment = it }
             val starting = isMeal && existing == null && plate.isEmpty() && values[AmountField.CARBS].isNullOrEmpty() && active == null
             when {
                 starting -> MealStart(

@@ -21,6 +21,8 @@ fun colorForLogEventType(type: LogEventType): Color = when (type) {
     LogEventType.FINGERSTICK -> PillLowText
     LogEventType.ACTIVITY -> StateHigh
     LogEventType.NOTE -> TextMuted
+    LogEventType.KETONE -> StateHigh
+    LogEventType.WEIGHT -> SageDeep
 }
 
 /** The line icon per event type, shared by the timeline chips and the add tiles. */
@@ -32,4 +34,6 @@ fun iconForLogEventType(type: LogEventType): Int = when (type) {
     LogEventType.FINGERSTICK -> R.drawable.ic_drop
     LogEventType.ACTIVITY -> R.drawable.ic_walk
     LogEventType.NOTE -> R.drawable.ic_note
+    LogEventType.KETONE -> R.drawable.ic_drop
+    LogEventType.WEIGHT -> R.drawable.ic_scale
 }

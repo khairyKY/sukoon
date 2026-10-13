@@ -47,6 +47,8 @@ sealed interface DoseAdvice {
         val slot: MealSlot,
         val target: Int,
         val factor: Double?,
+        /** A mode changed it (after a workout, lifting, suhoor): shown as its own line. */
+        val change: com.sukoon.app.modes.DoseChange? = null,
     ) : DoseAdvice
 }
 
@@ -78,11 +80,12 @@ object Dose {
         lastCarbsAt: java.time.Instant?,
         slot: MealSlot,
         lowAt: java.time.Instant? = null,
+        change: com.sukoon.app.modes.DoseChange? = null,
     ): DoseAdvice.Suggestion? {
         if (!settings.enabled || settings.correctionFactor == null || glucose == null || readingAt == null) return null
         if (java.time.Duration.between(readingAt, now) > java.time.Duration.ofMinutes(10) || glucose <= top || onBoard >= 0.5) return null
         if (lastCarbsAt != null && java.time.Duration.between(lastCarbsAt, now) < java.time.Duration.ofHours(2)) return null
-        return (advise(settings, slot, null, glucose, trend, onBoard, lowAt, now) as? DoseAdvice.Suggestion)?.takeIf { it.units >= settings.step }
+        return (advise(settings, slot, null, glucose, trend, onBoard, lowAt, now, change) as? DoseAdvice.Suggestion)?.takeIf { it.units >= settings.step }
     }
 
     /**
@@ -103,12 +106,13 @@ object Dose {
         onBoard: Double,
         slot: MealSlot,
         lowAt: java.time.Instant? = null,
+        change: com.sukoon.app.modes.DoseChange? = null,
     ): DoseAdvice.Suggestion? {
         if (!settings.enabled || carbs < 10 || insulinSince || onBoard >= 0.5 || glucose == null || readingAt == null) return null
         val since = java.time.Duration.between(mealAt, now)
         if (since.isNegative || since > java.time.Duration.ofHours(1)) return null
         if (java.time.Duration.between(readingAt, now) > java.time.Duration.ofMinutes(10)) return null
-        return (advise(settings, slot, carbs, glucose, trend, onBoard, lowAt, now) as? DoseAdvice.Suggestion)?.takeIf { it.mealUnits != null && it.units >= settings.step }
+        return (advise(settings, slot, carbs, glucose, trend, onBoard, lowAt, now, change) as? DoseAdvice.Suggestion)?.takeIf { it.mealUnits != null && it.units >= settings.step }
     }
 
     /**
@@ -127,10 +131,12 @@ object Dose {
         onBoard: Double,
         lowAt: java.time.Instant? = null,
         now: java.time.Instant = java.time.Instant.now(),
+        /** Today's modes (Modes.doseChange): the meal and correction parts scaled. */
+        change: com.sukoon.app.modes.DoseChange? = null,
     ): DoseAdvice? {
         val falling = trend == TrendDirection.FALLING || trend == TrendDirection.FALLING_FAST
         val ratio = settings.carbRatio[slot]?.takeIf { it > 0 }
-        val meal = if (carbs != null && carbs > 0 && ratio != null) carbs / ratio else null
+        val meal = if (carbs != null && carbs > 0 && ratio != null) carbs / ratio * (change?.mealFactor ?: 1.0) else null
         if (glucose != null && (glucose < 70 || (glucose < 100 && falling))) {
             return DoseAdvice.TreatLowFirst(glucose)
         }
@@ -138,7 +144,7 @@ object Dose {
         if (lowAt != null && calmAt!!.isAfter(now)) return DoseAdvice.AfterLow(lowAt, calmAt)
         val factor = settings.correctionFactor?.takeIf { it > 0 }
         val raw = if (glucose != null && factor != null) (glucose - settings.target) / factor else null
-        val correction = raw?.let { if (it > 0) maxOf(0.0, it - onBoard) else it }
+        val correction = raw?.let { if (it > 0) maxOf(0.0, it * (change?.correctionFactor ?: 1.0) - onBoard) else it }
         if (meal == null && correction == null) return null
         val total = maxOf(0.0, (meal ?: 0.0) + (correction ?: 0.0))
         val rounded = floor(total / settings.step + 1e-9) * settings.step
@@ -154,6 +160,7 @@ object Dose {
             slot = slot,
             target = settings.target,
             factor = factor,
+            change = change,
         )
     }
 }

@@ -24,6 +24,7 @@ import kotlin.math.roundToInt
 enum class Step {
     FAST_CARBS, RECHECK, CARBS_READY, KETONES, WATER, WATER_WALK, DONT_STACK, LET_IT_SETTLE, LOG_MEAL,
     SNACK_IF_MEAL_FAR, CARBS_BY_BED, CARBS_WITH_YOU, BEDTIME_SNACK, FINGERPRICK_FIRST,
+    BREAK_FAST, RECHECK_HOUR, URGENT_CARE, EXTRA_INSULIN,
 }
 
 /** What Home says under the number: the observation that matters most right now. The UI words it (EN/AR). */
@@ -32,8 +33,24 @@ sealed interface Brief {
 
     // Below 70.
     /** [again]: treated 15 to 60 minutes ago and still under 70 (the 15-15 rule's second round). */
-    data class Low(val insulin: Double, val again: Boolean = false) : Brief { override val step = Step.FAST_CARBS }
+    data class Low(val insulin: Double, val again: Boolean = false, val breakFast: Boolean = false) : Brief { override val step = Step.FAST_CARBS }
     data class Treated(val at: Instant) : Brief { override val step = Step.RECHECK }
+
+    // Modes (docs/research/modes-sources.md).
+    /** Over 300 while fasting: IDF-DAR says break the fast. */
+    data object BreakFastHigh : Brief { override val step = Step.BREAK_FAST }
+    /** 70–90 while fasting: IDF-DAR says check again within the hour. */
+    data class FastCheck(val mgDl: Int) : Brief { override val step = Step.RECHECK_HOUR }
+    /** A sick day's last ketones, when raised (ISPAD 2022 bands). */
+    data class Ketones(val mmol: Double, val band: com.sukoon.app.modes.Modes.KetoneBand) : Brief {
+        override val step = when (band) {
+            com.sukoon.app.modes.Modes.KetoneBand.DANGER -> Step.URGENT_CARE
+            com.sukoon.app.modes.Modes.KetoneBand.HIGH -> Step.EXTRA_INSULIN
+            else -> Step.KETONES
+        }
+    }
+    /** A sick day, and no ketones logged for 2 h. */
+    data object KetonesDue : Brief { override val step = Step.KETONES }
 
     // Worth acting on.
     data class HeadingLow(val minutes: Int, val insulin: Double) : Brief { override val step = Step.CARBS_READY }
@@ -85,6 +102,8 @@ object HomeBriefs {
         life: SensorLife? = null,
         /** When "I've treated it" was last pressed. */
         treatedAt: Instant? = null,
+        /** Workout, fasting, sick day. */
+        modes: com.sukoon.app.modes.ActiveModes = com.sukoon.app.modes.ActiveModes(),
     ): Brief? {
         val latest = readings.lastOrNull()?.takeIf { Duration.between(it.timestamp, now) <= HomeUiStateMapper.STALE_AFTER } ?: return null
         val v = latest.glucoseMgDl
@@ -97,7 +116,7 @@ object HomeBriefs {
         if (v < 70) {
             val treated = listOfNotNull(treatedAt, last(LogEventType.CARB, TREATMENT_WAIT.toMinutes())?.at()).filter { it > now.minus(TREATMENT_WAIT) }.maxOrNull()
             val earlier = listOfNotNull(treatedAt, last(LogEventType.CARB, 60)?.at()).any { it > ago(60) }
-            return if (treated != null) Brief.Treated(treated) else Brief.Low(insulin, again = earlier)
+            return if (treated != null) Brief.Treated(treated) else Brief.Low(insulin, again = earlier, breakFast = modes.fastingNow)
         }
 
         val hour = now.atZone(zone).hour
@@ -105,10 +124,18 @@ object HomeBriefs {
         val falling = latest.trend == TrendDirection.FALLING || latest.trend == TrendDirection.FALLING_FAST
         val projected = AlarmEngine.projected(readings.takeLast(60), latest)
         val lastLow = InsightEngine.lowEpisodes(readings.filter { it.timestamp >= ago(180) }).lastOrNull()
-        val meal = events.lastOrNull { it.logType == LogEventType.CARB && (it.value ?: 1.0) > 0 && it.at() in ago(180)..now }
+        val meal = events.lastOrNull { it.logType == LogEventType.CARB && !it.treatment && (it.value ?: 1.0) > 0 && it.at() in ago(180)..now }
+
+        val ketones = if (modes.sick) events.lastOrNull { it.logType == LogEventType.KETONE && it.value != null && it.at() in ago(240)..now } else null
+        val ketoneBand = ketones?.value?.let(com.sukoon.app.modes.Modes::ketoneBand)
+        val ketonesDue = modes.sick && (events.lastOrNull { it.logType == LogEventType.KETONE }?.at() ?: modes.sickSince!!) <= now.minus(com.sukoon.app.modes.Modes.KETONES_EVERY)
 
         return when {
             projected < 70 -> Brief.HeadingLow((((v - 70) * 20) / (v - projected)).roundToInt().coerceAtLeast(1), insulin)
+            ketoneBand != null && ketoneBand != com.sukoon.app.modes.Modes.KetoneBand.NORMAL -> Brief.Ketones(ketones.value!!, ketoneBand)
+            modes.fastingNow && v > com.sukoon.app.modes.Modes.FAST_BREAK_HIGH -> Brief.BreakFastHigh
+            modes.fastingNow && v < com.sukoon.app.modes.Modes.FAST_RECHECK -> Brief.FastCheck(v)
+            ketonesDue -> Brief.KetonesDue
             v > 250 && run(readings) { it > 250 } >= 120 -> Brief.VeryHighFor(run(readings) { it > 250 })
             v > top && lastLow != null -> Brief.Rebound(lastLow.start)
             v > top && insulin > 0 -> Brief.InsulinWorking(insulin)

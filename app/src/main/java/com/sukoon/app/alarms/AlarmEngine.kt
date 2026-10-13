@@ -7,10 +7,10 @@ import java.time.Instant
 import java.time.ZoneId
 
 enum class AlarmType {
-    URGENT_LOW, LOW, GOING_LOW, HIGH, SIGNAL_LOSS;
+    URGENT_LOW, LOW, GOING_LOW, HIGH, SIGNAL_LOSS, FALLING_FAST, RISING_FAST;
 
     /** Lows sound on the alarm stream (through silent mode and DND's "alarms"); highs and signal loss on the notification stream. */
-    val loud: Boolean get() = this == URGENT_LOW || this == LOW || this == GOING_LOW
+    val loud: Boolean get() = this == URGENT_LOW || this == LOW || this == GOING_LOW || this == FALLING_FAST
 }
 
 /** A chosen alarm sound: a content URI (a phone sound or the user's own file) and the name to show for it. */
@@ -24,6 +24,12 @@ data class AlarmSettings(
     val highEnabled: Boolean = true,
     val highMgDl: Int = 180, // the top of the target range: high on Home and the alarm start together
     val signalLossEnabled: Boolean = true,
+    /** Falling fast while still in range (under the high line): before it's a low. */
+    val fastFallEnabled: Boolean = true,
+    /** Rising fast: off by default, since meals do it. */
+    val fastRiseEnabled: Boolean = false,
+    /** What counts as fast, mg/dL a minute: Libre's own "changing quickly" arrow is 2. */
+    val fastRate: Int = 2,
     val signalLossMinutes: Int = 20,
     val lowSnoozeMinutes: Int = 15,
     val highSnoozeMinutes: Int = 60,
@@ -51,6 +57,7 @@ data class AlarmSettings(
         lowMgDl = lowMgDl.coerceIn(URGENT_LOW_MG_DL + 5, 110),
         highMgDl = highMgDl.coerceIn(120, 400),
         signalLossMinutes = signalLossMinutes.coerceIn(10, 120),
+        fastRate = fastRate.coerceIn(1, 5),
         lowSnoozeMinutes = lowSnoozeMinutes.coerceIn(5, 60),
         highSnoozeMinutes = highSnoozeMinutes.coerceIn(15, 240),
         quietHighsFrom = quietHighsFrom.coerceIn(-1, 23),
@@ -120,6 +127,12 @@ object AlarmEngine {
                 settings.goingLowEnabled && projected(recent, latest) < settings.lowMgDl -> active += AlarmType.GOING_LOW
             }
             if (settings.highEnabled && v > highLine && !settings.quietAt(now.atZone(zone).hour)) active += AlarmType.HIGH
+            // Changing fast: a little hysteresis (1 a minute) so a rate on the line doesn't flap.
+            val rate = ratePerMinute(recent, latest)
+            fun fast(type: AlarmType) = settings.fastRate - if (was(type)) 1.0 else 0.0
+            val lowish = AlarmType.URGENT_LOW in active || AlarmType.LOW in active || AlarmType.GOING_LOW in active
+            if (settings.fastFallEnabled && rate != null && -rate >= fast(AlarmType.FALLING_FAST) && v < settings.highMgDl && !lowish) active += AlarmType.FALLING_FAST
+            if (settings.fastRiseEnabled && rate != null && rate >= fast(AlarmType.RISING_FAST) && AlarmType.HIGH !in active) active += AlarmType.RISING_FAST
         } else {
             // Stale: keep glucose episodes open (don't announce them as resolved) but don't re-alert.
             active += state.activeSince.keys.filter { it != AlarmType.SIGNAL_LOSS }
@@ -163,19 +176,22 @@ object AlarmEngine {
         AlarmType.LOW -> Duration.ofMinutes(s.lowSnoozeMinutes.toLong())
         AlarmType.HIGH -> Duration.ofMinutes(s.highSnoozeMinutes.toLong())
         AlarmType.SIGNAL_LOSS -> SIGNAL_REPEAT
-        AlarmType.GOING_LOW -> NEVER
+        AlarmType.GOING_LOW, AlarmType.FALLING_FAST, AlarmType.RISING_FAST -> NEVER // once per episode
     }
 
     /**
      * Where glucose will be in 20 min at the current rate (linear, over the last ~15 min). Needs at
      * least 3 readings spanning 5+ minutes; otherwise returns +∞ (no prediction, no alarm).
      */
-    internal fun projected(recent: List<GlucoseReading>, latest: GlucoseReading): Double {
+    internal fun projected(recent: List<GlucoseReading>, latest: GlucoseReading): Double =
+        ratePerMinute(recent, latest)?.let { latest.glucoseMgDl + it * PROJECTION_MINUTES } ?: Double.POSITIVE_INFINITY
+
+    /** mg/dL a minute over the last ~15 min; null without 3 readings spanning 5+ minutes. */
+    internal fun ratePerMinute(recent: List<GlucoseReading>, latest: GlucoseReading): Double? {
         val window = recent.filter { Duration.between(it.timestamp, latest.timestamp).toMinutes() in 0..15 }
-        val oldest = window.minByOrNull { it.timestamp } ?: return Double.POSITIVE_INFINITY
+        val oldest = window.minByOrNull { it.timestamp } ?: return null
         val minutes = Duration.between(oldest.timestamp, latest.timestamp).seconds / 60.0
-        if (window.size < 3 || minutes < 5) return Double.POSITIVE_INFINITY
-        val ratePerMinute = (latest.glucoseMgDl - oldest.glucoseMgDl) / minutes
-        return latest.glucoseMgDl + ratePerMinute * PROJECTION_MINUTES
+        if (window.size < 3 || minutes < 5) return null
+        return (latest.glucoseMgDl - oldest.glucoseMgDl) / minutes
     }
 }

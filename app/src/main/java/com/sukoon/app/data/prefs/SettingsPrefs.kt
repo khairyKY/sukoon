@@ -56,6 +56,9 @@ class SettingsPrefs(context: Context) {
             highMgDl = prefs.getInt(KEY_HIGH, prefs.getInt(KEY_HIGH_OLD, 250).takeIf { it != 250 } ?: AlarmSettings().highMgDl),
             signalLossEnabled = prefs.getBoolean(KEY_SIGNAL_ON, true),
             signalLossMinutes = prefs.getInt(KEY_SIGNAL, 20),
+            fastFallEnabled = prefs.getBoolean(KEY_FAST_FALL_ON, true),
+            fastRiseEnabled = prefs.getBoolean(KEY_FAST_RISE_ON, false),
+            fastRate = prefs.getInt(KEY_FAST_RATE, 2),
             lowSnoozeMinutes = prefs.getInt(KEY_LOW_SNOOZE, 15),
             highSnoozeMinutes = prefs.getInt(KEY_HIGH_SNOOZE, 60),
             quietHighsFrom = prefs.getInt(KEY_QUIET_FROM, -1),
@@ -77,6 +80,9 @@ class SettingsPrefs(context: Context) {
                 .putInt(KEY_HIGH, value.highMgDl)
                 .putBoolean(KEY_SIGNAL_ON, value.signalLossEnabled)
                 .putInt(KEY_SIGNAL, value.signalLossMinutes)
+                .putBoolean(KEY_FAST_FALL_ON, value.fastFallEnabled)
+                .putBoolean(KEY_FAST_RISE_ON, value.fastRiseEnabled)
+                .putInt(KEY_FAST_RATE, value.fastRate)
                 .putInt(KEY_LOW_SNOOZE, value.lowSnoozeMinutes)
                 .putInt(KEY_HIGH_SNOOZE, value.highSnoozeMinutes)
                 .putInt(KEY_QUIET_FROM, value.quietHighsFrom)
@@ -137,6 +143,11 @@ class SettingsPrefs(context: Context) {
     var parentPin: String?
         get() = prefs.getString(KEY_PARENT_PIN, null)
         set(value) = prefs.edit().apply { if (value == null) remove(KEY_PARENT_PIN) else putString(KEY_PARENT_PIN, value) }.apply()
+
+    /** The weigh-in last copied into [profile] ("id:kg"), so a weight typed in the profile stays until the next weigh-in. */
+    var weighInApplied: String?
+        get() = prefs.getString(KEY_WEIGH_IN, null)
+        set(value) = prefs.edit().putString(KEY_WEIGH_IN, value).apply()
 
     /** The learning suggestion Home was told "Not now" about ([com.sukoon.app.insulin.RatioLearner.Nudge.key]). */
     var nudgeDismissed: String?
@@ -261,6 +272,7 @@ class SettingsPrefs(context: Context) {
         private const val KEY_INSULIN_PEAK = "insulin_peak_minutes"
         private const val KEY_TARGET_HIGH = "target_high"
         private const val KEY_PARENT_PIN = "parent_pin"
+        private const val KEY_WEIGH_IN = "weigh_in_applied"
         private const val KEY_NUDGE_DISMISSED = "nudge_dismissed"
         private const val KEY_WEIGHT = "profile_weight_kg"
         private const val KEY_HEIGHT = "profile_height_cm"
@@ -280,6 +292,9 @@ class SettingsPrefs(context: Context) {
         private const val KEY_QUIET_TO = "alarm_quiet_highs_to"
         private const val KEY_SOUND_PACK = "alarm_sound_pack"
         private const val KEY_HAPTIC = "alarm_haptic_"
+        private const val KEY_FAST_FALL_ON = "alarm_fast_fall_on"
+        private const val KEY_FAST_RISE_ON = "alarm_fast_rise_on"
+        private const val KEY_FAST_RATE = "alarm_fast_rate"
         private const val KEY_ALARMS_PAUSED = "alarms_paused_until"
         private const val KEY_THEME = "theme_mode"
         private const val KEY_TIME_FORMAT = "time_format"

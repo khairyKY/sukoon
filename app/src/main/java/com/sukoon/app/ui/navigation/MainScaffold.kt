@@ -135,6 +135,8 @@ enum class SukoonTab(val route: String, @StringRes val labelRes: Int, @DrawableR
 fun MainScaffold() {
     val navController = rememberNavController()
     var showGuide by rememberSaveable { mutableStateOf(false) }
+    /** The Guide opens on this topic (null: its hub). */
+    var guideTopic by rememberSaveable { mutableStateOf<String?>(null) }
     // Health Connect only lets most phones read while Sukoon is on screen: sync on every return.
     val appContainer = (LocalContext.current.applicationContext as SukoonApp).container
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -189,6 +191,7 @@ fun MainScaffold() {
             }
             "alarms" -> openYou(YouPage.ALARMS)
             "people" -> openYou(YouPage.PEOPLE)
+            "fitness" -> openYou(YouPage.FITNESS)
             "insulin" -> openYou(YouPage.INSULIN)
             "learning" -> {
                 appContainer.requestedLearning.value = true
@@ -209,7 +212,7 @@ fun MainScaffold() {
             "entry_fingerstick" -> appContainer.requestedEntry.value = LogEventType.FINGERSTICK
         }
     }
-    if (showGuide) HelpDialog(onClose = { showGuide = false }, onLink = { showGuide = false; openLink(it) })
+    if (showGuide) HelpDialog(onClose = { showGuide = false; guideTopic = null }, onLink = { showGuide = false; guideTopic = null; openLink(it) }, startTopic = guideTopic)
     // An invite link tapped (sukoon://follow): follow in one tap, or sign in first and it comes back.
     val pendingInvite by appContainer.pendingInvite.collectAsStateWithLifecycle()
     val account by appContainer.sharing.supabase.session.collectAsStateWithLifecycle()
@@ -253,6 +256,7 @@ fun MainScaffold() {
                         home.logbookRepository,
                         home.alarms.treatedAt,
                         actionOf = { home.settings.insulinAction },
+                        modesOf = { home.modes.now() },
                         healthToday = {
                             home.healthConnect.today().let { today ->
                                 buildMap {
@@ -302,6 +306,7 @@ fun MainScaffold() {
                 }
                 // Beta: a correction when you're above your range and haven't eaten in 2 hours.
                 val recentEvents by remember { home.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofHours(6).toMillis()) }.collectAsStateWithLifecycle(initialValue = emptyList())
+                var showModes by rememberSaveable { mutableStateOf(false) }
                 // ponytail: the newest 150 rows cover 2 hours at the 1-minute save interval (sparser saves cover more).
                 val lastReadings by remember { repository.recentReadings(150) }.collectAsStateWithLifecycle(initialValue = emptyList())
                 // A value under 70 in the last 2 hours: Home suggests no dose (the carbs since are treating it).
@@ -323,12 +328,13 @@ fun MainScaffold() {
                         lastCarbsAt = recentEvents.lastOrNull { it.logType == LogEventType.CARB && (it.value ?: 0.0) > 0 }?.let { Instant.ofEpochMilli(it.timestampMillis) },
                         slot = InsightEngine.slotFor(now.atZone(ZoneId.systemDefault()).hour),
                         lowAt = lowAt,
+                        change = com.sukoon.app.modes.Modes.doseChange(home.modes.now(), now, null, ZoneId.systemDefault(), home.modes.afterWorkoutCut),
                     )
                 }
                 // Beta: a meal in the last hour with no insulin logged and none working.
                 val mealDose = latest?.let { r ->
                     val now = Instant.now()
-                    recentEvents.lastOrNull { it.logType == LogEventType.CARB && (it.value ?: 0.0) >= 10 }?.takeUnless { it.summary }?.let { meal ->
+                    recentEvents.lastOrNull { it.logType == LogEventType.CARB && !it.treatment && (it.value ?: 0.0) >= 10 }?.takeUnless { it.summary }?.let { meal ->
                         val mealAt = Instant.ofEpochMilli(meal.timestampMillis)
                         // A meal from another app is timed when it was logged, which can be hours after you ate (and dosed): look further back.
                         val lookBack = Duration.ofHours(if (meal.source != null && !meal.timeSet) 3 else 1).toMillis()
@@ -345,6 +351,7 @@ fun MainScaffold() {
                             onBoard = insulinOnBoard,
                             slot = InsightEngine.slotFor(mealAt.atZone(ZoneId.systemDefault()).hour),
                             lowAt = lowAt,
+                            change = com.sukoon.app.modes.Modes.doseChange(home.modes.now(), now, mealAt, ZoneId.systemDefault(), home.modes.afterWorkoutCut),
                         )?.let { meal to it }
                     }
                 }
@@ -382,8 +389,41 @@ fun MainScaffold() {
                     val life by homeViewModel.sensorLife.collectAsStateWithLifecycle()
                     val source by home.sourceKind.collectAsStateWithLifecycle()
                     if (source == SourceKind.LIBRE_BLE && !rememberBluetoothOn()) BluetoothOffBanner { turnOnBluetooth(context) }
+                    // What's on, as chips under Now's header; Today (the sliders button) switches things on.
+                    val lastReadings by remember { repository.recentReadings(600) }.collectAsStateWithLifecycle(initialValue = emptyList())
+                    val modesNow by home.modes.active.collectAsStateWithLifecycle()
                     val alarmsPaused by home.alarms.pausedUntil.collectAsStateWithLifecycle()
-                    alarmsPaused?.let { com.sukoon.app.ui.home.AlarmsPausedBanner(it) { scope.launch { home.alarms.resumeAll() } } }
+                    val goal by home.modes.goalFlow.collectAsStateWithLifecycle()
+                    val lastKetoneEvent = recentEvents.lastOrNull { it.logType == LogEventType.KETONE && it.value != null }
+                    val lastKetones = lastKetoneEvent?.let { it.value!! to Instant.ofEpochMilli(it.timestampMillis) }
+                    val ketonesDue = modesNow.sick && (lastKetones?.second ?: modesNow.sickSince!!) <= Instant.now().minus(com.sukoon.app.modes.Modes.KETONES_EVERY)
+                    val chips = com.sukoon.app.ui.home.statusChips(
+                        m = modesNow,
+                        paused = alarmsPaused,
+                        goal = com.sukoon.app.modes.Goals.targets(home.settings.profile, goal)?.let { it to (stats[com.sukoon.app.ui.home.HomeStat.PROTEIN] to stats[com.sukoon.app.ui.home.HomeStat.KCAL]) },
+                        gap = if (source == SourceKind.LIBRE_BLE) com.sukoon.app.domain.metrics.MemoryGap.fillable(lastReadings, Instant.now()) else null,
+                        ketonesDue = ketonesDue,
+                        onResume = { scope.launch { home.alarms.resumeAll(); context.toast(context.getString(R.string.toast_alarms_back)) } },
+                        onToday = { showModes = true },
+                        onFitness = { openYou(YouPage.FITNESS) },
+                        onFillGap = { home.requestedCheckSensor.value = true; openYou(YouPage.SENSOR) },
+                    )
+                    // Under the parent lock, pausing alarms asks for the PIN first.
+                    var pinFor by remember { mutableStateOf<(() -> Unit)?>(null) }
+                    val lockedAlarms = home.settings.parentPin != null && com.sukoon.app.platform.ParentLock.appliesTo(home.settings.profile.ageYears)
+                    pinFor?.let { action ->
+                        com.sukoon.app.ui.settings.PinDialog(setting = false, stored = home.settings.parentPin, onDone = { action(); pinFor = null }, onDismiss = { pinFor = null })
+                    }
+                    if (showModes) {
+                        com.sukoon.app.ui.home.TodaySheet(
+                            home.modes, home.alarms, latest?.glucoseMgDl, lastKetones,
+                            askPin = if (lockedAlarms) { action -> pinFor = action } else null,
+                            onLogKetones = { showModes = false; home.requestedEntry.value = LogEventType.KETONE },
+                            onFitness = { showModes = false; openYou(YouPage.FITNESS) },
+                            onGuide = { showModes = false; guideTopic = "modes"; showGuide = true },
+                            onDismiss = { showModes = false },
+                        )
+                    }
                     (life as? SensorLife.Running)
                         ?.takeIf { Duration.between(Instant.now(), it.endsAt) <= Duration.ofHours(24) }
                         ?.let { SensorEndingBanner(it, onClick = toSensor) }
@@ -408,6 +448,8 @@ fun MainScaffold() {
                         },
                         onAddFood = { pendingEntry = LogEventType.CARB; navController.navigateToTab(SukoonTab.TRENDS) },
                         onAddInsulin = { pendingEntry = LogEventType.INSULIN; navController.navigateToTab(SukoonTab.TRENDS) },
+                        onModes = { showModes = true },
+                        status = chips,
                         insulinOnBoard = insulinOnBoard,
                         correction = correction,
                         mealDose = mealDose,
@@ -445,7 +487,7 @@ fun MainScaffold() {
                 val logbookViewModel: LogbookViewModel = viewModel(factory = LogbookViewModel.factory(container.logbookRepository, container.glucoseRepository, container.gemini, container.entryPhotos) { container.settings.insulinAction })
                 val logbookState by logbookViewModel.uiState.collectAsStateWithLifecycle()
                 val askViewModel: AskViewModel = viewModel(
-                    factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini, doseSettings = { container.settings.doseSettings }, profile = { container.settings.profile }) { container.settings.insulinAction },
+                    factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini, doseSettings = { container.settings.doseSettings }, profile = { container.settings.profile }, goal = { container.modes.goalLine(container.settings.profile) }) { container.settings.insulinAction },
                 )
                 val askState by askViewModel.uiState.collectAsStateWithLifecycle()
                 val insightsViewModel: InsightsViewModel = viewModel(
@@ -519,7 +561,8 @@ fun MainScaffold() {
                 var insulinAction by remember { mutableStateOf(container.settings.insulinAction) }
                 var basalReminder by remember { mutableStateOf(container.settings.basalReminder) }
                 var doseSettings by remember { mutableStateOf(container.settings.doseSettings) }
-                var profile by remember { mutableStateOf(container.settings.profile) }
+                val lastWeighIn by container.lastWeighIn.collectAsStateWithLifecycle()
+                var profile by remember(lastWeighIn) { mutableStateOf(container.settings.profile) }
                 var parentPin by remember { mutableStateOf(container.settings.parentPin) }
                 var targetHigh by remember { mutableIntStateOf(container.settings.targetHigh) }
                 val youContext = LocalContext.current
@@ -563,6 +606,7 @@ fun MainScaffold() {
                     healthConnect = container.healthConnect,
                     calibration = container.calibration,
                     onOpenGuide = { showGuide = true },
+                    onOpenGuideTopic = { guideTopic = it; showGuide = true },
                     updates = container.updates,
                     themeMode = themeMode,
                     onThemeMode = { mode ->

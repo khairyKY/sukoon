@@ -50,6 +50,8 @@ class AskViewModel(
     private val doseSettings: () -> DoseSettings = { DoseSettings() },
     private val profile: () -> Profile = { Profile() },
     private val insulinAction: () -> InsulinAction = { InsulinAction() },
+    /** Kai's goal (the bulk and its targets), "" when none. */
+    private val goal: () -> String = { "" },
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AskUiState())
@@ -90,6 +92,7 @@ class AskViewModel(
                     insulinAction = insulinAction(),
                     dose = doseSettings(),
                     profile = profile(),
+                    goal = goal(),
                 )
                 gemini.generate(system, turns)
             }
@@ -111,8 +114,8 @@ class AskViewModel(
     companion object {
         private val WINDOW_MILLIS = TimeUnit.DAYS.toMillis(7)
 
-        fun factory(glucoseRepository: GlucoseRepository, logbookRepository: LogbookRepository, gemini: GeminiClient, doseSettings: () -> DoseSettings = { DoseSettings() }, profile: () -> Profile = { Profile() }, insulinAction: () -> InsulinAction = { InsulinAction() }) = viewModelFactory {
-            initializer { AskViewModel(glucoseRepository, logbookRepository, gemini, doseSettings, profile, insulinAction) }
+        fun factory(glucoseRepository: GlucoseRepository, logbookRepository: LogbookRepository, gemini: GeminiClient, doseSettings: () -> DoseSettings = { DoseSettings() }, profile: () -> Profile = { Profile() }, goal: () -> String = { "" }, insulinAction: () -> InsulinAction = { InsulinAction() }) = viewModelFactory {
+            initializer { AskViewModel(glucoseRepository, logbookRepository, gemini, doseSettings, profile, insulinAction, goal) }
         }
     }
 }

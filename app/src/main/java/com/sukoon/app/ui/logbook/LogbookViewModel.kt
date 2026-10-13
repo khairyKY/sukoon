@@ -125,6 +125,7 @@ class LogbookViewModel(
                     else -> null
                 },
                 mealId = draft.mealId,
+                treatment = draft.treatment,
                 fiber = n?.fiber,
                 sugar = n?.sugar,
                 protein = n?.protein,

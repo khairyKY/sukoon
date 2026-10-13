@@ -52,6 +52,9 @@ import com.sukoon.app.insulin.InsulinOnBoard
 import java.time.Duration
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
 import com.sukoon.app.data.repository.EntryPhotos
 import com.sukoon.app.alarms.AlarmLog
 import com.sukoon.app.alarms.SignalWatchdog
@@ -119,6 +122,24 @@ class AppContainer(private val context: Context) {
 
     val logbookRepository: LogbookRepository = LogbookRepository(eventDao = database.eventDao())
 
+    /** Workout, fasting and sick-day modes: what alarms, dose suggestions and Now adjust for. */
+    val modes = com.sukoon.app.modes.ModesKeeper(context, logbookRepository, appScope)
+
+    /**
+     * The latest weigh-in. Each new one (or an edit of it) becomes the profile's weight before this
+     * emits it, so the goal's targets follow your weight.
+     */
+    val lastWeighIn: StateFlow<com.sukoon.app.data.db.EventEntity?> = logbookRepository.latest(LogEventType.WEIGHT)
+        .onEach { e ->
+            val kg = e?.value ?: return@onEach
+            val key = "${e.id}:$kg"
+            if (settings.weighInApplied != key) {
+                settings.weighInApplied = key
+                settings.profile = settings.profile.copy(weightKg = kg)
+            }
+        }
+        .stateIn(appScope, SharingStarted.Eagerly, null)
+
     val entryPhotos = EntryPhotos(context.filesDir)
 
     /** Opt-in daily backup to a file in any cloud app (You → Reports). */
@@ -161,6 +182,7 @@ class AppContainer(private val context: Context) {
         enabled = { _sourceKind.value.real },
         watchdog = { SignalWatchdog.arm(context, it) },
         warmingUp = { sensorLife() is SensorLife.WarmingUp },
+        modes = { modes.now() },
     )
 
     val followerWatch = FollowerWatch(context, sharing, settings, notifier, appScope)
@@ -192,6 +214,12 @@ class AppContainer(private val context: Context) {
     /** A guide link asked for You → Sensor → Start a new sensor: the Sensor card opens its confirmation. */
     val requestedStartSensor = MutableStateFlow(false)
 
+    /** The next new entry treats a low (a low alarm's "Log what I ate"): its "Treating a low" starts on. */
+    val requestedTreatment = MutableStateFlow(false)
+
+    /** Now's "fill the gap": You → Sensor opens ready to read the sensor's memory. */
+    val requestedCheckSensor = MutableStateFlow(false)
+
     init {
         glucoseRepository.start()
         BasalReminder.schedule(context, settings.basalReminder)
@@ -222,6 +250,7 @@ class AppContainer(private val context: Context) {
         alarms.start()
         nightscout.start()
         sharing.start()
+        modes.start()
         newFollowers.start(appScope)
         followerWatch.start()
         healthConnect.start()
@@ -296,15 +325,29 @@ class AppContainer(private val context: Context) {
         val pairing = SensorPairing(read.uid, read.patchInfo, fram, scannedAtMillis - Libre2.sensorInfo(fram).ageMinutes * LibreBleSource.MINUTE_MS)
         pairingStore.save(pairing)
         pairingStore.bleAddress = read.bleMac
-        // Only a running sensor's memory holds glucose: a just-started one holds noise (LibreNfc.SensorRead.check).
-        if (Libre2.sensorInfo(fram).state == Libre2.State.READY) appScope.launch {
-            for (point in Libre2.parseFram(pairing.calibration, fram)) {
-                if (point.mgDl !in LibreBleSource.PLAUSIBLE_MG_DL) continue
-                val at = Instant.ofEpochMilli(pairing.startMillis + point.minute * LibreBleSource.MINUTE_MS)
-                glucoseRepository.ingest(GlucoseReading(at, point.mgDl, TrendDirection.STEADY, SourceKind.LIBRE_BLE, warmup = point.minute < LibreBleSource.WARMUP_MINUTES))
-            }
-        }
+        appScope.launch { fillFromMemory(read, scannedAtMillis) }
         selectSource(SourceKind.LIBRE_BLE)
+    }
+
+    /**
+     * The sensor's memory (the last 8 h every 15 min, the last 16 min every minute) into the readings,
+     * filling what Bluetooth missed. Any tap: pairing, starting, or "Check sensor". Only a running
+     * sensor's memory holds glucose (a just-started one holds noise); minute 0 is the paired sensor's
+     * own when it's the same sensor, else this tap's. Returns how many readings were new.
+     */
+    suspend fun fillFromMemory(read: LibreNfc.SensorRead, scannedAtMillis: Long): Int {
+        val fram = read.fram ?: return 0
+        val info = Libre2.sensorInfo(fram)
+        if (info.state != Libre2.State.READY) return 0
+        val pairing = pairingStore.load()?.takeIf { it.uid.contentEquals(read.uid) }
+            ?: SensorPairing(read.uid, read.patchInfo, fram, scannedAtMillis - info.ageMinutes * LibreBleSource.MINUTE_MS)
+        val readings = Libre2.parseFram(pairing.calibration, fram).filter { it.mgDl in LibreBleSource.PLAUSIBLE_MG_DL }.map { point ->
+            GlucoseReading(
+                Instant.ofEpochMilli(pairing.startMillis + point.minute * LibreBleSource.MINUTE_MS), point.mgDl, TrendDirection.STEADY, SourceKind.LIBRE_BLE,
+                warmup = point.minute < LibreBleSource.WARMUP_MINUTES,
+            )
+        }
+        return glucoseRepository.fill(readings)
     }
 
     private companion object {

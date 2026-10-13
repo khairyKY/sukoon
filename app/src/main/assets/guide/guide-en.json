@@ -261,6 +261,42 @@
             { "problem": "No meals come in", "fix": "You › Apps & data › Resync says how many MyFitnessPal meals Health Connect has. None? Update MyFitnessPal and connect again." }
           ],
           "related": ["meal"]
+        },
+        {
+          "id": "modes", "icon": "ic_walk",
+          "title": "Workouts, fasting, sick days and your goal",
+          "for": "What Sukoon changes while you train, fast or are ill, and why.",
+          "summary": "Today, your goal, and the numbers behind them.",
+          "sections": [
+            { "heading": "Workouts", "steps": [
+              { "text": "Start a workout from Today: the low alarm sits at 100 while it lasts (Moser et al. 2020).", "path": "Now › Today" },
+              { "text": "Lifting can raise glucose now and lower it for at least a day after (Riddell et al. 2017). After any workout, logged or started from Today, the low alarm sits at 80 overnight." },
+              { "text": "Before starting: under 90, have 10–20 g and wait; 90–125, about 10 g; over 270, check ketones first (Riddell 2017)." },
+              { "text": "Dose suggestions: the meal after a workout 50% lower by default; corrections during and just after halved (lifting rises, Moser 2020). Nothing is cut before lifting.", "path": "You › Fitness & food", "link": "fitness" }
+            ]},
+            { "heading": "Your goal", "steps": [
+              { "text": "Lean bulk: +100–300 kcal a day, protein 1.6–2.2 g/kg, gaining 0.25–0.5% of your weight a week (your research; Iraki et al. 2019).", "path": "You › Fitness & food", "link": "fitness" },
+              { "text": "Cut: at most 500 kcal under maintenance, losing 0.5–1% a week, protein 2.2–2.6 g/kg (Helms et al. 2014; Murphy & Koehler 2022). Eating less usually means less insulin: review your doses with your clinic." },
+              { "text": "Maintain: protein 1.4–2.0 g/kg (ISSN 2017)." },
+              { "text": "Maintenance is estimated from your weight, height, age and sex (Mifflin–St Jeor × 1.55). If you know yours, type it in." }
+            ]},
+            { "heading": "Fasting", "steps": [
+              { "text": "Set your Fajr and Maghrib times once, then switch Fasting on in Today on the days you fast.", "path": "You › Fitness & food", "link": "fitness" },
+              { "text": "Break the fast under 70 or over 300, or if you feel unwell; at 70–90, check again within the hour (IDF-DAR 2021)." },
+              { "text": "Suhoor meal dose suggested 30% lower; none during the fast. Long-acting: IDF-DAR says take it at iftar, 30–40% less (15–30% for Toujeo in its table). Agree any change with your doctor." }
+            ]},
+            { "heading": "Sick days", "steps": [
+              { "text": "Switch Sick day on in Today: a ketone reminder every 2 hours, and high alarms every hour.", "path": "Now › Today" },
+              { "text": "Never stop long-acting insulin; drink about 100 ml an hour (ISPAD 2022)." },
+              { "text": "Ketones (mmol/L): under 0.6 normal; 0.6–1.4 check again in 1–2 h; 1.5–2.9 extra rapid insulin as your plan says; 3.0 or more, vomiting or fast breathing: urgent care." }
+            ]}
+          ],
+          "tips": [
+            "Fat-heavy meals (tahina, eggs, oil) rise 3–5 hours later. Your research suggests a split dose for them: agree it with your doctor.",
+            "Creatine can make lows a little more likely and raises creatinine: ask for a cystatin-C kidney test.",
+            "Sleep 7–8 hours: one short night cuts muscle building by about 18%."
+          ],
+          "related": ["alarms", "insulin", "learning"]
         }
       ]
     },

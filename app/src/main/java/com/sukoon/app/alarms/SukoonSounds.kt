@@ -30,8 +30,8 @@ enum class SoundRole(val key: String, val bells: String) {
         fun of(type: AlarmType): SoundRole = when (type) {
             AlarmType.URGENT_LOW -> URGENT
             AlarmType.LOW -> LOW
-            AlarmType.GOING_LOW -> GOING_LOW
-            AlarmType.HIGH -> HIGH
+            AlarmType.GOING_LOW, AlarmType.FALLING_FAST -> GOING_LOW
+            AlarmType.HIGH, AlarmType.RISING_FAST -> HIGH
             AlarmType.SIGNAL_LOSS -> NO_READINGS
         }
     }

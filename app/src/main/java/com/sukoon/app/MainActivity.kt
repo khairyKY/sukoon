@@ -72,6 +72,7 @@ class MainActivity : ComponentActivity() {
         if (intent.getBooleanExtra(EXTRA_TREATED, false)) {
             intent.removeExtra(EXTRA_TREATED)
             container.appScope.launch { container.alarms.treated() }
+            container.requestedTreatment.value = true
         }
         container.requestedEntry.value = type
     }

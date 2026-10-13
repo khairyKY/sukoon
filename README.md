@@ -161,6 +161,10 @@ Someone who only follows sees a simpler app: no sensor, insulin or dose settings
 - ✅ **A built-in guide** (You → Guide) and a getting-started card on Home.
 - 🌱 **Notices from Sukoon**: a short message to every install (a known problem, "please update"), as a notification and a card on Now, read every 6 hours from a file on GitHub Pages ([how](docs/notices.md)).
 - ✅ **A parent lock for children**: a PIN over the alarms, range, doses, profile and everything that would cut a parent off as a follower. From 18 it doesn't apply.
+- 🌱 **Modes** for a workout (low alarm 100, a day of watching for late lows, the meal after it cut), fasting in Ramadan (when to break the fast, a lower suhoor dose, a suhoor reminder) and sick days (ketones every 2 hours, with what each level means). Every number cites its guideline ([sources](docs/research/modes-sources.md)).
+- 🌱 **Falling fast** alarm while still in range, and **rising fast** if you want it; a vibration pattern per alarm; **pause all alarms** (urgent low always sounds).
+- 🌱 **Fill gaps from the sensor**: one tap reads its 8-hour memory into whatever Bluetooth missed.
+- 🌱 **Low treatments**: what you treat lows with is kept apart from meals, and Insights says how much you usually take and how often it overshoots.
 - ✅ **Starts after a reboot or update**, and a watchdog wakes it if the phone kills it.
 
 ---

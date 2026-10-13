@@ -333,6 +333,7 @@ private fun words(f: Finding): Pair<String, String> {
         } to stringResource(R.string.in2_ev_meals, i.meals)
         is Insight.RecurringHighs -> stringResource(R.string.in2_highs, clock(i.fromHour), clock(i.toHour)) to stringResource(R.string.in2_ev_percent_days, i.percentOfDays)
         is Insight.Rebounds -> stringResource(R.string.in2_rebound) to stringResource(R.string.in2_ev_of_lows, i.rebounds, i.lows)
+        is Insight.LowTreatments -> stringResource(R.string.in2_treatments, i.medianGrams) to stringResource(R.string.in2_ev_of_lows, i.rebounds, i.lows)
         is Insight.MeterAgreement -> stringResource(if (i.level == Level.GOOD) R.string.in2_meter_ok else R.string.in2_meter_off) to stringResource(R.string.in2_ev_checks, i.agreeing, i.checks)
         is Insight.DawnRise -> stringResource(R.string.in2_dawn, i.medianRise) to stringResource(R.string.in2_ev_mornings, i.nightsWithRise, i.nights)
         is Insight.Variability -> stringResource(if (i.level == Level.GOOD) R.string.in2_cv_ok else R.string.in2_cv_high) to stringResource(R.string.in2_ev_cv, i.cvPercent)
@@ -506,6 +507,12 @@ private fun InsightCard(insight: Insight) {
                 Body(stringResource(R.string.insight_rich_body, insight.richPeak, insight.leanPeak, signed(insight.richAt4h), signed(insight.leanAt4h), insight.rich))
                 if (insight.level == Level.ATTENTION) Discuss(stringResource(R.string.insight_rich_discuss))
                 Source(stringResource(R.string.insight_src_rich))
+            }
+            is Insight.LowTreatments -> {
+                Title(stringResource(R.string.insight_treatments_title))
+                Body(stringResource(R.string.insight_treatments_body, insight.lows, insight.medianGrams, insight.secondRounds, insight.rebounds))
+                if (insight.level == Level.ATTENTION) Discuss(stringResource(R.string.insight_rebound_discuss))
+                Source(stringResource(R.string.insight_src_treatments))
             }
             is Insight.Rebounds -> {
                 Title(stringResource(R.string.insight_rebound_title))
