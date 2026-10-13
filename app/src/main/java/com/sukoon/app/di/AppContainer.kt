@@ -119,6 +119,9 @@ class AppContainer(private val context: Context) {
 
     val logbookRepository: LogbookRepository = LogbookRepository(eventDao = database.eventDao())
 
+    /** Workout, fasting and sick-day modes: what alarms, dose suggestions and Now adjust for. */
+    val modes = com.sukoon.app.modes.ModesKeeper(context, logbookRepository, appScope)
+
     val entryPhotos = EntryPhotos(context.filesDir)
 
     /** Opt-in daily backup to a file in any cloud app (You → Reports). */
@@ -161,6 +164,7 @@ class AppContainer(private val context: Context) {
         enabled = { _sourceKind.value.real },
         watchdog = { SignalWatchdog.arm(context, it) },
         warmingUp = { sensorLife() is SensorLife.WarmingUp },
+        modes = { modes.now() },
     )
 
     val followerWatch = FollowerWatch(context, sharing, settings, notifier, appScope)
@@ -225,6 +229,7 @@ class AppContainer(private val context: Context) {
         alarms.start()
         nightscout.start()
         sharing.start()
+        modes.start()
         newFollowers.start(appScope)
         followerWatch.start()
         healthConnect.start()

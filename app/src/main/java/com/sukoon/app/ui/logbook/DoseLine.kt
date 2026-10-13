@@ -106,6 +106,18 @@ private fun Receipt(a: DoseAdvice.Suggestion) {
         ReceiptRow(stringResource(R.string.dose_r_corr), stringResource(R.string.dose_r_corr_how, a.glucose, a.target, formatAmountLocalized(a.factor)), signed(before))
         if (a.onBoardUsed > 0) ReceiptRow(stringResource(R.string.dose_r_iob), stringResource(R.string.dose_r_iob_how), signed(-a.onBoardUsed))
     }
+    a.change?.let { c ->
+        val less = ((1 - c.mealFactor) * 100).toInt()
+        ReceiptRow(
+            stringResource(R.string.dose_r_mode),
+            when (c.reason) {
+                com.sukoon.app.modes.DoseChange.Reason.AFTER_WORKOUT -> stringResource(R.string.dose_mode_after_workout, less)
+                com.sukoon.app.modes.DoseChange.Reason.IN_WORKOUT -> stringResource(R.string.dose_mode_in_workout)
+                com.sukoon.app.modes.DoseChange.Reason.SUHOOR -> stringResource(R.string.dose_mode_suhoor, less)
+            },
+            "",
+        )
+    }
     ReceiptRow(
         stringResource(if (a.capped) R.string.dose_r_capped else R.string.dose_r_round),
         stringResource(if (a.capped) R.string.dose_r_capped_how else R.string.dose_r_round_how),

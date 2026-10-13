@@ -253,6 +253,7 @@ fun MainScaffold() {
                         home.logbookRepository,
                         home.alarms.treatedAt,
                         actionOf = { home.settings.insulinAction },
+                        modesOf = { home.modes.now() },
                         healthToday = {
                             home.healthConnect.today().let { today ->
                                 buildMap {
@@ -302,6 +303,7 @@ fun MainScaffold() {
                 }
                 // Beta: a correction when you're above your range and haven't eaten in 2 hours.
                 val recentEvents by remember { home.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofHours(6).toMillis()) }.collectAsStateWithLifecycle(initialValue = emptyList())
+                var showModes by rememberSaveable { mutableStateOf(false) }
                 // ponytail: the newest 150 rows cover 2 hours at the 1-minute save interval (sparser saves cover more).
                 val lastReadings by remember { repository.recentReadings(150) }.collectAsStateWithLifecycle(initialValue = emptyList())
                 // A value under 70 in the last 2 hours: Home suggests no dose (the carbs since are treating it).
@@ -323,6 +325,7 @@ fun MainScaffold() {
                         lastCarbsAt = recentEvents.lastOrNull { it.logType == LogEventType.CARB && (it.value ?: 0.0) > 0 }?.let { Instant.ofEpochMilli(it.timestampMillis) },
                         slot = InsightEngine.slotFor(now.atZone(ZoneId.systemDefault()).hour),
                         lowAt = lowAt,
+                        change = com.sukoon.app.modes.Modes.doseChange(home.modes.now(), now, null, ZoneId.systemDefault(), home.modes.afterWorkoutCut),
                     )
                 }
                 // Beta: a meal in the last hour with no insulin logged and none working.
@@ -345,6 +348,7 @@ fun MainScaffold() {
                             onBoard = insulinOnBoard,
                             slot = InsightEngine.slotFor(mealAt.atZone(ZoneId.systemDefault()).hour),
                             lowAt = lowAt,
+                            change = com.sukoon.app.modes.Modes.doseChange(home.modes.now(), now, mealAt, ZoneId.systemDefault(), home.modes.afterWorkoutCut),
                         )?.let { meal to it }
                     }
                 }
@@ -396,6 +400,17 @@ fun MainScaffold() {
                                 }
                             }
                     }
+                    // Modes that are on, one line each; tap opens Modes.
+                    val modesNow by home.modes.active.collectAsStateWithLifecycle()
+                    val lastKetones = recentEvents.lastOrNull { it.logType == LogEventType.KETONE && it.value != null }?.let { it.value!! to Instant.ofEpochMilli(it.timestampMillis) }
+                    com.sukoon.app.ui.home.ModesBanner(modesNow, lastKetones) { showModes = true }
+                    if (showModes) {
+                        com.sukoon.app.ui.home.ModesSheet(
+                            home.modes, latest?.glucoseMgDl,
+                            onLogKetones = { showModes = false; home.requestedEntry.value = LogEventType.KETONE },
+                            onDismiss = { showModes = false },
+                        )
+                    }
                     val alarmsPaused by home.alarms.pausedUntil.collectAsStateWithLifecycle()
                     alarmsPaused?.let { com.sukoon.app.ui.home.AlarmsPausedBanner(it) { scope.launch { home.alarms.resumeAll() } } }
                     (life as? SensorLife.Running)
@@ -422,6 +437,7 @@ fun MainScaffold() {
                         },
                         onAddFood = { pendingEntry = LogEventType.CARB; navController.navigateToTab(SukoonTab.TRENDS) },
                         onAddInsulin = { pendingEntry = LogEventType.INSULIN; navController.navigateToTab(SukoonTab.TRENDS) },
+                        onModes = { showModes = true },
                         insulinOnBoard = insulinOnBoard,
                         correction = correction,
                         mealDose = mealDose,

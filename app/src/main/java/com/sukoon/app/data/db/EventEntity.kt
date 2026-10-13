@@ -43,7 +43,7 @@ data class EventEntity(
 )
 
 /** INSULIN = rapid-acting (bolus, e.g. Apidra); BASAL = long-acting (e.g. Toujeo). Stored by name, so adding one needs no migration. */
-enum class LogEventType { CARB, INSULIN, BASAL, FINGERSTICK, ACTIVITY, NOTE }
+enum class LogEventType { CARB, INSULIN, BASAL, FINGERSTICK, ACTIVITY, NOTE, /** Blood ketones, mmol/L (sick days). */ KETONE }
 
 /** Tolerant parse so a corrupt/future-build row can't crash the Logbook Flow (mirrors ReadingMappers.safeEnum). */
 val EventEntity.logType: LogEventType

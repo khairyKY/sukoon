@@ -131,6 +131,8 @@ fun HomeScreen(
     onEnterCodeManually: () -> Unit = {},
     onAddFood: () -> Unit = {},
     onAddInsulin: () -> Unit = {},
+    /** Opens Modes (workout, fasting, sick day). */
+    onModes: () -> Unit = {},
     /** Rapid insulin still active, shown beside the shortcuts when there is any. */
     insulinOnBoard: Double = 0.0,
     /** Today's numbers, and which of them the user chose to see. */
@@ -149,7 +151,7 @@ fun HomeScreen(
     mealDose: Pair<EventEntity, DoseAdvice.Suggestion>? = null,
     onMealDose: (EventEntity) -> Unit = {},
 ) {
-    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss, mealDose, onMealDose)) {
+    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss, mealDose, onMealDose, onModes)) {
         PullToSync(onSync, modifier) {
             HomeContent(state, brief, Modifier.fillMaxSize(), onTreated, onSnooze, onAlertEmergencyContact, onTroubleshoot, onPairSensor, onEnterCodeManually)
         }
@@ -170,6 +172,7 @@ private class Shortcuts(
     val onNudgeDismiss: () -> Unit = {},
     val mealDose: Pair<EventEntity, DoseAdvice.Suggestion>? = null,
     val onMealDose: (EventEntity) -> Unit = {},
+    val onModes: () -> Unit = {},
 )
 private val LocalShortcuts = staticCompositionLocalOf { Shortcuts({}, {}) }
 
@@ -279,6 +282,7 @@ private fun HomeAppBarRow(dimmed: Boolean) {
                     color = CaptionMuted,
                 )
             }
+            ShortcutIcon(R.drawable.ic_modes, stringResource(R.string.modes_title), shortcuts.onModes)
             ShortcutIcon(R.drawable.ic_food, stringResource(R.string.home_add_food), shortcuts.onFood)
             ShortcutIcon(R.drawable.ic_insulin, stringResource(R.string.home_add_insulin), shortcuts.onInsulin)
         }
@@ -470,6 +474,9 @@ private fun ColumnScope.LowContent(state: HomeUiState.Low, brief: Brief?, onTrea
                 }
             },
         )
+        if (brief is Brief.Low && brief.breakFast) {
+            Text(stringResource(R.string.home_low_break_fast), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = StateLow, modifier = Modifier.fillMaxWidth().padding(top = 10.dp))
+        }
         InsulinStillWorking(brief)
         Spacer(Modifier.weight(1f))
         Column(modifier = Modifier.padding(vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -860,6 +867,10 @@ private fun stepText(step: Step): String = stringResource(
         Step.CARBS_WITH_YOU -> R.string.home_step_carbs_with_you
         Step.BEDTIME_SNACK -> R.string.home_step_bedtime_snack
         Step.FINGERPRICK_FIRST -> R.string.home_step_fingerprick
+        Step.BREAK_FAST -> R.string.home_step_break_fast
+        Step.RECHECK_HOUR -> R.string.home_step_recheck_hour
+        Step.URGENT_CARE -> R.string.home_step_urgent_care
+        Step.EXTRA_INSULIN -> R.string.home_step_extra_insulin
     },
 )
 
@@ -895,6 +906,16 @@ private fun briefText(brief: Brief): Pair<String, String> {
         is Brief.InRangeFor -> stringResource(R.string.home_brief_streak_title) to stringResource(R.string.home_brief_streak_body, durationText(context, brief.minutes))
         is Brief.GoodDay -> stringResource(R.string.home_brief_good_day_title) to stringResource(R.string.home_brief_good_day_body, brief.percent)
         is Brief.Steady -> STEADY[brief.variant % STEADY.size].let { (title, body) -> stringResource(title) to stringResource(body) }
+        Brief.BreakFastHigh -> stringResource(R.string.home_brief_break_fast_high_title) to stringResource(R.string.home_brief_break_fast_high_body)
+        is Brief.FastCheck -> stringResource(R.string.home_brief_fast_check_title, brief.mgDl) to stringResource(R.string.home_brief_fast_check_body)
+        is Brief.Ketones -> stringResource(R.string.home_brief_ketones_title, String.format(Locale.getDefault(), "%.1f", brief.mmol)) to stringResource(
+            when (brief.band) {
+                com.sukoon.app.modes.Modes.KetoneBand.DANGER -> R.string.home_brief_ketones_danger
+                com.sukoon.app.modes.Modes.KetoneBand.HIGH -> R.string.home_brief_ketones_high
+                else -> R.string.home_brief_ketones_raised
+            },
+        )
+        Brief.KetonesDue -> stringResource(R.string.home_brief_ketones_due_title) to stringResource(R.string.home_brief_ketones_due_body)
         is Brief.Low, is Brief.Treated -> "" to "" // the low screens word these (see BriefCards)
     }
 }

@@ -285,6 +285,7 @@ fun LogbookScreen(
 
     if (adding) {
         AddSheet(
+            showKetones = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.modes.active.value.sick || (state.glucoseNow?.glucoseMgDl ?: 0) > 250,
             repeats = remember(state.events) { recentRepeats(state.events) },
             glucoseNow = state.glucoseNow,
             insulinOnBoard = state.insulinOnBoard,
@@ -377,6 +378,7 @@ private fun savedMessage(context: android.content.Context, draft: EntryDraft): S
             LogEventType.FINGERSTICK -> " " + context.getString(R.string.home_unit_mgdl)
             LogEventType.ACTIVITY -> context.getString(R.string.logbook_unit_minutes)
             LogEventType.NOTE -> ""
+            LogEventType.KETONE -> " " + context.getString(R.string.unit_mmol)
         }
     }
     val parts = listOfNotNull(amount(draft.amount, draft.type), amount(draft.insulin?.takeIf { it > 0 }, LogEventType.INSULIN))
@@ -557,6 +559,7 @@ internal fun typeLabel(type: LogEventType): String = when (type) {
     LogEventType.FINGERSTICK -> stringResource(R.string.logbook_type_fingerstick)
     LogEventType.ACTIVITY -> stringResource(R.string.logbook_type_activity)
     LogEventType.NOTE -> stringResource(R.string.logbook_type_note)
+    LogEventType.KETONE -> stringResource(R.string.logbook_type_ketone)
 }
 
 @Composable
@@ -567,6 +570,7 @@ internal fun unitLabel(type: LogEventType): String = when (type) {
     LogEventType.FINGERSTICK -> " " + stringResource(R.string.home_unit_mgdl)
     LogEventType.ACTIVITY -> stringResource(R.string.logbook_unit_minutes)
     LogEventType.NOTE -> ""
+    LogEventType.KETONE -> " " + stringResource(R.string.unit_mmol)
 }
 
 // Plain ASCII digits for a typed amount: it must round-trip through String.toDoubleOrNull().

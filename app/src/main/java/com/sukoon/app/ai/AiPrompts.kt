@@ -169,6 +169,7 @@ object AiPrompts {
                     LogEventType.FINGERSTICK -> " mg/dL finger-prick (blood meter)"
                     LogEventType.ACTIVITY -> " min activity"
                     LogEventType.NOTE -> ""
+                    LogEventType.KETONE -> " mmol/L blood ketones"
                 }
                 "${if (v % 1.0 == 0.0) v.toLong() else v}$unit"
             }.orEmpty()

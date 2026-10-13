@@ -205,6 +205,7 @@ class NightscoutUploader(
                 LogEventType.FINGERSTICK -> json.put("eventType", "BG Check").put("glucose", e.value ?: 0.0).put("glucoseType", "Finger").put("units", "mg/dl")
                 LogEventType.ACTIVITY -> json.put("eventType", "Exercise").put("duration", e.value ?: 0.0)
                 LogEventType.NOTE -> json.put("eventType", "Note")
+                LogEventType.KETONE -> json.put("eventType", "Note").put("notes", listOfNotNull("Ketones ${e.value ?: 0.0} mmol/L", e.note).joinToString(" · "))
             }
             return json
         }
