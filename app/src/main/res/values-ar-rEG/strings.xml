@@ -2085,7 +2085,7 @@
     <string name="follow_basal_body">كان ميعاده %1$s. رسالة أو مكالمة ممكن تفرق.</string>
     <string name="chip_follow_basal">طويل المفعول متسجلش · ميعاده %1$s</string>
     <string name="report_findings">الملاحظات لقت إيه</string>
-    <string name="report_findings_note">من نفس الأيام، للعيادة: طويل المفعول بالليل وعاداته، الهبوط وعلاجه، النشاط، الصبح والأكل. متغيرش جرعات على ده لوحده.</string>
+    <string name="report_findings_note">من نفس الأيام، للعيادة: طويل المفعول بالليل وعاداته، الهبوط وعلاجه، النشاط، الصبح والأكل. متغيرش جرعات على ده لوحده. (بالإنجليزي للدكتور)</string>
     <string name="chip_gym_day">يوم جيم · %1$s</string>
     <string name="chip_rest_day">يوم راحة · %1$s</string>
     <string name="chip_steps">%1$s خطوة</string>

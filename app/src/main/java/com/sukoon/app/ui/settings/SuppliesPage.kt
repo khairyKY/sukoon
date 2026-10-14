@@ -146,7 +146,7 @@ private fun PenCard(kind: PenKind, s: Stock, remaining: Double, perDay: Double?,
                     drawArc(ring, -90f, 360f * share, false, Offset(w / 2, w / 2), Size(size.width - w, size.height - w), style = Stroke(w, cap = StrokeCap.Round))
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(days?.toString() ?: "–", fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
+                    Text(days?.let { java.text.NumberFormat.getIntegerInstance().format(it) } ?: "–", fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
                     Text(stringResource(R.string.supply_days), fontSize = 10.5.sp, color = CaptionMuted)
                 }
             }
@@ -157,7 +157,7 @@ private fun PenCard(kind: PenKind, s: Stock, remaining: Double, perDay: Double?,
                     PenBar(openNow / s.penUnits, ring)
                     repeat(s.pens.coerceAtMost(12)) { i -> PenBar(if (i < fullPens) 1.0 else 0.0, ring) }
                 }
-                val until = days?.let { LocalDate.now().plusDays(it.toLong()).format(DateTimeFormatter.ofPattern("EEE d MMM")) }
+                val until = days?.let { LocalDate.now().plusDays(it.toLong()).format(DateTimeFormatter.ofPattern("EEE d MMM").withDecimalStyle(java.time.format.DecimalStyle.ofDefaultLocale())) }
                 Text(
                     stringResource(R.string.supply_left_line, s.pens, openNow.toInt()) + (until?.let { " · " + stringResource(R.string.supply_until, it) } ?: ""),
                     fontSize = 12.5.sp, color = CaptionMuted,
@@ -201,7 +201,7 @@ private fun PickupCard(p: Pickup, onChange: (Pickup) -> Unit, onPickedUp: () -> 
     ) {
         Text(stringResource(R.string.pickup_title), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (soon) PillHighText else MaterialTheme.colorScheme.onBackground)
         Text(
-            p.next?.let { stringResource(R.string.pickup_next, it.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))) } ?: stringResource(R.string.pickup_none),
+            p.next?.let { stringResource(R.string.pickup_next, it.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withDecimalStyle(java.time.format.DecimalStyle.ofDefaultLocale()))) } ?: stringResource(R.string.pickup_none),
             fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable { pickDate() }.heightIn(min = 40.dp).padding(vertical = 10.dp),
         )
@@ -233,7 +233,7 @@ private fun StockDialog(kind: PenKind, s: Stock?, onSave: (Stock) -> Unit, onRem
                 Text(stringResource(R.string.supply_unopened), fontSize = 13.sp, color = CaptionMuted)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     Link("−") { pens = (pens - 1).coerceAtLeast(0) }
-                    Text(pens.toString(), fontFamily = HeadlineSerifFontFamily, fontSize = 28.sp)
+                    Text(java.text.NumberFormat.getIntegerInstance().format(pens), fontFamily = HeadlineSerifFontFamily, fontSize = 28.sp)
                     Link("+") { pens += 1 }
                 }
                 OutlinedTextField(open, { open = it.filter(Char::isDigit).take(3) }, label = { Text(stringResource(R.string.supply_open_left)) },
@@ -265,7 +265,7 @@ private fun PickedUpDialog(kinds: List<PenKind>, onDone: (Map<PenKind, Int>) -> 
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(stringResource(kindName(k)), Modifier.weight(1f), fontSize = 15.sp)
                         Link("−") { added = added + (k to ((added[k] ?: 0) - 1).coerceAtLeast(0)) }
-                        Text((added[k] ?: 0).toString(), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp)
+                        Text(java.text.NumberFormat.getIntegerInstance().format(added[k] ?: 0), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp)
                         Link("+") { added = added + (k to (added[k] ?: 0) + 1) }
                     }
                 }

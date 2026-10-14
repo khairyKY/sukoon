@@ -7,6 +7,18 @@
     "title_ar": "سكون 0.13.1 متاح",
     "body_ar": "المتابعون يرون الآن التمرين والصيام وأيام المرض. وجديد أيضًا: مخزون الأقلام وتذكير استلام التأمين، أيام التمرين، الخطوات، وتقرير أفضل للعيادة. اضغط للتحديث.",
     "link": "https://github.com/khairyKY/sukoon/releases/latest",
-    "until": "2026-10-28"
+    "until": "2026-10-28",
+    "below": "0.13.1"
+  },
+  {
+    "id": "2026-10-14-sukoon-0.14.0",
+    "date": "2026-10-14",
+    "title": "Sukoon 0.14.0 is out",
+    "body": "Ramadan times from your location, worked out every day, and Arabic screens that read right. Tap to update.",
+    "title_ar": "سكون 0.14.0 متاح",
+    "body_ar": "مواعيد رمضان من موقعك محسوبة كل يوم، وشاشات عربية مظبوطة. اضغط للتحديث.",
+    "link": "https://github.com/khairyKY/sukoon/releases/latest",
+    "until": "2026-10-28",
+    "below": "0.14.0"
   }
 ]

@@ -170,6 +170,8 @@ class Notices(private val context: Context, private val scope: CoroutineScope) {
             return (0 until rows.length()).mapNotNull { i ->
                 val row = rows.optJSONObject(i) ?: return@mapNotNull null
                 val id = row.text("id") ?: return@mapNotNull null
+                // "below": only for phones older than that version (a release notice skips the updated ones).
+                row.text("below")?.let { if (!Updates.newer(it, com.sukoon.app.BuildConfig.VERSION_NAME)) return@mapNotNull null }
                 Notice(
                     id = id,
                     title = row.text("title") ?: return@mapNotNull null,

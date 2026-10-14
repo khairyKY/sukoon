@@ -2089,7 +2089,7 @@
     <string name="follow_basal_body">كان موعده %1$s. رسالة أو مكالمة قد تساعد.</string>
     <string name="chip_follow_basal">لم يُسجَّل طويل المفعول · موعده %1$s</string>
     <string name="report_findings">ما وجدته الملاحظات</string>
-    <string name="report_findings_note">من الأيام نفسها، لعيادتك: طويل المفعول ليلًا وعاداته، الهبوط وعلاجه، النشاط، الصباح والوجبات. لا تغيّر الجرعات بناءً على هذا وحده.</string>
+    <string name="report_findings_note">من الأيام نفسها، لعيادتك: طويل المفعول ليلًا وعاداته، الهبوط وعلاجه، النشاط، الصباح والوجبات. لا تغيّر الجرعات بناءً على هذا وحده. (بالإنجليزية لطبيبك)</string>
     <string name="chip_gym_day">يوم تمرين · %1$s</string>
     <string name="chip_rest_day">يوم راحة · %1$s</string>
     <string name="chip_steps">%1$s خطوة</string>

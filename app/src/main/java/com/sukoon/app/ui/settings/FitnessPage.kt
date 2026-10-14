@@ -69,8 +69,8 @@ fun FitnessPage(keeper: ModesKeeper, profile: Profile, onEditProfile: () -> Unit
             if (targets.kcal != null && targets.proteinGrams != null) {
                 Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                     Big(n.format(targets.kcal), stringResource(R.string.fitness_kcal))
-                    Big(targets.proteinGrams.toString(), stringResource(R.string.fitness_protein))
-                    targets.proteinPerMeal?.let { Big("${it.first}–${it.last}", stringResource(R.string.fitness_per_meal)) }
+                    Big(n.format(targets.proteinGrams), stringResource(R.string.fitness_protein))
+                    targets.proteinPerMeal?.let { Big("${n.format(it.first)}–${n.format(it.last)}", stringResource(R.string.fitness_per_meal)) }
                 }
                 Text(
                     stringResource(if (targets.estimated) R.string.fitness_from_estimate else R.string.fitness_from_yours, n.format(targets.maintenance)),
@@ -93,10 +93,10 @@ fun FitnessPage(keeper: ModesKeeper, profile: Profile, onEditProfile: () -> Unit
             }
         }
         Small(stringResource(R.string.fitness_protein_label))
-        ChoiceChips(Goals.proteinChoices(goal.kind), targets.proteinPerKg, { stringResource(R.string.fitness_per_kg, it.toString()) }) { keeper.goal = goal.copy(proteinPerKg = it) }
+        ChoiceChips(Goals.proteinChoices(goal.kind), targets.proteinPerKg, { stringResource(R.string.fitness_per_kg, NumberFormat.getNumberInstance().apply { minimumFractionDigits = 1 }.format(it)) }) { keeper.goal = goal.copy(proteinPerKg = it) }
         Goals.changeChoices(goal.kind).takeIf { it.isNotEmpty() }?.let { choices ->
             Small(stringResource(if (goal.kind == GoalKind.CUT) R.string.fitness_deficit else R.string.fitness_surplus))
-            ChoiceChips(choices, targets.change, { stringResource(R.string.fitness_kcal_change, (if (it > 0) "+" else "−") + kotlin.math.abs(it)) }) { keeper.goal = goal.copy(change = it) }
+            ChoiceChips(choices, targets.change, { stringResource(R.string.fitness_kcal_change, (if (it > 0) "+" else "−") + n.format(kotlin.math.abs(it))) }) { keeper.goal = goal.copy(change = it) }
         }
         var typed by remember(goal.kind) { mutableStateOf(goal.maintenance?.toString().orEmpty()) }
         OutlinedTextField(
@@ -203,8 +203,8 @@ private fun GymDays(keeper: ModesKeeper, goal: com.sukoon.app.modes.GoalSettings
         val gym = Goals.dayKcal(kcal, goal, true)
         val rest = Goals.dayKcal(kcal, goal, false)
         Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            DayCard(stringResource(R.string.fitness_gym_day), n.format(gym), "+" + (gym - kcal), true, Modifier.weight(1f))
-            DayCard(stringResource(R.string.fitness_rest_day), n.format(rest), "−" + (kcal - rest), false, Modifier.weight(1f))
+            DayCard(stringResource(R.string.fitness_gym_day), n.format(gym), "+" + n.format(gym - kcal), true, Modifier.weight(1f))
+            DayCard(stringResource(R.string.fitness_rest_day), n.format(rest), "−" + n.format(kcal - rest), false, Modifier.weight(1f))
         }
         Small(stringResource(R.string.fitness_gym_note, n.format(kcal)), muted = true)
     } else {
