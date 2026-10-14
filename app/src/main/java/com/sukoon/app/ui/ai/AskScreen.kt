@@ -136,7 +136,8 @@ fun AskScreen(
             }
         }
         state.error?.let { Text(it, fontSize = 12.sp, color = StateLow, modifier = Modifier.padding(vertical = 6.dp)) }
-        InputRow(input, { input = it }, canSend = input.isNotBlank() && !state.thinking) {
+        val speak = com.sukoon.app.ui.logbook.rememberSpeech(stringResource(R.string.ask_mic)) { said -> said?.let { input = it } }
+        InputRow(input, { input = it }, canSend = input.isNotBlank() && !state.thinking, onMic = { speak() }) {
             onAsk(input)
             input = ""
         }
@@ -231,7 +232,7 @@ private fun Bubble(turn: ChatTurn) {
 }
 
 @Composable
-private fun InputRow(value: String, onValue: (String) -> Unit, canSend: Boolean, onSend: () -> Unit) {
+private fun InputRow(value: String, onValue: (String) -> Unit, canSend: Boolean, onMic: () -> Unit = {}, onSend: () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(
             Modifier
@@ -252,12 +253,18 @@ private fun InputRow(value: String, onValue: (String) -> Unit, canSend: Boolean,
             )
         }
         Spacer(Modifier.width(8.dp))
-        val mirror = if (LocalLayoutDirection.current == LayoutDirection.Rtl) Modifier.scale(-1f, 1f) else Modifier
-        Box(
-            Modifier.size(44.dp).clip(CircleShape).background(if (canSend) Sage else Sage.copy(alpha = 0.4f)).clickable(enabled = canSend, onClick = onSend),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(painterResource(R.drawable.ic_chevron), stringResource(R.string.ask_send), tint = Color.White, modifier = Modifier.size(20.dp).then(mirror))
+        // Empty: the mic, to say the question; with text: send. (The chevron flips itself right to left.)
+        if (value.isBlank()) {
+            Box(Modifier.size(44.dp).clip(CircleShape).background(Sage).clickable(onClick = onMic), contentAlignment = Alignment.Center) {
+                Icon(painterResource(R.drawable.ic_mic), stringResource(R.string.ask_mic), tint = Color.White, modifier = Modifier.size(20.dp))
+            }
+        } else {
+            Box(
+                Modifier.size(44.dp).clip(CircleShape).background(if (canSend) Sage else Sage.copy(alpha = 0.4f)).clickable(enabled = canSend, onClick = onSend),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(painterResource(R.drawable.ic_chevron), stringResource(R.string.ask_send), tint = Color.White, modifier = Modifier.size(20.dp))
+            }
         }
     }
 }

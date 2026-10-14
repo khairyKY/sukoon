@@ -31,5 +31,16 @@
     "link": "https://github.com/khairyKY/sukoon/releases/latest",
     "until": "2026-10-28",
     "below": "0.15.0"
+  },
+  {
+    "id": "2026-10-14-sukoon-0.16.0",
+    "date": "2026-10-14",
+    "title": "Sukoon 0.16.0: just say it",
+    "body": "Log by talking: “koshari, a big plate, 6 units”. Sukoon writes it down for you to check before saving. Ask has a mic too. Tap to update.",
+    "title_ar": "سكون 0.16.0: قولها وبس",
+    "body_ar": "سجّل بصوتك: «كشري طبق كبير، 6 وحدات». سكون بيكتبها وإنت تراجعها قبل الحفظ. واسأل كمان بالمايك. اضغط للتحديث.",
+    "link": "https://github.com/khairyKY/sukoon/releases/latest",
+    "until": "2026-10-28",
+    "below": "0.16.0"
   }
 ]

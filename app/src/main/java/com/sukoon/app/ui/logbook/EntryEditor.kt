@@ -267,6 +267,8 @@ internal fun AddSheet(
     showKetones: Boolean = false,
     /** Meals you log by name, to start from. */
     usual: List<UsualMeal> = emptyList(),
+    /** Opens Say it (voice); null hides the button. */
+    onVoice: (() -> Unit)? = null,
 ) {
     SukoonSheet(
         onDismissRequest = onDismiss,
@@ -275,6 +277,19 @@ internal fun AddSheet(
         Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
             Text(stringResource(R.string.logbook_sheet_title_new), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground)
             ContextPills(glucoseNow, insulinOnBoard, Modifier.padding(top = 8.dp))
+            onVoice?.let { voice ->
+                Row(
+                    Modifier.padding(top = 14.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(com.sukoon.app.ui.theme.SageMist)
+                        .clickable(onClick = voice).heightIn(min = 52.dp).padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Icon(painterResource(R.drawable.ic_mic), null, tint = SageDeep, modifier = Modifier.size(22.dp))
+                    Column {
+                        Text(stringResource(R.string.voice_title), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = SageDeep)
+                        Text(stringResource(R.string.voice_hint), fontSize = 12.5.sp, color = CaptionMuted)
+                    }
+                }
+            }
             if (usual.isNotEmpty()) {
                 Eyebrow(stringResource(R.string.entry_usual), Modifier.padding(top = 18.dp))
                 Row(Modifier.padding(top = 8.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

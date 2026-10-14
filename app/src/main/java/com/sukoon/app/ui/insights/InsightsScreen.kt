@@ -168,7 +168,7 @@ private fun FourteenDays(digest: InsightDigest, insights: List<Insight>) {
                     modifier = Modifier.clip(RoundedCornerShape(50)).background(if (up) com.sukoon.app.ui.theme.InRangeMist else StateHigh.copy(alpha = 0.18f)).padding(horizontal = 8.dp, vertical = 3.dp),
                 )
             }
-            if (digest.targets != null) Icon(painterResource(R.drawable.ic_chevron), null, tint = CaptionMuted, modifier = Modifier.size(16.dp).rotate(if (open) 90f else 0f).autoMirror())
+            if (digest.targets != null) Icon(painterResource(R.drawable.ic_chevron), null, tint = CaptionMuted, modifier = Modifier.size(16.dp).openChevron(open))
         }
         Reveal(open) {
             Column(Modifier.padding(start = 4.dp, end = 4.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -215,7 +215,7 @@ private fun FindingRow(finding: Finding, insights: List<Insight>) {
                 Text(sentence, fontSize = 13.5.sp, lineHeight = 19.sp, color = MaterialTheme.colorScheme.onBackground)
                 Text(evidence, fontSize = 12.sp, color = CaptionMuted)
             }
-            Icon(painterResource(R.drawable.ic_chevron), null, tint = CaptionMuted, modifier = Modifier.padding(start = 8.dp).size(16.dp).rotate(if (open) 90f else 0f).autoMirror())
+            Icon(painterResource(R.drawable.ic_chevron), null, tint = CaptionMuted, modifier = Modifier.padding(start = 8.dp).size(16.dp).openChevron(open))
         }
         Reveal(open) { Column(Modifier.padding(start = 8.dp, end = 8.dp, bottom = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { related(finding, insights).forEach { InsightCard(it) } } }
     }
@@ -377,7 +377,7 @@ private fun Reveal(visible: Boolean, content: @Composable () -> Unit) {
 
 /** Chevrons point the reading way: flipped right to left. */
 @Composable
-private fun Modifier.autoMirror(): Modifier = if (LocalLayoutDirection.current == LayoutDirection.Rtl) this.scale(-1f, 1f) else this
+private fun Modifier.openChevron(open: Boolean): Modifier = rotate(if (!open) 0f else if (LocalLayoutDirection.current == LayoutDirection.Rtl) -90f else 90f) // points the reading way, then down when open
 
 @Composable
 private fun Acknowledgement(onAcknowledge: () -> Unit) {

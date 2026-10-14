@@ -2231,4 +2231,24 @@
     <string name="forced_updating">بنجيب التحديث…</string>
     <string name="forced_update_failed">معرفناش نجيبه. شوف النت وجرب تاني.</string>
     <string name="forced_update_note">قراياتك وتنبيهاتك شغالة وإنت بتحدّث.</string>
+    <string name="voice_title">قولها</string>
+    <string name="voice_hint">زي: «كشري طبق كبير، 6 وحدات»</string>
+    <string name="voice_heard">قلت: «%1$s»</string>
+    <string name="voice_understanding">بنفهم…</string>
+    <string name="voice_nothing">مفيش حاجة تتسجل. تجرب تاني؟</string>
+    <string name="voice_failed">معرفناش نفهم (%1$s). جرب تاني أو ضيفها بإيدك.</string>
+    <string name="voice_no_recognizer">الموبايل ده مفيهوش تعرّف على الكلام. نزّل Google أو Speech Services by Google علشان تكلم سكون.</string>
+    <string name="voice_estimated">نشويات تقديرية</string>
+    <string name="voice_treatment">لعلاج هبوط</string>
+    <string name="voice_save_all">احفظ الكل</string>
+    <string name="voice_again">قولها تاني</string>
+    <string name="ask_mic">قول سؤالك</string>
+    <plurals name="voice_saved">
+        <item quantity="zero">متحفظش حاجة</item>
+        <item quantity="one">اتحفظ إدخال واحد</item>
+        <item quantity="two">اتحفظ إدخالين</item>
+        <item quantity="few">اتحفظ %d إدخالات</item>
+        <item quantity="many">اتحفظ %d إدخال</item>
+        <item quantity="other">اتحفظ %d إدخال</item>
+    </plurals>
 </resources>

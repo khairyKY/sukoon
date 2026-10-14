@@ -157,6 +157,7 @@ fun LogbookScreen(
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
     var adding by remember { mutableStateOf(false) }
+    var voicing by remember { mutableStateOf(false) }
     var editor by remember { mutableStateOf<EditorRequest?>(null) }
     var detail by remember { mutableStateOf<EventEntity?>(null) }
     var cascade by remember { mutableStateOf(true) }
@@ -290,6 +291,7 @@ fun LogbookScreen(
             showKetones = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.modes.active.value.sick || (state.glucoseNow?.glucoseMgDl ?: 0) > 250,
             repeats = remember(state.events) { recentRepeats(state.events) },
             usual = remember(state.events) { usualMeals(state.events, java.time.Instant.now()) },
+            onVoice = { adding = false; voicing = true },
             glucoseNow = state.glucoseNow,
             insulinOnBoard = state.insulinOnBoard,
             mealsFromApps = state.events.any { it.source != null },
@@ -298,6 +300,19 @@ fun LogbookScreen(
                 editor = EditorRequest(type, prefill = repeat)
             },
             onDismiss = { adding = false },
+        )
+    }
+    if (voicing) {
+        VoiceSheet(
+            glucoseNow = state.glucoseNow?.glucoseMgDl,
+            onSave = { drafts ->
+                voicing = false
+                scope.launch {
+                    val ids = drafts.flatMap { onSaveEntry(it).await() }
+                    announce(context.resources.getQuantityString(R.plurals.voice_saved, drafts.size, drafts.size), ids)
+                }
+            },
+            onDismiss = { voicing = false },
         )
     }
     editor?.let { request ->

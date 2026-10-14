@@ -2099,4 +2099,20 @@
     <string name="forced_updating">Getting the update…</string>
     <string name="forced_update_failed">Couldn\'t get it. Check your internet and try again.</string>
     <string name="forced_update_note">Your readings and alarms keep working while you update.</string>
+    <string name="voice_title">Say it</string>
+    <string name="voice_hint">Like: “koshari, a big plate, 6 units”</string>
+    <string name="voice_heard">You said: “%1$s”</string>
+    <string name="voice_understanding">Working it out…</string>
+    <string name="voice_nothing">Nothing to log in that. Try again?</string>
+    <string name="voice_failed">Couldn\'t work it out (%1$s). Try again, or add it by hand.</string>
+    <string name="voice_no_recognizer">This phone has no speech recognition. Install Google, or Speech Services by Google, to talk to Sukoon.</string>
+    <string name="voice_estimated">carbs estimated</string>
+    <string name="voice_treatment">for a low</string>
+    <string name="voice_save_all">Save all</string>
+    <string name="voice_again">Say it again</string>
+    <string name="ask_mic">Say your question</string>
+    <plurals name="voice_saved">
+        <item quantity="one">Saved %d entry</item>
+        <item quantity="other">Saved %d entries</item>
+    </plurals>
 </resources>

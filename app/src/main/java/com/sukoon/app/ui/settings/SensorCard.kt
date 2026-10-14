@@ -527,7 +527,7 @@ private fun StartRow(onClick: () -> Unit) {
             Text(stringResource(R.string.sensor_start_hint), fontSize = 12.5.sp, color = CaptionMuted)
         }
         val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
-        Icon(painterResource(R.drawable.ic_chevron), contentDescription = null, tint = CaptionMuted, modifier = Modifier.size(16.dp).graphicsLayer { scaleX = if (rtl) -1f else 1f })
+        Icon(painterResource(R.drawable.ic_chevron), contentDescription = null, tint = CaptionMuted, modifier = Modifier.size(16.dp))
     }
 }
 
