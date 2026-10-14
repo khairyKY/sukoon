@@ -179,6 +179,18 @@ private suspend fun clinicFindings(context: android.content.Context, days: Int):
                 it is com.sukoon.app.insights.Insight.Rebounds || it is com.sukoon.app.insights.Insight.ActivityEffects || it is com.sukoon.app.insights.Insight.ActivityLows ||
                 it is com.sukoon.app.insights.Insight.MealOutcomes || it is com.sukoon.app.insights.Insight.Stacking
         }
-        .map { com.sukoon.app.ai.AiPrompts.insightLine(it) }
+        .map { com.sukoon.app.ai.AiPrompts.insightLine(it) } +
+        clinicLines(context, app)
 }.getOrDefault(emptyList())
+
+/** The questions for the visit and the latest lab results, for the same page. */
+private suspend fun clinicLines(context: android.content.Context, app: com.sukoon.app.di.AppContainer): List<String> {
+    val labs = app.clinic.labs.value
+    val today = java.time.LocalDate.now()
+    val questions = com.sukoon.app.clinic.Clinic.questions(com.sukoon.app.ui.settings.clinicInsights(app), labs, today)
+        .map { com.sukoon.app.ui.settings.questionText(context, it) } + app.clinic.questions.value
+    val latest = com.sukoon.app.clinic.Clinic.latest(labs).values.sortedBy { it.kind.ordinal }
+        .map { "${context.getString(com.sukoon.app.ui.settings.labName(it.kind))}: ${it.value} ${it.kind.unit} (${it.date})" }
+    return questions.map { context.getString(R.string.report_question, it) } + latest
+}
 

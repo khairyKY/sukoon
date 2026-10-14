@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.logbook
 
+import kotlinx.coroutines.flow.first
 import com.sukoon.app.ui.theme.PillLowBg
 
 import com.sukoon.app.ui.theme.SageMist
@@ -264,6 +265,8 @@ internal fun AddSheet(
     onDismiss: () -> Unit,
     /** A sick day, or high for a while: ketones get a tile too. */
     showKetones: Boolean = false,
+    /** Meals you log by name, to start from. */
+    usual: List<UsualMeal> = emptyList(),
 ) {
     SukoonSheet(
         onDismissRequest = onDismiss,
@@ -272,6 +275,12 @@ internal fun AddSheet(
         Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
             Text(stringResource(R.string.logbook_sheet_title_new), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground)
             ContextPills(glucoseNow, insulinOnBoard, Modifier.padding(top = 8.dp))
+            if (usual.isNotEmpty()) {
+                Eyebrow(stringResource(R.string.entry_usual), Modifier.padding(top = 18.dp))
+                Row(Modifier.padding(top = 8.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    usual.forEach { m -> UsualChip(m) { onPick(LogEventType.CARB, m.last.copy(value = m.carbs)) } }
+                }
+            }
             if (repeats.isNotEmpty()) {
                 Eyebrow(stringResource(R.string.entry_again), Modifier.padding(top = 18.dp))
                 Row(Modifier.padding(top = 8.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -298,6 +307,29 @@ internal fun AddSheet(
                 }
             }
         }
+    }
+}
+
+/** "Koshari · 85 g" and, under it, the last time: "6 u, 128 two hours later". */
+@Composable
+private fun UsualChip(m: UsualMeal, onClick: () -> Unit) {
+    val logbook = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.glucoseRepository
+    val after by androidx.compose.runtime.produceState<Int?>(null, m.last.id) {
+        val at = m.last.timestampMillis + 2 * 3_600_000L
+        value = runCatching {
+            logbook.readingsBetween(at - 15 * 60_000L, at + 15 * 60_000L).first().minByOrNull { kotlin.math.abs(it.timestamp.toEpochMilli() - at) }?.glucoseMgDl
+        }.getOrNull()
+    }
+    Column(
+        Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, outline(), RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick).heightIn(min = 48.dp).padding(horizontal = 14.dp, vertical = 10.dp),
+    ) {
+        Text("${m.name} · ${formatAmountLocalized(m.carbs)}${stringResource(R.string.logbook_unit_grams)}", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+        val last = listOfNotNull(
+            m.lastDose?.let { formatAmountLocalized(it) + stringResource(R.string.logbook_unit_units) },
+            after?.let { stringResource(R.string.entry_usual_after, String.format(Locale.getDefault(), "%d", it)) },
+        )
+        if (last.isNotEmpty()) Text(stringResource(R.string.entry_usual_last, last.joinToString(", ")), fontSize = 12.sp, color = CaptionMuted)
     }
 }
 

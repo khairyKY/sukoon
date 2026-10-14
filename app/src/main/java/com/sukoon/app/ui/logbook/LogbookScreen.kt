@@ -289,6 +289,7 @@ fun LogbookScreen(
         AddSheet(
             showKetones = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.modes.active.value.sick || (state.glucoseNow?.glucoseMgDl ?: 0) > 250,
             repeats = remember(state.events) { recentRepeats(state.events) },
+            usual = remember(state.events) { usualMeals(state.events, java.time.Instant.now()) },
             glucoseNow = state.glucoseNow,
             insulinOnBoard = state.insulinOnBoard,
             mealsFromApps = state.events.any { it.source != null },
