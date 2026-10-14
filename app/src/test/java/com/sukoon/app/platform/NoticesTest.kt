@@ -69,6 +69,17 @@ class NoticesTest {
     }
 
     @Test
+    fun `a must-read stays until acknowledged and a forced update needs below`() {
+        val json = """[{"id":"m","title":"t","body":"b","kind":"must_read"},{"id":"u1","title":"t","body":"b","kind":"update"},{"id":"u2","title":"t","body":"b","kind":"update","below":"99.0"}]"""
+        val all = Notices.parse(json)
+        org.junit.Assert.assertEquals(listOf(Notices.Notice.Kind.MUST_READ, Notices.Notice.Kind.NOTICE, Notices.Notice.Kind.UPDATE), all.map { it.kind })
+        val today = java.time.LocalDate.of(2026, 10, 14)
+        org.junit.Assert.assertEquals("u2", Notices.urgent(all, emptySet(), today)?.id) // the update first
+        org.junit.Assert.assertEquals("m", Notices.urgent(all.take(2), emptySet(), today)?.id)
+        org.junit.Assert.assertNull(Notices.urgent(all.take(2), setOf("m"), today))
+    }
+
+    @Test
     fun `a release notice skips phones that already have the version`() {
         val json = """[{"id":"old","title":"t","body":"b","below":"0.0.1"},{"id":"new","title":"t","body":"b","below":"99.0"},{"id":"all","title":"t","body":"b"}]"""
         org.junit.Assert.assertEquals(listOf("new", "all"), Notices.parse(json).map { it.id })

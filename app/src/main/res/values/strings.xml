@@ -2091,4 +2091,12 @@
         <item quantity="one">Clinic visit tomorrow</item>
         <item quantity="other">Clinic visit in %d days</item>
     </plurals>
+    <string name="forced_reading">Now · %1$d min ago</string>
+    <string name="forced_from">FROM SUKOON</string>
+    <string name="forced_got_it">Got it</string>
+    <string name="forced_read_more">Read more</string>
+    <string name="forced_update">Update Sukoon</string>
+    <string name="forced_updating">Getting the update…</string>
+    <string name="forced_update_failed">Couldn\'t get it. Check your internet and try again.</string>
+    <string name="forced_update_note">Your readings and alarms keep working while you update.</string>
 </resources>
