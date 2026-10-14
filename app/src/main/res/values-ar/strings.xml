@@ -2235,4 +2235,24 @@
     <string name="forced_updating">جارٍ جلب التحديث…</string>
     <string name="forced_update_failed">تعذّر جلبه. تحقق من الإنترنت وحاول مجددًا.</string>
     <string name="forced_update_note">قراءاتك وتنبيهاتك تعمل أثناء التحديث.</string>
+    <string name="voice_title">قلها</string>
+    <string name="voice_hint">مثل: «كشري طبق كبير، 6 وحدات»</string>
+    <string name="voice_heard">قلت: «%1$s»</string>
+    <string name="voice_understanding">جارٍ الفهم…</string>
+    <string name="voice_nothing">لا شيء لتسجيله. حاول مجددًا؟</string>
+    <string name="voice_failed">تعذّر الفهم (%1$s). حاول مجددًا أو أضفه يدويًا.</string>
+    <string name="voice_no_recognizer">لا يوجد تعرّف على الكلام في هذا الهاتف. ثبّت Google أو Speech Services by Google للتحدث مع سكون.</string>
+    <string name="voice_estimated">كربوهيدرات تقديرية</string>
+    <string name="voice_treatment">لعلاج هبوط</string>
+    <string name="voice_save_all">احفظ الكل</string>
+    <string name="voice_again">قلها مجددًا</string>
+    <string name="ask_mic">قل سؤالك</string>
+    <plurals name="voice_saved">
+        <item quantity="zero">لم يُحفظ شيء</item>
+        <item quantity="one">حُفظ إدخال واحد</item>
+        <item quantity="two">حُفظ إدخالان</item>
+        <item quantity="few">حُفظت %d إدخالات</item>
+        <item quantity="many">حُفظ %d إدخالًا</item>
+        <item quantity="other">حُفظ %d إدخال</item>
+    </plurals>
 </resources>
