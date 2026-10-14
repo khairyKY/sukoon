@@ -2029,4 +2029,13 @@
     <string name="update_channel">Updates</string>
     <string name="update_ready_title">Sukoon %1$s is ready</string>
     <string name="update_ready_body">Tap to see what\'s new and update.</string>
+    <string name="ramadan_auto">From my location</string>
+    <string name="ramadan_auto_on">Fajr and Maghrib worked out for today, every day.</string>
+    <string name="ramadan_auto_off">Or type the times below.</string>
+    <string name="ramadan_no_place">Couldn\'t find where you are. Open a maps app once, or type the times.</string>
+    <string name="ramadan_method">Fajr by</string>
+    <string name="ramadan_method_egypt">Egypt</string>
+    <string name="ramadan_method_mwl">Muslim World League</string>
+    <string name="ramadan_method_uq">Umm al-Qura</string>
+    <string name="ramadan_source">Within a minute or two of the published timetables. Your mosque\'s times win.</string>
 </resources>
