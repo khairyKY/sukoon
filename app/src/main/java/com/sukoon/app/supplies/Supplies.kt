@@ -134,6 +134,10 @@ class SuppliesReminder : BroadcastReceiver() {
                 val p = container.supplies.pickup.value
                 val to = Supply.daysToPickup(p, LocalDate.now(zone))
                 if (to != null && to <= p.remindDays) lines.add(0, pickupLine(context, to, p.next!!))
+                container.clinic.visit.value?.let { v ->
+                    val days = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(zone), v)
+                    if (days in 0..2) lines.add(0, if (days == 0L) context.getString(R.string.clinic_visit_today) else context.resources.getQuantityString(R.plurals.clinic_visit_soon, days.toInt(), days.toInt()))
+                }
                 if (lines.isNotEmpty()) notify(context, lines)
             } finally {
                 done.finish()

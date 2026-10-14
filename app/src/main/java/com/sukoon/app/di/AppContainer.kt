@@ -135,6 +135,9 @@ class AppContainer(private val context: Context) {
     /** Pens left and the insurance pickup (You → Supplies); checked daily at 10:00. */
     val supplies = com.sukoon.app.supplies.SuppliesStore(context).also { com.sukoon.app.supplies.SuppliesReminder.schedule(context) }
 
+    /** The next clinic visit, your questions and lab results (You → Clinic visit). */
+    val clinic = com.sukoon.app.clinic.ClinicStore(context)
+
     /**
      * The latest weigh-in. Each new one (or an edit of it) becomes the profile's weight before this
      * emits it, so the goal's targets follow your weight.

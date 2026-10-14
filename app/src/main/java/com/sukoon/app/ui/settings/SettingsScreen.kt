@@ -134,6 +134,7 @@ enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
     PEOPLE(R.string.you_people, R.drawable.ic_people),
     INSULIN(R.string.you_insulin, R.drawable.ic_insulin),
     SUPPLIES(R.string.you_supplies, R.drawable.ic_stat_insulin),
+    CLINIC(R.string.you_clinic, R.drawable.ic_doc),
     FITNESS(R.string.you_fitness, R.drawable.ic_walk),
     APPS(R.string.you_apps, R.drawable.ic_link),
     REPORTS(R.string.you_reports, R.drawable.ic_doc),
@@ -269,6 +270,7 @@ fun SettingsScreen(
                         YouPage.INSULIN to stringResource(R.string.you_insulin_summary, insulinAction.peakMinutes, formatHours(insulinAction.durationMinutes)),
                         YouPage.FITNESS to fitnessSummary(),
                         YouPage.SUPPLIES to suppliesSummary(),
+                        YouPage.CLINIC to clinicSummary(),
                         YouPage.APPS to stringResource(R.string.you_apps_summary),
                         YouPage.REPORTS to stringResource(R.string.you_reports_summary),
                         YouPage.APPEARANCE to "${themeLabel(themeMode)} · ${stringResource(colourName(com.sukoon.app.ui.theme.Themes.current))} · ${languageLabel()}",
@@ -403,6 +405,7 @@ fun SettingsScreen(
                             DoseCard(doseSettings, guarded(onDoseSettings), doseStartingPoints, learningReport, insulinAction.durationMinutes / 60, profile, guarded(onProfile), locked, { askingPin = true }, parentPin, onParentPin, openLearning, onOpenedLearning)
                         }
                         YouPage.SUPPLIES -> SuppliesPage()
+                        YouPage.CLINIC -> ClinicPage(onOpenReports = { page = YouPage.REPORTS })
                         YouPage.FITNESS -> FitnessPage(
                             (context.applicationContext as com.sukoon.app.SukoonApp).container.modes,
                             profile,
@@ -582,6 +585,20 @@ private fun NeedsYou(count: Int, first: String, onClick: () -> Unit) {
         )
         Text(stringResource(R.string.you_fix), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = PillHighText)
     }
+}
+
+/** You hub: "Visit 28 Oct · HbA1c due", or what the page is for. */
+@Composable
+private fun clinicSummary(): String {
+    val app = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container
+    val visit by app.clinic.visit.collectAsStateWithLifecycle()
+    val labs by app.clinic.labs.collectAsStateWithLifecycle()
+    val today = java.time.LocalDate.now()
+    val parts = listOfNotNull(
+        visit?.takeIf { !it.isBefore(today) }?.let { stringResource(R.string.clinic_summary_visit, it.format(java.time.format.DateTimeFormatter.ofPattern("d MMM").withDecimalStyle(java.time.format.DecimalStyle.ofDefaultLocale()))) },
+        if (com.sukoon.app.clinic.Clinic.due(com.sukoon.app.clinic.LabKind.HBA1C, labs, today)) stringResource(R.string.clinic_summary_hba1c) else null,
+    )
+    return parts.joinToString(" · ").ifEmpty { stringResource(R.string.clinic_summary_none) }
 }
 
 /** You hub: "Long-acting 4 days · pickup Sunday", or that nothing's set up. */

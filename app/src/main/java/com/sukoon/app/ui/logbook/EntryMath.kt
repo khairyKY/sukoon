@@ -106,6 +106,22 @@ internal fun recentRepeats(newestFirst: List<EventEntity>): List<EventEntity> =
         .distinctBy { Triple(it.logType, it.value, it.note) }
         .take(3)
 
+/** A meal you've logged by name at least twice in 60 days: its usual carbs, and the last time's dose. */
+internal data class UsualMeal(val name: String, val carbs: Double, val times: Int, val last: EventEntity, val lastDose: Double?)
+
+/** Your usual meals, most eaten first (low treatments and app-imported day totals left out). */
+internal fun usualMeals(newestFirst: List<EventEntity>, now: Instant): List<UsualMeal> {
+    val since = now.minus(java.time.Duration.ofDays(60)).toEpochMilli()
+    val meals = newestFirst.filter { it.logType == LogEventType.CARB && !it.treatment && (it.value ?: 0.0) > 0 && !it.note.isNullOrBlank() && it.timestampMillis > since }
+    return meals.groupBy { it.note!!.trim().lowercase() }.filterValues { it.size >= 2 }.map { (_, list) ->
+        val last = list.maxBy { it.timestampMillis }
+        val carbs = list.map { it.value!! }.sorted()
+        val dose = newestFirst.filter { it.logType == LogEventType.INSULIN && kotlin.math.abs(it.timestampMillis - last.timestampMillis) <= 30 * 60_000L }
+            .minByOrNull { kotlin.math.abs(it.timestampMillis - last.timestampMillis) }?.value
+        UsualMeal(last.note!!.trim(), carbs[carbs.size / 2], list.size, last, dose)
+    }.sortedByDescending { it.times }.take(6)
+}
+
 /** Today's carbs and insulin (rapid and long-acting), for the Logbook's header. */
 internal fun todayTotals(events: List<EventEntity>, now: Instant, zone: ZoneId): Pair<Double, Double> {
     val today = events.filter { Instant.ofEpochMilli(it.timestampMillis).atZone(zone).toLocalDate() == now.atZone(zone).toLocalDate() }
