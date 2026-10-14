@@ -50,7 +50,15 @@ class Notices(private val context: Context, private val scope: CoroutineScope) {
         val until: LocalDate? = null,
         /** The day it was sent ("From Sukoon · today"); null when the file doesn't say. */
         val date: LocalDate? = null,
+        val kind: Kind = Kind.NOTICE,
     ) {
+        /**
+         * NOTICE: a notification and the banner. MUST_READ: also full screen when Sukoon is in front,
+         * until "Got it". UPDATE: full screen, no way to close it, on phones older than its "below"
+         * version (only those get it): "Update Sukoon". Readings and alarms keep working underneath.
+         */
+        enum class Kind { NOTICE, MUST_READ, UPDATE }
+
         /** Still running on [today]: shown up to and including [until]. */
         fun liveOn(today: LocalDate) = until == null || !today.isAfter(until)
 
@@ -65,6 +73,20 @@ class Notices(private val context: Context, private val scope: CoroutineScope) {
 
     /** The newest notice still running that this phone hasn't closed: the card on Now. */
     val current: StateFlow<Notice?> = _current.asStateFlow()
+
+    private val _urgent = MutableStateFlow(urgent(cached(), acked(), LocalDate.now()))
+
+    /** A must-read not yet acknowledged here, or a forced update: shown full screen over everything. */
+    val urgent: StateFlow<Notice?> = _urgent.asStateFlow()
+
+    /** "Got it" on a must-read. */
+    fun acknowledge(id: String) {
+        prefs.edit().putStringSet(KEY_ACKED, acked() + id).apply()
+        markRead(id)
+        _urgent.value = urgent(cached(), acked(), LocalDate.now())
+    }
+
+    private fun acked(): Set<String> = prefs.getStringSet(KEY_ACKED, null).orEmpty()
 
     private val _read = MutableStateFlow(prefs.getStringSet(KEY_READ, null).orEmpty())
 
@@ -102,6 +124,7 @@ class Notices(private val context: Context, private val scope: CoroutineScope) {
         val all = parse(text)
         prefs.edit().putString(KEY_FILE, text).apply()
         _current.value = newest(all, dismissed(), LocalDate.now())
+        _urgent.value = urgent(all, acked(), LocalDate.now())
 
         val manager = context.getSystemService(NotificationManager::class.java)
         if (!manager.areNotificationsEnabled()) return
@@ -156,9 +179,11 @@ class Notices(private val context: Context, private val scope: CoroutineScope) {
         private const val KEY_DISMISSED = "dismissed"
         private const val KEY_FILE = "file"
         private const val KEY_READ = "read"
+        private const val KEY_ACKED = "acked"
         private const val NOTIFICATION_BASE = 5000
         /** How often a running Sukoon looks for notices (and a new release, which it asks GitHub for at most daily). */
-        val CHECK_EVERY: Duration = Duration.ofHours(6)
+        /** Often enough that an announcement lands within about 15 minutes (GitHub Pages caches 10). */
+        val CHECK_EVERY: Duration = Duration.ofMinutes(15)
 
         /**
          * The file: a JSON array of notices, newest last. An entry without an id, title or body is
@@ -181,11 +206,22 @@ class Notices(private val context: Context, private val scope: CoroutineScope) {
                     link = row.text("link")?.takeIf { it.startsWith("https://") },
                     until = row.text("until")?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
                     date = row.text("date")?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
+                    kind = when (row.text("kind")) {
+                        "must_read" -> Notice.Kind.MUST_READ
+                        // A forced update needs "below": without it there's no telling who is behind.
+                        "update" -> if (row.text("below") != null) Notice.Kind.UPDATE else Notice.Kind.NOTICE
+                        else -> Notice.Kind.NOTICE
+                    },
                 )
             }
         }
 
         private fun JSONObject.text(name: String): String? = optString(name).trim().takeIf { it.isNotEmpty() && it != "null" }
+
+        /** The full-screen one: a forced update first, else the newest must-read not acknowledged. */
+        internal fun urgent(all: List<Notice>, acked: Set<String>, today: LocalDate): Notice? =
+            all.lastOrNull { it.kind == Notice.Kind.UPDATE && it.liveOn(today) }
+                ?: all.lastOrNull { it.kind == Notice.Kind.MUST_READ && it.id !in acked && it.liveOn(today) }
 
         /** The card's notice: the last one in the file that is still running and wasn't closed here. */
         internal fun newest(all: List<Notice>, dismissed: Set<String>, today: LocalDate): Notice? =

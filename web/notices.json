@@ -20,5 +20,16 @@
     "link": "https://github.com/khairyKY/sukoon/releases/latest",
     "until": "2026-10-28",
     "below": "0.14.0"
+  },
+  {
+    "id": "2026-10-14-sukoon-0.15.0",
+    "date": "2026-10-14",
+    "title": "Sukoon 0.15.0 is out",
+    "body": "Get ready for clinic visits: questions from your data and your lab results in one place. Your usual meals one tap away. Tap to update.",
+    "title_ar": "سكون 0.15.0 متاح",
+    "body_ar": "جهّز لزيارة العيادة: أسئلة من بياناتك ونتائج تحاليلك في مكان واحد. وأكلاتك المعتادة بضغطة. اضغط للتحديث.",
+    "link": "https://github.com/khairyKY/sukoon/releases/latest",
+    "until": "2026-10-28",
+    "below": "0.15.0"
   }
 ]

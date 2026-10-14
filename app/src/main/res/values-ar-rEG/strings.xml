@@ -2223,4 +2223,12 @@
         <item quantity="many">زيارة العيادة بعد %d يوم</item>
         <item quantity="other">زيارة العيادة بعد %d يوم</item>
     </plurals>
+    <string name="forced_reading">دلوقتي · من %1$d د</string>
+    <string name="forced_from">من سكون</string>
+    <string name="forced_got_it">تمام</string>
+    <string name="forced_read_more">اقرا أكتر</string>
+    <string name="forced_update">حدّث سكون</string>
+    <string name="forced_updating">بنجيب التحديث…</string>
+    <string name="forced_update_failed">معرفناش نجيبه. شوف النت وجرب تاني.</string>
+    <string name="forced_update_note">قراياتك وتنبيهاتك شغالة وإنت بتحدّث.</string>
 </resources>

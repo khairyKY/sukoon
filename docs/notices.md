@@ -1,7 +1,7 @@
 # Notices: a message to everyone who has Sukoon
 
 Every phone with Sukoon (GitHub and Play builds, wearers, followers and demo users alike) reads
-`web/notices.json` from Sukoon's GitHub Pages site when the app starts and then every 6 hours, and
+`web/notices.json` from Sukoon's GitHub Pages site when the app starts and then every 15 minutes (every 6 hours before 0.15.0), and
 shows each notice it hasn't shown before as a notification ("Notices from Sukoon" channel). Tapping
 it opens the notice's link, or the app. The newest notice that is still running also sits on Now as
 a slim banner that opens into the full notice, until "Don't show again" or its last day.
@@ -35,6 +35,7 @@ a slim banner that opens into the full notice, until "Don't show again" or its l
 | `title_ar`, `body_ar` | Optional. Shown when the app is in Arabic. |
 | `link` | Optional, `https://` only (anything else is ignored). |
 | `date` | Optional day it was sent (`YYYY-MM-DD`), shown as "From Sukoon · today". |
+| `kind` | Optional. `"must_read"`: also full screen when Sukoon is open, until "Got it". `"update"`: a full-screen "Update Sukoon" that can't be closed, only with `below` (it reaches only older phones). Both keep the latest reading on screen; alarms keep working. Phones before 0.15.0 show these as normal notices. |
 | `below` | Optional version (`"0.14.0"`): only phones on an older version get it. Set it on release notices, so updated phones don't. Phones before 0.14.0 ignore it. |
 | `until` | Optional last day (`YYYY-MM-DD`). Set it, so new installs don't get old news. |
 

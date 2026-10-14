@@ -212,6 +212,8 @@ fun MainScaffold() {
             "entry_fingerstick" -> appContainer.requestedEntry.value = LogEventType.FINGERSTICK
         }
     }
+    // An announcement everyone must see (web/notices.json "kind"), over everything.
+    com.sukoon.app.ui.components.ForcedNotice()
     if (showGuide) HelpDialog(onClose = { showGuide = false; guideTopic = null }, onLink = { showGuide = false; guideTopic = null; openLink(it) }, startTopic = guideTopic)
     // An invite link tapped (sukoon://follow): follow in one tap, or sign in first and it comes back.
     val pendingInvite by appContainer.pendingInvite.collectAsStateWithLifecycle()
