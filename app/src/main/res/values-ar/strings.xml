@@ -2089,7 +2089,7 @@
     <string name="follow_basal_body">كان موعده %1$s. رسالة أو مكالمة قد تساعد.</string>
     <string name="chip_follow_basal">لم يُسجَّل طويل المفعول · موعده %1$s</string>
     <string name="report_findings">ما وجدته الملاحظات</string>
-    <string name="report_findings_note">من الأيام نفسها، لعيادتك: طويل المفعول ليلًا وعاداته، الهبوط وعلاجه، النشاط، الصباح والوجبات. لا تغيّر الجرعات بناءً على هذا وحده.</string>
+    <string name="report_findings_note">من الأيام نفسها، لعيادتك: طويل المفعول ليلًا وعاداته، الهبوط وعلاجه، النشاط، الصباح والوجبات. لا تغيّر الجرعات بناءً على هذا وحده. (بالإنجليزية لطبيبك)</string>
     <string name="chip_gym_day">يوم تمرين · %1$s</string>
     <string name="chip_rest_day">يوم راحة · %1$s</string>
     <string name="chip_steps">%1$s خطوة</string>
@@ -2157,4 +2157,13 @@
     <string name="update_channel">التحديثات</string>
     <string name="update_ready_title">سكون %1$s جاهز</string>
     <string name="update_ready_body">اضغط لترى الجديد وتحدّث.</string>
+    <string name="ramadan_auto">من موقعي</string>
+    <string name="ramadan_auto_on">الفجر والمغرب محسوبان لليوم، كل يوم.</string>
+    <string name="ramadan_auto_off">أو اكتب الأوقات أدناه.</string>
+    <string name="ramadan_no_place">تعذّر تحديد موقعك. افتح تطبيق خرائط مرة، أو اكتب الأوقات.</string>
+    <string name="ramadan_method">الفجر حسب</string>
+    <string name="ramadan_method_egypt">مصر</string>
+    <string name="ramadan_method_mwl">رابطة العالم الإسلامي</string>
+    <string name="ramadan_method_uq">أم القرى</string>
+    <string name="ramadan_source">بفارق دقيقة أو اثنتين عن الجداول المنشورة. أوقات مسجدك هي المرجع.</string>
 </resources>

@@ -74,13 +74,31 @@ class ModesKeeper(private val context: Context, logbook: LogbookRepository, priv
         set(v) { prefs.edit().putInt(K_AFTER_CUT, v.coerceIn(0, 50)).apply(); refresh() }
 
     var fasting: FastingSettings
-        get() = FastingSettings(
-            on = prefs.getBoolean(K_FAST_ON, false),
-            suhoorEnds = LocalTime.ofSecondOfDay(prefs.getInt(K_SUHOOR, FastingSettings().suhoorEnds.toSecondOfDay()).toLong()),
-            iftar = LocalTime.ofSecondOfDay(prefs.getInt(K_IFTAR, FastingSettings().iftar.toSecondOfDay()).toLong()),
-        )
+        get() {
+            val typed = FastingSettings(
+                on = prefs.getBoolean(K_FAST_ON, false),
+                suhoorEnds = LocalTime.ofSecondOfDay(prefs.getInt(K_SUHOOR, FastingSettings().suhoorEnds.toSecondOfDay()).toLong()),
+                iftar = LocalTime.ofSecondOfDay(prefs.getInt(K_IFTAR, FastingSettings().iftar.toSecondOfDay()).toLong()),
+            )
+            // From your place: today's Fajr and Maghrib, worked out fresh every day.
+            val zone = java.time.ZoneId.systemDefault()
+            val day = prayerPlace?.let { PrayerTimes.of(java.time.LocalDate.now(zone), it.lat, it.lng, it.method) } ?: return typed
+            return typed.copy(suhoorEnds = day.fajr.atZone(zone).toLocalTime().withSecond(0).withNano(0), iftar = day.maghrib.atZone(zone).toLocalTime().withSecond(0).withNano(0))
+        }
         set(v) {
             prefs.edit().putBoolean(K_FAST_ON, v.on).putInt(K_SUHOOR, v.suhoorEnds.toSecondOfDay()).putInt(K_IFTAR, v.iftar.toSecondOfDay()).apply()
+            refresh()
+        }
+
+    /** Where Fajr and Maghrib are worked out for (null: the times typed in). */
+    data class PrayerPlace(val lat: Double, val lng: Double, val method: PrayerTimes.Method = PrayerTimes.Method.EGYPT)
+
+    var prayerPlace: PrayerPlace?
+        get() = prefs.getString(K_PLACE, null)?.split(",")?.takeIf { it.size == 3 }?.let {
+            runCatching { PrayerPlace(it[0].toDouble(), it[1].toDouble(), PrayerTimes.Method.valueOf(it[2])) }.getOrNull()
+        }
+        set(v) {
+            prefs.edit().apply { if (v == null) remove(K_PLACE) else putString(K_PLACE, "${v.lat},${v.lng},${v.method.name}") }.apply()
             refresh()
         }
 
@@ -208,6 +226,7 @@ class ModesKeeper(private val context: Context, logbook: LogbookRepository, priv
         const val K_SICK = "sick_since"
         const val K_BULK_ON = "bulk_on" // before goals
         const val K_GOAL = "goal"
+        const val K_PLACE = "prayer_place"
         const val K_GOAL_PROTEIN = "goal_protein_per_kg"
         const val K_GOAL_CHANGE = "goal_change"
         const val K_GOAL_MAINTENANCE = "goal_maintenance"

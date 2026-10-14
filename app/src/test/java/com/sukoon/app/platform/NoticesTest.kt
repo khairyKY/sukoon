@@ -67,4 +67,10 @@ class NoticesTest {
         assertNull(notices.single().link)
         assertNull(notices.single().until)
     }
+
+    @Test
+    fun `a release notice skips phones that already have the version`() {
+        val json = """[{"id":"old","title":"t","body":"b","below":"0.0.1"},{"id":"new","title":"t","body":"b","below":"99.0"},{"id":"all","title":"t","body":"b"}]"""
+        org.junit.Assert.assertEquals(listOf("new", "all"), Notices.parse(json).map { it.id })
+    }
 }

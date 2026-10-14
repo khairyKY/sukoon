@@ -597,7 +597,7 @@ private fun suppliesSummary(): String {
         s ?: return@mapNotNull null
         com.sukoon.app.supplies.Supply.daysLeft(com.sukoon.app.supplies.Supply.remaining(s, events, k), com.sukoon.app.supplies.Supply.perDay(events, k, now, java.time.ZoneId.systemDefault()))
             ?.let { stringResource(R.string.supply_summary_days, stringResource(kindName(k)), it) }
-    } + listOfNotNull(pickup.next?.let { stringResource(R.string.supply_summary_pickup, it.format(java.time.format.DateTimeFormatter.ofPattern("d MMM"))) })
+    } + listOfNotNull(pickup.next?.let { stringResource(R.string.supply_summary_pickup, it.format(java.time.format.DateTimeFormatter.ofPattern("d MMM").withDecimalStyle(java.time.format.DecimalStyle.ofDefaultLocale()))) })
     return parts.joinToString(" · ").ifEmpty { stringResource(R.string.supply_summary_none) }
 }
 

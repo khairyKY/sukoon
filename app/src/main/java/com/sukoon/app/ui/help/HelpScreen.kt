@@ -99,7 +99,7 @@ private fun Hub(guide: Guide, done: List<Boolean>, onClose: () -> Unit, onOpen: 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(40.dp).clip(CircleShape).clickable(onClick = onClose), contentAlignment = Alignment.Center) {
-                Icon(painterResource(R.drawable.ic_back), stringResource(R.string.guide_close), tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(22.dp).mirrored())
+                Icon(painterResource(R.drawable.ic_back), stringResource(R.string.guide_close), tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(22.dp))
             }
             Spacer(Modifier.width(6.dp))
             Text(stringResource(R.string.help_title), fontFamily = HeadlineSerifFontFamily, fontSize = 28.sp, color = MaterialTheme.colorScheme.onBackground)
@@ -164,7 +164,7 @@ internal fun StartHere(steps: List<GuideStart>, done: List<Boolean>, eyebrow: St
                     contentAlignment = Alignment.Center,
                 ) {
                     if (isDone) Icon(painterResource(R.drawable.ic_check), null, tint = Color.White, modifier = Modifier.size(14.dp))
-                    else Text("${i + 1}", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = if (i == next) SageDeep else CaptionMuted)
+                    else Text(String.format(java.util.Locale.getDefault(), "%d", i + 1), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = if (i == next) SageDeep else CaptionMuted)
                 }
                 Spacer(Modifier.width(12.dp))
                 Text(
@@ -175,7 +175,7 @@ internal fun StartHere(steps: List<GuideStart>, done: List<Boolean>, eyebrow: St
                     textDecoration = if (isDone) TextDecoration.LineThrough else null,
                     modifier = Modifier.weight(1f),
                 )
-                if (!isDone) Icon(painterResource(R.drawable.ic_chevron), null, tint = CaptionMuted, modifier = Modifier.size(16.dp).mirrored())
+                if (!isDone) Icon(painterResource(R.drawable.ic_chevron), null, tint = CaptionMuted, modifier = Modifier.size(16.dp))
             }
         }
         footer()
@@ -195,7 +195,7 @@ private fun TopicList(topics: List<GuideTopic>, onOpen: (String) -> Unit) {
                     Text(t.title, fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
                     Text(t.summary, fontSize = 12.5.sp, color = CaptionMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
-                Icon(painterResource(R.drawable.ic_chevron), null, tint = CaptionMuted, modifier = Modifier.size(16.dp).mirrored())
+                Icon(painterResource(R.drawable.ic_chevron), null, tint = CaptionMuted, modifier = Modifier.size(16.dp))
             }
         }
     }
@@ -205,7 +205,7 @@ private fun TopicList(topics: List<GuideTopic>, onOpen: (String) -> Unit) {
 private fun TopicPage(topic: GuideTopic, guide: Guide, onBack: () -> Unit, onOpen: (String) -> Unit, onLink: (String) -> Unit) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(Modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = onBack).padding(vertical = 6.dp, horizontal = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(painterResource(R.drawable.ic_back), null, tint = SageDeep, modifier = Modifier.size(18.dp).mirrored())
+            Icon(painterResource(R.drawable.ic_back), null, tint = SageDeep, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(4.dp))
             Text(stringResource(R.string.help_title), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = SageDeep)
         }
@@ -311,6 +311,4 @@ private fun Eyebrow(text: String) {
     Text(text.uppercase(), fontSize = 11.5.sp, letterSpacing = 1.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted, modifier = Modifier.padding(top = 6.dp, start = 4.dp))
 }
 
-/** Chevrons and back arrows point the reading way: flipped right to left. */
-@Composable
-private fun Modifier.mirrored(): Modifier = if (LocalLayoutDirection.current == LayoutDirection.Rtl) this.scale(-1f, 1f) else this
+// Chevrons and back arrows point the reading way by themselves: their drawables are autoMirrored.
