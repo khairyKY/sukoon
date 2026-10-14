@@ -2026,4 +2026,7 @@
     <string name="follow_mode_no_ketones">No ketones logged yet</string>
     <string name="follow_mode_next_check">next check %1$s</string>
     <string name="follow_mode_sick_means">Ketones every 2 hours, and highs repeat hourly. 0.6 to 1.4 is raised; 1.5 or more needs extra insulin; 3.0 means urgent care.</string>
+    <string name="update_channel">Updates</string>
+    <string name="update_ready_title">Sukoon %1$s is ready</string>
+    <string name="update_ready_body">Tap to see what\'s new and update.</string>
 </resources>

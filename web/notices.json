@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "id": "2026-10-14-sukoon-0.13.1",
+    "date": "2026-10-14",
+    "title": "Sukoon 0.13.1 is out",
+    "body": "Followers now see workouts, fasts and sick days. Also new: pen supplies with insurance pickup reminders, gym days, steps, and a better clinic report. Tap to update.",
+    "title_ar": "سكون 0.13.1 متاح",
+    "body_ar": "المتابعون يرون الآن التمرين والصيام وأيام المرض. وجديد أيضًا: مخزون الأقلام وتذكير استلام التأمين، أيام التمرين، الخطوات، وتقرير أفضل للعيادة. اضغط للتحديث.",
+    "link": "https://github.com/khairyKY/sukoon/releases/latest",
+    "until": "2026-10-28"
+  }
+]

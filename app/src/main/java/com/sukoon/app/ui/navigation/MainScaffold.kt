@@ -244,6 +244,7 @@ fun MainScaffold() {
                         val missing = rememberMissingSetup().filter { it in FOLLOWER_SETUP }
                         var later by rememberSaveable { mutableStateOf(false) }
                         if (missing.isNotEmpty() && !later) SetupBanner(missing, onFix = { openYou() }, onLater = { later = true })
+                        if (com.sukoon.app.BuildConfig.SELF_UPDATE) UpdateBanner(home.updates, onBackUp = { openYou() })
                         FollowingHome(home.sharing, home.settings, onAddPerson = { openYou() }, modifier = Modifier.weight(1f))
                     }
                     return@composable

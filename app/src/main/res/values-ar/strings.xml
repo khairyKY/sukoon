@@ -2154,4 +2154,7 @@
     <string name="follow_mode_no_ketones">لم تُسجَّل كيتونات بعد</string>
     <string name="follow_mode_next_check">الفحص التالي %1$s</string>
     <string name="follow_mode_sick_means">الكيتونات كل ساعتين، وتنبيهات الارتفاع كل ساعة. 0.6 إلى 1.4 مرتفعة؛ 1.5 فأكثر تحتاج أنسولينًا إضافيًا؛ 3.0 رعاية عاجلة.</string>
+    <string name="update_channel">التحديثات</string>
+    <string name="update_ready_title">سكون %1$s جاهز</string>
+    <string name="update_ready_body">اضغط لترى الجديد وتحدّث.</string>
 </resources>

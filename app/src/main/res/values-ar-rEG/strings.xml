@@ -2150,4 +2150,7 @@
     <string name="follow_mode_no_ketones">لسه مفيش كيتونات متسجلة</string>
     <string name="follow_mode_next_check">القياس الجاي %1$s</string>
     <string name="follow_mode_sick_means">الكيتونات كل ساعتين، وتنبيهات العالي كل ساعة. 0.6 لـ 1.4 عالية؛ 1.5 أو أكتر محتاجة إنسولين زيادة؛ 3.0 طوارئ.</string>
+    <string name="update_channel">التحديثات</string>
+    <string name="update_ready_title">سكون %1$s جاهز</string>
+    <string name="update_ready_body">دوس تشوف الجديد وتحدّث.</string>
 </resources>
