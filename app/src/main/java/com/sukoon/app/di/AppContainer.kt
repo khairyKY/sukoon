@@ -53,6 +53,7 @@ import java.time.Duration
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
@@ -220,9 +221,12 @@ class AppContainer(private val context: Context) {
                     ketones = k?.value.takeIf { m.sick }, ketonesAt = k?.let { java.time.Instant.ofEpochMilli(it.timestampMillis) }.takeIf { m.sick },
                     pausedUntil = paused,
                 )
-            }.distinctUntilChanged().collect { shared ->
-                val on = sharing.shareModes && (shared.workoutUntil != null || shared.nightLow || shared.iftar != null || shared.sickSince != null || shared.pausedUntil != null)
-                runCatching { sharing.publishModes(if (on) shared.copy(at = java.time.Instant.now()) else null) }
+            }.distinctUntilChanged().collectLatest { shared ->
+                while (true) {
+                    val on = sharing.shareModes && (shared.workoutUntil != null || shared.nightLow || shared.iftar != null || shared.sickSince != null || shared.pausedUntil != null)
+                    runCatching { sharing.publishModes(if (on) shared.copy(at = java.time.Instant.now()) else null) }
+                    delay(java.util.concurrent.TimeUnit.MINUTES.toMillis(15))
+                }
             }
         }
     }
@@ -268,7 +272,7 @@ class AppContainer(private val context: Context) {
         appScope.launch {
             while (true) {
                 updates.checkIfDue()
-                delay(com.sukoon.app.platform.Notices.CHECK_EVERY.toMillis())
+                delay(java.util.concurrent.TimeUnit.HOURS.toMillis(1))
             }
         }
         notices.start()

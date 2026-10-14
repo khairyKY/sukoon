@@ -57,11 +57,41 @@ class Updates(private val context: Context, private val scope: CoroutineScope) {
         _dismissed.value = release.version
     }
 
-    /** At start: a quiet check when the last was over a day ago. */
+    /**
+     * A quiet check when the last was [CHECK_EVERY_HOURS] or more ago; a newer version is announced
+     * with a notification, once per version. (It was once a day, at start only: the sensor service
+     * keeps Sukoon running for days, so releases went unnoticed.)
+     */
     fun checkIfDue() {
         if (!com.sukoon.app.BuildConfig.SELF_UPDATE) return // the Play build is updated by Play
-        if (System.currentTimeMillis() - prefs.getLong(KEY_LAST_CHECK, 0) < TimeUnit.HOURS.toMillis(20)) return
-        scope.launch { check(quiet = true) }
+        if (System.currentTimeMillis() - prefs.getLong(KEY_LAST_CHECK, 0) < TimeUnit.HOURS.toMillis(CHECK_EVERY_HOURS)) return
+        scope.launch {
+            check(quiet = true)
+            (_state.value as? State.Available)?.release?.let(::announce)
+        }
+    }
+
+    /** "Sukoon 0.13.1 is ready": once per version, tapping opens Now where its banner is. */
+    private fun announce(release: Release) {
+        if (prefs.getString(KEY_ANNOUNCED, null) == release.version) return
+        prefs.edit().putString(KEY_ANNOUNCED, release.version).apply()
+        val manager = context.getSystemService(android.app.NotificationManager::class.java)
+        if (manager.getNotificationChannel(CHANNEL) == null) {
+            manager.createNotificationChannel(android.app.NotificationChannel(CHANNEL, context.getString(com.sukoon.app.R.string.update_channel), android.app.NotificationManager.IMPORTANCE_DEFAULT))
+        }
+        val open = android.app.PendingIntent.getActivity(
+            context, 50, Intent(context, com.sukoon.app.MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val n = androidx.core.app.NotificationCompat.Builder(context, CHANNEL)
+            .setSmallIcon(com.sukoon.app.R.drawable.ic_stat_sukoon)
+            .setColor(0xFF3E7A63.toInt())
+            .setContentTitle(context.getString(com.sukoon.app.R.string.update_ready_title, release.version))
+            .setContentText(context.getString(com.sukoon.app.R.string.update_ready_body))
+            .setContentIntent(open)
+            .setAutoCancel(true)
+            .build()
+        runCatching { manager.notify(5000, n) }
     }
 
     /** [quiet]: a failure stays Idle (the daily check shouldn't show errors). */
@@ -179,6 +209,10 @@ class Updates(private val context: Context, private val scope: CoroutineScope) {
     companion object {
         private const val LATEST = "https://api.github.com/repos/khairyKY/sukoon/releases/latest"
         private const val KEY_LAST_CHECK = "last_check"
+        private const val KEY_ANNOUNCED = "announced"
+        private const val CHANNEL = "updates"
+        /** GitHub allows 60 unauthenticated calls an hour; this is one every few hours. */
+        const val CHECK_EVERY_HOURS = 3L
         private const val KEY_DISMISSED = "dismissed"
 
         private fun sha256(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
