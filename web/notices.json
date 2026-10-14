@@ -31,5 +31,15 @@
     "link": "https://github.com/khairyKY/sukoon/releases/latest",
     "until": "2026-10-28",
     "below": "0.15.0"
+  },
+  {
+    "id": "2026-10-14-must-read-test",
+    "date": "2026-10-14",
+    "kind": "must_read",
+    "title": "Important messages now open full screen",
+    "body": "When Sukoon has something important to tell you, it opens like this until you tap Got it. Your latest reading stays at the top and your alarms keep working. This one is a test.",
+    "title_ar": "الرسائل المهمة بتفتح على الشاشة كلها",
+    "body_ar": "لما سكون يكون عنده حاجة مهمة يقولهالك، هتفتح كده لحد ما تدوس تمام. آخر قراية بتفضل فوق والتنبيهات شغالة. دي رسالة تجريبية.",
+    "until": "2026-10-17"
   }
 ]
