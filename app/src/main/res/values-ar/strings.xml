@@ -2274,4 +2274,12 @@
     <string name="alarm_scope_all_note">كل التنبيهات إلا الهبوط الشديد، فهو يرن دائمًا.</string>
     <string name="home_btn_snooze_for">تأجيل %1$s</string>
     <string name="sensor_replace_link">تستبدل الحساس؟ ابدأ حساسًا جديدًا</string>
+    <string name="chip_meal_watch">مراقبة الهبوط · حتى %1$s</string>
+    <string name="today_meal_watch">مراقبة بعد وجبة أصغر</string>
+    <string name="today_meal_watch_line">حتى %1$s · تنبيه الهبوط عند %2$d</string>
+    <string name="meal_watch_channel">المراقبة بعد وجبة</string>
+    <string name="meal_watch_check_title">بعد وجبتك الأصغر: %1$s %2$s</string>
+    <string name="meal_watch_check_falling">تنخفض أو تحت 100: تناول 15 غ كربوهيدرات.</string>
+    <string name="meal_watch_check_fine">يبدو جيدًا. سكون يواصل المراقبة.</string>
+    <string name="follow_meal_watch">%1$s: مراقبة الهبوط · حتى %2$s</string>
 </resources>

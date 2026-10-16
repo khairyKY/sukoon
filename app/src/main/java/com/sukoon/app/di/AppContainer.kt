@@ -223,10 +223,11 @@ class AppContainer(private val context: Context) {
                     sickSince = m.sickSince,
                     ketones = k?.value.takeIf { m.sick }, ketonesAt = k?.let { java.time.Instant.ofEpochMilli(it.timestampMillis) }.takeIf { m.sick },
                     pausedUntil = paused,
+                    mealWatchUntil = m.mealWatchUntil,
                 )
             }.distinctUntilChanged().collectLatest { shared ->
                 while (true) {
-                    val on = sharing.shareModes && (shared.workoutUntil != null || shared.nightLow || shared.iftar != null || shared.sickSince != null || shared.pausedUntil != null)
+                    val on = sharing.shareModes && (shared.workoutUntil != null || shared.nightLow || shared.iftar != null || shared.sickSince != null || shared.pausedUntil != null || shared.mealWatchUntil != null)
                     runCatching { sharing.publishModes(if (on) shared.copy(at = java.time.Instant.now()) else null) }
                     delay(java.util.concurrent.TimeUnit.MINUTES.toMillis(15))
                 }

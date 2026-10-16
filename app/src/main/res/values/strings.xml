@@ -2134,4 +2134,12 @@
     <string name="alarm_scope_all_note">Every alarm but urgent low, which always sounds.</string>
     <string name="home_btn_snooze_for">Snooze %1$s</string>
     <string name="sensor_replace_link">Replacing your sensor? Start a new one</string>
+    <string name="chip_meal_watch">Watching for a low · until %1$s</string>
+    <string name="today_meal_watch">Watching after a smaller meal</string>
+    <string name="today_meal_watch_line">Until %1$s · low alarm at %2$d</string>
+    <string name="meal_watch_channel">Watching after a meal</string>
+    <string name="meal_watch_check_title">After your smaller meal: %1$s %2$s</string>
+    <string name="meal_watch_check_falling">Dropping or under 100: have 15 g of carbs.</string>
+    <string name="meal_watch_check_fine">Looking fine. Sukoon keeps watching.</string>
+    <string name="follow_meal_watch">%1$s: watching for a low · until %2$s</string>
 </resources>

@@ -27,11 +27,13 @@ data class ActiveModes(
     /** Inside today's fast. */
     val fastingNow: Boolean = false,
     val sickSince: Instant? = null,
+    /** Watching after a meal smaller than its insulin: the low alarm sits at [Modes.MEAL_WATCH_LOW] until then. */
+    val mealWatchUntil: Instant? = null,
 ) {
     val workingOut: Boolean get() = workoutUntil != null
     val lateLowWatch: Boolean get() = lastWorkoutEnd != null && workoutUntil == null
     val sick: Boolean get() = sickSince != null
-    val any: Boolean get() = workingOut || lateLowWatch || fasting.on || sick
+    val any: Boolean get() = workingOut || lateLowWatch || fasting.on || sick || mealWatchUntil != null
 }
 
 /** Why a dose suggestion was changed, and by how much (shown with the suggestion). */
@@ -44,6 +46,9 @@ object Modes {
     const val WORKOUT_LOW = 100
     /** Low alarm overnight after a workout (Moser 2020: 80 mg/dL). */
     const val NIGHT_LOW = 80
+
+    /** After eating less than the insulin was for: the low alarm sits here until the extra is spent. */
+    const val MEAL_WATCH_LOW = 90
     /** How long lows can follow exercise (Riddell et al., Lancet D&E 2017: at least 24 h). */
     val LATE_LOW: Duration = Duration.ofHours(24)
     /** The meal "after" a workout: within this of its end. */
@@ -97,6 +102,7 @@ object Modes {
         var s = base
         val lowLine = when {
             m.workingOut -> WORKOUT_LOW
+            m.mealWatchUntil != null -> MEAL_WATCH_LOW
             m.nightWatch -> NIGHT_LOW
             else -> null
         }

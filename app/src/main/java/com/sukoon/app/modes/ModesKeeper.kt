@@ -53,7 +53,40 @@ class ModesKeeper(private val context: Context, logbook: LogbookRepository, priv
     }
 
     /** What's on at this moment (fresh, for the alarms). */
-    fun now(): ActiveModes = Modes.active(Instant.now(), zone, workoutUntil, workoutStart, events.value, fasting, sickSince)
+    fun now(): ActiveModes = Instant.now().let { t ->
+        Modes.active(t, zone, workoutUntil, workoutStart, events.value, fasting, sickSince).copy(mealWatchUntil = mealWatch(t))
+    }
+
+    // --- the watch after a smaller meal ---------------------------------------------------------
+
+    private var watchUntil: Instant?
+        get() = prefs.getLong(K_WATCH_UNTIL, 0).takeIf { it > 0 }?.let(Instant::ofEpochMilli)
+        set(v) = prefs.edit().putLong(K_WATCH_UNTIL, v?.toEpochMilli() ?: 0).apply()
+    private var watchStart: Instant?
+        get() = prefs.getLong(K_WATCH_START, 0).takeIf { it > 0 }?.let(Instant::ofEpochMilli)
+        set(v) = prefs.edit().putLong(K_WATCH_START, v?.toEpochMilli() ?: 0).apply()
+
+    /** On until [watchUntil], unless 10 g or more of carbs were logged after it started (that covers it). */
+    private fun mealWatch(now: Instant): Instant? {
+        val until = watchUntil?.takeIf { it > now } ?: return null
+        val start = watchStart ?: return until
+        val ate = events.value.any { it.logType == com.sukoon.app.data.db.LogEventType.CARB && (it.value ?: 0.0) >= 10 && Instant.ofEpochMilli(it.timestampMillis) > start }
+        return if (ate) null else until
+    }
+
+    /** Watch for a low until [until] (when a smaller meal's extra insulin is spent): low alarm at 90, two check-ins. */
+    fun startMealWatch(until: Instant) {
+        val now = Instant.now()
+        watchStart = now
+        watchUntil = until.coerceAtMost(now.plus(Duration.ofHours(5)))
+        MealWatchCheck.schedule(context, now)
+        refresh()
+    }
+
+    fun endMealWatch() {
+        watchUntil = null
+        refresh()
+    }
 
     private fun refresh() {
         _active.value = now()
@@ -218,6 +251,8 @@ class ModesKeeper(private val context: Context, logbook: LogbookRepository, priv
         const val SUHOOR_ID = 9
         val SUHOOR_REMINDER: Duration = Duration.ofMinutes(45)
         const val K_WORKOUT_UNTIL = "workout_until"
+        const val K_WATCH_UNTIL = "meal_watch_until"
+        const val K_WATCH_START = "meal_watch_start"
         const val K_WORKOUT_START = "workout_start"
         const val K_AFTER_CUT = "after_workout_cut"
         const val K_FAST_ON = "fasting_on"

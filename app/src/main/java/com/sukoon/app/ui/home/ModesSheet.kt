@@ -91,6 +91,14 @@ fun TodaySheet(
         ) {
             Text(stringResource(R.string.today_title), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, lineHeight = 31.sp, color = MaterialTheme.colorScheme.onBackground)
 
+            // Watching after a smaller meal: only while it's on, with End.
+            val watch by keeper.active.collectAsState()
+            watch.mealWatchUntil?.let { until ->
+                TodayRow(stringResource(R.string.today_meal_watch), stringResource(R.string.today_meal_watch_line, time.format(until), Modes.MEAL_WATCH_LOW)) {
+                    Action(stringResource(R.string.today_end)) { keeper.endMealWatch() }
+                }
+            }
+
             // Pause alarms
             val pausedAt = paused
             TodayRow(stringResource(R.string.today_pause), if (pausedAt != null) stringResource(R.string.today_pause_until, time.format(pausedAt)) else stringResource(R.string.today_pause_note)) {
@@ -260,6 +268,7 @@ fun statusChips(
     }
     pickup?.let { list += StatusChip(it, attention = true, onClick = onSupplies) }
     lowSupply.forEach { (name, days) -> list += StatusChip(stringResource(R.string.chip_supply_low, name, days), attention = true, onClick = onSupplies) }
+    m.mealWatchUntil?.let { list += StatusChip(stringResource(R.string.chip_meal_watch, time.format(it)), attention = true, onClick = onToday) }
     m.workoutUntil?.let { list += StatusChip(stringResource(R.string.chip_workout, time.format(it)), onClick = onToday) }
     if (m.workoutUntil == null && m.nightWatch) list += StatusChip(stringResource(R.string.chip_late_low, Modes.NIGHT_LOW), onClick = onToday)
     if (m.fastingNow) list += StatusChip(stringResource(R.string.chip_fasting, time.format(m.fasting.iftar)), onClick = onToday)

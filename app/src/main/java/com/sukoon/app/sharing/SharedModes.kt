@@ -21,6 +21,7 @@ data class SharedModes(
     val ketones: Double? = null,
     val ketonesAt: Instant? = null,
     val pausedUntil: Instant? = null,
+    val mealWatchUntil: Instant? = null,
     val at: Instant? = null,
 ) {
     fun toJson(): JSONObject = JSONObject().apply {
@@ -33,6 +34,7 @@ data class SharedModes(
         ketones?.let { put("ketones", it) }
         ketonesAt?.let { put("ketonesAt", it.toString()) }
         pausedUntil?.let { put("pausedUntil", it.toString()) }
+        mealWatchUntil?.let { put("mealWatchUntil", it.toString()) }
         at?.let { put("at", it.toString()) }
     }
 
@@ -58,7 +60,7 @@ data class SharedModes(
                 workoutFrom = i("workoutFrom"), workoutUntil = i("workoutUntil"), nightLow = o.optBoolean("nightLow"),
                 suhoorEnds = t("suhoorEnds"), iftar = t("iftar"), sickSince = i("sickSince"),
                 ketones = if (o.has("ketones")) o.optDouble("ketones") else null, ketonesAt = i("ketonesAt"),
-                pausedUntil = i("pausedUntil"), at = i("at"),
+                pausedUntil = i("pausedUntil"), mealWatchUntil = i("mealWatchUntil"), at = i("at"),
             )
         }
     }

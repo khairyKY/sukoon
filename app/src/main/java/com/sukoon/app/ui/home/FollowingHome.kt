@@ -273,6 +273,7 @@ private fun FollowerChips(person: Followed) {
             val now = Instant.now()
             if (m.paused(now)) add(StatusChip(stringResource(R.string.follow_paused, person.name.ifBlank { "…" }, time.format(m.pausedUntil!!)), attention = true) {})
             if (m.nightLow && !m.working(now)) add(StatusChip(stringResource(R.string.chip_late_low, com.sukoon.app.modes.Modes.NIGHT_LOW)) {})
+            m.mealWatchUntil?.takeIf { it > now }?.let { add(StatusChip(stringResource(R.string.follow_meal_watch, person.name.ifBlank { "…" }, time.format(it)), attention = true) {}) }
         }
         if (paused == null) add(StatusChip(stringResource(R.string.today_pause), attention = false) { pausing = true })
     }
