@@ -128,7 +128,7 @@ fun FollowInviteDialog(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(InviteCode.format(code), fontFamily = FontFamily.Monospace, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
                 Text(stringResource(if (signedIn) R.string.invite_follow_body else R.string.invite_follow_sign_in), fontSize = 13.5.sp, lineHeight = 19.sp, color = CaptionMuted)
-                problem?.let { Text(it, fontSize = 13.sp, color = com.sukoon.app.ui.theme.StateLow) }
+                problem?.let { Text(it, fontSize = 13.sp, color = com.sukoon.app.ui.theme.PillLowText) }
             }
         },
         confirmButton = {

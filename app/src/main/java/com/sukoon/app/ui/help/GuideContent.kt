@@ -126,6 +126,10 @@ object GuideContent {
         "ic_people" -> R.drawable.ic_people
         "ic_link" -> R.drawable.ic_link
         "ic_lock" -> R.drawable.ic_lock
+        "ic_walk" -> R.drawable.ic_walk
+        "ic_box" -> R.drawable.ic_box
+        "ic_clinic" -> R.drawable.ic_clinic
+        "ic_mic" -> R.drawable.ic_mic
         else -> R.drawable.ic_help
     }
 }

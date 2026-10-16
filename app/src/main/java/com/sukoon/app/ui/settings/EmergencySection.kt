@@ -124,7 +124,7 @@ fun EmergencySection(settings: EmergencySettings, alerts: EmergencyAlerts, onCha
                     }
                 }
                 TextButton(onClick = { onChange(settings.copy(contacts = settings.contacts - contact)) }) {
-                    Text(stringResource(R.string.emergency_remove), color = StateLow, fontSize = 12.sp)
+                    Text(stringResource(R.string.emergency_remove), color = com.sukoon.app.ui.theme.PillLowText, fontSize = 12.sp)
                 }
             }
         }

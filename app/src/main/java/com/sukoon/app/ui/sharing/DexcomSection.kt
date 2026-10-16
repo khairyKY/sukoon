@@ -131,7 +131,7 @@ fun DexcomSection(dexcom: DexcomShare, sharing: Sharing, watch: FollowerWatch) {
                 TextButton(onClick = {
                     dexcom.signOut()
                     watch.refreshNow()
-                }) { Text(stringResource(R.string.sharing_sign_out), color = StateLow, fontSize = 12.sp) }
+                }) { Text(stringResource(R.string.sharing_sign_out), color = com.sukoon.app.ui.theme.PillLowText, fontSize = 12.sp) }
             }
             person?.let { p ->
                 Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).clickable { viewing = p }.padding(vertical = 4.dp)) {

@@ -64,7 +64,7 @@ fun ForgotPassword(supabase: Supabase, email: String) {
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     modifier = Modifier.fillMaxWidth(),
                 )
-                problem?.let { Text(it, fontSize = 13.sp, color = StateLow) }
+                problem?.let { Text(it, fontSize = 13.sp, color = com.sukoon.app.ui.theme.PillLowText) }
             }
         },
         confirmButton = {
@@ -106,7 +106,7 @@ fun CheckInbox(supabase: Supabase, email: String, password: String, onSignedIn: 
     ) {
         Text(stringResource(R.string.auth_inbox_title), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
         Text(stringResource(R.string.auth_inbox_body, email.trim()), fontSize = 13.5.sp, lineHeight = 19.sp, color = MaterialTheme.colorScheme.onBackground)
-        problem?.let { Text(it, fontSize = 13.sp, color = StateLow) }
+        problem?.let { Text(it, fontSize = 13.sp, color = com.sukoon.app.ui.theme.PillLowText) }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (password.isNotEmpty()) Pill(stringResource(R.string.auth_confirmed_sign_in)) {
                 scope.launch {

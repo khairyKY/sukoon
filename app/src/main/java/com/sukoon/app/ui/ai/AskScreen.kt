@@ -140,7 +140,7 @@ fun AskScreen(
                 }
             }
         }
-        state.error?.let { Text(it, fontSize = 12.sp, color = StateLow, modifier = Modifier.padding(vertical = 6.dp)) }
+        state.error?.let { Text(it, fontSize = 12.sp, color = com.sukoon.app.ui.theme.PillLowText, modifier = Modifier.padding(vertical = 6.dp)) }
         val noVoice = stringResource(R.string.voice_no_recognizer)
         val askContext = androidx.compose.ui.platform.LocalContext.current
         val (voice, speak) = com.sukoon.app.ui.logbook.rememberVoiceCapture(stringResource(R.string.ask_mic), onUnavailable = { android.widget.Toast.makeText(askContext, noVoice, android.widget.Toast.LENGTH_LONG).show() }) { said ->

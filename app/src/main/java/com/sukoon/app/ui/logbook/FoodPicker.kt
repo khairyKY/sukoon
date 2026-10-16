@@ -244,7 +244,7 @@ internal fun FoodPicker(
                         if (filter != FoodFilter.YOURS) items(dishes, key = { "d" + it.key }) { f -> FoodRow(f, yours = false) { picked = f } }
                         if (filter != FoodFilter.YOURS && theirs.isNotEmpty()) item { Eyebrow(stringResource(R.string.food_from_off), Modifier.padding(top = 14.dp, bottom = 8.dp)) }
                         if (filter != FoodFilter.YOURS) items(theirs, key = { "o" + it.key }) { f -> FoodRow(f, yours = false) { picked = f } }
-                        if (failed) item { Text(stringResource(R.string.food_offline), fontSize = 13.5.sp, color = StateLow, modifier = Modifier.padding(vertical = 10.dp)) }
+                        if (failed) item { Text(stringResource(R.string.food_offline), fontSize = 13.5.sp, color = com.sukoon.app.ui.theme.PillLowText, modifier = Modifier.padding(vertical = 10.dp)) }
                         if (query.isNotBlank() && estimate != null) item {
                             Row(Modifier.fillMaxWidth().clickable(enabled = !asking) { ask(query.trim()) }.padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Icon(painterResource(R.drawable.ic_sparkle), contentDescription = null, tint = SageDeep, modifier = Modifier.size(20.dp))
@@ -257,7 +257,7 @@ internal fun FoodPicker(
                                 )
                             }
                         }
-                        askError?.let { item { Text(it, fontSize = 13.sp, color = StateLow) } }
+                        askError?.let { item { Text(it, fontSize = 13.sp, color = com.sukoon.app.ui.theme.PillLowText) } }
                         if (query.isNotBlank()) item { LinkRow(stringResource(R.string.food_make_own, query.trim())) { making = query.trim() to null } }
                         item { Text(stringResource(R.string.food_off_note), fontSize = 12.sp, color = CaptionMuted, modifier = Modifier.padding(vertical = 14.dp)) }
                     }

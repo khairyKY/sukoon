@@ -311,7 +311,7 @@ internal fun MealDetailSheet(
                 }
             }
             TextButton(onClick = onHide, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.meal_detail_hide), color = StateLow, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.meal_detail_hide), color = com.sukoon.app.ui.theme.PillLowText, fontWeight = FontWeight.SemiBold)
             }
         }
     }

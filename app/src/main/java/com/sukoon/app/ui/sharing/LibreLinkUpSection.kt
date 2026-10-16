@@ -116,7 +116,7 @@ fun LibreLinkUpSection(llu: LibreLinkUp, sharing: Sharing, watch: FollowerWatch)
                 TextButton(onClick = {
                     llu.signOut()
                     watch.refreshNow()
-                }) { Text(stringResource(R.string.sharing_sign_out), color = StateLow, fontSize = 12.sp) }
+                }) { Text(stringResource(R.string.sharing_sign_out), color = com.sukoon.app.ui.theme.PillLowText, fontSize = 12.sp) }
             }
             val list = people
             when {
