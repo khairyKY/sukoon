@@ -19,7 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -236,7 +236,7 @@ private fun StockDialog(kind: PenKind, s: Stock?, onSave: (Stock) -> Unit, onRem
                     Text(java.text.NumberFormat.getIntegerInstance().format(pens), fontFamily = HeadlineSerifFontFamily, fontSize = 28.sp)
                     Link("+") { pens += 1 }
                 }
-                OutlinedTextField(open, { open = it.filter(Char::isDigit).take(3) }, label = { Text(stringResource(R.string.supply_open_left)) },
+                SukoonTextField(open, { open = it.filter(Char::isDigit).take(3) }, label = stringResource(R.string.supply_open_left),
                     singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
             }
         },

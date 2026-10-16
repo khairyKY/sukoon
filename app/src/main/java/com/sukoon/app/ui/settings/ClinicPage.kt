@@ -14,7 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -97,8 +97,8 @@ fun ClinicPage(onOpenReports: () -> Unit) {
         if (auto.isEmpty() && own.isEmpty()) Text(stringResource(R.string.clinic_no_questions), fontSize = 13.sp, color = CaptionMuted)
         auto.forEach { q -> QuestionRow(questionText(q), stringResource(R.string.clinic_from_insights), null) }
         own.forEachIndexed { i, q -> QuestionRow(q, null) { app.clinic.setQuestions(own.filterIndexed { j, _ -> j != i }) } }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(typed, { typed = it }, label = { Text(stringResource(R.string.clinic_add_question)) }, modifier = Modifier.weight(1f))
+        Row(verticalAlignment = Alignment.Bottom) {
+            SukoonTextField(typed, { typed = it }, label = stringResource(R.string.clinic_add_question), modifier = Modifier.weight(1f))
             TextButton(onClick = { if (typed.isNotBlank()) { app.clinic.setQuestions(own + typed.trim()); typed = "" } }) { Text(stringResource(R.string.clinic_add)) }
         }
     }
@@ -142,7 +142,7 @@ fun ClinicPage(onOpenReports: () -> Unit) {
             title = { Text(stringResource(labName(k))) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value, { value = it.filter { c -> c.isDigit() || c == '.' }.take(6) }, label = { Text(k.unit) }, singleLine = true,
+                    SukoonTextField(value, { value = it.filter { c -> c.isDigit() || c == '.' }.take(6) }, label = k.unit, singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
                     Text(date.format(dates), fontSize = 14.sp, color = SageDeep, fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable {

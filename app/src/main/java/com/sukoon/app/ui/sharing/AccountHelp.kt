@@ -10,7 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -57,9 +57,9 @@ fun ForgotPassword(supabase: Supabase, email: String) {
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.auth_reset_body), fontSize = 13.5.sp, lineHeight = 19.sp, color = CaptionMuted)
-                OutlinedTextField(
+                SukoonTextField(
                     address, { address = it.trim() },
-                    label = { Text(stringResource(R.string.sharing_email)) },
+                    label = stringResource(R.string.sharing_email),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     modifier = Modifier.fillMaxWidth(),

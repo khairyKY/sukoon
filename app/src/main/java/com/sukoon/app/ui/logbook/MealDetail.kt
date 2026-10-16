@@ -5,7 +5,7 @@ import com.sukoon.app.platform.TimeFormat
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.AlertDialog
 import java.time.ZonedDateTime
 import java.time.ZoneId
@@ -545,7 +545,7 @@ private fun NameDialog(current: String, onSave: (String) -> Unit, onDismiss: () 
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.meal_name_title)) },
         text = {
-            OutlinedTextField(text, { text = it }, placeholder = { Text(stringResource(R.string.meal_name_hint)) }, singleLine = true)
+            SukoonTextField(text, { text = it }, placeholder = stringResource(R.string.meal_name_hint), singleLine = true)
         },
         confirmButton = { TextButton(onClick = { onSave(text.trim()) }) { Text(stringResource(R.string.meal_name_save)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.sensor_cancel)) } },

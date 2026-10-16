@@ -228,10 +228,7 @@
     <string name="setup_overlay_why">بتخلّي تنبيه الهبوط الخطير يفتح فوق أي أبلكيشن شغّال.</string>
     <string name="setup_dnd">صلاحية عدم الإزعاج</string>
     <string name="setup_dnd_why">بتخلّي تنبيهات الهبوط ترن حتى لو وضع عدم الإزعاج شغّال.</string>
-    <string name="setup_oem">إعدادات بطارية الشركة المصنّعة</string>
-    <string name="setup_oem_why">خلّي سكون بدون قيود / عمره ما ينام.</string>
     <string name="setup_allow">اسمح</string>
-    <string name="setup_open">افتح</string>
     <string name="setup_fix">ظبّط</string>
     <string name="setup_later">بعدين</string>
 
@@ -555,7 +552,6 @@
     <string name="report_pdf_footer">اتعمل بسكون، وهو مش جهاز طبي. القرايات من حساس FreeStyle Libre 2 بيقراه سكون. النسب المئوية حسب الوقت في اليوم على مدار الفترة؛ والأهداف من الإجماع الدولي على الوقت في المدى (Battelino et al., Diabetes Care 2019).</string>
     <string name="toast_report_failed">مقدرناش نعمل الـ PDF: %1$s</string>
     <string name="service_stale_body">آخر قراية: %1$d ملغم/دل الساعة %2$s. بيرجع يتوصل لوحده.</string>
-    <string name="settings_guide">الدليل: سكون بيشتغل إزاي ←</string>
     <string name="help_title">الدليل</string>
     <string name="help_intro">كل التفاصيل في مكان واحد.</string>
     <string name="help_sensor_title">توصيل الحساس</string>
@@ -731,7 +727,7 @@
     <string name="you_insulin_summary">ذروته %1$d دقيقة · %2$s ساعة</string>
     <string name="you_apps_summary">MyFitnessPal، Nightscout، الذكاء الاصطناعي</string>
     <string name="you_reports_summary">ملف CSV ونسخ احتياطية</string>
-    <string name="you_help_summary">الدليل، فحص الإعداد</string>
+    <string name="you_help_summary">فحص الإعداد، الخصوصية، عن التطبيق</string>
     <string name="you_reports_body">تقرير الدكتور لـ١٤ يوم (PDF) موجود في الاتجاهات ← التقرير.</string>
     <string name="ob_back">رجوع</string>
     <string name="ob_continue">كمّل</string>
@@ -2013,8 +2009,8 @@
     <string name="fitness_kcal_change">%1$s سعر</string>
     <string name="fitness_maintenance_field">احتياجك اليومي بالسعرات (اختياري)</string>
     <string name="fitness_training">التمرين</string>
-    <string name="fitness_after_meal">الأكلة بعد التمرين</string>
-    <string name="fitness_as_usual">زي العادة</string>
+    <string name="fitness_after_meal">أنسولين الأكلة بعد التمرين</string>
+    <string name="fitness_as_usual">نفس الجرعة</string>
     <string name="fitness_less">أقل %1$d%%</string>
     <string name="fitness_training_note">بالليل بعد التمرين تنبيه الهبوط بيبقى عند %1$d.</string>
     <string name="fitness_ramadan">رمضان</string>
@@ -2387,4 +2383,7 @@
     <string name="widget_low_carbs">خد 15 جم نشويات سريعة</string>
     <string name="widget_add_food">+ أكل</string>
     <string name="widget_add_insulin">+ إنسولين</string>
+    <string name="fitness_after_meal_body">لأكلة في خلال ساعتين من آخر التمرين، سكون بيقترح أنسولين أكل أقل بالنسبة دي. التمرين بيخلّي الأنسولين أقوى لساعات، فالجرعة الأصغر بتحميك من الهبوط.</string>
+    <string name="you_guide_summary">سكون بيشتغل إزاي</string>
+    <string name="help_privacy_body">سكون بيحفظ إيه، وإيه اللي بيطلع من موبايلك</string>
 </resources>

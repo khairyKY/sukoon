@@ -39,7 +39,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.sukoon.app.R
-import com.sukoon.app.platform.BatteryOptimization
 import com.sukoon.app.platform.SetupCheck
 import com.sukoon.app.platform.SetupItem
 import com.sukoon.app.ui.theme.CaptionMuted
@@ -119,18 +118,6 @@ fun SetupChecklist(only: Set<SetupItem>? = null) {
                         }
                     }
                 }
-            }
-        }
-        if (SetupCheck.hasOemBackgroundSettings()) {
-            Row(verticalAlignment = Alignment.Top) {
-                Box(Modifier.padding(top = 5.dp).size(10.dp).clip(CircleShape).background(CaptionMuted))
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.setup_oem), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                    Text(stringResource(R.string.setup_oem_why), fontSize = 12.sp, color = CaptionMuted)
-                }
-                Spacer(Modifier.width(8.dp))
-                SmallButton(stringResource(R.string.setup_open)) { BatteryOptimization.openOemBackgroundSettings(context) }
             }
         }
     }

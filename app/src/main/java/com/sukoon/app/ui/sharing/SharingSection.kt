@@ -26,7 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -129,18 +129,18 @@ private fun SignIn(sharing: Sharing, watch: FollowerWatch) {
         return
     }
     if (creating) {
-        OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.sharing_your_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+        SukoonTextField(name, { name = it }, label = stringResource(R.string.sharing_your_name), singleLine = true, modifier = Modifier.fillMaxWidth())
     }
-    OutlinedTextField(
+    SukoonTextField(
         email, { email = it },
-        label = { Text(stringResource(R.string.sharing_email)) },
+        label = stringResource(R.string.sharing_email),
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         modifier = Modifier.fillMaxWidth(),
     )
-    OutlinedTextField(
+    SukoonTextField(
         password, { password = it },
-        label = { Text(stringResource(R.string.sharing_password)) },
+        label = stringResource(R.string.sharing_password),
         singleLine = true,
         visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -248,8 +248,8 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session, l
         )
     }
     problem?.let { Text(it, fontSize = 12.sp, color = com.sukoon.app.ui.theme.PillLowText) }
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.sharing_your_name)) }, singleLine = true, modifier = Modifier.weight(1f))
+    Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        SukoonTextField(name, { name = it }, label = stringResource(R.string.sharing_your_name), singleLine = true, modifier = Modifier.weight(1f))
         Pill(stringResource(R.string.settings_save), filled = false) {
             act {
                 sharing.setName(name)

@@ -52,7 +52,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -943,14 +943,14 @@ private fun Field(
     hidden: Boolean = false,
     trailing: (@Composable () -> Unit)? = null,
 ) {
-    OutlinedTextField(
+    SukoonTextField(
         value = value,
         onValueChange = onChange,
-        label = { Text(label) },
+        label = label,
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = keyboard),
         visualTransformation = if (hidden) PasswordVisualTransformation() else VisualTransformation.None,
-        supportingText = helper?.let { { Text(it) } },
+        supportingText = helper,
         trailingIcon = trailing,
         modifier = Modifier.fillMaxWidth(),
     )

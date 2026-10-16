@@ -64,7 +64,7 @@
           "sections": [
             { "steps": [
               { "text": "Allow everything Setup lists.", "path": "You › Help & about › Setup", "link": "help" },
-              { "text": "On Samsung or Xiaomi, open the battery page it links and set Sukoon to Unrestricted or Never sleeping." },
+              { "text": "On Samsung or Xiaomi, also open the phone's Settings › Apps › Sukoon and set Battery to Unrestricted; on Xiaomi turn on Autostart too." },
               { "text": "Leave Sukoon's small notification on: it keeps Sukoon running and shows your number." }
             ]}
           ],

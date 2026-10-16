@@ -50,7 +50,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import com.sukoon.app.ui.components.SukoonSheet
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -591,10 +591,10 @@ private fun EditorContent(
                     ValueCard(stringResource(R.string.logbook_type_insulin), values[AmountField.RAPID].orEmpty(), units, active == AmountField.RAPID, Modifier.weight(1f)) { active = AmountField.RAPID }
                 }
                 main != null -> ValueCard(fieldLabel(type), values[main].orEmpty(), unitLabel(type).trim(), active == main, Modifier.fillMaxWidth()) { active = main }
-                else -> OutlinedTextField(
+                else -> SukoonTextField(
                     value = note,
                     onValueChange = { note = it },
-                    label = { Text(stringResource(R.string.logbook_note_hint)) },
+                    label = stringResource(R.string.logbook_note_hint),
                     minLines = 4,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -679,7 +679,7 @@ private fun EditorContent(
             }
             if (isMeal) {
                 if (showMore) {
-                    OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text(stringResource(R.string.entry_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    SukoonTextField(value = note, onValueChange = { note = it }, label = stringResource(R.string.entry_name), singleLine = true, modifier = Modifier.fillMaxWidth())
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf(AmountField.FIBER to R.string.entry_fiber, AmountField.PROTEIN to R.string.entry_protein, AmountField.FAT to R.string.entry_fat).forEach { (f, label) ->
                             ValueCard(stringResource(label), values[f].orEmpty(), stringResource(R.string.logbook_unit_grams), active == f, Modifier.weight(1f), compact = true) { active = f }
@@ -1254,7 +1254,7 @@ private fun CarbEstimator(estimate: suspend (String, List<ByteArray>) -> CarbEst
     var error by remember { mutableStateOf<String?>(null) }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(stringResource(R.string.carb_ai_estimate), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, lineHeight = 29.sp, color = MaterialTheme.colorScheme.onBackground)
-        OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text(stringResource(R.string.carb_ai_describe)) }, modifier = Modifier.fillMaxWidth())
+        SukoonTextField(value = description, onValueChange = { description = it }, label = stringResource(R.string.carb_ai_describe), modifier = Modifier.fillMaxWidth())
         if (photos.isNotEmpty()) Text(pluralStringResource(R.plurals.carb_ai_photos_added, photos.size, photos.size), fontSize = 12.sp, color = SageDeep)
         val canEstimate = !busy && (description.isNotBlank() || photos.isNotEmpty())
         Box(

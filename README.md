@@ -187,7 +187,7 @@ A CGM app is only as good as the alarm that wakes you at 3 a.m. Every alarm here
 
 Alarms only ever come from real readings: the sensor, or a LibreLinkUp or Dexcom connection used as this phone's glucose. Demo data never sounds one.
 
-**Can alarms reach you?** You → Alarms checks notifications, full-screen permission, display over other apps, Do Not Disturb access, and battery restrictions including the phone maker's own, with a one-tap fix for each. **What your alarms did** keeps the last 60 alarm events and says in red when one didn't get through. **See and hear each alarm** runs any alarm's real path with a sample value, marked TEST.
+**Can alarms reach you?** You → Alarms checks notifications, full-screen permission, display over other apps, Do Not Disturb access, and battery restrictions, with a one-tap fix for each. **What your alarms did** keeps the last 60 alarm events and says in red when one didn't get through. **See and hear each alarm** runs any alarm's real path with a sample value, marked TEST.
 
 ### When nobody answers
 
@@ -346,7 +346,7 @@ Nothing, unless you turn it on. There are no analytics, no ads and no tracking o
 | Symptom | What to do |
 | :-- | :-- |
 | An alarm didn't sound | Open **You → Alarms**. *Can alarms reach you?* lists what's blocking it, and *What your alarms did* shows what got through each time. |
-| Readings stop when the screen is off | Your phone maker is killing background apps. Set Sukoon's battery to **Unrestricted** and follow the phone maker's page that the setup checklist opens (see [dontkillmyapp.com](https://dontkillmyapp.com)). |
+| Readings stop when the screen is off | Your phone maker is killing background apps. Set Sukoon's battery to **Unrestricted** in the setup checklist; on Samsung or Xiaomi also check the phone's own app settings (Autostart on Xiaomi; see [dontkillmyapp.com](https://dontkillmyapp.com)). |
 | "Signal lost" every so often | **You → Sensor** shows the last 24 hours of gaps. Short gaps are usually distance: keep the phone on the same side of your body as the sensor. |
 | Sukoon can't find the sensor after pairing | Another app has it. Force-stop LibreLink, DiaBox or xDrip+, then **You → Sensor → Connect** and scan again. |
 | No MyFitnessPal meals | **You → Apps & data → Resync** says how many meals Health Connect has. If it has none, sharing is off on MyFitnessPal's side (More → Apps & Devices → Health Connect). |

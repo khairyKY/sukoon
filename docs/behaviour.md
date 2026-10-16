@@ -139,7 +139,7 @@ Home banner shows too):
 - full-screen alerts allowed (Android 14+)
 - display over other apps
 - Do Not Disturb access (lets lows through DND)
-- battery: unrestricted, plus the phone maker's own background setting
+- battery: unrestricted (a phone maker's own background settings have no API; the Guide's Keep Sukoon running says where to look)
 
 ---
 
