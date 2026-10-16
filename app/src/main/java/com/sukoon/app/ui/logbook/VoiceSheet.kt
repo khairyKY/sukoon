@@ -191,7 +191,11 @@ internal fun VoiceSheet(glucoseNow: Int?, onSave: (List<EntryDraft>) -> Unit, on
                                 LogEventType.CARB, LogEventType.NOTE -> e.name
                                 else -> null
                             }
-                            EntryDraft(e.type, amount, note, now, treatment = e.type == LogEventType.CARB && (e.treatment || (glucoseNow ?: 999) < 70))
+                            EntryDraft(
+                                e.type, amount, note, now,
+                                nutrients = Nutrients(protein = e.protein, fat = e.fat, kcal = e.kcal).takeIf { e.type == LogEventType.CARB && it != Nutrients() },
+                                treatment = e.type == LogEventType.CARB && (e.treatment || (glucoseNow ?: 999) < 70),
+                            )
                         })
                     }.heightIn(min = 54.dp).padding(16.dp),
                 )

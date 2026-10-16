@@ -2240,5 +2240,196 @@
    "grams": 60
   },
   "source": "USDA FoodData Central FNDDS 2021-2023 2710377 (coffee, Turkish)"
+ },
+ {
+  "en": "Eggs, scrambled",
+  "ar": "بيض مخفوق",
+  "aliases": [
+   "scrambled eggs",
+   "scrambled egg",
+   "بيض اومليت مخفوق",
+   "بيض مقلب",
+   "بيض مخلوط"
+  ],
+  "per100": [
+   1.6,
+   0.0,
+   1.4,
+   10.0,
+   11.0,
+   149
+  ],
+  "portion": {
+   "en": "2 eggs",
+   "ar": "بيضتين",
+   "grams": 122
+  },
+  "source": "USDA FoodData Central SR Legacy 172187"
+ },
+ {
+  "en": "Omelette",
+  "ar": "أومليت",
+  "aliases": [
+   "omelet",
+   "omelette",
+   "اومليت",
+   "عجة"
+  ],
+  "per100": [
+   0.6,
+   0.0,
+   0.3,
+   10.6,
+   11.7,
+   154
+  ],
+  "portion": {
+   "en": "2 eggs",
+   "ar": "بيضتين",
+   "grams": 122
+  },
+  "source": "USDA FoodData Central SR Legacy 172185"
+ },
+ {
+  "en": "Chicken breast, roasted",
+  "ar": "صدر فراخ مشوي",
+  "aliases": [
+   "chicken breast",
+   "grilled chicken",
+   "صدور فراخ",
+   "فراخ مشوية",
+   "دجاج مشوي"
+  ],
+  "per100": [
+   0.0,
+   0.0,
+   0.0,
+   31.0,
+   3.6,
+   165
+  ],
+  "portion": {
+   "en": "1 piece",
+   "ar": "قطعة",
+   "grams": 120
+  },
+  "source": "USDA FoodData Central SR Legacy 171477"
+ },
+ {
+  "en": "Tuna, canned in water",
+  "ar": "تونة معلبة بالماء",
+  "aliases": [
+   "tuna",
+   "تونة",
+   "تونه"
+  ],
+  "per100": [
+   0.0,
+   0.0,
+   0.0,
+   25.5,
+   0.8,
+   116
+  ],
+  "portion": {
+   "en": "1 can, drained",
+   "ar": "علبة",
+   "grams": 120
+  },
+  "source": "USDA FoodData Central SR Legacy 171986"
+ },
+ {
+  "en": "Cottage cheese, 2%",
+  "ar": "جبن قريش",
+  "aliases": [
+   "cottage cheese",
+   "قريش",
+   "جبنة قريش"
+  ],
+  "per100": [
+   4.8,
+   0.0,
+   4.0,
+   10.4,
+   2.3,
+   81
+  ],
+  "portion": {
+   "en": "½ cup",
+   "ar": "نص كوب",
+   "grams": 113
+  },
+  "source": "USDA FoodData Central SR Legacy 172182"
+ },
+ {
+  "en": "Greek yogurt, plain, nonfat",
+  "ar": "زبادي يوناني",
+  "aliases": [
+   "greek yogurt",
+   "زبادي يوناني سادة",
+   "جريك يوجرت"
+  ],
+  "per100": [
+   3.4,
+   0.2,
+   0.0,
+   9.5,
+   0.2,
+   54
+  ],
+  "portion": {
+   "en": "1 pot",
+   "ar": "علبة",
+   "grams": 170
+  },
+  "source": "USDA FoodData Central SR Legacy 171312"
+ },
+ {
+  "en": "Ground beef patty, 85% lean",
+  "ar": "برجر لحم",
+  "aliases": [
+   "beef patty",
+   "burger patty",
+   "كفتة",
+   "برجر",
+   "لحمة مفرومة"
+  ],
+  "per100": [
+   0.0,
+   0.0,
+   0.0,
+   24.6,
+   14.0,
+   232
+  ],
+  "portion": {
+   "en": "1 patty",
+   "ar": "قطعة",
+   "grams": 85
+  },
+  "source": "USDA FoodData Central SR Legacy 174033"
+ },
+ {
+  "en": "Feta cheese",
+  "ar": "جبنة فيتا",
+  "aliases": [
+   "feta",
+   "فيتا",
+   "جبنة بيضا"
+  ],
+  "per100": [
+   3.9,
+   0.0,
+   0.0,
+   14.2,
+   21.5,
+   265
+  ],
+  "portion": {
+   "en": "1 slice",
+   "ar": "شريحة",
+   "grams": 30
+  },
+  "source": "USDA FoodData Central SR Legacy 173420"
  }
 ]

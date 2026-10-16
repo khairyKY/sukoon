@@ -29,6 +29,8 @@ android {
         // Followers backend (Supabase): URL + publishable key from the gitignored local.properties.
         buildConfigField("String", "SUPABASE_URL", "\"${localProps.getProperty("supabase.url", "")}\"")
         buildConfigField("String", "SUPABASE_KEY", "\"${localProps.getProperty("supabase.publishableKey", "")}\"")
+        // USDA FoodData Central (free key from api.data.gov; DEMO_KEY allows a few searches an hour).
+        buildConfigField("String", "USDA_KEY", "\"${localProps.getProperty("usda.key", "DEMO_KEY")}\"")
     }
 
     // Two builds of the same app: GitHub releases (self-updates from GitHub) and Google Play (Play

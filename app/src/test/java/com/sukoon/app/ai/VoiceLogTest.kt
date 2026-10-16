@@ -10,7 +10,7 @@ class VoiceLogTest {
     fun `entries come out typed, rounded and range-checked`() {
         val json = """```json
             {"entries": [
-              {"type": "carbs", "amount": 84.6, "name": "كشري", "estimated": true},
+              {"type": "carbs", "amount": 84.6, "name": "كشري", "estimated": true, "protein_g": 18, "fat_g": 12, "kcal": 520},
               {"type": "rapid", "amount": 6.3},
               {"type": "long", "amount": 20},
               {"type": "activity", "amount": 60, "activity": "STRENGTH", "effort": "HARD"},
@@ -24,6 +24,7 @@ class VoiceLogTest {
         assertEquals(listOf(LogEventType.CARB, LogEventType.INSULIN, LogEventType.BASAL, LogEventType.ACTIVITY, LogEventType.CARB, LogEventType.NOTE), e.map { it.type })
         assertEquals(85.0, e[0].amount!!, 1e-9)
         assertTrue(e[0].estimated)
+        assertEquals(18.0, e[0].protein!!, 1e-9)
         assertEquals(6.5, e[1].amount!!, 1e-9) // to the half unit
         assertEquals("STRENGTH", e[3].name)
         assertEquals("HARD", e[3].effort)

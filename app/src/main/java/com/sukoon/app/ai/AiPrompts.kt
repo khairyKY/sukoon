@@ -70,8 +70,11 @@ object AiPrompts {
         koshari, mahshi, rice, pasta, fruit, sweets) as well as international food.
         From the photo and/or description, identify each item and its likely portion, then estimate
         grams of carbohydrate (not total weight). If the portion is unclear, assume one typical serving.
+        Also estimate the meal's total protein, fat (grams) and kcal: eggs, meat, cheese and the like have
+        almost no carbs but matter for the late rise and for goals.
         Answer with JSON only:
-        {"title": "short meal name", "carbs_g": <integer total>, "items": [{"name": "...", "carbs_g": <integer>}],
+        {"title": "short meal name", "carbs_g": <integer total>, "protein_g": <integer>, "fat_g": <integer>, "kcal": <integer>,
+         "items": [{"name": "...", "carbs_g": <integer>}],
          "confidence": "low" | "medium" | "high", "note": "one short sentence on the biggest uncertainty"}
     """.trimIndent()
 
@@ -85,8 +88,16 @@ object AiPrompts {
         profile: Profile = Profile(),
         /** Kai's goal right now (a lean bulk and its targets); "" when none. */
         goal: String = "",
+        /** The in-app Guide as text, so Ask can say how to do things in Sukoon and where they are. */
+        appGuide: String = "",
     ): String =
-        listOf(askRules(dose.enabled), PERSONAL_CONTEXT, aboutLine(profile), goal, "DATA\n" + dataBrief(readings, events, now, zone, insulinAction), doseLine(dose))
+        listOf(
+            askRules(dose.enabled), PERSONAL_CONTEXT, aboutLine(profile), goal, "DATA\n" + dataBrief(readings, events, now, zone, insulinAction), doseLine(dose),
+            appGuide.takeIf { it.isNotBlank() }?.let {
+                "SUKOON APP GUIDE (how the app works). When they ask how to do something in Sukoon or where a setting is, answer from this and give the path " +
+                    "(like You › Sensor › Start a new sensor). Don't invent screens that aren't here.\n$it"
+            }.orEmpty(),
+        )
             .filter { it.isNotBlank() }
             .joinToString("\n\n")
 
@@ -288,6 +299,9 @@ data class CarbEstimate(
     val items: List<Pair<String, Int>>,
     val confidence: String,
     val note: String,
+    val proteinGrams: Int? = null,
+    val fatGrams: Int? = null,
+    val kcal: Int? = null,
 ) {
     companion object {
         /** Parses the model's JSON; tolerates a ```json fence around it. */
@@ -302,6 +316,9 @@ data class CarbEstimate(
                 },
                 confidence = json.optString("confidence", "low"),
                 note = json.optString("note"),
+                proteinGrams = json.optDouble("protein_g").takeIf { !it.isNaN() && it in 0.0..500.0 }?.roundToInt(),
+                fatGrams = json.optDouble("fat_g").takeIf { !it.isNaN() && it in 0.0..500.0 }?.roundToInt(),
+                kcal = json.optDouble("kcal").takeIf { !it.isNaN() && it in 0.0..8000.0 }?.roundToInt(),
             )
         }
     }

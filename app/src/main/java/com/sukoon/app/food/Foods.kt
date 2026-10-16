@@ -47,6 +47,41 @@ data class PlateItem(val food: Food, val amount: Double) {
 }
 
 /**
+ * USDA FoodData Central (public domain): generic foods ("eggs, scrambled", "rice, cooked") with
+ * protein, fat and kcal, where Open Food Facts mostly has packaged products. Foundation, SR Legacy
+ * and the survey foods (FNDDS, which come with household portions).
+ */
+object UsdaFoods {
+    private val searches = mutableMapOf<String, List<Food>>()
+
+    suspend fun search(query: String): List<Food> {
+        val q = query.trim()
+        searches[q]?.let { return it }
+        val url = "https://api.nal.usda.gov/fdc/v1/foods/search?pageSize=12&dataType=${OpenFoodFacts.enc("Foundation,SR Legacy,Survey (FNDDS)")}&query=${OpenFoodFacts.enc(q)}&api_key=${com.sukoon.app.BuildConfig.USDA_KEY}"
+        val foods = OpenFoodFacts.get(url).optJSONArray("foods")
+        val out = if (foods == null) emptyList() else List(foods.length()) { foods.optJSONObject(it)?.let(::parse) }.filterNotNull().distinctBy { it.name.lowercase() }
+        return out.also { searches[q] = it }
+    }
+
+    /** USDA's nutrient numbers: carbs 205, fibre 291, sugar 269, protein 203, fat 204, kcal 208. */
+    internal fun parse(f: JSONObject): Food? {
+        val name = f.optString("description").trim().ifEmpty { return null }
+        val nutrients = f.optJSONArray("foodNutrients") ?: return null
+        val by = (0 until nutrients.length()).mapNotNull { nutrients.optJSONObject(it) }.associate { it.optString("nutrientNumber") to it.optDouble("value") }
+        val carbs = by["205"]?.takeIf { !it.isNaN() } ?: return null
+        fun v(k: String) = by[k]?.takeIf { !it.isNaN() } ?: 0.0
+        val measure = f.optJSONArray("foodMeasures")?.optJSONObject(0)
+        return Food(
+            name = name.lowercase().replaceFirstChar { it.uppercase() },
+            brand = "USDA",
+            per100 = listOf(carbs, v("291"), v("269"), v("203"), v("204"), v("208")),
+            servingGrams = measure?.optDouble("gramWeight")?.takeIf { !it.isNaN() && it > 0 },
+            servingLabel = measure?.optString("disseminationText")?.takeIf { it.isNotBlank() && it != "Quantity not specified" },
+        )
+    }
+}
+
+/**
  * Open Food Facts (free, open data): search and barcodes. Fast first: the search-a-licious index,
  * only the fields used, and answers kept for the session, so a second look is instant.
  */
@@ -99,15 +134,15 @@ object OpenFoodFacts {
         )
     }
 
-    private fun enc(s: String) = URLEncoder.encode(s, "UTF-8")
+    internal fun enc(s: String) = URLEncoder.encode(s, "UTF-8")
 
-    private suspend fun get(url: String): JSONObject = withContext(Dispatchers.IO) {
+    internal suspend fun get(url: String): JSONObject = withContext(Dispatchers.IO) {
         val c = URL(url).openConnection() as HttpURLConnection
         c.connectTimeout = 6_000
         c.readTimeout = 8_000
         c.setRequestProperty("User-Agent", AGENT)
         try {
-            if (c.responseCode != 200) error("Open Food Facts: ${c.responseCode}")
+            if (c.responseCode != 200) error("${URL(url).host}: ${c.responseCode}")
             JSONObject(c.inputStream.bufferedReader().readText())
         } finally {
             c.disconnect()

@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.logbook
 
+import kotlinx.coroutines.async
 import android.graphics.BitmapFactory
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.ImageBitmap
@@ -166,7 +167,15 @@ internal fun FoodPicker(
         }
         delay(300)
         loading = true
-        found = runCatching { OpenFoodFacts.search(query, filter == FoodFilter.EGYPT) }.onFailure { failed = true }.getOrDefault(emptyList())
+        // Two databases at once: USDA for everyday foods (eggs, chicken, rice), Open Food Facts for products.
+        found = kotlinx.coroutines.coroutineScope {
+            val off = async { runCatching<List<com.sukoon.app.food.Food>> { OpenFoodFacts.search(query, filter == FoodFilter.EGYPT) } }
+            val usda = async { if (filter == FoodFilter.EGYPT) Result.success(emptyList<com.sukoon.app.food.Food>()) else runCatching<List<com.sukoon.app.food.Food>> { com.sukoon.app.food.UsdaFoods.search(query) } }
+            val a = off.await()
+            val b = usda.await()
+            if (a.isFailure && b.isFailure) failed = true
+            (b.getOrDefault(emptyList()).take(6) + a.getOrDefault(emptyList())).distinctBy { it.key }
+        }
         loading = false
     }
 

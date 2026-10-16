@@ -21,6 +21,10 @@ data class VoiceEntry(
     val treatment: Boolean = false,
     /** For an activity: "EASY", "MODERATE" or "HARD". */
     val effort: String? = null,
+    /** For food: protein, fat (g) and kcal, estimated like the carbs. */
+    val protein: Double? = null,
+    val fat: Double? = null,
+    val kcal: Double? = null,
 )
 
 object VoiceLog {
@@ -29,12 +33,15 @@ object VoiceLog {
         or English, maybe with recognition mistakes) into logbook entries. Answer with JSON only:
         {"entries": [{"type": "carbs"|"rapid"|"long"|"activity"|"fingerstick"|"ketones"|"weight"|"note",
           "amount": <number or null>, "name": "...", "estimated": true|false, "treatment": true|false,
+          "protein_g": <number>, "fat_g": <number>, "kcal": <number>,
           "activity": "STRENGTH"|"WALK"|"RUN"|"BIKE"|"SWIM"|"HIIT"|"FOOTBALL"|"YOGA"|"OTHER", "effort": "EASY"|"MODERATE"|"HARD"}]}
         Rules:
         - carbs: grams of carbohydrate. If grams were said, use them ("estimated": false). If only food was
           named, estimate grams for the portion said (one typical serving if unclear; Egyptian home food is
           common: aish baladi, ful, ta'meya, koshari, mahshi, rice, pasta, fruit, sweets) and set "estimated": true.
           "name" is the food in the speaker's language. "treatment": true when it was for a low (juice for a low, "I was low").
+          For food also estimate "protein_g", "fat_g" and "kcal" (eggs, meat and cheese: little carbs, real protein).
+          A food with almost no carbs (eggs, meat) is still a "carbs" entry, with its small carbs amount.
         - rapid: rapid-acting/meal/correction insulin units (Apidra, Novorapid, Humalog, Fiasp, "units" with a meal).
         - long: long-acting/basal units (Toujeo, Lantus, Tresiba, Levemir, "basal", "long-acting").
         - NEVER invent or estimate an insulin amount. If insulin was mentioned without a number, leave it out.
@@ -54,7 +61,11 @@ object VoiceLog {
             val amount = if (o.isNull("amount")) null else o.optDouble("amount").takeIf { !it.isNaN() }
             val name = o.optString("name").trim().takeIf { it.isNotEmpty() && it != "null" }
             when (o.optString("type")) {
-                "carbs" -> amount?.takeIf { it in 1.0..400.0 }?.let { VoiceEntry(LogEventType.CARB, it.roundToInt().toDouble(), name, o.optBoolean("estimated"), o.optBoolean("treatment")) }
+                "carbs" -> amount?.takeIf { it in 0.0..400.0 }?.let {
+                    fun g(k: String) = o.optDouble(k).takeIf { v -> !v.isNaN() && v in 0.0..500.0 }
+                    VoiceEntry(LogEventType.CARB, it.roundToInt().toDouble(), name, o.optBoolean("estimated"), o.optBoolean("treatment"),
+                        protein = g("protein_g"), fat = g("fat_g"), kcal = o.optDouble("kcal").takeIf { v -> !v.isNaN() && v in 0.0..8000.0 })
+                }
                 "rapid" -> amount?.takeIf { it in 0.5..50.0 }?.let { VoiceEntry(LogEventType.INSULIN, (it * 2).roundToInt() / 2.0) }
                 "long" -> amount?.takeIf { it in 1.0..150.0 }?.let { VoiceEntry(LogEventType.BASAL, (it * 2).roundToInt() / 2.0) }
                 "activity" -> amount?.takeIf { it in 1.0..600.0 }?.let {

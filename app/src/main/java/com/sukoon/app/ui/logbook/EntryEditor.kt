@@ -758,9 +758,13 @@ private fun EditorContent(
     if (showEstimate && onEstimateCarbs != null) {
         SukoonSheet(onDismissRequest = { showEstimate = false }) {
             Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
-                CarbEstimator(onEstimateCarbs, photos.toList(), onUse = { grams, title ->
-                    values[AmountField.CARBS] = grams.toString()
-                    if (note.isBlank()) note = title
+                CarbEstimator(onEstimateCarbs, photos.toList(), onUse = { r ->
+                    values[AmountField.CARBS] = r.carbsGrams.toString()
+                    // Protein, fat and kcal too (eggs: almost no carbs, but the protein counts).
+                    r.proteinGrams?.let { values[AmountField.PROTEIN] = it.toString() }
+                    r.fatGrams?.let { values[AmountField.FAT] = it.toString() }
+                    r.kcal?.let { values[AmountField.KCAL] = it.toString() }
+                    if (note.isBlank()) note = r.title
                     active = AmountField.CARBS
                     showEstimate = false
                 })
@@ -1252,7 +1256,7 @@ private fun AppMealCard(meal: EventEntity) {
 
 /** AI carb estimate (Gemini): describe the meal and/or use its photo; "Use" fills the carbs, nothing is logged. */
 @Composable
-private fun CarbEstimator(estimate: suspend (String, List<ByteArray>) -> CarbEstimate, photos: List<ByteArray>, onUse: (Int, String) -> Unit) {
+private fun CarbEstimator(estimate: suspend (String, List<ByteArray>) -> CarbEstimate, photos: List<ByteArray>, onUse: (CarbEstimate) -> Unit) {
     val scope = rememberCoroutineScope()
     var description by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
@@ -1287,7 +1291,12 @@ private fun CarbEstimator(estimate: suspend (String, List<ByteArray>) -> CarbEst
                 Text(r.items.joinToString(" · ") { (name, grams) -> "$name ${formatAmountLocalized(grams.toDouble())}g" }, fontSize = 12.5.sp, color = CaptionMuted)
             }
             Text(stringResource(R.string.carb_ai_confidence, r.confidence, r.note), fontSize = 12.sp, color = CaptionMuted)
-            PillButton(stringResource(R.string.carb_ai_use, formatAmountLocalized(r.carbsGrams.toDouble()))) { onUse(r.carbsGrams, r.title) }
+            listOfNotNull(
+                r.proteinGrams?.let { stringResource(R.string.carb_ai_protein, formatAmountLocalized(it.toDouble())) },
+                r.fatGrams?.let { stringResource(R.string.carb_ai_fat, formatAmountLocalized(it.toDouble())) },
+                r.kcal?.let { formatAmountLocalized(it.toDouble()) + " " + stringResource(R.string.entry_unit_kcal) },
+            ).takeIf { it.isNotEmpty() }?.let { Text(it.joinToString(" · "), fontSize = 12.5.sp, color = CaptionMuted) }
+            PillButton(stringResource(R.string.carb_ai_use, formatAmountLocalized(r.carbsGrams.toDouble()))) { onUse(r) }
         }
         error?.let { Text(it, fontSize = 12.5.sp, color = StateLow) }
         Text(stringResource(R.string.carb_ai_disclaimer), fontSize = 11.5.sp, color = CaptionMuted)

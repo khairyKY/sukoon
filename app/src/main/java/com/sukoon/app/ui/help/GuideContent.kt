@@ -42,6 +42,18 @@ data class GuideStart(val title: String, val link: String)
 data class Guide(val start: List<GuideStart>, val groups: List<GuideGroup>) {
     val topics: List<GuideTopic> get() = groups.flatMap { it.topics }
 
+    /** Every topic as plain text (title, what it's for, steps with their paths, tips): for Ask. */
+    fun asText(): String = topics.joinToString("\n\n") { t ->
+        buildString {
+            append("## ").append(t.title).append(" — ").append(t.forLine)
+            t.sections.forEach { s ->
+                s.heading?.let { append("\n").append(it).append(':') }
+                s.steps.forEach { st -> append("\n- ").append(st.text); st.path?.let { append(" (").append(it).append(')') } }
+            }
+            t.tips.forEach { append("\n* ").append(it) }
+        }
+    }
+
     fun topic(id: String): GuideTopic? = topics.firstOrNull { it.id == id }
 
     fun search(query: String): List<GuideTopic> {

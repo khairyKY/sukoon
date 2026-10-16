@@ -2126,4 +2126,6 @@
     <string name="powered_by_sotto">Powered by Sotto</string>
     <string name="voice_listening_hint">Say what you ate, took or did</string>
     <string name="voice_nothing_heard">Nothing heard. Tap Say it again and speak a little closer.</string>
+    <string name="carb_ai_protein">%1$s g protein</string>
+    <string name="carb_ai_fat">%1$s g fat</string>
 </resources>

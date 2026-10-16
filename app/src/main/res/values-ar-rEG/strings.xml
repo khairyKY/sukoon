@@ -2262,4 +2262,6 @@
     <string name="powered_by_sotto">بدعم من Sotto</string>
     <string name="voice_listening_hint">قول أكلت إيه أو خدت إيه أو عملت إيه</string>
     <string name="voice_nothing_heard">مسمعناش حاجة. دوس «قولها تاني» واتكلم أقرب شوية.</string>
+    <string name="carb_ai_protein">%1$s جم بروتين</string>
+    <string name="carb_ai_fat">%1$s جم دهون</string>
 </resources>

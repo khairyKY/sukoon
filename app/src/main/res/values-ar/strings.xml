@@ -2266,4 +2266,6 @@
     <string name="powered_by_sotto">بدعم من Sotto</string>
     <string name="voice_listening_hint">قل ما أكلت أو أخذت أو فعلت</string>
     <string name="voice_nothing_heard">لم يُسمع شيء. اضغط «قلها مجددًا» وتكلّم أقرب قليلًا.</string>
+    <string name="carb_ai_protein">%1$s غ بروتين</string>
+    <string name="carb_ai_fat">%1$s غ دهون</string>
 </resources>
