@@ -91,6 +91,7 @@ import com.sukoon.app.ui.components.toast
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
 import com.sukoon.app.ui.theme.Motion
+import com.sukoon.app.ui.theme.Motion.staggerIn
 import com.sukoon.app.ui.theme.PillHighBg
 import com.sukoon.app.ui.theme.PillHighText
 import com.sukoon.app.ui.theme.PillLowText
@@ -299,9 +300,10 @@ internal fun AddSheet(
             }
             Eyebrow(stringResource(R.string.entry_new), Modifier.padding(top = 18.dp))
             Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                (if (showKetones) TILES + LogEventType.KETONE else TILES).chunked(3).forEach { row ->
+                (if (showKetones) TILES + LogEventType.KETONE else TILES).chunked(3).forEachIndexed { r, row ->
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        row.forEach { type -> TypeTile(type, filled = type == LogEventType.CARB, Modifier.weight(1f)) { onPick(type, null) } }
+                        // The tiles stagger in as the sheet rises (reduced: one short fade).
+                        row.forEachIndexed { c, type -> TypeTile(type, filled = type == LogEventType.CARB, Modifier.weight(1f).staggerIn(r * 3 + c)) { onPick(type, null) } }
                     }
                 }
             }
@@ -876,18 +878,20 @@ private fun ChoiceRow(options: List<String>, selected: Int, onSelect: (Int) -> U
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         options.forEachIndexed { i, label ->
             val on = i == selected
+            // Selection crossfades its fill, border and ink (reduced: at once).
+            val ring by androidx.compose.animation.core.animateDpAsState(if (on) 2.dp else 1.dp, tween(if (Motion.reduced()) 0 else Motion.BASE, easing = Motion.Standard), label = "ring")
             Box(
                 Modifier
                     .weight(1f)
                     .heightIn(min = 44.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(if (on) Sage.copy(alpha = 0.10f) else MaterialTheme.colorScheme.surface)
-                    .border(if (on) 2.dp else 1.dp, if (on) Sage else outline(), RoundedCornerShape(12.dp))
+                    .background(Motion.tint(if (on) Sage.copy(alpha = 0.10f) else MaterialTheme.colorScheme.surface))
+                    .border(ring, Motion.tint(if (on) Sage else outline()), RoundedCornerShape(12.dp))
                     .clickable { onSelect(i) }
                     .padding(horizontal = 4.dp, vertical = 6.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (on) SageDeep else MaterialTheme.colorScheme.onBackground, maxLines = 2)
+                Text(label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Motion.tint(if (on) SageDeep else MaterialTheme.colorScheme.onBackground), maxLines = 2)
             }
         }
     }

@@ -281,10 +281,11 @@ internal fun GlucoseChart(
         val now = System.currentTimeMillis()
         if (tick && now - lastTick[0] >= 40) { lastTick[0] = now; view.performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK) }
     }
-    // Graph draw-on (motion spec): 900 ms left to right on each range; "remove animations" shows it whole.
+    // Graph draw-on (motion spec): left to right once per range on the calm curve, the band fading up with it;
+    // a new reading or a recomposition doesn't redraw it. "Remove animations" shows it whole.
     val reduced = Motion.reduced()
     val reveal = remember(range) { Animatable(if (reduced) 1f else 0f) }
-    LaunchedEffect(range) { reveal.animateTo(1f, tween(Motion.DRAW, easing = Motion.Out)) }
+    LaunchedEffect(range) { reveal.animateTo(1f, tween(Motion.SLOW, easing = Motion.Calm)) }
 
     Column {
         val sel = selected
@@ -325,7 +326,7 @@ internal fun GlucoseChart(
             fun y(mgDl: Int) = plotHeight * (1f - (mgDl.coerceIn(Y_MIN, yMax) - Y_MIN).toFloat() / (yMax - Y_MIN))
 
             // Target band; its two edges are the only y-axis numbers.
-            drawRect(com.sukoon.app.ui.theme.InRange.copy(alpha = 0.10f), topLeft = Offset(0f, y(HIGH)), size = Size(size.width, y(LOW) - y(HIGH)))
+            drawRect(com.sukoon.app.ui.theme.InRange.copy(alpha = 0.10f * (reveal.value * 2).coerceAtMost(1f)), topLeft = Offset(0f, y(HIGH)), size = Size(size.width, y(LOW) - y(HIGH)))
             val dash = PathEffect.dashPathEffect(floatArrayOf(8f, 8f))
             listOf(LOW, HIGH).forEach { level ->
                 drawLine(onBg.copy(alpha = 0.15f), Offset(0f, y(level)), Offset(size.width, y(level)), strokeWidth = 1.dp.toPx(), pathEffect = dash)
@@ -397,14 +398,15 @@ private fun RangeSelector(selected: GraphRange, onSelect: (GraphRange) -> Unit) 
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(8.dp))
-                    .then(if (isSelected) Modifier.background(Sage) else Modifier.border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f), RoundedCornerShape(8.dp)))
+                    .background(Motion.tint(if (isSelected) Sage else Sage.copy(alpha = 0f)))
+                    .border(1.dp, Motion.tint(if (isSelected) Color.Transparent else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)), RoundedCornerShape(8.dp))
                     .clickable { onSelect(range) }
                     .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = rangeLabel(range),
-                    color = if (isSelected) Color.White else CaptionMuted,
+                    color = Motion.tint(if (isSelected) Color.White else CaptionMuted),
                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                     fontSize = 12.sp,
                 )
@@ -441,16 +443,19 @@ internal fun RangeStats(summary: RangeSummary, title: String, showGmi: Boolean) 
         }
         // A tighter range of your own sits beside the international 70–180, which the bands keep.
         yours?.let { Text(stringResource(R.string.graph_in_your_range, it, percent(summary.inYourRange)), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = SageDeep) }
-        Row(
+        // The bands grow in from the start when first shown (reduced: drawn at once).
+        Box(
             Modifier
                 .fillMaxWidth()
                 .height(12.dp)
                 .clip(RoundedCornerShape(6.dp))
                 .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)),
         ) {
+        Row(Modifier.fillMaxWidth(Motion.fill(1f)).fillMaxHeight()) {
             bands.forEach { (_, share, color) ->
                 if (share > 0) Box(Modifier.weight(share.toFloat()).fillMaxHeight().background(color))
             }
+        }
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             bands.forEach { (label, share, color) ->

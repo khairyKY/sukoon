@@ -72,6 +72,8 @@ import com.sukoon.app.insights.LowsStory
 import com.sukoon.app.platform.TimeFormat
 import com.sukoon.app.ui.insights.slot
 import com.sukoon.app.ui.theme.CaptionMuted
+import com.sukoon.app.ui.theme.Motion.settleSize
+import com.sukoon.app.ui.theme.Motion.staggerIn
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
 import com.sukoon.app.ui.theme.PillHighText
 import com.sukoon.app.ui.theme.Sage
@@ -165,7 +167,8 @@ fun AskScreen(
                 }
             }
             itemsIndexed(state.turns) { i, turn ->
-                Bubble(turn)
+                // Your question rises in as it's sent; the answer was already there, written as it streamed.
+                Bubble(turn, if (turn.fromUser && i == state.turns.lastIndex) Modifier.staggerIn(0, key = i) else Modifier)
                 // Two more suggestions stay in reach under the last answer.
                 if (!turn.fromUser && i == state.turns.lastIndex && !state.thinking) {
                     // One line each, never cut: the row scrolls sideways, edge to edge.
@@ -178,8 +181,8 @@ fun AskScreen(
                 // The answer as it's written; until the first words, "thinking".
                 item {
                     val soFar = state.streaming
-                    if (soFar.isNullOrBlank()) Text(stringResource(R.string.ask_thinking), fontSize = 12.sp, color = CaptionMuted, modifier = Modifier.padding(4.dp))
-                    else Bubble(ChatTurn(fromUser = false, text = soFar))
+                    if (soFar.isNullOrBlank()) Text(stringResource(R.string.ask_thinking), fontSize = 12.sp, color = CaptionMuted, modifier = Modifier.padding(4.dp).staggerIn(0))
+                    else Bubble(ChatTurn(fromUser = false, text = soFar), Modifier.staggerIn(0))
                 }
             }
         }
@@ -267,17 +270,18 @@ private fun Chip(text: String, small: Boolean = false, onClick: () -> Unit) {
 
 /** You at the end in sage; Sukoon at the start on the surface, with a small source caption. */
 @Composable
-private fun Bubble(turn: ChatTurn) {
+private fun Bubble(turn: ChatTurn, modifier: Modifier = Modifier) {
     val user = turn.fromUser
     // The tail corner points at the speaker's side (bottom-end for you, bottom-start for the answer).
     val shape = if (user) RoundedCornerShape(18.dp, 18.dp, 6.dp, 18.dp) else RoundedCornerShape(18.dp, 18.dp, 18.dp, 6.dp)
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = if (user) Alignment.End else Alignment.Start) {
+    Column(modifier.fillMaxWidth(), horizontalAlignment = if (user) Alignment.End else Alignment.Start) {
         Text(
             if (user) AnnotatedString(turn.text) else markdown(turn.text),
             fontSize = 14.sp,
             lineHeight = 20.sp,
             color = if (user) Color.White else MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
+                .settleSize() // a streaming answer grows smoothly instead of jumping line by line
                 .widthIn(max = 310.dp)
                 .clip(shape)
                 .background(if (user) Sage else MaterialTheme.colorScheme.surface)

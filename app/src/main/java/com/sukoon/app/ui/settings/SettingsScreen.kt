@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import com.sukoon.app.ui.theme.Motion
+import com.sukoon.app.ui.theme.Motion.staggerIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -237,6 +238,7 @@ fun SettingsScreen(
     // Push / pop (motion spec): a page slides 30 dp in from the trailing edge (mirrored in Arabic) as it fades in over the hub; back reverses it.
     val travel = with(LocalDensity.current) { 30.dp.roundToPx() } * if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1 else 1
     val hubScroll = rememberScrollState()
+    val entering = Motion.firstShow() // the hub's cards stagger in once, not on every pop back to it
     AnimatedContent(
         page,
         modifier.fillMaxSize(),
@@ -283,9 +285,9 @@ fun SettingsScreen(
                         YouPage.HELP to stringResource(R.string.you_help_summary),
                         YouPage.GUIDE to stringResource(R.string.you_guide_summary),
                     )
-                    (if (wears) YouPage.entries - YouPage.PROFILE else FOLLOWER_PAGES).chunked(2).forEach { row ->
+                    (if (wears) YouPage.entries - YouPage.PROFILE else FOLLOWER_PAGES).chunked(2).forEachIndexed { r, row ->
                         Row(Modifier.padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            row.forEach { p -> SectionCard(p, summaries.getValue(p), Modifier.weight(1f)) { if (p == YouPage.GUIDE) onOpenGuide() else page = p } }
+                            row.forEachIndexed { c, p -> SectionCard(p, summaries.getValue(p), Modifier.weight(1f).then(if (entering) Modifier.staggerIn(r * 2 + c) else Modifier)) { if (p == YouPage.GUIDE) onOpenGuide() else page = p } }
                             if (row.size == 1) Spacer(Modifier.weight(1f))
                         }
                     }

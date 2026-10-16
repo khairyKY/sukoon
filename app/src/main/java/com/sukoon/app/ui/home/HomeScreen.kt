@@ -85,6 +85,8 @@ import com.sukoon.app.ui.theme.Motion
 import com.sukoon.app.ui.components.NoticeBanner
 import com.sukoon.app.ui.components.drawSensor
 import com.sukoon.app.ui.theme.Motion.pressScale
+import com.sukoon.app.ui.theme.Motion.settleSize
+import com.sukoon.app.ui.theme.Motion.staggerIn
 import kotlin.math.roundToInt
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -166,7 +168,7 @@ fun HomeScreen(
     /** Dose suggestions (beta) are on: Now can say why there's no correction. */
     dosing: Boolean = false,
 ) {
-    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss, mealDose, onMealDose, onModes, status, layout, demo, dosing)) {
+    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss, mealDose, onMealDose, onModes, status, layout, demo, dosing), LocalEntrance provides Motion.firstShow()) {
         PullToSync(onSync, modifier) {
             HomeContent(state, brief, Modifier.fillMaxSize(), onTreated, onSnooze, onAlertEmergencyContact, onTroubleshoot, onPairSensor)
         }
@@ -194,6 +196,9 @@ private class Shortcuts(
     val dosing: Boolean = false,
 )
 private val LocalShortcuts = staticCompositionLocalOf { Shortcuts({}, {}) }
+
+/** Now's first appearance (the cards under the number cascade in); held here so crossing 180 doesn't replay it. */
+private val LocalEntrance = staticCompositionLocalOf { false }
 
 @Composable
 private fun HomeContent(
@@ -461,7 +466,13 @@ private fun ColumnScope.CalmContent(
         HomeStatusBar(stringResource(R.string.home_status_live), dot, pulsing = true, top = 2.dp)
         // Alarms paused, a missed long-acting, supplies, a meal watch: these show even with chips off.
         val iob = if (s.insulinOnBoard >= 0.05) StatusChip(stringResource(R.string.home_iob, String.format(Locale.getDefault(), "%.1f", s.insulinOnBoard)), onClick = null) else null
-        StatusChips(listOfNotNull(iob) + if (s.layout.shows(NowPart.CHIPS)) s.status else s.status.filter { it.attention })
+        // Chips fade in as their row opens and out as it closes; one more or one fewer settles the row's size.
+        val chips = listOfNotNull(iob) + if (s.layout.shows(NowPart.CHIPS)) s.status else s.status.filter { it.attention }
+        val lastChips = remember { arrayOf(chips) }
+        val shownChips = if (chips.isNotEmpty()) chips.also { lastChips[0] = it } else lastChips[0]
+        androidx.compose.animation.AnimatedVisibility(chips.isNotEmpty(), enter = Motion.appear(), exit = Motion.vanish()) {
+            StatusChips(shownChips, Modifier.padding(horizontal = 16.dp).settleSize())
+        }
         NoticeBanner(Modifier.padding(horizontal = 16.dp).padding(top = 12.dp))
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -470,23 +481,24 @@ private fun ColumnScope.CalmContent(
             pill()
             Spacer(Modifier.height(8.dp))
             HeroNumber(digits(countUp(mgDl)), trend, color)
-            Text(
-                text = listOfNotNull(
+            Motion.Swap(
+                listOfNotNull(
                     stringResource(R.string.home_unit_mgdl),
                     trendLabel(trend),
                     if (updated) stringResource(R.string.home_updated_now) else null,
                 ).joinToString(" · "),
-                fontSize = 12.sp,
-                color = CaptionMuted,
-            )
+            ) { Text(text = it, fontSize = 12.sp, color = CaptionMuted) }
         }
         Spacer(Modifier.height(18.dp))
-        s.layout.order.filter(s.layout::shows).forEach { part ->
+        // List & card stagger on Now's first appearance (not on a low or urgent screen: those show at once).
+        val entering = LocalEntrance.current
+        s.layout.order.filter(s.layout::shows).forEachIndexed { i, part ->
+            val enter = if (entering) Modifier.staggerIn(i) else Modifier
             when (part) {
-                NowPart.NEXT -> NextCard(brief)
-                NowPart.GRAPH -> { RecentChart(readings); Spacer(Modifier.height(16.dp)) }
-                NowPart.STATS -> { StatsRow(); Spacer(Modifier.height(12.dp)) }
-                NowPart.DOSE -> Box(Modifier.onGloballyPositioned { doseTop = it.positionInParent().y.toInt() }) { DoseCards() }
+                NowPart.NEXT -> Box(Modifier.fillMaxWidth().then(enter).settleSize()) { NextCard(brief) }
+                NowPart.GRAPH -> Box(Modifier.fillMaxWidth().then(enter)) { Column { RecentChart(readings); Spacer(Modifier.height(16.dp)) } }
+                NowPart.STATS -> Box(Modifier.fillMaxWidth().then(enter)) { Column { StatsRow(); Spacer(Modifier.height(12.dp)) } }
+                NowPart.DOSE -> Box(Modifier.onGloballyPositioned { doseTop = it.positionInParent().y.toInt() }.then(enter).settleSize()) { DoseCards() }
                 else -> Unit
             }
         }
@@ -786,7 +798,9 @@ private fun StatTile(stat: HomeStat, value: Double?, modifier: Modifier) {
             .padding(horizontal = 10.dp, vertical = 9.dp),
     ) {
         Text(statLabel(stat), fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted, maxLines = 1)
-        Text(value?.let { statValue(stat, it) } ?: "—", fontFamily = HeadlineSerifFontFamily, fontSize = 21.sp, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, modifier = Modifier.padding(top = 2.dp))
+        Motion.Swap(value?.let { statValue(stat, it) } ?: "—", Modifier.padding(top = 2.dp), rise = true) {
+            Text(it, fontFamily = HeadlineSerifFontFamily, fontSize = 21.sp, color = MaterialTheme.colorScheme.onBackground, maxLines = 1)
+        }
         Text(statUnit(stat), fontSize = 11.5.sp, color = CaptionMuted, maxLines = 1)
     }
 }
