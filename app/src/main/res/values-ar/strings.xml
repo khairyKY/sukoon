@@ -2155,7 +2155,7 @@
     <string name="update_ready_body">اضغط لترى الجديد وتحدّث.</string>
     <string name="ramadan_auto">من موقعي</string>
     <string name="ramadan_auto_on">الفجر والمغرب محسوبان لليوم، كل يوم.</string>
-    <string name="ramadan_auto_off">يستخدم موقعك التقريبي (نحو 1 كم) لحساب الفجر والمغرب حيث أنت. يبقى على هذا الهاتف.</string>
+    <string name="ramadan_auto_off">يستخدم موقعك التقريبي (نحو 1 كم) لحساب الفجر والمغرب حيث أنت. يبقيه سكون على هذا الهاتف؛ ولإظهار اسم المدينة تُسأل به خدمة الأماكن في الهاتف (من Google في معظم الهواتف).</string>
     <string name="ramadan_no_place">تعذّر تحديد موقعك. اختر مدينتك، أو اكتب الأوقات أدناه.</string>
     <string name="ramadan_method">الفجر حسب</string>
     <string name="ramadan_method_egypt">مصر</string>
@@ -2399,4 +2399,6 @@
     <string name="delete_hide_title">إخفاء هذه الوجبة؟</string>
     <string name="delete_hide_body">تبقى في التطبيق الذي جاءت منه، لكنها تخرج من سجل سكون.</string>
     <string name="delete_hide_confirm">إخفاء</string>
+    <string name="ramadan_no_city_name">اسم المدينة غير متاح (لا يوجد اتصال، أو لا يستطيع هذا الهاتف البحث عن الأماكن). الأوقات ما زالت لمكانك.</string>
+    <string name="after_workout_custom">مخصّص</string>
 </resources>

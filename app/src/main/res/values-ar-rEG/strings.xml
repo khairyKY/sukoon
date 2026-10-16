@@ -2151,7 +2151,7 @@
     <string name="update_ready_body">دوس تشوف الجديد وتحدّث.</string>
     <string name="ramadan_auto">من مكاني</string>
     <string name="ramadan_auto_on">الفجر والمغرب متحسبين للنهارده، كل يوم.</string>
-    <string name="ramadan_auto_off">بيستخدم مكانك التقريبي (حوالي 1 كم) علشان يحسب الفجر والمغرب في مكانك. بيفضل على الموبايل ده.</string>
+    <string name="ramadan_auto_off">بيستخدم مكانك التقريبي (حوالي 1 كم) علشان يحسب الفجر والمغرب في مكانك. سكون بيسيبه على الموبايل ده؛ وعلشان يظهر اسم المدينة، بتتسأل بيه خدمة الأماكن في الموبايل (بتاعة Google في أغلب الموبايلات).</string>
     <string name="ramadan_no_place">معرفناش إنت فين. اختار مدينتك، أو اكتب المواعيد تحت.</string>
     <string name="ramadan_method">الفجر حسب</string>
     <string name="ramadan_method_egypt">مصر</string>
@@ -2395,4 +2395,6 @@
     <string name="delete_hide_title">تخفي الأكلة دي؟</string>
     <string name="delete_hide_body">هتفضل في التطبيق اللي جت منه، بس هتخرج من سجل سكون.</string>
     <string name="delete_hide_confirm">اخفيها</string>
+    <string name="ramadan_no_city_name">اسم المدينة مش متاح (مفيش نت، أو الموبايل ده مش بيعرف يدوّر على الأماكن). المواعيد لسه محسوبة لمكانك.</string>
+    <string name="after_workout_custom">نسبة تانية</string>
 </resources>

@@ -29,6 +29,16 @@ object PrayerTimes {
     /** The city within 25 km, if any. */
     fun nearest(lat: Double, lng: Double): City? = City.entries.minBy { km(lat, lng, it.lat, it.lng) }.takeIf { km(lat, lng, it.lat, it.lng) <= 25 }
 
+    /** The place follows you only past this, so GPS jitter doesn't keep renaming it. */
+    const val MOVE_KM = 10.0
+
+    /** A fix far enough from where the times are for to move them there. */
+    fun moved(fromLat: Double, fromLng: Double, lat: Double, lng: Double): Boolean = km(fromLat, fromLng, lat, lng) > MOVE_KM
+
+    /** A geocoded place's name: its town, else its district, else its governorate (Egypt's rural fixes often lack a locality). */
+    fun placeName(locality: String?, subAdminArea: String?, adminArea: String?): String? =
+        listOf(locality, subAdminArea, adminArea).firstOrNull { !it.isNullOrBlank() }?.trim()
+
     /** Great-circle distance (haversine). */
     fun km(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
         val a = sin(rad(lat2 - lat1) / 2).let { it * it } + cos(rad(lat1)) * cos(rad(lat2)) * sin(rad(lng2 - lng1) / 2).let { it * it }

@@ -59,6 +59,19 @@ class ModesTest {
     }
 
     @Test
+    fun `a custom cut after a workout is any 5 percent step, capped at 75`() {
+        val m = active("19:00", listOf(workout("17:00", 60)))
+        fun meal(percent: Int) = Modes.doseChange(m, at("19:00"), at("18:45"), zone, percent)!!
+        assertEquals(0.65, meal(35).mealFactor, 1e-9)
+        assertEquals(35, meal(35).mealCutPercent)
+        assertEquals(DoseChange.Reason.IN_WORKOUT, meal(0).reason) // 0%: the meal as usual, only the correction halved
+        assertEquals(1.0, meal(0).mealFactor, 1e-9)
+        assertEquals(0.25, meal(90).mealFactor, 1e-9)
+        (0..75 step 5).forEach { assertEquals(it, meal(it).takeIf { c -> c.reason == DoseChange.Reason.AFTER_WORKOUT }?.mealCutPercent ?: 0) } // 10, 20, 45 don't show as 9, 19, 44
+        assertEquals(listOf(0, 25, 50, 35, 75, 0, 40), listOf(0, 25, 50, 35, 120, -10, 38).map(Modes::afterWorkoutCut)) // old choices kept as is
+    }
+
+    @Test
     fun `fasting runs from suhoor's end to iftar`() {
         val f = FastingSettings(on = true, suhoorEnds = LocalTime.of(4, 20), iftar = LocalTime.of(17, 40))
         assertTrue(active("12:00", fasting = f).fastingNow)

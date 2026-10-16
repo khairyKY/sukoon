@@ -418,6 +418,8 @@ fun SettingsScreen(
                             InsulinSection(insulinAction, onInsulinAction, doseSettings.step) { onDoseSettings(doseSettings.copy(step = it)) }
                             Gap()
                             DoseCard(doseSettings, guarded(onDoseSettings), doseStartingPoints, learningReport, insulinAction.durationMinutes / 60, profile, locked, { askingPin = true }, parentPin, onParentPin, openLearning, onOpenedLearning)
+                            // The same setting as Fitness & food → Training: a dose change, so it sits with the others too.
+                            AfterWorkoutCut((context.applicationContext as com.sukoon.app.SukoonApp).container.modes, enabled = !locked)
                             Spacer(Modifier.height(10.dp))
                             // About you (weight for the starting ratios, age for the lock) and the parent lock moved to the profile page.
                             LinkRow(stringResource(R.string.you_profile_link), stringResource(R.string.you_profile_link_body)) { page = YouPage.PROFILE }
