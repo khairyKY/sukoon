@@ -236,28 +236,18 @@ private fun StepsToday() {
 }
 
 /**
- * Ramadan times from where you are: the phone's last known place (coarse is enough), asked for
- * once; then Fajr and Maghrib are worked out every day (PrayerTimes), by the chosen authority.
+ * Ramadan times from where you are: the phone's rough location (coarse is enough), asked for when you
+ * turn it on, followed as you move (ModesKeeper.followPlace); Fajr and Maghrib are worked out every day
+ * (PrayerTimes) by the chosen authority. Location off: pick the city you're in.
  */
 @Composable
 private fun RamadanPlace(keeper: ModesKeeper) {
     val context = LocalContext.current
-    var place by remember { mutableStateOf(keeper.prayerPlace) }
+    val place by keeper.place.collectAsState()
     var failed by remember { mutableStateOf(false) }
-    fun locate() {
-        val lm = context.getSystemService(android.location.LocationManager::class.java)
-        val loc = runCatching {
-            listOf(android.location.LocationManager.NETWORK_PROVIDER, android.location.LocationManager.PASSIVE_PROVIDER, android.location.LocationManager.GPS_PROVIDER)
-                .mapNotNull { p -> lm.getLastKnownLocation(p) }.maxByOrNull { it.time }
-        }.getOrNull()
-        if (loc == null) { failed = true; return }
-        failed = false
-        // Rounded to ~1 km: plenty for prayer times, and no more precise than it needs to be.
-        val p = ModesKeeper.PrayerPlace(Math.round(loc.latitude * 100) / 100.0, Math.round(loc.longitude * 100) / 100.0, place?.method ?: com.sukoon.app.modes.PrayerTimes.Method.EGYPT)
-        keeper.prayerPlace = p
-        place = p
-    }
-    val ask = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { granted -> if (granted) locate() else failed = true }
+    fun granted() = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+    androidx.compose.runtime.LaunchedEffect(Unit) { keeper.followPlace() }
+    val ask = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { ok -> failed = !(ok && keeper.followPlace(start = true)) }
     Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(stringResource(R.string.ramadan_auto), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
@@ -266,15 +256,34 @@ private fun RamadanPlace(keeper: ModesKeeper) {
         androidx.compose.material3.Switch(
             checked = place != null,
             onCheckedChange = { on ->
-                if (!on) { keeper.prayerPlace = null; place = null }
-                else if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) locate()
+                failed = false
+                if (!on) keeper.prayerPlace = null
+                else if (granted()) failed = !keeper.followPlace(start = true)
                 else ask.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION)
             },
             colors = androidx.compose.material3.SwitchDefaults.colors(checkedTrackColor = Sage),
         )
     }
-    if (failed) Small(stringResource(R.string.ramadan_no_place), muted = true)
+    val pickCity: @Composable (com.sukoon.app.modes.PrayerTimes.City?) -> Unit = { now ->
+        ChoiceChips<com.sukoon.app.modes.PrayerTimes.City?>(com.sukoon.app.modes.PrayerTimes.City.entries, now, { cityName(it) }) { c ->
+            c?.let { keeper.prayerPlace = ModesKeeper.PrayerPlace(it.lat, it.lng, place?.method ?: com.sukoon.app.modes.PrayerTimes.Method.EGYPT) }
+            failed = false
+        }
+    }
+    if (failed && place == null) {
+        Small(stringResource(R.string.ramadan_no_place), muted = true)
+        pickCity(null)
+    }
     place?.let { p ->
+        // Where the times are for, so you can see they follow you.
+        val city = com.sukoon.app.modes.PrayerTimes.nearest(p.lat, p.lng)
+        val coords = String.format(java.util.Locale.getDefault(), "%.2f, %.2f", p.lat, p.lng)
+        Text(city?.let { cityName(it) + " · " + coords } ?: coords, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 8.dp))
+        if (granted()) Small(stringResource(R.string.ramadan_follows), muted = true)
+        else {
+            Small(stringResource(R.string.ramadan_pick_city), muted = true)
+            pickCity(city)
+        }
         Small(stringResource(R.string.ramadan_method))
         ChoiceChips(com.sukoon.app.modes.PrayerTimes.Method.entries, p.method, {
             stringResource(when (it) {
@@ -282,7 +291,7 @@ private fun RamadanPlace(keeper: ModesKeeper) {
                 com.sukoon.app.modes.PrayerTimes.Method.MWL -> R.string.ramadan_method_mwl
                 com.sukoon.app.modes.PrayerTimes.Method.UMM_AL_QURA -> R.string.ramadan_method_uq
             })
-        }) { m -> val n = p.copy(method = m); keeper.prayerPlace = n; place = n }
+        }) { m -> keeper.prayerPlace = p.copy(method = m) }
     }
 }
 
@@ -332,3 +341,12 @@ private fun TimeRow(label: String, value: LocalTime, enabled: Boolean = true, on
         Text(TimeFormat.of().format(value), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Sage)
     }
 }
+
+@Composable
+private fun cityName(city: com.sukoon.app.modes.PrayerTimes.City?): String = stringResource(
+    when (city) {
+        com.sukoon.app.modes.PrayerTimes.City.ALEXANDRIA -> R.string.ramadan_city_alexandria
+        com.sukoon.app.modes.PrayerTimes.City.TANTA -> R.string.ramadan_city_tanta
+        else -> R.string.ramadan_city_cairo
+    },
+)

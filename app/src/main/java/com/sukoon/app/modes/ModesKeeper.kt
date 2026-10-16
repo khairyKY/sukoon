@@ -123,7 +123,7 @@ class ModesKeeper(private val context: Context, logbook: LogbookRepository, priv
             refresh()
         }
 
-    /** Where Fajr and Maghrib are worked out for (null: the times typed in). */
+    /** Where Fajr and Maghrib are worked out for (null: the times typed in). [lat]/[lng] rounded to ~1 km. */
     data class PrayerPlace(val lat: Double, val lng: Double, val method: PrayerTimes.Method = PrayerTimes.Method.EGYPT)
 
     var prayerPlace: PrayerPlace?
@@ -132,8 +132,43 @@ class ModesKeeper(private val context: Context, logbook: LogbookRepository, priv
         }
         set(v) {
             prefs.edit().apply { if (v == null) remove(K_PLACE) else putString(K_PLACE, "${v.lat},${v.lng},${v.method.name}") }.apply()
+            _place.value = v
             refresh()
         }
+    private val _place = MutableStateFlow(prayerPlace)
+    val place: StateFlow<PrayerPlace?> = _place.asStateFlow()
+    private var freshFixAt = 0L
+
+    /**
+     * The place follows the phone (Cairo, Alexandria and Tanta are minutes apart): its rough last-known
+     * location, and on Android 11+ a fresh one at most hourly; only a move of over 10 km moves the place.
+     * [start] turns it on from nothing. False when no location is known yet. Nothing leaves the phone.
+     */
+    fun followPlace(start: Boolean = false): Boolean {
+        if (prayerPlace == null && !start) return false
+        if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED) return false
+        val lm = context.getSystemService(android.location.LocationManager::class.java) ?: return false
+        val fused = if (android.os.Build.VERSION.SDK_INT >= 31) android.location.LocationManager.FUSED_PROVIDER else android.location.LocationManager.NETWORK_PROVIDER
+        val last = runCatching {
+            listOf(fused, android.location.LocationManager.NETWORK_PROVIDER, android.location.LocationManager.PASSIVE_PROVIDER, android.location.LocationManager.GPS_PROVIDER)
+                .distinct().mapNotNull { lm.getLastKnownLocation(it) }.maxByOrNull { it.time }
+        }.getOrNull()
+        last?.let(::moveTo)
+        val now = System.currentTimeMillis()
+        if (android.os.Build.VERSION.SDK_INT >= 30 && (start || now - freshFixAt > Duration.ofHours(1).toMillis())) {
+            freshFixAt = now
+            val provider = if (android.os.Build.VERSION.SDK_INT >= 31 && lm.hasProvider(fused)) fused else android.location.LocationManager.NETWORK_PROVIDER
+            runCatching { lm.getCurrentLocation(provider, null, context.mainExecutor) { loc -> if (loc != null && (start || prayerPlace != null)) moveTo(loc) } }
+        }
+        return last != null
+    }
+
+    private fun moveTo(loc: android.location.Location) {
+        val cur = prayerPlace
+        if (cur != null && PrayerTimes.km(cur.lat, cur.lng, loc.latitude, loc.longitude) <= 10) return
+        // Rounded to ~1 km: plenty for prayer times, and no more precise than it needs to be.
+        prayerPlace = PrayerPlace(Math.round(loc.latitude * 100) / 100.0, Math.round(loc.longitude * 100) / 100.0, cur?.method ?: PrayerTimes.Method.EGYPT)
+    }
 
     /** Your goal (You → Fitness & food): maintain, lean bulk or cut, with its targets (Goals). */
     var goal: GoalSettings

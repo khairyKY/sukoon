@@ -14,7 +14,7 @@
     <!-- Graph (A3) -->
     <string name="graph_title">الرسم البياني</string>
     <string name="graph_empty">لا توجد بيانات في هذه المدة بعد</string>
-    <string name="graph_tap_hint">انقر على الرسم لعرض قراءة</string>
+    <string name="graph_tap_hint">انقر على الرسم أو اسحب عليه لعرض قراءة</string>
     <string name="graph_range_hours">%1$dس</string>
     <string name="home_unit_mgdl">مجم/دل</string>
     <string name="home_updated_now">حُدِّث الآن</string>
@@ -2159,8 +2159,8 @@
     <string name="update_ready_body">اضغط لترى الجديد وتحدّث.</string>
     <string name="ramadan_auto">من موقعي</string>
     <string name="ramadan_auto_on">الفجر والمغرب محسوبان لليوم، كل يوم.</string>
-    <string name="ramadan_auto_off">أو اكتب الأوقات أدناه.</string>
-    <string name="ramadan_no_place">تعذّر تحديد موقعك. افتح تطبيق خرائط مرة، أو اكتب الأوقات.</string>
+    <string name="ramadan_auto_off">يستخدم موقعك التقريبي (نحو 1 كم) لحساب الفجر والمغرب حيث أنت. يبقى على هذا الهاتف.</string>
+    <string name="ramadan_no_place">تعذّر تحديد موقعك. اختر مدينتك، أو اكتب الأوقات أدناه.</string>
     <string name="ramadan_method">الفجر حسب</string>
     <string name="ramadan_method_egypt">مصر</string>
     <string name="ramadan_method_mwl">رابطة العالم الإسلامي</string>
@@ -2369,4 +2369,9 @@
     <string name="nfc_started_not_paired">بدأ المستشعر ويمرّ بالتهيئة، لكن الربط لم يكتمل. اضغط «الربط من جديد» أثناء التهيئة.</string>
     <string name="nfc_no_stream">لم يقبل المستشعر الاتصال بسكون. حاول مجددًا.</string>
     <string name="home_more_below">اقتراح تجريبي في الأسفل</string>
+    <string name="ramadan_follows">يتبعك: إذا انتقلت أكثر من 10 كم تتغير الأوقات معك.</string>
+    <string name="ramadan_pick_city">الموقع مغلق لسكون. اختر المدينة التي أنت فيها:</string>
+    <string name="ramadan_city_cairo">القاهرة</string>
+    <string name="ramadan_city_alexandria">الإسكندرية</string>
+    <string name="ramadan_city_tanta">طنطا</string>
 </resources>

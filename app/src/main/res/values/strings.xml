@@ -14,7 +14,7 @@
     <!-- Graph (A3) -->
     <string name="graph_title">Graph</string>
     <string name="graph_empty">No data in this range yet</string>
-    <string name="graph_tap_hint">Tap the chart to inspect a reading</string>
+    <string name="graph_tap_hint">Tap or slide along the chart to read a moment</string>
     <string name="graph_range_hours">%1$dh</string>
     <string name="home_unit_mgdl">mg/dL</string>
     <string name="home_updated_now">updated now</string>
@@ -2031,8 +2031,8 @@
     <string name="update_ready_body">Tap to see what\'s new and update.</string>
     <string name="ramadan_auto">From my location</string>
     <string name="ramadan_auto_on">Fajr and Maghrib worked out for today, every day.</string>
-    <string name="ramadan_auto_off">Or type the times below.</string>
-    <string name="ramadan_no_place">Couldn\'t find where you are. Open a maps app once, or type the times.</string>
+    <string name="ramadan_auto_off">Uses your rough location (about 1 km) to work out Fajr and Maghrib where you are. It stays on this phone.</string>
+    <string name="ramadan_no_place">Couldn\'t find where you are. Pick your city, or type the times below.</string>
     <string name="ramadan_method">Fajr by</string>
     <string name="ramadan_method_egypt">Egypt</string>
     <string name="ramadan_method_mwl">Muslim World League</string>
@@ -2229,4 +2229,9 @@
     <string name="nfc_started_not_paired">The sensor has started and is warming up, but pairing didn\'t finish. Tap Pair again while it warms up.</string>
     <string name="nfc_no_stream">The sensor wouldn\'t connect to Sukoon. Try again.</string>
     <string name="home_more_below">Beta suggestion below</string>
+    <string name="ramadan_follows">Follows you: move more than 10 km and the times move with you.</string>
+    <string name="ramadan_pick_city">Location is off for Sukoon. Pick the city you\'re in:</string>
+    <string name="ramadan_city_cairo">Cairo</string>
+    <string name="ramadan_city_alexandria">Alexandria</string>
+    <string name="ramadan_city_tanta">Tanta</string>
 </resources>
