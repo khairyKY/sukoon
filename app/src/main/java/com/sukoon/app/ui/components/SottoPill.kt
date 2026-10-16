@@ -95,10 +95,12 @@ fun SottoPill(state: PillState, level: Float, onTap: () -> Unit = {}, onCancel: 
             .background(if (state == PillState.ERROR) (if (dark) Sotto.blushDark else Sotto.blush) else if (dark) Sotto.plum else Sotto.cream)
             .clickable(enabled = state == PillState.LISTENING, onClick = onTap)
             .semantics { contentDescription = label }
-            .padding(start = 22.dp, end = if (cancel) 8.dp else 22.dp),
+            .padding(horizontal = if (cancel) 8.dp else 22.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        // An empty twin of the ✕ on the other side, so the animation sits in the pill's middle.
+        if (cancel) Box(Modifier.size(36.dp))
         Canvas(Modifier.width(96.dp).fillMaxHeight()) {
             val cx = size.width / 2
             val yc = size.height / 2

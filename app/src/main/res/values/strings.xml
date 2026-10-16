@@ -2260,4 +2260,9 @@
     <string name="delete_hide_title">Hide this meal?</string>
     <string name="delete_hide_body">It stays in the app it came from, but leaves Sukoon\'s logbook.</string>
     <string name="delete_hide_confirm">Hide</string>
+    <string name="voice_tap_done">Tap when you\'re done</string>
+    <string name="voice_done">I\'m done</string>
+    <string name="voice_heard_label">What I heard. Fix anything first</string>
+    <string name="voice_use_this">Use this</string>
+    <string name="voice_say_more">Say more</string>
 </resources>

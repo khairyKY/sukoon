@@ -2399,4 +2399,9 @@
     <string name="delete_hide_title">إخفاء هذه الوجبة؟</string>
     <string name="delete_hide_body">تبقى في التطبيق الذي جاءت منه، لكنها تخرج من سجل سكون.</string>
     <string name="delete_hide_confirm">إخفاء</string>
+    <string name="voice_tap_done">اضغط حين تنتهي</string>
+    <string name="voice_done">انتهيت</string>
+    <string name="voice_heard_label">ما سمعته. صحّح أي شيء أولًا</string>
+    <string name="voice_use_this">استخدم هذا</string>
+    <string name="voice_say_more">قل المزيد</string>
 </resources>

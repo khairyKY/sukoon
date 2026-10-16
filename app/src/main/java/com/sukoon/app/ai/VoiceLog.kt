@@ -35,6 +35,10 @@ object VoiceLog {
           "amount": <number or null>, "name": "...", "estimated": true|false, "treatment": true|false,
           "protein_g": <number>, "fat_g": <number>, "kcal": <number>,
           "activity": "STRENGTH"|"WALK"|"RUN"|"BIKE"|"SWIM"|"HIIT"|"FOOTBALL"|"YOGA"|"OTHER", "effort": "EASY"|"MODERATE"|"HARD"}]}
+        It is often Egyptian Arabic and English mixed in one sentence, the Arabic maybe in Latin letters and
+        numbers ("kalt 2 sandwich foul w tea" = ate 2 ful sandwiches and tea; "w" = and, 3 = ع, 7 = ح,
+        "etnein"/"talata" = 2/3): read it all as one account. Egyptian names in any spelling: foul/ful,
+        ta3meya/ta'meya/falafel, koshari, feteer, molokhia, mahshi, aish baladi, fino, basbousa, konafa.
         Rules:
         - carbs: grams of carbohydrate. If grams were said, use them ("estimated": false). If only food was
           named, estimate grams for the portion said (one typical serving if unclear; Egyptian home food is

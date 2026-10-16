@@ -2395,4 +2395,9 @@
     <string name="delete_hide_title">تخفي الأكلة دي؟</string>
     <string name="delete_hide_body">هتفضل في التطبيق اللي جت منه، بس هتخرج من سجل سكون.</string>
     <string name="delete_hide_confirm">اخفيها</string>
+    <string name="voice_tap_done">دوس لما تخلص</string>
+    <string name="voice_done">خلصت</string>
+    <string name="voice_heard_label">اللي سمعته. صلّح أي حاجة الأول</string>
+    <string name="voice_use_this">استخدم ده</string>
+    <string name="voice_say_more">قول كمان</string>
 </resources>
