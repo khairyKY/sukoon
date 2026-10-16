@@ -28,7 +28,7 @@ class LibreNfcTest {
 
     @Test
     fun `a sensor nobody started is refused, a warming or running one is taken`() {
-        assertTrue(LibreNfc.problemWith(Libre2.State.NOT_STARTED)!!.contains("hasn't been started"))
+        assertEquals(com.sukoon.app.R.string.nfc_not_started, LibreNfc.problemWith(Libre2.State.NOT_STARTED))
         listOf(Libre2.State.EXPIRED, Libre2.State.SHUTDOWN, Libre2.State.FAILURE).forEach { assertTrue(LibreNfc.problemWith(it) != null) }
         listOf(Libre2.State.STARTING, Libre2.State.READY, Libre2.State.UNKNOWN).forEach { assertEquals(null, LibreNfc.problemWith(it)) }
     }
@@ -48,9 +48,9 @@ class LibreNfcTest {
     fun `a lost link is read again, the sensor's or Sukoon's refusal is final`() {
         assertTrue(LibreNfc.retryable(java.io.IOException("Tag was lost.")))
         assertTrue(LibreNfc.retryable(SecurityException("Tag is out of date")))
-        assertFalse(LibreNfc.retryable(LibreNfc.NfcException("Sensor answered with an error (01 0F)"))) // still there: Android won't hand it back
-        assertFalse(LibreNfc.retryable(LibreNfc.NfcException("This sensor has ended or failed. Put a new one on.")))
-        assertFalse(LibreNfc.retryable(LibreNfc.NfcException(LibreNfc.STARTED_NOT_PAIRED)))
+        assertFalse(LibreNfc.retryable(LibreNfc.NfcException(com.sukoon.app.R.string.nfc_sensor_error, "Sensor answered with an error (01 0F)"))) // still there: Android won't hand it back
+        assertFalse(LibreNfc.retryable(LibreNfc.NfcException(com.sukoon.app.R.string.nfc_ended)))
+        assertFalse(LibreNfc.retryable(LibreNfc.NfcException(com.sukoon.app.R.string.nfc_started_not_paired)))
     }
 
     /** Decrypted memory with just the fields the check reads: state (byte 4), age (316-317), lifetime (326-327). */

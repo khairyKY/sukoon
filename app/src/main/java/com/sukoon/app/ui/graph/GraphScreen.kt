@@ -192,6 +192,14 @@ private fun Header(latest: GlucoseReading?, title: String?) {
     Column {
         Text(title ?: stringResource(R.string.graph_title), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, lineHeight = 29.sp, color = MaterialTheme.colorScheme.onBackground)
         if (latest == null) return@Column
+        // Demo data must never pass for glucose: a coral chip says so above the number.
+        if (latest.source == SourceKind.SIMULATED) {
+            Text(
+                stringResource(R.string.graph_demo_chip),
+                modifier = Modifier.padding(top = 6.dp).clip(RoundedCornerShape(50)).background(com.sukoon.app.ui.theme.PillLowBg).padding(horizontal = 10.dp, vertical = 4.dp),
+                fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.6.sp, color = com.sukoon.app.ui.theme.PillLowText,
+            )
+        }
         val minutes = Duration.between(latest.timestamp, Instant.now()).toMinutes().coerceAtLeast(0)
         val stale = minutes > HomeUiStateMapper.STALE_AFTER.toMinutes()
         val color = if (stale) CaptionMuted else valueColor(latest.glucoseMgDl)

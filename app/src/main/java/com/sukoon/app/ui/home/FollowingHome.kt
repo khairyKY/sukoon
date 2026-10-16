@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -90,16 +91,21 @@ import androidx.compose.ui.res.pluralStringResource
 
 private val THREE_HOURS: Duration = Duration.ofHours(3)
 
-/** The people this phone follows, refreshed every minute (null until the first answer). */
+/**
+ * The people this phone follows, refreshed every minute: the last list that came back (null until
+ * one has), when it came, and whether the newest try failed (the list stays on screen if so).
+ */
+private data class Following(val people: List<Followed>? = null, val at: Instant? = null, val failed: Boolean = false)
+
 @Composable
-private fun rememberFollowing(sharing: Sharing): List<Followed>? {
-    val people by produceState<List<Followed>?>(null, sharing) {
+private fun rememberFollowing(sharing: Sharing): Following {
+    val state by produceState(Following(), sharing) {
         while (true) {
-            runCatching { sharing.following() }.onSuccess { value = it }
+            value = runCatching { sharing.following() }.fold({ Following(it, Instant.now()) }, { value.copy(failed = true) })
             delay(60_000)
         }
     }
-    return people
+    return state
 }
 
 /**
@@ -108,10 +114,12 @@ private fun rememberFollowing(sharing: Sharing): List<Followed>? {
  * people switches between them from the name at the top.
  */
 @Composable
-fun FollowingHome(sharing: Sharing, settings: SettingsPrefs, onAddPerson: () -> Unit, modifier: Modifier = Modifier, personId: String? = null) {
-    val people = rememberFollowing(sharing)
+fun FollowingHome(sharing: Sharing, settings: SettingsPrefs, onAddPerson: () -> Unit, modifier: Modifier = Modifier, personId: String? = null, onSignIn: () -> Unit = onAddPerson) {
+    val following = rememberFollowing(sharing)
+    val people = following.people
     var selectedId by rememberSaveable { mutableStateOf(personId) }
     val person = people?.let { list -> list.firstOrNull { it.id == selectedId } ?: list.firstOrNull() }
+    val session by sharing.supabase.session.collectAsState()
     Column(
         modifier
             .fillMaxSize()
@@ -120,21 +128,50 @@ fun FollowingHome(sharing: Sharing, settings: SettingsPrefs, onAddPerson: () -> 
             .padding(horizontal = 20.dp, vertical = 14.dp),
     ) {
         NoticeBanner(Modifier.padding(bottom = 12.dp))
+        // Signed out by the server: the people followed through Sukoon are gone until you sign in again.
+        if (session == null && sharing.supabase.sessionLost) SignInAgain(onSignIn)
+        if (following.failed) CantReach(following.at)
         when {
-            people == null -> Unit // first load
-            person == null -> NobodyYet(onAddPerson)
-            else -> PersonView(sharing, settings, person, people) { selectedId = it }
+            people == null -> if (!following.failed) Box(Modifier.fillMaxWidth().padding(top = 120.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Sage) }
+            person == null -> if (!(session == null && sharing.supabase.sessionLost)) NobodyYet(onAddPerson)
+            else -> PersonView(sharing, settings, person, people, offline = following.failed) { selectedId = it }
         }
     }
 }
 
+/** "Can't reach Sukoon · last update 14:02": this phone's connection, not the person's sensor. */
 @Composable
-private fun PersonView(sharing: Sharing, settings: SettingsPrefs, person: Followed, people: List<Followed>, onSwitch: (String) -> Unit) {
+private fun CantReach(at: Instant?) {
+    val text = at?.let { stringResource(R.string.follow_cant_reach_since, com.sukoon.app.platform.TimeFormat.of().format(it)) } ?: stringResource(R.string.follow_cant_reach)
+    Text(
+        text,
+        fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = PillHighText,
+        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp).clip(RoundedCornerShape(14.dp)).background(PillHighBg).padding(horizontal = 14.dp, vertical = 12.dp),
+    )
+}
+
+/** The session ran out: one button back to the sign-in. */
+@Composable
+private fun SignInAgain(onSignIn: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().padding(bottom = 12.dp).clip(RoundedCornerShape(14.dp)).background(PillHighBg).clickable(onClick = onSignIn).heightIn(min = 52.dp).padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text(stringResource(R.string.follow_signed_out), fontSize = 13.5.sp, color = PillHighText, modifier = Modifier.weight(1f).padding(vertical = 10.dp))
+        Text(stringResource(R.string.follow_sign_in_again), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = PillHighText)
+    }
+}
+
+@Composable
+private fun PersonView(sharing: Sharing, settings: SettingsPrefs, person: Followed, people: List<Followed>, offline: Boolean, onSwitch: (String) -> Unit) {
     val context = LocalContext.current
     val name = person.name.ifBlank { "…" }
+    var readingsFailed by remember(person.id) { mutableStateOf(false) }
     val readings by produceState(emptyList<GlucoseReading>(), person.id) {
         while (true) {
-            runCatching { sharing.readingsOf(person.id, System.currentTimeMillis() - THREE_HOURS.toMillis()) }.onSuccess { value = it }
+            runCatching { sharing.readingsOf(person.id, System.currentTimeMillis() - THREE_HOURS.toMillis()) }
+                .onSuccess { value = it; readingsFailed = false }.onFailure { readingsFailed = true }
             delay(60_000)
         }
     }
@@ -213,7 +250,7 @@ private fun PersonView(sharing: Sharing, settings: SettingsPrefs, person: Follow
     }
 
     Spacer(Modifier.height(16.dp))
-    val (title, body, calm) = followerWords(name, readings, latest, fresh, minutesAgo, context)
+    val (title, body, calm) = followerWords(name, readings, latest, fresh, minutesAgo, context, offline = offline || readingsFailed)
     Column(
         Modifier
             .fillMaxWidth()
@@ -373,7 +410,9 @@ private fun ModeCard(icon: Int, bg: androidx.compose.ui.graphics.Color, ink: and
 }
 
 /** How they're doing, in words: title, detail, and whether all is calm. */
-private fun followerWords(name: String, readings: List<GlucoseReading>, latest: GlucoseReading?, fresh: Boolean, minutesAgo: Long?, context: android.content.Context): Triple<String, String, Boolean> {
+private fun followerWords(name: String, readings: List<GlucoseReading>, latest: GlucoseReading?, fresh: Boolean, minutesAgo: Long?, context: android.content.Context, offline: Boolean = false): Triple<String, String, Boolean> {
+    // This phone can't reach Sukoon: say so, rather than blame their sensor.
+    if (offline && !fresh) return Triple(context.getString(R.string.follow_offline, name), latest?.let { context.getString(R.string.follow_last_seen, it.glucoseMgDl, (minutesAgo ?: 0).toInt()) }.orEmpty(), false)
     if (latest == null) return Triple(context.getString(R.string.follow_no_data, name), "", true)
     if (!fresh) return Triple(context.getString(R.string.follow_no_signal, name), context.getString(R.string.follow_last_seen, latest.glucoseMgDl, (minutesAgo ?: 0).toInt()), false)
     val v = latest.glucoseMgDl
@@ -442,7 +481,7 @@ private fun NobodyYet(onAddPerson: () -> Unit) {
 /** Trends for a follower: the person's graph, every range, time in range and readings. */
 @Composable
 fun FollowingTrends(sharing: Sharing, modifier: Modifier = Modifier) {
-    val people = rememberFollowing(sharing)
+    val people = rememberFollowing(sharing).people
     val person = people?.firstOrNull() ?: return Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
     var tab by rememberSaveable { mutableIntStateOf(0) } // graph, insights, report
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -517,7 +556,7 @@ private fun FollowedReport(sharing: Sharing, person: Followed, modifier: Modifie
 /** On a wearer's Home who also follows someone: each person's latest, one tap to their view. */
 @Composable
 fun FollowingStrip(sharing: Sharing, onOpen: (Followed) -> Unit) {
-    val people = rememberFollowing(sharing).orEmpty()
+    val people = rememberFollowing(sharing).people.orEmpty()
     if (people.isEmpty()) return
     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         people.forEach { p ->

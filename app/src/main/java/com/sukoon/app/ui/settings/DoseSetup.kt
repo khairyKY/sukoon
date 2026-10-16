@@ -39,41 +39,7 @@ import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
 import com.sukoon.app.ui.theme.SageDeep
 import kotlin.math.roundToInt
 
-/** "About you · 75 kg · 178 cm · 30 · male": one line in the dose card; opens to [ProfileFields]. */
-@Composable
-internal fun ProfileRow(profile: Profile, onChange: (Profile) -> Unit) {
-    var open by remember { mutableStateOf(false) }
-    if (open) {
-        ProfileFields(profile, onChange)
-        return
-    }
-    val parts = listOfNotNull(
-        profile.weightKg?.let { formatAmountLocalized(it) + " " + stringResource(R.string.profile_kg) },
-        profile.heightCm?.let { formatAmountLocalized(it.toDouble()) + " " + stringResource(R.string.profile_cm) },
-        profile.ageYears?.let { formatAmountLocalized(it.toDouble()) },
-        profile.sex?.let { stringResource(if (it == Sex.FEMALE) R.string.profile_female else R.string.profile_male).lowercase() },
-    )
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f))
-            .clickable { open = true }
-            .padding(horizontal = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            (listOf(stringResource(R.string.profile_title)) + parts.ifEmpty { listOf(stringResource(R.string.profile_empty)) }).joinToString(" · "),
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.weight(1f),
-        )
-        Text(stringResource(R.string.apps_change), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = SageDeep)
-    }
-}
-
-/** Weight, height, age and sex, each optional. Weight feeds the starting ratios; age stops them under 18. */
+/** Weight, height, age and sex, each optional (You's profile page). Weight feeds the starting ratios; age stops them under 18. */
 @Composable
 internal fun ProfileFields(profile: Profile, onChange: (Profile) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -32,9 +32,18 @@ enum class ThemeMode { AUTO, LIGHT, DARK }
 class SettingsPrefs(context: Context) {
     private val prefs = context.getSharedPreferences("sukoon_prefs", Context.MODE_PRIVATE)
 
-    /** Unknown/retired values (e.g. the removed NIGHTSCOUT/BROADCAST sources) fall back to demo data. */
+    /**
+     * Unknown/retired values (e.g. the removed NIGHTSCOUT/BROADCAST sources) fall back to demo data.
+     * Nothing saved: a new install starts with no source (demo data only when picked); one set up
+     * before that keeps the demo data it had by default. Saved on first read, so finishing onboarding
+     * doesn't turn a new install into an old one.
+     */
     var sourceKind: SourceKind
-        get() = SourceKind.entries.firstOrNull { it.name == prefs.getString(KEY_SOURCE, null) } ?: SourceKind.SIMULATED
+        get() {
+            val saved = prefs.getString(KEY_SOURCE, null)
+                ?: return (if (onboarded) SourceKind.SIMULATED else SourceKind.NONE).also { sourceKind = it }
+            return SourceKind.entries.firstOrNull { it.name == saved } ?: SourceKind.SIMULATED
+        }
         set(value) = prefs.edit().putString(KEY_SOURCE, value.name).apply()
 
     var geminiApiKey: String

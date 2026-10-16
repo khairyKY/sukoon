@@ -183,7 +183,11 @@ class Sharing(
         return ids.map { Person(it, names[it].orEmpty()) }
     }
 
-    /** Everyone this phone follows: through Sukoon, LibreLinkUp and Dexcom Share, each when signed in. */
+    /**
+     * Everyone this phone follows: through Sukoon, LibreLinkUp and Dexcom Share, each when signed in.
+     * Throws when Sukoon can't be reached, or when the others fail and nobody came back, so a
+     * dropped connection never reads as "not following anyone".
+     */
     suspend fun following(): List<Followed> {
         val mine = if (supabase.session.value == null) emptyList() else {
             val ids = column(supabase.get("follows?follower=eq.$me&select=owner"), "owner")
@@ -193,7 +197,10 @@ class Sharing(
             val modes = if (ids.isEmpty()) emptyMap() else modesOf(ids)
             ids.map { Followed(it, names[it].orEmpty(), latestOf(it), alarms = alarms[it] ?: ALL_ALARMS, basalMissedSince = basal[it], modes = modes[it]) }
         }
-        return mine + runCatching { libreLinkUp.followed() }.getOrDefault(emptyList()) + runCatching { dexcom.followed() }.getOrDefault(emptyList())
+        val others = listOf(runCatching { libreLinkUp.followed() }, runCatching { dexcom.followed() })
+        val all = mine + others.flatMap { it.getOrDefault(emptyList()) }
+        others.firstNotNullOfOrNull { it.exceptionOrNull() }?.takeIf { all.isEmpty() }?.let { throw it }
+        return all
     }
 
     suspend fun latestOf(userId: String): GlucoseReading? =

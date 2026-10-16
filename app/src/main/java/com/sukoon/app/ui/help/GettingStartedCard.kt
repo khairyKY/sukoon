@@ -28,7 +28,8 @@ import com.sukoon.app.ui.theme.Sage
 /**
  * Now, for a new user (Redesign Canvas §7): "Get set up", the Guide's three Start here steps, ticked
  * as they're done ([done]: sensor, alarms reach you, an emergency contact); a step opens its screen.
- * The card goes once all three are done or it's dismissed.
+ * The card goes for good once all three are done (the first time) or on "Got it"; while it shows,
+ * Now's setup banner waits.
  */
 @Composable
 fun GettingStartedCard(done: List<Boolean>, onStep: (String) -> Unit, onGuide: () -> Unit, onDismiss: () -> Unit) {
@@ -47,7 +48,7 @@ fun GettingStartedCard(done: List<Boolean>, onStep: (String) -> Unit, onGuide: (
                     fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White,
                     modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Sage).clickable(onClick = onGuide).padding(horizontal = 18.dp, vertical = 11.dp),
                 )
-                TextButton(onClick = onDismiss) { Text(stringResource(R.string.start_not_now), color = CaptionMuted) }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.start_dismiss), color = CaptionMuted) }
             }
         }
     }

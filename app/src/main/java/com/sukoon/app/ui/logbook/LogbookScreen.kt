@@ -153,6 +153,8 @@ fun LogbookScreen(
     mealRecord: suspend (Long) -> HealthConnectSync.MealRecord? = { null },
 ) {
     val context = LocalContext.current
+    // Say it and the AI estimate need a Gemini key: without one they aren't offered (the key is in You → Apps & data).
+    val hasAiKey = (context.applicationContext as com.sukoon.app.SukoonApp).container.gemini.hasKey
     val view = LocalView.current
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
@@ -291,7 +293,7 @@ fun LogbookScreen(
             showKetones = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.modes.active.value.sick || (state.glucoseNow?.glucoseMgDl ?: 0) > 250,
             repeats = remember(state.events) { recentRepeats(state.events) },
             usual = remember(state.events) { usualMeals(state.events, java.time.Instant.now()) },
-            onVoice = { adding = false; voicing = true },
+            onVoice = if (hasAiKey) ({ adding = false; voicing = true }) else null,
             glucoseNow = state.glucoseNow,
             insulinOnBoard = state.insulinOnBoard,
             mealsFromApps = state.events.any { it.source != null },
@@ -326,7 +328,7 @@ fun LogbookScreen(
             siteHistory = state.siteHistory,
             doseSettings = remember(request) { doseSettings() },
             lowAt = state.lowAt,
-            onEstimateCarbs = onEstimateCarbs,
+            onEstimateCarbs = onEstimateCarbs.takeIf { hasAiKey },
             onSave = { draft ->
                 editor = null
                 val saving = onSaveEntry(draft)
