@@ -583,12 +583,9 @@ fun FollowingStrip(sharing: Sharing, onOpen: (Followed) -> Unit) {
                         },
                     ),
                 )
-                Text(
-                    "${p.name.ifBlank { "…" }} ${if (fresh) String.format(Locale.getDefault(), "%d %s", r!!.glucoseMgDl, r.trend.arrow) else "- - -"}",
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
+                Text(p.name.ifBlank { "…" }, fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                if (fresh) com.sukoon.app.ui.components.NumberWithTrend(String.format(Locale.getDefault(), "%d", r!!.glucoseMgDl), r.trend, MaterialTheme.colorScheme.onBackground, 13.5.sp, fontWeight = FontWeight.SemiBold)
+                else Text("- - -", fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
             }
         }
     }

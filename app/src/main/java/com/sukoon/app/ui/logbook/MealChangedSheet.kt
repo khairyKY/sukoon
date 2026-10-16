@@ -7,17 +7,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -120,15 +119,18 @@ internal fun MealChangedSheet(
 }
 
 /** Deleting a meal that had its insulin: did you take it? (The insulin isn't deleted with the meal unless you say no.) */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun TookInsulinDialog(units: Double, onKeep: () -> Unit, onDeleteBoth: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.meal_delete_title)) },
-        text = { Text(stringResource(R.string.meal_delete_body, formatAmountLocalized(units))) },
-        confirmButton = { TextButton(onClick = onKeep) { Text(stringResource(R.string.meal_delete_keep)) } },
-        dismissButton = { TextButton(onClick = onDeleteBoth) { Text(stringResource(R.string.meal_delete_both)) } },
-    )
+    SukoonSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(stringResource(R.string.meal_delete_title), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, lineHeight = 31.sp, color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.meal_delete_body, formatAmountLocalized(units)), fontSize = 14.sp, lineHeight = 20.sp, color = CaptionMuted)
+            Spacer(Modifier.height(4.dp))
+            Primary(stringResource(R.string.meal_delete_keep), onKeep)
+            Secondary(stringResource(R.string.meal_delete_both), Modifier.fillMaxWidth(), onDeleteBoth)
+        }
+    }
 }
 
 @Composable
@@ -144,13 +146,13 @@ private fun Bar(label: String, share: Double, value: String, color: Color) {
 
 @Composable
 private fun Primary(label: String, onClick: () -> Unit) = Text(
-    label, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White,
+    label, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
     modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Sage).clickable(onClick = onClick).heightIn(min = 52.dp).padding(16.dp),
 )
 
 @Composable
 private fun Secondary(label: String, modifier: Modifier, onClick: () -> Unit) = Text(
-    label, fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground,
+    label, fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
     modifier = modifier.clip(RoundedCornerShape(14.dp)).border(1.dp, outline(), RoundedCornerShape(14.dp)).clickable(onClick = onClick).heightIn(min = 46.dp).padding(14.dp),
 )
 

@@ -2365,4 +2365,10 @@
     <string name="nfc_started_not_paired">الحساس اشتغل وبيسخن، بس الربط مكملش. دوس «اربطه تاني» وهو بيسخن.</string>
     <string name="nfc_no_stream">الحساس مرضيش يتوصّل بسكون. جرّب تاني.</string>
     <string name="home_more_below">اقتراح تجريبي تحت</string>
+    <string name="alarm_test_pause_all">ده اختبار: تنبيهاتك ما اتوقفتش.</string>
+    <string name="alarm_urgent_snooze_only">الهبوط المستعجل ينفع يتأجل بس. باقي تنبيهاتك شغالة.</string>
+    <string name="home_no_correction_yet">علشان كده مفيش تصحيح مقترح لسه: الجرعات القريبة من بعض ممكن تتجمع وتوطّيك.</string>
+    <string name="now_part_goal">السعرات والبروتين</string>
+    <string name="now_part_goal_what">تقدّم النهارده ناحية هدفك، كشارة</string>
+    <string name="entry_now_suffix">دلوقتي</string>
 </resources>

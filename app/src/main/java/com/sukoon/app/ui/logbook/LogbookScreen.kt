@@ -597,21 +597,22 @@ private fun LogbookEmptyState(onLogFirst: () -> Unit, modifier: Modifier = Modif
     }
 }
 
-/** "142 ↗", tinted like Home's pills: low red, high amber, in range neutral. */
+/** "142" and Sukoon's arrow (then [suffix], e.g. "now"), tinted like Home's pills: low red, high amber, in range neutral. */
 @Composable
-internal fun GlucosePill(reading: GlucoseReading, label: String = String.format(Locale.getDefault(), "%d %s", reading.glucoseMgDl, reading.trend.arrow)) {
+internal fun GlucosePill(reading: GlucoseReading, suffix: String? = null) {
     val (background, text) = when {
         reading.glucoseMgDl < 70 -> PillLowBg to PillLowText
         reading.glucoseMgDl > 180 -> PillHighBg to PillHighText
         else -> PillNeutralBg to MaterialTheme.colorScheme.onBackground
     }
-    Text(
-        label,
-        modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(background).padding(horizontal = 8.dp, vertical = 4.dp),
-        fontSize = 12.sp,
-        fontWeight = FontWeight.SemiBold,
-        color = text,
-    )
+    Row(
+        Modifier.clip(RoundedCornerShape(8.dp)).background(background).padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        com.sukoon.app.ui.components.NumberWithTrend(String.format(Locale.getDefault(), "%d", reading.glucoseMgDl), reading.trend, text, 12.sp, fontWeight = FontWeight.SemiBold)
+        suffix?.let { Text(it, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = text) }
+    }
 }
 
 /** A small rounded preview, decoded off the main thread at a fraction of full size. */

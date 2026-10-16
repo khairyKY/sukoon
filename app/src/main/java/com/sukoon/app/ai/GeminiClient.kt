@@ -23,7 +23,7 @@ class AiException(message: String) : Exception(message)
  * Tries [MODELS] in order and falls through on "busy / gone" answers (429/5xx/404) and on a model
  * that never answers — the free tier regularly returns 503 "high demand" (or just hangs) for the
  * newest model while older ones answer fine.
- * Auth/request errors (400/403) fail fast since every model would reject them the same way.
+ * A bad key (403, or 400 naming the key) fails fast since every model would reject it the same way.
  * Errors are thrown in the app's language ([context]'s strings), ready to show as they are
  * (no context: the JVM's live test, a bare "Gemini error").
  */
@@ -51,10 +51,12 @@ class GeminiClient(private val context: Context?, private val apiKey: () -> Stri
         var lastError = R.string.ai_err_busy to 0
         for (model in if (lite) LITE_FIRST else MODELS) {
             var (code, response) = post(model, key, body)
-            if (code == 400 && response.contains("thinking", ignoreCase = true)) post(model, key, plain).let { code = it.first; response = it.second }
+            // A model that won't take "no thinking" (or any setting) is asked again plainly.
+            if (code == 400) post(model, key, plain).let { code = it.first; response = it.second }
             if (code == 200) return@withContext replyText(response) ?: fail(R.string.ai_err_empty)
+            logError(model, code, response)
             lastError = errorText(code, response) to code
-            if (code != TIMED_OUT && code != 404 && code != 429 && code < 500) break
+            if (!worthAnotherModel(code, response)) break
         }
         fail(lastError.first, lastError.second)
     }
@@ -70,11 +72,12 @@ class GeminiClient(private val context: Context?, private val apiKey: () -> Stri
         var lastError = R.string.ai_err_busy to 0
         for (model in MODELS) {
             var r = streamPost(model, key, body, onText)
-            if (r.first == 400 && r.third.contains("thinking", ignoreCase = true)) r = streamPost(model, key, plain, onText)
+            if (r.first == 400) r = streamPost(model, key, plain, onText)
             val (code, text, error) = r
             if (code == 200 && text.isNotEmpty()) return@withContext text
+            if (code != 200) logError(model, code, error)
             lastError = (if (code == 200) R.string.ai_err_empty else errorText(code, error)) to code
-            if (code != 200 && code != TIMED_OUT && code != 404 && code != 429 && code < 500) break
+            if (code != 200 && !worthAnotherModel(code, error)) break
         }
         fail(lastError.first, lastError.second)
     }
@@ -143,7 +146,17 @@ class GeminiClient(private val context: Context?, private val apiKey: () -> Stri
         }
     }
 
+    /** The error's own words in the log (never the key), so a failure can be told apart later. */
+    private fun logError(model: String, code: Int, response: String) {
+        val message = runCatching { JSONObject(response).getJSONObject("error").getString("message") }.getOrNull()
+        android.util.Log.w("Gemini", "$model answered $code: ${message ?: response.take(300)}")
+    }
+
     companion object {
+        /** Busy, gone, slow, or a request this model rejects (400): another model may take it. A bad key won't. */
+        fun worthAnotherModel(code: Int, response: String) =
+            code == TIMED_OUT || code == 404 || code == 429 || code >= 500 || (code == 400 && !response.contains("API key", ignoreCase = true))
+
         private const val BASE = "https://generativelanguage.googleapis.com/v1beta/models"
         /** Not an HTTP code: the model took longer than the read timeout. */
         const val TIMED_OUT = -1

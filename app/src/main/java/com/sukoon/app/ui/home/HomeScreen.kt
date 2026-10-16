@@ -341,9 +341,12 @@ private fun StatusPill(label: String, dotColor: Color, backgroundColor: Color, t
 
 @Composable
 private fun HeroNumber(value: String, trend: TrendDirection?, color: Color, fontSize: androidx.compose.ui.unit.TextUnit = 100.sp) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(text = value, fontFamily = HeadlineSerifFontFamily, fontWeight = FontWeight.Light, fontSize = fontSize, color = color)
-        if (trend != null) com.sukoon.app.ui.components.TrendArrow(trend, color, size = 34.dp, modifier = Modifier.padding(top = 18.dp), label = trendArrow(trend))
+    // Left to right in every language: the arrow is a trend on a timeline, so it stays right of the number.
+    CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(text = value, fontFamily = HeadlineSerifFontFamily, fontWeight = FontWeight.Light, fontSize = fontSize, color = color)
+            if (trend != null) com.sukoon.app.ui.components.TrendArrow(trend, color, size = 34.dp, modifier = Modifier.padding(top = 18.dp), label = trendArrow(trend))
+        }
     }
 }
 
@@ -454,7 +457,8 @@ private fun ColumnScope.CalmContent(
         HomeAppBarRow(dimmed = false)
         HomeStatusBar(stringResource(R.string.home_status_live), dot, pulsing = true, top = 2.dp)
         // Alarms paused, a missed long-acting, supplies, a meal watch: these show even with chips off.
-        StatusChips(if (s.layout.shows(NowPart.CHIPS)) s.status else s.status.filter { it.attention })
+        val iob = if (s.insulinOnBoard >= 0.05) StatusChip(stringResource(R.string.home_iob, String.format(Locale.getDefault(), "%.1f", s.insulinOnBoard)), onClick = null) else null
+        StatusChips(listOfNotNull(iob) + if (s.layout.shows(NowPart.CHIPS)) s.status else s.status.filter { it.attention })
         NoticeBanner(Modifier.padding(horizontal = 16.dp).padding(top = 12.dp))
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -468,7 +472,6 @@ private fun ColumnScope.CalmContent(
                     stringResource(R.string.home_unit_mgdl),
                     trendLabel(trend),
                     if (updated) stringResource(R.string.home_updated_now) else null,
-                    if (s.insulinOnBoard >= 0.05) stringResource(R.string.home_iob, String.format(Locale.getDefault(), "%.1f", s.insulinOnBoard)) else null,
                 ).joinToString(" · "),
                 fontSize = 12.sp,
                 color = CaptionMuted,
@@ -959,8 +962,10 @@ private fun briefText(brief: Brief): Pair<String, String> {
             pluralStringResource(R.plurals.home_brief_heading_low_body, brief.minutes.toInt(), brief.minutes),
             if (brief.insulin > 0) stringResource(R.string.home_insulin_working, units(brief.insulin)) else null,
         ).joinToString(" ")
-        is Brief.VeryHighFor -> stringResource(R.string.home_brief_very_high_title) to
-            stringResource(R.string.home_brief_very_high_body, durationText(context, brief.minutes))
+        is Brief.VeryHighFor -> stringResource(R.string.home_brief_very_high_title) to listOfNotNull(
+            stringResource(R.string.home_brief_very_high_body, durationText(context, brief.minutes)),
+            if (brief.insulin > 0) stringResource(R.string.home_insulin_working, units(brief.insulin)) + " " + stringResource(R.string.home_no_correction_yet) else null,
+        ).joinToString(" ")
         is Brief.Rebound -> stringResource(R.string.home_brief_rebound_title) to stringResource(R.string.home_brief_rebound_body, HM.format(brief.lowAt))
         is Brief.InsulinWorking -> stringResource(R.string.home_brief_insulin_title) to stringResource(R.string.home_insulin_working, units(brief.units))
         is Brief.HighFor -> stringResource(R.string.home_brief_high_title) to

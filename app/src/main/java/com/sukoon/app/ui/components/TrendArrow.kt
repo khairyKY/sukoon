@@ -46,3 +46,28 @@ fun TrendArrow(trend: TrendDirection, color: Color, size: Dp = 28.dp, modifier: 
         }
     }
 }
+
+/**
+ * "142" and Sukoon's arrow after it. Laid out left to right in every language: the arrow is a trend
+ * on a timeline (as on the graph), so in Arabic too it sits to the right of the number.
+ */
+@Composable
+fun NumberWithTrend(
+    text: String,
+    trend: TrendDirection?,
+    color: Color,
+    fontSize: androidx.compose.ui.unit.TextUnit,
+    modifier: Modifier = Modifier,
+    fontWeight: androidx.compose.ui.text.font.FontWeight? = null,
+    fontFamily: androidx.compose.ui.text.font.FontFamily? = null,
+) {
+    androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
+        androidx.compose.foundation.layout.Row(modifier, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(3.dp)) {
+            androidx.compose.material3.Text(text, color = color, fontSize = fontSize, fontWeight = fontWeight, fontFamily = fontFamily)
+            if (trend != null) {
+                val arrow = with(androidx.compose.ui.platform.LocalDensity.current) { (fontSize.toPx() * 1.05f).toDp() }
+                TrendArrow(trend, color, size = arrow)
+            }
+        }
+    }
+}

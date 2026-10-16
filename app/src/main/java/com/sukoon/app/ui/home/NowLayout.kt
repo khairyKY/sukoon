@@ -49,6 +49,7 @@ import com.sukoon.app.ui.theme.Sage
 /** The parts of Now a user can turn off; the ones in [NowLayout.order] can also be moved. The number itself always shows. */
 enum class NowPart(val label: Int, val what: Int) {
     CHIPS(R.string.now_part_chips, R.string.now_part_chips_what),
+    GOAL(R.string.now_part_goal, R.string.now_part_goal_what),
     SENSOR_ENDING(R.string.now_part_sensor, R.string.now_part_sensor_what),
     NEXT(R.string.now_part_next, R.string.now_part_next_what),
     GRAPH(R.string.now_part_graph, R.string.now_part_graph_what),
@@ -69,7 +70,7 @@ data class NowLayout(val order: List<NowPart> = MOVABLE, val hidden: Set<NowPart
         FIXED.joinToString(",") { (if (it in hidden) "-" else "") + it.name }
 
     companion object {
-        val FIXED = listOf(NowPart.CHIPS, NowPart.SENSOR_ENDING)
+        val FIXED = listOf(NowPart.CHIPS, NowPart.GOAL, NowPart.SENSOR_ENDING)
         val MOVABLE = listOf(NowPart.NEXT, NowPart.GRAPH, NowPart.STATS, NowPart.DOSE)
 
         fun decode(s: String?): NowLayout {

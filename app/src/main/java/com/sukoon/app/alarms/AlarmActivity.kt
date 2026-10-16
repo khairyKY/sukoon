@@ -147,10 +147,13 @@ class AlarmActivity : ComponentActivity() {
                             snoozes = s.type.snoozeChoices,
                             onSnooze = { snooze(it, treated = false) },
                             secondary = if (treatable && !s.test) stringResource(R.string.alarm_action_log_food) else null,
-                            // Your own alarms, not urgent low, and not behind the parent lock.
-                            pauseAll = if (s.person == null && !s.test && s.type != AlarmType.URGENT_LOW && !lockedAlarms(container)) {
-                                { minutes -> answer { container.alarms.pauseAll(minutes) } }
+                            // Your own alarms, not urgent low, and not behind the parent lock. A test shows the
+                            // switch as it will be, but pausing from it leaves your real alarms on.
+                            pauseAll = if (s.person == null && s.type != AlarmType.URGENT_LOW && !lockedAlarms(container)) {
+                                if (s.test) { minutes -> android.widget.Toast.makeText(this@AlarmActivity, getString(R.string.alarm_test_pause_all), android.widget.Toast.LENGTH_LONG).show(); snooze(minutes, treated = false) }
+                                else { minutes -> answer { container.alarms.pauseAll(minutes) } }
                             } else null,
+                            urgent = s.type == AlarmType.URGENT_LOW,
                             onSecondary = {
                                 startActivity(com.sukoon.app.MainActivity.logTreatment(this@AlarmActivity))
                                 finish()
@@ -259,6 +262,8 @@ private fun Takeover(
     /** "Pause all alarms for 1 h", as a link at the bottom; null hides it. */
     /** Design B: the same times can quiet every alarm (not urgent low); null when that isn't offered. */
     pauseAll: ((Int) -> Unit)? = null,
+    /** Urgent low: only this alarm can be snoozed, and the screen says why. */
+    urgent: Boolean = false,
     onAction: () -> Unit,
 ) {
     // Motion spec: scales in from 93 % over 560 ms; the reading breathes with the live-dot rhythm.
@@ -334,7 +339,7 @@ private fun Takeover(
                 }
                 Spacer(Modifier.height(10.dp))
             } else {
-                Text(stringResource(R.string.alarm_snooze_for), color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp)
+                Text(stringResource(if (urgent) R.string.alarm_urgent_snooze_only else R.string.alarm_snooze_for), color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(10.dp))
             }
             val context = LocalContext.current
@@ -354,8 +359,8 @@ private fun Takeover(
                     }
                 }
             }
-            Spacer(Modifier.height(10.dp))
-            Text(
+            if (pauseAll != null) Spacer(Modifier.height(10.dp))
+            if (pauseAll != null) Text(
                 stringResource(if (everything) R.string.alarm_scope_all_note else R.string.alarm_scope_this_note),
                 color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp, lineHeight = 18.sp, textAlign = TextAlign.Center,
             )

@@ -278,17 +278,7 @@ internal fun AddSheet(
             Text(stringResource(R.string.logbook_sheet_title_new), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, lineHeight = 31.sp, color = MaterialTheme.colorScheme.onBackground)
             ContextPills(glucoseNow, insulinOnBoard, Modifier.padding(top = 8.dp))
             onVoice?.let { voice ->
-                Row(
-                    Modifier.padding(top = 14.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(com.sukoon.app.ui.theme.SageMist)
-                        .clickable(onClick = voice).heightIn(min = 52.dp).padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Icon(painterResource(R.drawable.ic_mic), null, tint = SageDeep, modifier = Modifier.size(22.dp))
-                    Column {
-                        Text(stringResource(R.string.voice_title), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = SageDeep)
-                        Text(stringResource(R.string.voice_hint), fontSize = 12.5.sp, color = CaptionMuted)
-                    }
-                }
+                com.sukoon.app.ui.components.SottoBanner(stringResource(R.string.voice_title), stringResource(R.string.voice_hint), voice, Modifier.padding(top = 14.dp).fillMaxWidth())
             }
             if (usual.isNotEmpty()) {
                 Eyebrow(stringResource(R.string.entry_usual), Modifier.padding(top = 18.dp))
@@ -779,7 +769,7 @@ internal fun ContextPills(glucoseNow: GlucoseReading?, insulinOnBoard: Double, m
     if (glucoseNow == null && insulinOnBoard < 0.05) return
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         glucoseNow?.let { r ->
-            GlucosePill(r, stringResource(R.string.entry_now_pill, String.format(Locale.getDefault(), "%d", r.glucoseMgDl), r.trend.arrow))
+            GlucosePill(r, stringResource(R.string.entry_now_suffix))
         }
         if (insulinOnBoard >= 0.05) {
             Text(

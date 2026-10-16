@@ -2229,4 +2229,11 @@
     <string name="nfc_started_not_paired">The sensor has started and is warming up, but pairing didn\'t finish. Tap Pair again while it warms up.</string>
     <string name="nfc_no_stream">The sensor wouldn\'t connect to Sukoon. Try again.</string>
     <string name="home_more_below">Beta suggestion below</string>
+    <string name="alarm_test_pause_all">A test: your alarms were not paused.</string>
+    <string name="alarm_urgent_snooze_only">Urgent lows can only be snoozed. Your other alarms stay on.</string>
+    <string name="sotto_name" translatable="false">Sotto</string>
+    <string name="home_no_correction_yet">That is why no correction is suggested yet: doses close together can stack into a low.</string>
+    <string name="now_part_goal">Calories and protein</string>
+    <string name="now_part_goal_what">Today\'s progress to your goal, as a chip</string>
+    <string name="entry_now_suffix">now</string>
 </resources>

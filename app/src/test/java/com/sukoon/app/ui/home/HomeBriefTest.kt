@@ -64,6 +64,13 @@ class HomeBriefTest {
     }
 
     @Test
+    fun `very high for hours still says the insulin that is working`() {
+        val b = brief(series(List(131) { 270 }), listOf(event(LogEventType.INSULIN, 6.0, 60)))
+        assertTrue(b is Brief.VeryHighFor && b.insulin > 3)
+    }
+
+
+    @Test
     fun `rising after a logged meal needs nothing, rising without one asks to log it`() {
         val up = series((0..20).map { 120 + it * 2 }, trend = TrendDirection.RISING)
         val afterMeal = brief(up, listOf(event(LogEventType.CARB, 45.0, 40)))

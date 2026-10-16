@@ -432,7 +432,7 @@ fun MainScaffold() {
                     val chips = com.sukoon.app.ui.home.statusChips(
                         m = modesNow,
                         paused = alarmsPaused,
-                        goal = com.sukoon.app.modes.Goals.targets(home.settings.profile, goal)?.let { t ->
+                        goal = com.sukoon.app.modes.Goals.targets(home.settings.profile, goal)?.takeIf { nowLayout.shows(com.sukoon.app.ui.home.NowPart.GOAL) }?.let { t ->
                             val gym = home.modes.gymToday()
                             val day = if (goal.gymDays.isEmpty()) t else t.copy(kcal = t.kcal?.let { com.sukoon.app.modes.Goals.dayKcal(it, goal, gym) })
                             day to (stats[com.sukoon.app.ui.home.HomeStat.PROTEIN] to stats[com.sukoon.app.ui.home.HomeStat.KCAL])

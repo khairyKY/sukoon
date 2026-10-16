@@ -2369,4 +2369,10 @@
     <string name="nfc_started_not_paired">بدأ المستشعر ويمرّ بالتهيئة، لكن الربط لم يكتمل. اضغط «الربط من جديد» أثناء التهيئة.</string>
     <string name="nfc_no_stream">لم يقبل المستشعر الاتصال بسكون. حاول مجددًا.</string>
     <string name="home_more_below">اقتراح تجريبي في الأسفل</string>
+    <string name="alarm_test_pause_all">اختبار: لم تُوقف تنبيهاتك.</string>
+    <string name="alarm_urgent_snooze_only">الهبوط العاجل يمكن تأجيله فقط. تبقى تنبيهاتك الأخرى مفعّلة.</string>
+    <string name="home_no_correction_yet">لهذا لا يُقترح تصحيح بعد: الجرعات المتقاربة قد تتراكم وتسبب هبوطًا.</string>
+    <string name="now_part_goal">السعرات والبروتين</string>
+    <string name="now_part_goal_what">تقدّم اليوم نحو هدفك، كشارة</string>
+    <string name="entry_now_suffix">الآن</string>
 </resources>
