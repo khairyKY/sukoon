@@ -2118,4 +2118,12 @@
     <string name="meal_source_title">Add the meal</string>
     <string name="meal_source_estimate_body">Describe it or add photos: Sukoon estimates the carbs</string>
     <string name="chip_ratios">%1$d new meals: check your ratios</string>
+    <string name="pill_listening">Listening. Tap when you\'re done</string>
+    <string name="pill_transcribing">Writing it down</string>
+    <string name="pill_polishing">Working out the entries</string>
+    <string name="pill_done">Done</string>
+    <string name="pill_error">Didn\'t catch that</string>
+    <string name="powered_by_sotto">Powered by Sotto</string>
+    <string name="voice_listening_hint">Say what you ate, took or did</string>
+    <string name="voice_nothing_heard">Nothing heard. Tap Say it again and speak a little closer.</string>
 </resources>

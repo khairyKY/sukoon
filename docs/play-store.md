@@ -139,11 +139,12 @@ The app already asks for the permission where Android doesn't grant it.
 | Name, email | Yes (account) | No | Account management | Yes |
 | User IDs | Yes (account) | No | Account management | Yes |
 | Photos, user content | Yes (to Gemini, user's key) | No | App functionality | Yes |
+| Audio (voice) | No: the phone's speech recognizer turns it into words while the mic is tapped; no audio is stored or sent by Sukoon | No | App functionality | Yes |
 | Approximate/precise location | Yes (emergency text only) | No | App functionality (safety) | Yes |
 | App settings (which alarms followers get) | Yes (account) | No | App functionality | Yes |
 | Crash logs, analytics, ads IDs | No | No | — | — |
 Encrypted in transit: yes. Users can request deletion: yes, in the app and on the follow page.
-The notices and release checks (every 6 hours, GitHub) send nothing about the user, so they aren't data collection.
+The notices and release checks (every 15 minutes and every 3 hours, GitHub) send nothing about the user, so they aren't data collection.
 
 ## 4. Things to watch after launch
 

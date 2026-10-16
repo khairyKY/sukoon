@@ -97,9 +97,11 @@ internal fun VoiceSheet(glucoseNow: Int?, onSave: (List<EntryDraft>) -> Unit, on
     val entries = remember { mutableStateListOf<VoiceEntry>() }
     val amounts = remember { mutableStateListOf<String>() }
 
+    var capture: VoiceCapture? = null
     fun understand(text: String) {
         said = text
         working = true
+        capture?.settle(com.sukoon.app.ui.components.PillState.POLISHING)
         problem = null
         entries.clear()
         amounts.clear()
@@ -112,18 +114,32 @@ internal fun VoiceSheet(glucoseNow: Int?, onSave: (List<EntryDraft>) -> Unit, on
                 }
                 .onFailure { problem = context.getString(R.string.voice_failed, it.message ?: "") }
             working = false
+            capture?.settle(if (problem == null) com.sukoon.app.ui.components.PillState.DONE else com.sukoon.app.ui.components.PillState.ERROR)
         }
     }
-    val listen = rememberSpeech(stringResource(R.string.voice_hint)) { text -> if (text == null) { if (said == null) onDismiss() } else understand(text) }
-    LaunchedEffect(Unit) { if (!listen()) problem = context.getString(R.string.voice_no_recognizer) }
+    // Sotto's way: listen in the app, the pill showing your voice and your words as they come.
+    val (voice, listen) = rememberVoiceCapture(stringResource(R.string.voice_hint), onUnavailable = { problem = context.getString(R.string.voice_no_recognizer) }) { text ->
+        if (text == null) { if (said == null) problem = context.getString(R.string.voice_nothing_heard) } else understand(text)
+    }
+    capture = voice
+    LaunchedEffect(Unit) { listen() }
 
     val lastBasal by remember { app.logbookRepository.latest(LogEventType.BASAL) }.collectAsState(initial = null as EventEntity?)
 
     SukoonSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(stringResource(R.string.voice_title), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, lineHeight = 31.sp, color = MaterialTheme.colorScheme.onBackground)
+            voice.state?.let { st ->
+                com.sukoon.app.ui.components.SottoPill(st, voice.level, onTap = voice::finish, onCancel = if (st == com.sukoon.app.ui.components.PillState.LISTENING) voice::cancel else null,
+                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 6.dp))
+            }
+            if (voice.state == com.sukoon.app.ui.components.PillState.LISTENING) {
+                Text(voice.partial.ifBlank { stringResource(R.string.voice_listening_hint) }, fontSize = 15.sp, lineHeight = 21.sp,
+                    color = if (voice.partial.isBlank()) CaptionMuted else MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.align(Alignment.CenterHorizontally), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            }
             said?.let { Text(stringResource(R.string.voice_heard, it), fontSize = 14.sp, lineHeight = 20.sp, color = CaptionMuted) }
-            if (working) Text(stringResource(R.string.voice_understanding), fontSize = 14.sp, color = SageDeep)
+            if (working && voice.state == null) Text(stringResource(R.string.voice_understanding), fontSize = 14.sp, color = SageDeep)
             problem?.let { Text(it, fontSize = 14.sp, color = PillHighText) }
             entries.forEachIndexed { i, e ->
                 val treatment = e.type == LogEventType.CARB && (e.treatment || (glucoseNow ?: 999) < 70)
@@ -182,8 +198,9 @@ internal fun VoiceSheet(glucoseNow: Int?, onSave: (List<EntryDraft>) -> Unit, on
             }
             if (!working) Text(
                 stringResource(R.string.voice_again), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = SageDeep,
-                modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable { if (!listen()) problem = context.getString(R.string.voice_no_recognizer) }.heightIn(min = 44.dp).padding(vertical = 12.dp),
+                modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable { said = null; problem = null; entries.clear(); amounts.clear(); listen() }.heightIn(min = 44.dp).padding(vertical = 12.dp),
             )
+            com.sukoon.app.ui.components.PoweredBySotto(Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp))
         }
     }
 }

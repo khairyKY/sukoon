@@ -35,14 +35,15 @@ a { color: var(--sage); }
 <tr><td>Your LibreLinkUp or Dexcom sign-in</td><td>Abbott's or Dexcom's servers</td><td>You connect one of those accounts</td></tr>
 <tr><td>Readings and logbook entries</td><td>Your own Nightscout site</td><td>You add its address</td></tr>
 <tr><td>Summaries of your data, your profile and dose settings, meal photos, a dish you ask about</td><td>Google Gemini, with your own API key (Google's terms apply)</td><td>You add a key and ask a question or for an estimate</td></tr>
+<tr><td>Your voice while you tap Say it or the mic in Ask</td><td>Your phone's speech recognition: on the phone where it speaks your language, otherwise the phone's speech service (Google's on most phones). Sukoon keeps only the words, and sends them to Gemini as above</td><td>You tap the mic</td></tr>
 <tr><td>What you type in food search, or a barcode you scan</td><td>Open Food Facts</td><td>You search or scan</td></tr>
 <tr><td>A full backup (everything above, your AI key included)</td><td>One file in the cloud app you choose</td><td>You turn on the daily cloud backup</td></tr>
 <tr><td>Your glucose, for how long, and your location</td><td>Your emergency contacts, by SMS and a phone call</td><td>An urgent low alarm goes unanswered and you set contacts</td></tr>
-<tr><td>Nothing about you: the app asks for two public files (Sukoon's notices and its latest version)</td><td>GitHub, which hosts Sukoon (it sees your phone's internet address, as any website does)</td><td>Every 6 hours while Sukoon runs, and when it starts</td></tr>
+<tr><td>Nothing about you: the app asks for two public files (Sukoon's notices and its latest version)</td><td>GitHub, which hosts Sukoon (it sees your phone's internet address, as any website does)</td><td>Every 15 minutes while Sukoon runs, and when it starts</td></tr>
 </table>
 
 <h2>Camera, location and other permissions</h2>
-<p>The camera reads barcodes and takes meal photos; both stay on the phone. Bluetooth and NFC talk to your sensor (NFC also starts a new one, when you ask it to). Location is asked only on Android 11 and older, where Bluetooth scanning needs it; Sukoon doesn't use or store where you are, except in an emergency text to your contacts.</p>
+<p>The microphone is used only while you tap Say it or the mic in Ask, and nothing is recorded or kept. The camera reads barcodes and takes meal photos; both stay on the phone. Bluetooth and NFC talk to your sensor (NFC also starts a new one, when you ask it to). Location is asked only on Android 11 and older, where Bluetooth scanning needs it; Sukoon doesn't use or store where you are, except in an emergency text to your contacts.</p>
 
 <h2>How long, and deleting it</h2>
 <ul>
@@ -72,6 +73,7 @@ a { color: var(--sage); }
 <li><strong>حساب سكون (Supabase):</strong> إيميلك واسمك وقراياتك المباشرة والتنبيهات اللي بتوصل لمتابعينك، واللي بتدعيهم بس هما اللي يشوفوها.</li>
 <li><strong>LibreLinkUp أو Dexcom أو Nightscout:</strong> لو ربطتهم بنفسك.</li>
 <li><strong>Gemini:</strong> ملخصات وصور الوجبات وأسئلتك، بمفتاحك انت، لو سألت.</li>
+<li><strong>صوتك:</strong> لما تدوس «قولها» أو المايك في اسأل بس، للتعرّف على الكلام على موبايلك أو خدمة الكلام بتاعته؛ مفيش تسجيل بيتحفظ.</li>
 <li><strong>Open Food Facts:</strong> اللي بتكتبه في البحث أو الباركود اللي بتمسحه.</li>
 <li><strong>السحابة بتاعتك:</strong> نسخة احتياطية كاملة، لو شغّلتها.</li>
 <li><strong>جهات الطوارئ:</strong> رسالة ومكالمة فيها سكرك ومكانك، لو هبوط خطير محدش رد عليه.</li>

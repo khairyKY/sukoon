@@ -2254,4 +2254,12 @@
     <string name="meal_source_title">ضيف الأكلة</string>
     <string name="meal_source_estimate_body">اوصفها أو ضيف صور: سكون هيقدّر النشويات</string>
     <string name="chip_ratios">%1$d أكلات جديدة: راجع نسبك</string>
+    <string name="pill_listening">بسمعك. دوس لما تخلص</string>
+    <string name="pill_transcribing">بكتب اللي قلته</string>
+    <string name="pill_polishing">بظبط الإدخالات</string>
+    <string name="pill_done">تم</string>
+    <string name="pill_error">مسمعتش كويس</string>
+    <string name="powered_by_sotto">بدعم من Sotto</string>
+    <string name="voice_listening_hint">قول أكلت إيه أو خدت إيه أو عملت إيه</string>
+    <string name="voice_nothing_heard">مسمعناش حاجة. دوس «قولها تاني» واتكلم أقرب شوية.</string>
 </resources>
