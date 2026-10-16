@@ -2255,4 +2255,7 @@
         <item quantity="many">حُفظ %d إدخالًا</item>
         <item quantity="other">حُفظ %d إدخال</item>
     </plurals>
+    <string name="meal_source_title">أضف الوجبة</string>
+    <string name="meal_source_estimate_body">صِفها أو أضف صورًا: يقدّر سكون الكربوهيدرات</string>
+    <string name="chip_ratios">%1$d وجبات جديدة: راجع نسبك</string>
 </resources>

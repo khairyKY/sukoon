@@ -26,22 +26,86 @@ class GeminiClient(private val apiKey: () -> String) {
 
     val hasKey: Boolean get() = apiKey().isNotBlank()
 
+    /**
+     * [lite]: the quick model first (voice parsing: short, structured). Thinking is off for every
+     * request: Sukoon's jobs are summaries and estimates, and thinking was most of the wait. A model
+     * that refuses "no thinking" is asked again without the setting.
+     */
     suspend fun generate(
         systemPrompt: String,
         turns: List<ChatTurn>,
         images: List<ByteArray> = emptyList(),
         jsonOutput: Boolean = false,
+        lite: Boolean = false,
     ): String = withContext(Dispatchers.IO) {
         val key = apiKey().ifBlank { throw AiException(NO_KEY) }
         val body = requestBody(systemPrompt, turns, images, jsonOutput).toString()
+        val plain by lazy { requestBody(systemPrompt, turns, images, jsonOutput, thinkingOff = false).toString() }
         var lastError = "No model answered"
-        for (model in MODELS) {
-            val (code, response) = post(model, key, body)
+        for (model in if (lite) LITE_FIRST else MODELS) {
+            var (code, response) = post(model, key, body)
+            if (code == 400 && response.contains("thinking", ignoreCase = true)) post(model, key, plain).let { code = it.first; response = it.second }
             if (code == 200) return@withContext replyText(response)
             lastError = errorMessage(code, response)
             if (code != TIMED_OUT && code != 404 && code != 429 && code < 500) break
         }
         throw AiException(lastError)
+    }
+
+    /**
+     * Ask's answer as it's written: [onText] gets the text so far after each piece. Falls through
+     * the models like [generate] until one starts answering.
+     */
+    suspend fun stream(systemPrompt: String, turns: List<ChatTurn>, onText: (String) -> Unit): String = withContext(Dispatchers.IO) {
+        val key = apiKey().ifBlank { throw AiException(NO_KEY) }
+        val body = requestBody(systemPrompt, turns, emptyList(), false).toString()
+        val plain by lazy { requestBody(systemPrompt, turns, emptyList(), false, thinkingOff = false).toString() }
+        var lastError = "No model answered"
+        for (model in MODELS) {
+            var r = streamPost(model, key, body, onText)
+            if (r.first == 400 && r.third.contains("thinking", ignoreCase = true)) r = streamPost(model, key, plain, onText)
+            val (code, text, error) = r
+            if (code == 200 && text.isNotEmpty()) return@withContext text
+            lastError = if (code == 200) "Gemini returned an empty answer." else errorMessage(code, error)
+            if (code != 200 && code != TIMED_OUT && code != 404 && code != 429 && code < 500) break
+        }
+        throw AiException(lastError)
+    }
+
+    /** (code, the answer, the error body). */
+    private fun streamPost(model: String, key: String, body: String, onText: (String) -> Unit): Triple<Int, String, String> {
+        val connection = URL("$BASE/$model:streamGenerateContent?alt=sse").openConnection() as HttpURLConnection
+        connection.requestMethod = "POST"
+        connection.doOutput = true
+        connection.connectTimeout = 15_000
+        connection.readTimeout = 40_000
+        connection.setRequestProperty("Content-Type", "application/json")
+        connection.setRequestProperty("x-goog-api-key", key)
+        return try {
+            connection.connect()
+            try {
+                connection.outputStream.use { it.write(body.toByteArray()) }
+                val code = connection.responseCode
+                if (code !in 200..299) return Triple(code, "", connection.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty())
+                val text = StringBuilder()
+                connection.inputStream.bufferedReader().useLines { lines ->
+                    lines.filter { it.startsWith("data:") }.forEach { line ->
+                        val piece = runCatching { partText(line.removePrefix("data:").trim()) }.getOrDefault("")
+                        if (piece.isNotEmpty()) {
+                            text.append(piece)
+                            onText(text.toString())
+                        }
+                    }
+                }
+                Triple(200, text.toString().trim(), "")
+            } catch (e: java.net.SocketTimeoutException) {
+                Triple(TIMED_OUT, "", "")
+            }
+        } catch (e: java.io.IOException) {
+            throw AiException("Couldn't reach Gemini — check your connection. (${e.message})")
+        } finally {
+            connection.disconnect()
+        }
     }
 
     private fun post(model: String, key: String, body: String): Pair<Int, String> {
@@ -80,7 +144,10 @@ class GeminiClient(private val apiKey: () -> String) {
         // retired (gemini-2.5-flash already 404s for new keys); the pinned one is the fallback.
         val MODELS = listOf("gemini-flash-latest", "gemini-3.5-flash", "gemini-flash-lite-latest")
 
-        fun requestBody(systemPrompt: String, turns: List<ChatTurn>, images: List<ByteArray>, jsonOutput: Boolean): JSONObject {
+        /** The quick model first, for short structured jobs (voice entries). */
+        val LITE_FIRST = listOf("gemini-flash-lite-latest", "gemini-flash-latest", "gemini-3.5-flash")
+
+        fun requestBody(systemPrompt: String, turns: List<ChatTurn>, images: List<ByteArray>, jsonOutput: Boolean, thinkingOff: Boolean = true): JSONObject {
             val contents = JSONArray()
             turns.forEachIndexed { index, turn ->
                 val parts = JSONArray().put(JSONObject().put("text", turn.text))
@@ -98,7 +165,18 @@ class GeminiClient(private val apiKey: () -> String) {
             return JSONObject()
                 .put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", systemPrompt))))
                 .put("contents", contents)
-                .apply { if (jsonOutput) put("generationConfig", JSONObject().put("responseMimeType", "application/json")) }
+                .apply {
+                    val config = JSONObject()
+                    if (jsonOutput) config.put("responseMimeType", "application/json")
+                    if (thinkingOff) config.put("thinkingConfig", JSONObject().put("thinkingBudget", 0))
+                    if (config.length() > 0) put("generationConfig", config)
+                }
+        }
+
+        /** One streamed piece's text, thoughts left out ("" when it has none). */
+        fun partText(chunk: String): String {
+            val parts = JSONObject(chunk).optJSONArray("candidates")?.optJSONObject(0)?.optJSONObject("content")?.optJSONArray("parts")
+            return (0 until (parts?.length() ?: 0)).mapNotNull { parts!!.optJSONObject(it) }.filterNot { it.optBoolean("thought") }.joinToString("") { it.optString("text") }
         }
 
         fun replyText(response: String): String {

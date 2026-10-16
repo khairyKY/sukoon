@@ -73,7 +73,7 @@ fun StatsPicker(chosen: List<HomeStat>, health: HealthConnectSync, onChange: (Li
     }
     SukoonSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
-            Text(stringResource(R.string.stats_title), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.stats_title), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, lineHeight = 31.sp, color = MaterialTheme.colorScheme.onBackground)
             Text(
                 stringResource(if (picked.size >= MAX_HOME_STATS) R.string.stats_full else R.string.stats_body),
                 fontSize = 14.sp,

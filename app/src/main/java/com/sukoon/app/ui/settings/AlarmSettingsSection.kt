@@ -430,7 +430,7 @@ private fun AlarmDot(type: AlarmType) {
 private fun SeeAndHear(onDismiss: () -> Unit, onHear: (AlarmType) -> Unit, onSee: (AlarmType) -> Unit) {
     SukoonSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 28.dp)) {
-            Text(stringResource(R.string.alarms_see_hear), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.alarms_see_hear), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, lineHeight = 29.sp, color = MaterialTheme.colorScheme.onBackground)
             Text(stringResource(R.string.alarms_preview_body), fontSize = 13.sp, color = CaptionMuted, modifier = Modifier.padding(top = 6.dp, bottom = 14.dp))
             ListCard {
                 AlarmType.entries.forEachIndexed { i, type ->

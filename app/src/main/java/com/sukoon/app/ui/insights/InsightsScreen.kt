@@ -102,7 +102,7 @@ fun InsightsScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         if (!state.acknowledged) {
-            Text(stringResource(R.string.insights_title), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.insights_title), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, lineHeight = 31.sp, color = MaterialTheme.colorScheme.onBackground)
             Acknowledgement(onAcknowledge)
             return@Column
         }
@@ -265,7 +265,7 @@ private fun Calm() {
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(stringResource(R.string.in2_one_thing).uppercase(), fontSize = 11.5.sp, letterSpacing = 1.sp, fontWeight = FontWeight.SemiBold, color = SageDeep)
-        Text(stringResource(R.string.in2_calm), fontFamily = HeadlineSerifFontFamily, fontSize = 21.sp, color = MaterialTheme.colorScheme.onBackground)
+        Text(stringResource(R.string.in2_calm), fontFamily = HeadlineSerifFontFamily, fontSize = 21.sp, lineHeight = 25.sp, color = MaterialTheme.colorScheme.onBackground)
         Text(stringResource(R.string.in2_calm_body), fontSize = 13.sp, color = CaptionMuted)
     }
 }

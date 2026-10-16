@@ -330,7 +330,7 @@ fun SensorCard(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (pairing == null) {
-                Text(stringResource(R.string.sensor_none_title), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
+                Text(stringResource(R.string.sensor_none_title), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, lineHeight = 29.sp, color = MaterialTheme.colorScheme.onBackground)
                 Text(stringResource(R.string.sensor_body_unpaired), fontSize = 13.5.sp, color = CaptionMuted)
             } else {
                 // The state from the last reading, not the Bluetooth link: the sensor drops it after every reading.
@@ -415,7 +415,7 @@ fun SensorCard(
                 ) {
                     val ink = MaterialTheme.colorScheme.onBackground
                     Canvas(Modifier.size(120.dp)) { drawSensor(center, size.minDimension / 2 * 0.86f, ink) }
-                    Text(stringResource(R.string.sensor_start_title), fontFamily = HeadlineSerifFontFamily, fontSize = 23.sp, color = ink)
+                    Text(stringResource(R.string.sensor_start_title), fontFamily = HeadlineSerifFontFamily, fontSize = 23.sp, lineHeight = 28.sp, color = ink)
                     Text(stringResource(R.string.sensor_start_body), fontSize = 14.sp, lineHeight = 21.sp, color = CaptionMuted, textAlign = TextAlign.Center)
                     Box(
                         Modifier
@@ -552,7 +552,7 @@ private fun StartedBlock() {
             drawSensor(center, 33.dp.toPx(), ink, adhesive = false)
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(stringResource(R.string.sensor_started_title), fontFamily = HeadlineSerifFontFamily, fontSize = 22.sp, color = ink)
+            Text(stringResource(R.string.sensor_started_title), fontFamily = HeadlineSerifFontFamily, fontSize = 22.sp, lineHeight = 26.sp, color = ink)
             Text(stringResource(R.string.sensor_started_now), fontSize = 13.5.sp, lineHeight = 19.sp, color = CaptionMuted)
         }
     }

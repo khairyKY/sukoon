@@ -2251,4 +2251,7 @@
         <item quantity="many">اتحفظ %d إدخال</item>
         <item quantity="other">اتحفظ %d إدخال</item>
     </plurals>
+    <string name="meal_source_title">ضيف الأكلة</string>
+    <string name="meal_source_estimate_body">اوصفها أو ضيف صور: سكون هيقدّر النشويات</string>
+    <string name="chip_ratios">%1$d أكلات جديدة: راجع نسبك</string>
 </resources>

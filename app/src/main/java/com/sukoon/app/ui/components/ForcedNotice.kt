@@ -78,7 +78,7 @@ fun ForcedNotice() {
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Text(String.format(Locale.getDefault(), "%d", r.glucoseMgDl), fontFamily = HeadlineSerifFontFamily, fontSize = 30.sp, color = MaterialTheme.colorScheme.onBackground)
-                        Text(r.trend.arrow, fontSize = 22.sp, color = MaterialTheme.colorScheme.onBackground)
+                        TrendArrow(r.trend, MaterialTheme.colorScheme.onBackground, size = 24.dp)
                         Text(stringResource(R.string.forced_reading, minutes.toInt()), fontSize = 13.sp, color = CaptionMuted)
                     }
                 }

@@ -133,8 +133,8 @@ enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
     ALARMS(R.string.you_alarms, R.drawable.ic_bell),
     PEOPLE(R.string.you_people, R.drawable.ic_people),
     INSULIN(R.string.you_insulin, R.drawable.ic_insulin),
-    SUPPLIES(R.string.you_supplies, R.drawable.ic_stat_insulin),
-    CLINIC(R.string.you_clinic, R.drawable.ic_doc),
+    SUPPLIES(R.string.you_supplies, R.drawable.ic_box),
+    CLINIC(R.string.you_clinic, R.drawable.ic_clinic),
     FITNESS(R.string.you_fitness, R.drawable.ic_walk),
     APPS(R.string.you_apps, R.drawable.ic_link),
     REPORTS(R.string.you_reports, R.drawable.ic_doc),
@@ -255,7 +255,7 @@ fun SettingsScreen(
         ) {
             when (val open = shown) {
                 null -> {
-                    Text(stringResource(R.string.home_nav_you), fontFamily = HeadlineSerifFontFamily, fontSize = 30.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(horizontal = 4.dp))
+                    Text(stringResource(R.string.home_nav_you), fontFamily = HeadlineSerifFontFamily, fontSize = 30.sp, lineHeight = 36.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(horizontal = 4.dp))
                     Spacer(Modifier.height(14.dp))
                     ProfileCard(emergency.yourName, wears = pairing != null) { page = YouPage.PEOPLE }
                     if (missing.isNotEmpty()) {
@@ -544,7 +544,7 @@ private fun ProfileCard(name: String, wears: Boolean, onClick: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(Modifier.size(48.dp).clip(CircleShape).background(SageMist), contentAlignment = Alignment.Center) {
-            Text(shown.take(1).uppercase(), fontFamily = HeadlineSerifFontFamily, fontSize = 22.sp, color = SageDeep)
+            Text(shown.take(1).uppercase(), fontFamily = HeadlineSerifFontFamily, fontSize = 22.sp, lineHeight = 26.sp, color = SageDeep)
         }
         Column(Modifier.weight(1f)) {
             Text(shown, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
@@ -631,21 +631,37 @@ private fun fitnessSummary(): String {
     }
 }
 
+/** A fixed colour per section (not the theme's accent): white text on each passes 4.5:1. */
+private fun sectionHue(page: YouPage): androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color(
+    when (page) {
+        YouPage.SENSOR -> 0xFF3E7A63
+        YouPage.ALARMS -> 0xFFB04A42
+        YouPage.PEOPLE -> 0xFF3A6E93
+        YouPage.INSULIN -> 0xFF675CA6
+        YouPage.SUPPLIES -> 0xFF8A6A2E
+        YouPage.CLINIC -> 0xFFA44C78
+        YouPage.FITNESS -> 0xFF4A7D3A
+        YouPage.APPS -> 0xFF237A85
+        YouPage.REPORTS -> 0xFF6F5F4E
+        YouPage.APPEARANCE -> 0xFF56687A
+        YouPage.HELP -> 0xFF5E6B64
+    },
+)
+
 @Composable
 private fun SectionCard(page: YouPage, summary: String, modifier: Modifier, onClick: () -> Unit) {
-    val (tileBg, tint) = when (page) {
-        YouPage.SENSOR -> SageMist to SageDeep
-        YouPage.ALARMS -> PillLowBg to PillLowText
-        YouPage.PEOPLE -> SageMist to SageDeep
-        YouPage.APPS -> PillHighBg to PillHighText
-        else -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f) to MaterialTheme.colorScheme.onBackground
-    }
+    // Each section its own colour: a tinted card and a solid tile, so they read apart at a glance.
+    val hue = sectionHue(page)
+    val dark = com.sukoon.app.ui.theme.LocalDarkTheme.current
+    val tileBg = hue
+    val tint = androidx.compose.ui.graphics.Color.White
     Column(
         modifier
             .heightIn(min = 104.dp)
             .clip(RoundedCornerShape(18.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, outline(), RoundedCornerShape(18.dp))
+            .background(hue.copy(alpha = if (dark) 0.16f else 0.09f))
+            .border(1.dp, hue.copy(alpha = if (dark) 0.35f else 0.22f), RoundedCornerShape(18.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.SpaceBetween,
@@ -669,7 +685,7 @@ private fun PageHeader(title: String, onBack: () -> Unit) {
         ) {
             Icon(painterResource(R.drawable.ic_back), contentDescription = stringResource(R.string.you_back), tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(20.dp))
         }
-        Text(title, fontFamily = HeadlineSerifFontFamily, fontSize = 28.sp, color = MaterialTheme.colorScheme.onBackground)
+        Text(title, fontFamily = HeadlineSerifFontFamily, fontSize = 28.sp, lineHeight = 34.sp, color = MaterialTheme.colorScheme.onBackground)
     }
 }
 

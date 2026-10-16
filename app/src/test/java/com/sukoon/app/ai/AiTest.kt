@@ -76,6 +76,7 @@ class AiTest {
         assertEquals(1, contents.getJSONObject(0).getJSONArray("parts").length())
         assertEquals("AQID", contents.getJSONObject(2).getJSONArray("parts").getJSONObject(1).getJSONObject("inline_data").getString("data"))
         assertEquals("application/json", body.getJSONObject("generationConfig").getString("responseMimeType"))
+        assertEquals(0, body.getJSONObject("generationConfig").getJSONObject("thinkingConfig").getInt("thinkingBudget"))
     }
 
     @Test

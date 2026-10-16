@@ -190,7 +190,7 @@ private fun ReadingsList(days: List<ReadingDay>) {
 @Composable
 private fun Header(latest: GlucoseReading?, title: String?) {
     Column {
-        Text(title ?: stringResource(R.string.graph_title), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
+        Text(title ?: stringResource(R.string.graph_title), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, lineHeight = 29.sp, color = MaterialTheme.colorScheme.onBackground)
         if (latest == null) return@Column
         val minutes = Duration.between(latest.timestamp, Instant.now()).toMinutes().coerceAtLeast(0)
         val stale = minutes > HomeUiStateMapper.STALE_AFTER.toMinutes()
@@ -206,7 +206,7 @@ private fun Header(latest: GlucoseReading?, title: String?) {
                 color = color,
             )
             Spacer(Modifier.width(8.dp))
-            Text(latest.trend.arrow, fontSize = 32.sp, color = color, modifier = Modifier.padding(bottom = 8.dp))
+            com.sukoon.app.ui.components.TrendArrow(latest.trend, color, size = 30.dp, modifier = Modifier.padding(bottom = 10.dp))
         }
         Text(
             listOf(

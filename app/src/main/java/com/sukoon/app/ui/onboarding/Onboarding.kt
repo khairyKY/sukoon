@@ -213,8 +213,8 @@ private fun Welcome(onStart: () -> Unit, onHaveAccount: () -> Unit) {
         }
         Column(Modifier.weight(1f).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             SukoonMark(markSize = 76.dp)
-            Text(stringResource(R.string.app_name), fontFamily = HeadlineSerifFontFamily, fontSize = 46.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 22.dp))
-            Text(stringResource(R.string.ob_tagline), fontFamily = HeadlineSerifFontFamily, fontSize = 22.sp, color = MaterialTheme.colorScheme.onBackground, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 22.dp))
+            Text(stringResource(R.string.app_name), fontFamily = HeadlineSerifFontFamily, fontSize = 46.sp, lineHeight = 55.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 22.dp))
+            Text(stringResource(R.string.ob_tagline), fontFamily = HeadlineSerifFontFamily, fontSize = 22.sp, lineHeight = 26.sp, color = MaterialTheme.colorScheme.onBackground, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 22.dp))
             Text(stringResource(R.string.ob_welcome_body), fontSize = 15.sp, lineHeight = 23.sp, color = CaptionMuted, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 12.dp))
         }
         Row(
@@ -709,7 +709,7 @@ private fun ReadyStep(container: AppContainer, onDone: () -> Unit) {
             } else {
                 SukoonMark(markSize = 76.dp)
             }
-            Text(stringResource(R.string.ob_ready_title), fontFamily = HeadlineSerifFontFamily, fontSize = 34.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 24.dp))
+            Text(stringResource(R.string.ob_ready_title), fontFamily = HeadlineSerifFontFamily, fontSize = 34.sp, lineHeight = 41.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 24.dp))
             Text(
                 stringResource(
                     when (life) {

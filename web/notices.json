@@ -52,5 +52,16 @@
     "link": "https://github.com/khairyKY/sukoon/releases/latest",
     "until": "2026-10-28",
     "below": "0.16.0"
+  },
+  {
+    "id": "2026-10-16-sukoon-0.17.0",
+    "date": "2026-10-16",
+    "title": "Sukoon 0.17.0: quicker answers",
+    "body": "Ask answers as it writes, estimates come back faster, Sukoon draws its own trend arrows, and each section in You has its own colour. Tap to update.",
+    "title_ar": "سكون 0.17.0: ردود أسرع",
+    "body_ar": "اسأل بيرد وهو بيكتب، والتقديرات أسرع، وسكون بيرسم أسهمه بنفسه، وكل قسم في حسابي ليه لونه. اضغط للتحديث.",
+    "link": "https://github.com/khairyKY/sukoon/releases/latest",
+    "until": "2026-10-30",
+    "below": "0.17.0"
   }
 ]

@@ -104,7 +104,7 @@ internal fun VoiceSheet(glucoseNow: Int?, onSave: (List<EntryDraft>) -> Unit, on
         entries.clear()
         amounts.clear()
         scope.launch {
-            runCatching { VoiceLog.parse(app.gemini.generate(VoiceLog.systemPrompt(), listOf(ChatTurn(fromUser = true, text = text)), jsonOutput = true)) }
+            runCatching { VoiceLog.parse(app.gemini.generate(VoiceLog.systemPrompt(), listOf(ChatTurn(fromUser = true, text = text)), jsonOutput = true, lite = true)) }
                 .onSuccess { found ->
                     entries += found
                     amounts += found.map { e -> e.amount?.let(::formatAmount).orEmpty() }
@@ -121,7 +121,7 @@ internal fun VoiceSheet(glucoseNow: Int?, onSave: (List<EntryDraft>) -> Unit, on
 
     SukoonSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(stringResource(R.string.voice_title), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.voice_title), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, lineHeight = 31.sp, color = MaterialTheme.colorScheme.onBackground)
             said?.let { Text(stringResource(R.string.voice_heard, it), fontSize = 14.sp, lineHeight = 20.sp, color = CaptionMuted) }
             if (working) Text(stringResource(R.string.voice_understanding), fontSize = 14.sp, color = SageDeep)
             problem?.let { Text(it, fontSize = 14.sp, color = PillHighText) }

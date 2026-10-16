@@ -70,7 +70,7 @@ fun ReportScreen(state: ReportUiState, name: String, onSelectDays: (Int) -> Unit
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(stringResource(R.string.report_title), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
+        Text(stringResource(R.string.report_title), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, lineHeight = 29.sp, color = MaterialTheme.colorScheme.onBackground)
         NumberChips(listOf(7, 14, 30), state.days, 1..90, { pluralStringResource(R.plurals.report_days, it.toInt(), it) }) { onSelectDays(it) }
         val report = state.report
         if (report == null) {

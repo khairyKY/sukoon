@@ -2115,4 +2115,7 @@
         <item quantity="one">Saved %d entry</item>
         <item quantity="other">Saved %d entries</item>
     </plurals>
+    <string name="meal_source_title">Add the meal</string>
+    <string name="meal_source_estimate_body">Describe it or add photos: Sukoon estimates the carbs</string>
+    <string name="chip_ratios">%1$d new meals: check your ratios</string>
 </resources>

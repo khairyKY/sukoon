@@ -149,6 +149,11 @@ class SettingsPrefs(context: Context) {
         get() = prefs.getString(KEY_WEIGH_IN, null)
         set(value) = prefs.edit().putString(KEY_WEIGH_IN, value).apply()
 
+    /** When Learning was last opened: new clean meals since then make Now say it's worth a look. */
+    var ratiosReviewedAt: Long
+        get() = prefs.getLong(KEY_RATIOS_REVIEWED, 0L)
+        set(value) = prefs.edit().putLong(KEY_RATIOS_REVIEWED, value).apply()
+
     /** The learning suggestion Home was told "Not now" about ([com.sukoon.app.insulin.RatioLearner.Nudge.key]). */
     var nudgeDismissed: String?
         get() = prefs.getString(KEY_NUDGE_DISMISSED, null)
@@ -280,6 +285,7 @@ class SettingsPrefs(context: Context) {
         private const val KEY_INSULIN_PEAK = "insulin_peak_minutes"
         private const val KEY_TARGET_HIGH = "target_high"
         private const val KEY_PARENT_PIN = "parent_pin"
+        private const val KEY_RATIOS_REVIEWED = "ratios_reviewed_at"
         private const val KEY_WEIGH_IN = "weigh_in_applied"
         private const val KEY_NUDGE_DISMISSED = "nudge_dismissed"
         private const val KEY_WEIGHT = "profile_weight_kg"
