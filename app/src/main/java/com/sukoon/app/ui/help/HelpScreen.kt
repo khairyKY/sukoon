@@ -55,6 +55,8 @@ import androidx.compose.ui.window.DialogProperties
 import com.sukoon.app.R
 import com.sukoon.app.SukoonApp
 import com.sukoon.app.ui.settings.rememberMissingSetup
+import com.sukoon.app.platform.SetupItem
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
 import com.sukoon.app.ui.theme.Sage
@@ -85,13 +87,26 @@ fun HelpDialog(onClose: () -> Unit, onLink: (String) -> Unit = {}, startTopic: S
     }
 }
 
-/** Start here, ticked from the phone: a sensor paired, alarms able to reach you, an emergency contact. */
+/**
+ * Start here, ticked from the phone (the Guide's hub, Now's card, onboarding's last page): real
+ * glucose coming in (any source but demo data), alarms able to reach you, an emergency contact.
+ */
 @Composable
 internal fun startDone(): List<Boolean> {
     val container = (LocalContext.current.applicationContext as SukoonApp).container
-    val missing = rememberMissingSetup()
-    return listOf(container.pairingStore.load()?.started == true, missing.isEmpty(), container.settings.emergency.contacts.isNotEmpty())
+    val source by container.sourceKind.collectAsStateWithLifecycle()
+    val latest by container.glucoseRepository.latestReading.collectAsStateWithLifecycle(initialValue = null)
+    return listOf(source.real && latest?.source?.real == true, alarmsCanReach(rememberMissingSetup()), container.settings.emergency.contacts.isNotEmpty())
 }
+
+/**
+ * Alarms reach you when nothing they can't work without is missing: notifications, an unrestricted
+ * battery, and full-screen alerts where Android asks. Do Not Disturb, the overlay and texts stay in
+ * the checklist; many phones lack or refuse them, and the step shouldn't wait on them.
+ */
+internal fun alarmsCanReach(missing: List<SetupItem>): Boolean = missing.none { it in CORE_SETUP }
+
+private val CORE_SETUP = setOf(SetupItem.NOTIFICATIONS, SetupItem.BATTERY, SetupItem.FULL_SCREEN)
 
 @Composable
 private fun Hub(guide: Guide, done: List<Boolean>, onClose: () -> Unit, onOpen: (String) -> Unit, onLink: (String) -> Unit) {

@@ -17,6 +17,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -159,7 +163,10 @@ fun TrendsHub(
     }
 }
 
-/** Graph · Logbook · Insights · Report · ✦ Ask (Redesign Canvas §8): one track, the chosen segment raised. */
+/**
+ * Graph · Logbook · Insights · Report · ✦ Ask (Redesign Canvas §8): one track, the chosen segment raised.
+ * A long name wraps to two lines (Arabic on a narrow phone) rather than being cut; TalkBack hears tabs.
+ */
 @Composable
 private fun SegmentedTabs(selected: TrendsSubTab, onSelect: (TrendsSubTab) -> Unit) {
     Row(
@@ -177,8 +184,9 @@ private fun SegmentedTabs(selected: TrendsSubTab, onSelect: (TrendsSubTab) -> Un
                     .weight(if (tab == TrendsSubTab.INSIGHTS || tab == TrendsSubTab.LOGBOOK) 1.12f else 1f)
                     .clip(RoundedCornerShape(11.dp))
                     .background(if (on) MaterialTheme.colorScheme.surface else Color.Transparent)
-                    .clickable { onSelect(tab) }
-                    .padding(vertical = 8.dp),
+                    .selectable(selected = on, role = Role.Tab) { onSelect(tab) }
+                    .heightIn(min = 48.dp)
+                    .padding(horizontal = 2.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -197,8 +205,9 @@ private fun SegmentedTabs(selected: TrendsSubTab, onSelect: (TrendsSubTab) -> Un
                         },
                     ),
                     fontSize = 12.5.sp,
-                    maxLines = 1,
-                    softWrap = false,
+                    lineHeight = 14.sp,
+                    maxLines = 2,
+                    textAlign = TextAlign.Center,
                     fontWeight = if (on) FontWeight.SemiBold else FontWeight.Medium,
                     color = if (on) MaterialTheme.colorScheme.onBackground else CaptionMuted,
                 )

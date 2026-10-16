@@ -201,7 +201,8 @@ private fun Callout(text: String) = Text(
 )
 
 /** One state on Now: [attention] tints it amber (something to do), else it's a quiet outline. */
-class StatusChip(val text: String, val attention: Boolean = false, val onClick: () -> Unit)
+/** [onClick] null: a chip that only says something (a follower can't act on the wearer's basal). */
+class StatusChip(val text: String, val attention: Boolean = false, val onClick: (() -> Unit)?)
 
 /**
  * Now, under the header: what's on, as chips (alarms paused, a workout, fasting, a sick day, the
@@ -223,8 +224,9 @@ fun StatusChips(chips: List<StatusChip>, modifier: Modifier = Modifier.padding(h
                     .clip(RoundedCornerShape(50))
                     .background(if (c.attention) PillHighBg else Color.Transparent)
                     .border(1.dp, if (c.attention) Color.Transparent else outline(), RoundedCornerShape(50))
-                    .clickable(onClick = c.onClick)
-                    .padding(horizontal = 12.dp, vertical = 7.dp),
+                    .let { m -> c.onClick?.let { m.clickable(onClick = it) } ?: m }
+                    .heightIn(min = 36.dp)
+                    .padding(horizontal = 12.dp, vertical = 9.dp),
             )
         }
     }

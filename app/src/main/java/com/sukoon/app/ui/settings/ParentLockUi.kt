@@ -72,7 +72,7 @@ internal fun PinDialog(setting: Boolean, stored: String?, onDone: (String) -> Un
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                     )
                 }
-                if (wrong) Text(stringResource(R.string.lock_wrong), fontSize = 13.sp, color = StateLow)
+                if (wrong) Text(stringResource(R.string.lock_wrong), fontSize = 13.sp, color = com.sukoon.app.ui.theme.PillLowText)
             }
         },
         confirmButton = {

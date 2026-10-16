@@ -130,10 +130,16 @@ class Supabase(context: Context, private val url: String, private val key: Strin
             val body = JSONObject().put("refresh_token", current.refreshToken)
             save(JSONObject(call("POST", "/auth/v1/token?grant_type=refresh_token", body.toString(), authorized = false)))
         } catch (e: SupabaseException) {
-            if (e.status in 400..401) signOut()
+            if (e.status in 400..401) {
+                signOut()
+                prefs.edit().putBoolean(K_LOST, true).apply()
+            }
             throw e
         }
     }
+
+    /** Signed out by the server (the refresh token died), not by the person: a follower is asked to sign in again. */
+    val sessionLost: Boolean get() = prefs.getBoolean(K_LOST, false)
 
     private fun save(json: JSONObject): Session {
         val user = json.getJSONObject("user")
@@ -150,6 +156,7 @@ class Supabase(context: Context, private val url: String, private val key: Strin
             .putLong(K_EXPIRES, session.expiresAtMillis)
             .putString(K_USER, session.userId)
             .putString(K_EMAIL, session.email)
+            .remove(K_LOST)
             .apply()
         _session.value = session
         return session
@@ -173,6 +180,7 @@ class Supabase(context: Context, private val url: String, private val key: Strin
         private const val K_USER = "user_id"
         private const val K_EMAIL = "email"
         private const val K_VERIFIER = "pkce_verifier"
+        private const val K_LOST = "session_lost"
 
         /** Where Supabase's emails send people (web/auth.html): confirmation and choosing a new password. */
         const val AUTH_PAGE = "https://khairyky.github.io/sukoon/auth.html"

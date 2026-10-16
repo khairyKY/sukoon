@@ -70,7 +70,6 @@ fun DoseCard(
     learningReport: suspend (Double?) -> RatioLearner.Report,
     insulinHours: Int,
     profile: Profile,
-    onProfile: (Profile) -> Unit,
     locked: Boolean = false,
     onUnlock: () -> Unit = {},
     parentPin: String? = null,
@@ -127,11 +126,10 @@ fun DoseCard(
             LockedNotice(onUnlock)
             return@Column
         }
-        if (com.sukoon.app.platform.ParentLock.appliesTo(profile.ageYears)) ParentLockRow(parentPin, onParentPin) // no lock from 18
         if (!settings.enabled) return@Column
 
+        // About you and the parent lock live on You's profile page (they matter with suggestions off too).
         val fromLogbook by produceState<Insight.Formulas?>(null) { value = runCatching { startingPoints() }.getOrNull() }
-        ProfileRow(profile, onProfile)
         SuggestRatios(settings, profile, fromLogbook, onChange)
 
         Eyebrow(stringResource(R.string.dose_ratio_label), Modifier.padding(top = 4.dp))

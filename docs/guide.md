@@ -52,7 +52,7 @@ Paths are written as the app shows them: tab → page → control (You → Senso
 ### 3. Keep Sukoon running  · icon `ic_sync`
 **For:** alarms that reach you at 3 a.m. too.
 
-1. You → Help & about → **Setup check**: allow everything it lists.
+1. You → Help & about → **Setup**: allow everything it lists.
 2. On Samsung or Xiaomi, open the battery page it links and set Sukoon to **Unrestricted** / **Never sleeping**.
 3. Leave Sukoon's small notification on: it's what keeps it running, and it shows your number.
 
@@ -91,7 +91,7 @@ Paths are written as the app shows them: tab → page → control (You → Senso
 **For:** someone being told when you can't answer.
 
 1. You → People → **Emergency contacts** → add from your phone book (or type a number).
-2. Allow SMS and calls when Setup check asks.
+2. Allow SMS and calls when Setup asks.
 3. Choose how long an urgent low may go unanswered (10 minutes by default).
 
 **What happens**
@@ -244,7 +244,7 @@ Paths are written as the app shows them: tab → page → control (You → Senso
 ### 18. Parent lock  · icon `ic_lock`
 **For:** a child's phone where the important settings can't be changed by accident or on purpose.
 
-1. You → Insulin → **Parent lock** → **Set**, and type a 4–8 digit PIN twice.
+1. You → your name at the top → **Parent lock** → **Set**, and type a 4–8 digit PIN twice.
 2. From then on, changing alarms, the range, doses or the profile asks for the PIN, once per visit.
 
 **Good to know**
@@ -269,7 +269,7 @@ Paths are written as the app shows them: tab → page → control (You → Senso
 ### 20. Backup, moving phones and your data  · icon `ic_doc`
 **For:** never losing your history, and knowing where it goes.
 
-1. You → Reports → **Back up everything**: one private file with readings, logbook, settings, sensor pairing and photos.
+1. You → Export & backup → **Back up everything**: one private file with readings, logbook, settings, sensor pairing and photos.
 2. On a new phone: **Restore** that file, and Sukoon opens as it was (widgets need adding again).
 3. **Daily backup to your cloud** (optional): pick a file in Drive, OneDrive or Dropbox, refreshed once a day.
 
@@ -284,6 +284,6 @@ Paths are written as the app shows them: tab → page → control (You → Senso
 
 Three steps, ticked as they're done, then it goes away:
 1. **Start or connect your sensor** → opens topic 1 / You → Sensor.
-2. **Make sure alarms can reach you** → Setup check.
+2. **Make sure alarms can reach you** → Setup.
 3. **Add an emergency contact** → You → People.
 Buttons: **Open the guide**, **Not now**.

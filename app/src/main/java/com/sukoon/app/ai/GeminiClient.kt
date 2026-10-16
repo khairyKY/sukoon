@@ -1,5 +1,8 @@
 package com.sukoon.app.ai
 
+import android.content.Context
+import androidx.annotation.StringRes
+import com.sukoon.app.R
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Base64
@@ -21,8 +24,12 @@ class AiException(message: String) : Exception(message)
  * that never answers — the free tier regularly returns 503 "high demand" (or just hangs) for the
  * newest model while older ones answer fine.
  * Auth/request errors (400/403) fail fast since every model would reject them the same way.
+ * Errors are thrown in the app's language ([context]'s strings), ready to show as they are
+ * (no context: the JVM's live test, a bare "Gemini error").
  */
-class GeminiClient(private val apiKey: () -> String) {
+class GeminiClient(private val context: Context?, private val apiKey: () -> String) {
+
+    private fun fail(@StringRes text: Int, vararg args: Any): Nothing = throw AiException(context?.getString(text, *args) ?: "Gemini error")
 
     val hasKey: Boolean get() = apiKey().isNotBlank()
 
@@ -38,18 +45,18 @@ class GeminiClient(private val apiKey: () -> String) {
         jsonOutput: Boolean = false,
         lite: Boolean = false,
     ): String = withContext(Dispatchers.IO) {
-        val key = apiKey().ifBlank { throw AiException(NO_KEY) }
+        val key = apiKey().ifBlank { fail(R.string.ai_err_no_key) }
         val body = requestBody(systemPrompt, turns, images, jsonOutput).toString()
         val plain by lazy { requestBody(systemPrompt, turns, images, jsonOutput, thinkingOff = false).toString() }
-        var lastError = "No model answered"
+        var lastError = R.string.ai_err_busy to 0
         for (model in if (lite) LITE_FIRST else MODELS) {
             var (code, response) = post(model, key, body)
             if (code == 400 && response.contains("thinking", ignoreCase = true)) post(model, key, plain).let { code = it.first; response = it.second }
-            if (code == 200) return@withContext replyText(response)
-            lastError = errorMessage(code, response)
+            if (code == 200) return@withContext replyText(response) ?: fail(R.string.ai_err_empty)
+            lastError = errorText(code, response) to code
             if (code != TIMED_OUT && code != 404 && code != 429 && code < 500) break
         }
-        throw AiException(lastError)
+        fail(lastError.first, lastError.second)
     }
 
     /**
@@ -57,19 +64,19 @@ class GeminiClient(private val apiKey: () -> String) {
      * the models like [generate] until one starts answering.
      */
     suspend fun stream(systemPrompt: String, turns: List<ChatTurn>, onText: (String) -> Unit): String = withContext(Dispatchers.IO) {
-        val key = apiKey().ifBlank { throw AiException(NO_KEY) }
+        val key = apiKey().ifBlank { fail(R.string.ai_err_no_key) }
         val body = requestBody(systemPrompt, turns, emptyList(), false).toString()
         val plain by lazy { requestBody(systemPrompt, turns, emptyList(), false, thinkingOff = false).toString() }
-        var lastError = "No model answered"
+        var lastError = R.string.ai_err_busy to 0
         for (model in MODELS) {
             var r = streamPost(model, key, body, onText)
             if (r.first == 400 && r.third.contains("thinking", ignoreCase = true)) r = streamPost(model, key, plain, onText)
             val (code, text, error) = r
             if (code == 200 && text.isNotEmpty()) return@withContext text
-            lastError = if (code == 200) "Gemini returned an empty answer." else errorMessage(code, error)
+            lastError = (if (code == 200) R.string.ai_err_empty else errorText(code, error)) to code
             if (code != 200 && code != TIMED_OUT && code != 404 && code != 429 && code < 500) break
         }
-        throw AiException(lastError)
+        fail(lastError.first, lastError.second)
     }
 
     /** (code, the answer, the error body). */
@@ -102,7 +109,8 @@ class GeminiClient(private val apiKey: () -> String) {
                 Triple(TIMED_OUT, "", "")
             }
         } catch (e: java.io.IOException) {
-            throw AiException("Couldn't reach Gemini — check your connection. (${e.message})")
+            android.util.Log.w("Gemini", "Couldn't connect", e)
+            fail(R.string.ai_err_offline)
         } finally {
             connection.disconnect()
         }
@@ -128,7 +136,8 @@ class GeminiClient(private val apiKey: () -> String) {
                 TIMED_OUT to ""
             }
         } catch (e: java.io.IOException) {
-            throw AiException("Couldn't reach Gemini — check your connection. (${e.message})")
+            android.util.Log.w("Gemini", "Couldn't connect", e)
+            fail(R.string.ai_err_offline)
         } finally {
             connection.disconnect()
         }
@@ -138,7 +147,6 @@ class GeminiClient(private val apiKey: () -> String) {
         private const val BASE = "https://generativelanguage.googleapis.com/v1beta/models"
         /** Not an HTTP code: the model took longer than the read timeout. */
         const val TIMED_OUT = -1
-        const val NO_KEY = "Add your Gemini API key in You → AI to use this."
 
         // `*-latest` aliases track Google's current models so the app doesn't break when one is
         // retired (gemini-2.5-flash already 404s for new keys); the pinned one is the fallback.
@@ -179,7 +187,8 @@ class GeminiClient(private val apiKey: () -> String) {
             return (0 until (parts?.length() ?: 0)).mapNotNull { parts!!.optJSONObject(it) }.filterNot { it.optBoolean("thought") }.joinToString("") { it.optString("text") }
         }
 
-        fun replyText(response: String): String {
+        /** The answer's text, thoughts left out; null when there's none (empty, or Gemini declined). */
+        fun replyText(response: String): String? {
             val json = JSONObject(response)
             val parts = json.optJSONArray("candidates")?.optJSONObject(0)?.optJSONObject("content")?.optJSONArray("parts")
             val text = (0 until (parts?.length() ?: 0))
@@ -187,18 +196,18 @@ class GeminiClient(private val apiKey: () -> String) {
                 .filterNot { it.optBoolean("thought") } // thinking models may return their reasoning as a part
                 .joinToString("") { it.optString("text") }
                 .trim()
-            if (text.isNotEmpty()) return text
-            val blocked = json.optJSONObject("promptFeedback")?.optString("blockReason").orEmpty()
-            throw AiException(if (blocked.isNotEmpty()) "Gemini declined to answer ($blocked)." else "Gemini returned an empty answer.")
+            return text.ifEmpty { null }
         }
 
-        fun errorMessage(code: Int, response: String): String {
+        /** What to tell the person about an error answer: a string that may show the HTTP code as %1$d. */
+        @StringRes
+        fun errorText(code: Int, response: String): Int {
             val message = runCatching { JSONObject(response).getJSONObject("error").getString("message") }.getOrNull()
             return when (code) {
-                400, 403 -> if (message?.contains("API key", ignoreCase = true) == true) "Gemini rejected the API key. Check it in You → AI." else "Gemini error $code: ${message ?: "bad request"}"
-                429 -> "Gemini's free quota is used up for now — try again in a minute."
-                TIMED_OUT -> "Gemini took too long to answer. Try again shortly."
-                else -> "Gemini is busy right now ($code). Try again shortly."
+                400, 403 -> if (message?.contains("API key", ignoreCase = true) == true) R.string.ai_err_bad_key else R.string.ai_err_request
+                429 -> R.string.ai_err_quota
+                TIMED_OUT -> R.string.ai_err_slow
+                else -> R.string.ai_err_busy
             }
         }
     }

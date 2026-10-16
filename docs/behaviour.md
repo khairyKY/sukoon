@@ -208,12 +208,12 @@ back of the upper arms, upper outer buttocks, each left or right. One tap picks 
 the other side. Rapid and long-acting rotate separately.
 
 **One spot doing most of the work**: 10 or more doses of a kind in 14 days, half or more in one spot.
-It shows on You → Insulin & logbook (with the last 30 days on the body map) and as an insight in
+It shows on You → Insulin & doses (with the last 30 days on the body map) and as an insight in
 Trends (Frid et al., Mayo Clin Proc 2016).
 
 ## 9. Dose suggestions (beta)
 
-Off until turned on in You → Insulin & logbook. Carb counting: a carb ratio per meal (breakfast
+Off until turned on in You → Insulin & doses. Carb counting: a carb ratio per meal (breakfast
 04–10, lunch 11–15, dinner 16–21, late otherwise), a correction factor and a target. Any box can
 stay empty, and that part is then left out. Sources: docs/research/dosing-sources.md.
 
@@ -380,7 +380,7 @@ only for half-unit pens, and suggestions round down to the pen.
 
 - The logbook and the graph show the last 24 hours (or the chosen range) up to now; the *‹ Today ›*
   bar goes to any earlier day (its entries, totals and the whole day's graph).
-- Cloud backup (opt-in, You → Reports): the full backup zip, written to one file you chose in a
+- Cloud backup (opt-in, You → Export & backup): the full backup zip, written to one file you chose in a
   cloud app, on choosing and then once a day (checked hourly while Sukoon runs). Sukoon keeps
   permission to that file only. *Stop* releases it.
 - Times follow You → Appearance → Clock: the phone's, 12-hour or 24-hour, everywhere (alarms,
