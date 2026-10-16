@@ -54,7 +54,7 @@ sealed interface Brief {
 
     // Worth acting on.
     data class HeadingLow(val minutes: Int, val insulin: Double) : Brief { override val step = Step.CARBS_READY }
-    data class VeryHighFor(val minutes: Long) : Brief { override val step = Step.KETONES }
+    data class VeryHighFor(val minutes: Long, val insulin: Double = 0.0) : Brief { override val step = Step.KETONES }
     data class Rebound(val lowAt: Instant) : Brief { override val step = Step.LET_IT_SETTLE }
     data class InsulinWorking(val units: Double) : Brief { override val step = Step.DONT_STACK }
     data class HighFor(val minutes: Long, val over250: Boolean) : Brief {
@@ -136,7 +136,7 @@ object HomeBriefs {
             modes.fastingNow && v > com.sukoon.app.modes.Modes.FAST_BREAK_HIGH -> Brief.BreakFastHigh
             modes.fastingNow && v < com.sukoon.app.modes.Modes.FAST_RECHECK -> Brief.FastCheck(v)
             ketonesDue -> Brief.KetonesDue
-            v > 250 && run(readings) { it > 250 } >= 120 -> Brief.VeryHighFor(run(readings) { it > 250 })
+            v > 250 && run(readings) { it > 250 } >= 120 -> Brief.VeryHighFor(run(readings) { it > 250 }, insulin)
             v > top && lastLow != null -> Brief.Rebound(lastLow.start)
             v > top && insulin > 0 -> Brief.InsulinWorking(insulin)
             meal != null && (v > top || rising) -> Brief.AfterMeal(meal.value?.roundToInt()?.takeIf { it > 0 }, meal.at())

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -38,7 +39,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.sukoon.app.R
-import com.sukoon.app.platform.BatteryOptimization
 import com.sukoon.app.platform.SetupCheck
 import com.sukoon.app.platform.SetupItem
 import com.sukoon.app.ui.theme.CaptionMuted
@@ -120,22 +120,10 @@ fun SetupChecklist(only: Set<SetupItem>? = null) {
                 }
             }
         }
-        if (SetupCheck.hasOemBackgroundSettings()) {
-            Row(verticalAlignment = Alignment.Top) {
-                Box(Modifier.padding(top = 5.dp).size(10.dp).clip(CircleShape).background(CaptionMuted))
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.setup_oem), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                    Text(stringResource(R.string.setup_oem_why), fontSize = 12.sp, color = CaptionMuted)
-                }
-                Spacer(Modifier.width(8.dp))
-                SmallButton(stringResource(R.string.setup_open)) { BatteryOptimization.openOemBackgroundSettings(context) }
-            }
-        }
     }
 }
 
-/** Home banner while anything is missing; "Fix" jumps to the checklist. Hidden for the session by "Later". */
+/** Home banner while anything is missing (not while the getting-started card shows); "Fix" jumps to the checklist. Hidden for the session by "Later". */
 @Composable
 fun SetupBanner(missing: List<SetupItem>, onFix: () -> Unit, onLater: () -> Unit) {
     Row(
@@ -153,12 +141,9 @@ fun SetupBanner(missing: List<SetupItem>, onFix: () -> Unit, onLater: () -> Unit
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.weight(1f),
         )
-        Text(
-            stringResource(R.string.setup_later),
-            fontSize = 12.5.sp,
-            color = CaptionMuted,
-            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onLater).padding(8.dp),
-        )
+        Box(Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onLater).heightIn(min = 48.dp).padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
+            Text(stringResource(R.string.setup_later), fontSize = 12.5.sp, color = CaptionMuted)
+        }
         SmallButton(stringResource(R.string.setup_fix), onClick = onFix)
     }
 }
@@ -170,7 +155,9 @@ private fun SmallButton(label: String, onClick: () -> Unit) {
             .clip(RoundedCornerShape(10.dp))
             .background(Sage)
             .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .heightIn(min = 48.dp)
+            .padding(horizontal = 14.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Text(label, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp)
     }

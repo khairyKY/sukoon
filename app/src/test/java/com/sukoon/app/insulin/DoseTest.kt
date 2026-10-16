@@ -77,7 +77,10 @@ class DoseTest {
         assertNull(corr(170)) // in range
         assertEquals(1.0, corr(170, top = 140)!!.units, 1e-9) // above a tighter range: 1.2
         assertNull(corr(220, ateAgo = 60)) // ate an hour ago
-        assertNull(corr(220, onBoard = 1.0)) // insulin still working
+        assertEquals(1.0, corr(220, onBoard = 1.0)!!.units, 1e-9) // 2.2 less the 1.0 still working
+        assertNull(corr(220, onBoard = 1.5)) // 0.7 left: under one pen step
+        assertEquals(1.0, corr(279, onBoard = 2.3)!!.units, 1e-9) // 3.38 less 2.3: the rest is still needed
+        assertNull(Dose.correction(s, 260, TrendDirection.STEADY, now, now, 180, 0.0, null, MealSlot.LUNCH, lastInsulinAt = now.minusSeconds(90 * 60))) // dosed 90 min ago
         assertNull(corr(220, readingAgo = 30)) // stale reading
         assertNull(corr(150, top = 140)) // 0.8 u: under one pen step
         assertNull(Dose.correction(s.copy(enabled = false), 220, null, now, now, 180, 0.0, null, MealSlot.LUNCH))

@@ -18,7 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -98,13 +98,13 @@ fun EmergencySection(settings: EmergencySettings, alerts: EmergencyAlerts, onCha
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(stringResource(R.string.emergency_body), fontSize = 12.5.sp, color = CaptionMuted)
-        OutlinedTextField(
+        SukoonTextField(
             value = yourName,
             onValueChange = {
                 yourName = it
                 onChange(settings.copy(yourName = it))
             },
-            label = { Text(stringResource(R.string.emergency_your_name)) },
+            label = stringResource(R.string.emergency_your_name),
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -124,7 +124,7 @@ fun EmergencySection(settings: EmergencySettings, alerts: EmergencyAlerts, onCha
                     }
                 }
                 TextButton(onClick = { onChange(settings.copy(contacts = settings.contacts - contact)) }) {
-                    Text(stringResource(R.string.emergency_remove), color = StateLow, fontSize = 12.sp)
+                    Text(stringResource(R.string.emergency_remove), color = com.sukoon.app.ui.theme.PillLowText, fontSize = 12.sp)
                 }
             }
         }
@@ -224,11 +224,11 @@ private fun AddNumberDialog(callingCode: String, onAdd: (EmergencyContact) -> Un
         title = { Text(stringResource(R.string.emergency_add_number)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.emergency_name)) }, singleLine = true)
-                OutlinedTextField(
+                SukoonTextField(name, { name = it }, label = stringResource(R.string.emergency_name), singleLine = true)
+                SukoonTextField(
                     phone,
                     { phone = it },
-                    label = { Text(stringResource(R.string.emergency_phone)) },
+                    label = stringResource(R.string.emergency_phone),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 )

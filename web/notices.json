@@ -74,5 +74,16 @@
     "link": "https://github.com/khairyKY/sukoon/releases/latest",
     "until": "2026-10-30",
     "below": "0.18.0"
+  },
+  {
+    "id": "2026-10-17-sukoon-0.19.0",
+    "date": "2026-10-17",
+    "title": "Sukoon 0.19.0 is here",
+    "body": "Smarter corrections, a sheet when a meal changes after its insulin, voice in Arabic and English, new widgets, a link for laptop widgets, calmer motion. Tap to update.",
+    "title_ar": "سكون 0.19.0 وصل",
+    "body_ar": "تصحيحات أذكى، وشاشة لما الأكلة تتغير بعد الإنسولين، وصوت بالعربي والإنجليزي، وأدوات جديدة، ورابط لأدوات اللابتوب، وحركة أهدى. اضغط للتحديث.",
+    "link": "https://github.com/khairyKY/sukoon/releases/latest",
+    "until": "2026-10-31",
+    "below": "0.19.0"
   }
 ]

@@ -10,7 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -57,14 +57,14 @@ fun ForgotPassword(supabase: Supabase, email: String) {
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.auth_reset_body), fontSize = 13.5.sp, lineHeight = 19.sp, color = CaptionMuted)
-                OutlinedTextField(
+                SukoonTextField(
                     address, { address = it.trim() },
-                    label = { Text(stringResource(R.string.sharing_email)) },
+                    label = stringResource(R.string.sharing_email),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     modifier = Modifier.fillMaxWidth(),
                 )
-                problem?.let { Text(it, fontSize = 13.sp, color = StateLow) }
+                problem?.let { Text(it, fontSize = 13.sp, color = com.sukoon.app.ui.theme.PillLowText) }
             }
         },
         confirmButton = {
@@ -106,7 +106,7 @@ fun CheckInbox(supabase: Supabase, email: String, password: String, onSignedIn: 
     ) {
         Text(stringResource(R.string.auth_inbox_title), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
         Text(stringResource(R.string.auth_inbox_body, email.trim()), fontSize = 13.5.sp, lineHeight = 19.sp, color = MaterialTheme.colorScheme.onBackground)
-        problem?.let { Text(it, fontSize = 13.sp, color = StateLow) }
+        problem?.let { Text(it, fontSize = 13.sp, color = com.sukoon.app.ui.theme.PillLowText) }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (password.isNotEmpty()) Pill(stringResource(R.string.auth_confirmed_sign_in)) {
                 scope.launch {

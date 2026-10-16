@@ -13,7 +13,7 @@ class GuideContentTest {
 
     /** Every link the app routes (MainScaffold.openLink). */
     private val links = setOf(
-        "now", "sensor", "sensor_start", "alarms", "people", "fitness", "insulin", "learning", "apps", "reports", "appearance", "help",
+        "now", "today", "profile", "supplies", "clinic", "sensor", "sensor_start", "alarms", "people", "fitness", "insulin", "learning", "apps", "reports", "appearance", "help",
         "trends_graph", "trends_logbook", "trends_insights", "trends_report", "trends_ask",
         "entry_carb", "entry_insulin", "entry_basal", "entry_fingerstick",
     )
@@ -30,7 +30,7 @@ class GuideContentTest {
         assertTrue("unknown links: ${used.toSet() - links}", links.containsAll(used))
         val ids = en.topics.map { it.id }.toSet()
         en.topics.forEach { t -> assertTrue("${t.id} relates to a missing topic", ids.containsAll(t.related)) }
-        assertEquals(23, en.topics.size)
+        assertEquals(27, en.topics.size)
     }
 
     @Test

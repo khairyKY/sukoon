@@ -8,6 +8,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -71,6 +72,12 @@ fun SottoPill(state: PillState, level: Float, onTap: () -> Unit = {}, onCancel: 
     val t by rememberInfiniteTransition(label = "pill").animateFloat(0f, 1000f, infiniteRepeatable(tween(1_000_000, easing = LinearEasing), RepeatMode.Restart), label = "time")
     val now = t * 1000f // milliseconds, as in Sotto
     val accent = if (dark) Sotto.lilacDark else Sotto.lilac
+    // The mic's level, gated and eased: room noise reads as silence, and the bars glide instead of jitter.
+    val heard by androidx.compose.animation.core.animateFloatAsState(
+        if (level < 0.08f) 0f else ((level - 0.08f) / 0.92f).coerceIn(0f, 1f),
+        tween(220, easing = androidx.compose.animation.core.FastOutSlowInEasing), label = "level",
+    )
+    val cancel = onCancel != null && state != PillState.DONE && state != PillState.ERROR
     val label = stringResource(
         when (state) {
             PillState.LISTENING -> R.string.pill_listening
@@ -88,23 +95,26 @@ fun SottoPill(state: PillState, level: Float, onTap: () -> Unit = {}, onCancel: 
             .background(if (state == PillState.ERROR) (if (dark) Sotto.blushDark else Sotto.blush) else if (dark) Sotto.plum else Sotto.cream)
             .clickable(enabled = state == PillState.LISTENING, onClick = onTap)
             .semantics { contentDescription = label }
-            .padding(start = 22.dp, end = 8.dp),
+            .padding(horizontal = if (cancel) 8.dp else 22.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        // An empty twin of the ✕ on the other side, so the animation sits in the pill's middle.
+        if (cancel) Box(Modifier.size(36.dp))
         Canvas(Modifier.width(96.dp).fillMaxHeight()) {
             val cx = size.width / 2
             val yc = size.height / 2
             val u = 1.dp.toPx()
             when (state) {
                 PillState.LISTENING -> {
-                    val amplitude = (level * 1.4f).coerceIn(0f, 1f)
+                    val amplitude = (heard * 1.3f).coerceIn(0f, 1f)
                     val barW = 4.5f * u
                     val gap = 5f * u
                     val total = 5 * barW + 4 * gap
                     for (i in 0 until 5) {
-                        val wave = sin(((now * 0.003f + i * 0.18f) * 2 * PI).toFloat())
-                        val mix = amplitude * 0.7f + 0.3f * (0.5f + 0.5f * wave)
+                        // Silence is a slow, soft breath (about one a second); speech lifts the bars.
+                        val wave = sin(((now * 0.0011f + i * 0.14f) * 2 * PI).toFloat())
+                        val mix = amplitude * 0.85f + 0.08f * (0.5f + 0.5f * wave)
                         val v = 0.15f + 0.85f * mix
                         val h = maxOf(5f * u, v * 24f * u)
                         drawRoundRect(accent.copy(alpha = 0.5f + v * 0.5f), Offset(cx - total / 2 + i * (barW + gap), yc - h / 2), Size(barW, h), CornerRadius(barW / 2))
@@ -157,7 +167,7 @@ fun SottoPill(state: PillState, level: Float, onTap: () -> Unit = {}, onCancel: 
             }
         }
         // Sotto's ✕: cancel while it's live.
-        if (onCancel != null && state != PillState.DONE) {
+        if (cancel) {
             Box(
                 Modifier.size(36.dp).clip(CircleShape).background((if (dark) Sotto.mutedDark else Sotto.muted).copy(alpha = 0.14f)).clickable(onClick = onCancel),
                 contentAlignment = Alignment.Center,
@@ -165,6 +175,40 @@ fun SottoPill(state: PillState, level: Float, onTap: () -> Unit = {}, onCancel: 
                 Text("✕", fontSize = 14.sp, color = if (dark) Sotto.mutedDark else Sotto.muted)
             }
         }
+    }
+}
+
+/** Say it, in Sotto's colours: the lilac wave tile, the title and hint, and who powers it. */
+@Composable
+fun SottoBanner(title: String, hint: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val dark = LocalDarkTheme.current
+    val lilac = if (dark) Sotto.lilacDark else Sotto.lilac
+    Row(
+        modifier
+            .clip(RoundedCornerShape(18.dp))
+            .background(if (dark) Sotto.plum else Sotto.cream)
+            .border(1.dp, lilac.copy(alpha = 0.35f), RoundedCornerShape(18.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(lilac), contentAlignment = Alignment.Center) {
+            Canvas(Modifier.size(22.dp)) {
+                val w = size.width
+                val barW = w * 0.13f
+                floatArrayOf(0.35f, 0.7f, 1f, 0.6f, 0.3f).forEachIndexed { i, h ->
+                    val x = w * 0.1f + i * w * 0.2f - barW / 2
+                    drawRoundRect(Color(0xFFF0E9DF), Offset(x, (w - w * h * 0.8f) / 2), Size(barW, w * h * 0.8f), CornerRadius(barW / 2))
+                }
+            }
+        }
+        androidx.compose.foundation.layout.Column(Modifier.weight(1f)) {
+            Text(title, fontSize = 15.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold, color = if (dark) Sotto.cream else Sotto.plum)
+            Text(hint, fontSize = 12.5.sp, color = if (dark) Sotto.mutedDark else Sotto.muted)
+        }
+        Text(stringResource(R.string.sotto_name), fontSize = 11.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold, color = lilac,
+            modifier = Modifier.clip(RoundedCornerShape(50)).background(lilac.copy(alpha = 0.14f)).padding(horizontal = 8.dp, vertical = 3.dp))
     }
 }
 

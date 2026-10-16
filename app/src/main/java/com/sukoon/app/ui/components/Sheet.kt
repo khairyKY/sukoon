@@ -22,6 +22,8 @@ import androidx.compose.ui.platform.LocalView
 fun SukoonSheet(
     onDismissRequest: () -> Unit,
     sheetState: SheetState = rememberModalBottomSheetState(),
+    /** False: only the sheet's own buttons close it (give it a state that refuses Hidden, see [answerOnlySheetState]). */
+    dismissible: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val view = LocalView.current
@@ -31,6 +33,12 @@ fun SukoonSheet(
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.background,
         scrimColor = Color.Black.copy(alpha = 0.42f),
+        properties = androidx.compose.material3.ModalBottomSheetProperties(shouldDismissOnBackPress = dismissible),
         content = content,
     )
 }
+
+/** A sheet state that won't be swiped or tapped away: for questions that need an answer. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+fun answerOnlySheetState(): SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true, confirmValueChange = { it != androidx.compose.material3.SheetValue.Hidden })

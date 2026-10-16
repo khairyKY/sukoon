@@ -139,7 +139,7 @@ Home banner shows too):
 - full-screen alerts allowed (Android 14+)
 - display over other apps
 - Do Not Disturb access (lets lows through DND)
-- battery: unrestricted, plus the phone maker's own background setting
+- battery: unrestricted (a phone maker's own background settings have no API; the Guide's Keep Sukoon running says where to look)
 
 ---
 
@@ -208,12 +208,12 @@ back of the upper arms, upper outer buttocks, each left or right. One tap picks 
 the other side. Rapid and long-acting rotate separately.
 
 **One spot doing most of the work**: 10 or more doses of a kind in 14 days, half or more in one spot.
-It shows on You → Insulin & logbook (with the last 30 days on the body map) and as an insight in
+It shows on You → Insulin & doses (with the last 30 days on the body map) and as an insight in
 Trends (Frid et al., Mayo Clin Proc 2016).
 
 ## 9. Dose suggestions (beta)
 
-Off until turned on in You → Insulin & logbook. Carb counting: a carb ratio per meal (breakfast
+Off until turned on in You → Insulin & doses. Carb counting: a carb ratio per meal (breakfast
 04–10, lunch 11–15, dinner 16–21, late otherwise), a correction factor and a target. Any box can
 stay empty, and that part is then left out. Sources: docs/research/dosing-sources.md.
 
@@ -380,7 +380,7 @@ only for half-unit pens, and suggestions round down to the pen.
 
 - The logbook and the graph show the last 24 hours (or the chosen range) up to now; the *‹ Today ›*
   bar goes to any earlier day (its entries, totals and the whole day's graph).
-- Cloud backup (opt-in, You → Reports): the full backup zip, written to one file you chose in a
+- Cloud backup (opt-in, You → Export & backup): the full backup zip, written to one file you chose in a
   cloud app, on choosing and then once a day (checked hourly while Sukoon runs). Sukoon keeps
   permission to that file only. *Stop* releases it.
 - Times follow You → Appearance → Clock: the phone's, 12-hour or 24-hour, everywhere (alarms,
@@ -461,7 +461,7 @@ Every number below is sourced in `docs/research/modes-sources.md`.
 
 | Mode | While it's on | Dose suggestions (beta) |
 |---|---|---|
-| **Workout** (1, 1½ or 2 h from Today, or any logged workout) | Low alarm at **100** (Moser 2020). Before starting, by glucose: under 90 "10–20 g and wait", 90–125 "about 10 g", over 270 "check ketones first" (Riddell 2017) | Corrections during and 2 h after: **half** (lifting rises). The meal within 2 h after: **−50%** by default, or −25% / as usual. Nothing cut before lifting |
+| **Workout** (1, 1½ or 2 h from Today, or any logged workout) | Low alarm at **100** (Moser 2020). Before starting, by glucose: under 90 "10–20 g and wait", 90–125 "about 10 g", over 270 "check ketones first" (Riddell 2017) | Corrections during and 2 h after: **half** (lifting rises). The meal within 2 h after: **−50%** by default, or −25% / as usual / a custom 0–75% in 5% steps (You → Fitness & food → Training and You → Insulin, one setting). Nothing cut before lifting |
 | **After a workout** (24 h from its end) | Low alarm at **80** overnight, 22:00–07:00 (Moser 2020; lows "for at least 24 hours", Riddell 2017) | — |
 | **Fasting** (your suhoor-end and iftar times) | Now: under 70 *break the fast now*; 70–90 *check again within the hour*; over 300 *break the fast, correct, check ketones* (IDF-DAR 2021). A suhoor reminder 45 min before Fajr. The times are set once in Fitness & food | Suhoor meal **−30%** (IDF-DAR 30–50%); none suggested during the fast; iftar as usual. Basal: the sheet quotes IDF-DAR (take it at iftar, −30–40%; −15–30% for Toujeo) and leaves it to Kai's doctor |
 | **Sick day** | A reminder every 2 h to check ketones and drink; Now names the last reading's band (ISPAD 2022: < 0.6 normal, 0.6–1.4 raised, 1.5–2.9 high, ≥ 3.0 urgent care); high alarms repeat hourly | — |

@@ -50,7 +50,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import com.sukoon.app.ui.components.SukoonSheet
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -91,6 +91,7 @@ import com.sukoon.app.ui.components.toast
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
 import com.sukoon.app.ui.theme.Motion
+import com.sukoon.app.ui.theme.Motion.staggerIn
 import com.sukoon.app.ui.theme.PillHighBg
 import com.sukoon.app.ui.theme.PillHighText
 import com.sukoon.app.ui.theme.PillLowText
@@ -278,17 +279,7 @@ internal fun AddSheet(
             Text(stringResource(R.string.logbook_sheet_title_new), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, lineHeight = 31.sp, color = MaterialTheme.colorScheme.onBackground)
             ContextPills(glucoseNow, insulinOnBoard, Modifier.padding(top = 8.dp))
             onVoice?.let { voice ->
-                Row(
-                    Modifier.padding(top = 14.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(com.sukoon.app.ui.theme.SageMist)
-                        .clickable(onClick = voice).heightIn(min = 52.dp).padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Icon(painterResource(R.drawable.ic_mic), null, tint = SageDeep, modifier = Modifier.size(22.dp))
-                    Column {
-                        Text(stringResource(R.string.voice_title), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = SageDeep)
-                        Text(stringResource(R.string.voice_hint), fontSize = 12.5.sp, color = CaptionMuted)
-                    }
-                }
+                com.sukoon.app.ui.components.SottoBanner(stringResource(R.string.voice_title), stringResource(R.string.voice_hint), voice, Modifier.padding(top = 14.dp).fillMaxWidth())
             }
             if (usual.isNotEmpty()) {
                 Eyebrow(stringResource(R.string.entry_usual), Modifier.padding(top = 18.dp))
@@ -309,9 +300,10 @@ internal fun AddSheet(
             }
             Eyebrow(stringResource(R.string.entry_new), Modifier.padding(top = 18.dp))
             Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                (if (showKetones) TILES + LogEventType.KETONE else TILES).chunked(3).forEach { row ->
+                (if (showKetones) TILES + LogEventType.KETONE else TILES).chunked(3).forEachIndexed { r, row ->
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        row.forEach { type -> TypeTile(type, filled = type == LogEventType.CARB, Modifier.weight(1f)) { onPick(type, null) } }
+                        // The tiles stagger in as the sheet rises (reduced: one short fade).
+                        row.forEachIndexed { c, type -> TypeTile(type, filled = type == LogEventType.CARB, Modifier.weight(1f).staggerIn(r * 3 + c)) { onPick(type, null) } }
                     }
                 }
             }
@@ -601,10 +593,10 @@ private fun EditorContent(
                     ValueCard(stringResource(R.string.logbook_type_insulin), values[AmountField.RAPID].orEmpty(), units, active == AmountField.RAPID, Modifier.weight(1f)) { active = AmountField.RAPID }
                 }
                 main != null -> ValueCard(fieldLabel(type), values[main].orEmpty(), unitLabel(type).trim(), active == main, Modifier.fillMaxWidth()) { active = main }
-                else -> OutlinedTextField(
+                else -> SukoonTextField(
                     value = note,
                     onValueChange = { note = it },
-                    label = { Text(stringResource(R.string.logbook_note_hint)) },
+                    label = stringResource(R.string.logbook_note_hint),
                     minLines = 4,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -618,10 +610,16 @@ private fun EditorContent(
                 }
             }
             if (isMeal && (rapid != null || active == AmountField.RAPID)) {
-                ChoiceRow(
-                    listOf(stringResource(R.string.logbook_prebolus_with), stringResource(R.string.logbook_prebolus_min, 10), stringResource(R.string.logbook_prebolus_min, 20)),
-                    selected = listOf(0, 10, 20).indexOf(preBolus),
-                ) { preBolus = listOf(0, 10, 20)[it] }
+                // Before the meal, with it, or after it when it was forgotten (minutes before; negative is after).
+                val before = listOf(20, 10, 0)
+                val after = listOf(-15, -30, -60)
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    ChoiceRow(
+                        listOf(stringResource(R.string.logbook_prebolus_min, 20), stringResource(R.string.logbook_prebolus_min, 10), stringResource(R.string.logbook_prebolus_with)),
+                        selected = before.indexOf(preBolus),
+                    ) { preBolus = before[it] }
+                    ChoiceRow(after.map { stringResource(R.string.entry_dose_after, -it) }, selected = after.indexOf(preBolus)) { preBolus = after[it] }
+                }
             }
             if (type == LogEventType.FINGERSTICK && glucoseNow != null && existing == null) {
                 Text(stringResource(R.string.entry_sensor_now, String.format(Locale.getDefault(), "%d", glucoseNow.glucoseMgDl)), fontSize = 13.5.sp, color = CaptionMuted)
@@ -689,7 +687,7 @@ private fun EditorContent(
             }
             if (isMeal) {
                 if (showMore) {
-                    OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text(stringResource(R.string.entry_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    SukoonTextField(value = note, onValueChange = { note = it }, label = stringResource(R.string.entry_name), singleLine = true, modifier = Modifier.fillMaxWidth())
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf(AmountField.FIBER to R.string.entry_fiber, AmountField.PROTEIN to R.string.entry_protein, AmountField.FAT to R.string.entry_fat).forEach { (f, label) ->
                             ValueCard(stringResource(label), values[f].orEmpty(), stringResource(R.string.logbook_unit_grams), active == f, Modifier.weight(1f), compact = true) { active = f }
@@ -758,9 +756,13 @@ private fun EditorContent(
     if (showEstimate && onEstimateCarbs != null) {
         SukoonSheet(onDismissRequest = { showEstimate = false }) {
             Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
-                CarbEstimator(onEstimateCarbs, photos.toList(), onUse = { grams, title ->
-                    values[AmountField.CARBS] = grams.toString()
-                    if (note.isBlank()) note = title
+                CarbEstimator(onEstimateCarbs, photos.toList(), onUse = { r ->
+                    values[AmountField.CARBS] = r.carbsGrams.toString()
+                    // Protein, fat and kcal too (eggs: almost no carbs, but the protein counts).
+                    r.proteinGrams?.let { values[AmountField.PROTEIN] = it.toString() }
+                    r.fatGrams?.let { values[AmountField.FAT] = it.toString() }
+                    r.kcal?.let { values[AmountField.KCAL] = it.toString() }
+                    if (note.isBlank()) note = r.title
                     active = AmountField.CARBS
                     showEstimate = false
                 })
@@ -775,7 +777,7 @@ internal fun ContextPills(glucoseNow: GlucoseReading?, insulinOnBoard: Double, m
     if (glucoseNow == null && insulinOnBoard < 0.05) return
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         glucoseNow?.let { r ->
-            GlucosePill(r, stringResource(R.string.entry_now_pill, String.format(Locale.getDefault(), "%d", r.glucoseMgDl), r.trend.arrow))
+            GlucosePill(r, stringResource(R.string.entry_now_suffix))
         }
         if (insulinOnBoard >= 0.05) {
             Text(
@@ -876,18 +878,20 @@ private fun ChoiceRow(options: List<String>, selected: Int, onSelect: (Int) -> U
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         options.forEachIndexed { i, label ->
             val on = i == selected
+            // Selection crossfades its fill, border and ink (reduced: at once).
+            val ring by androidx.compose.animation.core.animateDpAsState(if (on) 2.dp else 1.dp, tween(if (Motion.reduced()) 0 else Motion.BASE, easing = Motion.Standard), label = "ring")
             Box(
                 Modifier
                     .weight(1f)
                     .heightIn(min = 44.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(if (on) Sage.copy(alpha = 0.10f) else MaterialTheme.colorScheme.surface)
-                    .border(if (on) 2.dp else 1.dp, if (on) Sage else outline(), RoundedCornerShape(12.dp))
+                    .background(Motion.tint(if (on) Sage.copy(alpha = 0.10f) else MaterialTheme.colorScheme.surface))
+                    .border(ring, Motion.tint(if (on) Sage else outline()), RoundedCornerShape(12.dp))
                     .clickable { onSelect(i) }
                     .padding(horizontal = 4.dp, vertical = 6.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (on) SageDeep else MaterialTheme.colorScheme.onBackground, maxLines = 2)
+                Text(label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Motion.tint(if (on) SageDeep else MaterialTheme.colorScheme.onBackground), maxLines = 2)
             }
         }
     }
@@ -1252,7 +1256,7 @@ private fun AppMealCard(meal: EventEntity) {
 
 /** AI carb estimate (Gemini): describe the meal and/or use its photo; "Use" fills the carbs, nothing is logged. */
 @Composable
-private fun CarbEstimator(estimate: suspend (String, List<ByteArray>) -> CarbEstimate, photos: List<ByteArray>, onUse: (Int, String) -> Unit) {
+private fun CarbEstimator(estimate: suspend (String, List<ByteArray>) -> CarbEstimate, photos: List<ByteArray>, onUse: (CarbEstimate) -> Unit) {
     val scope = rememberCoroutineScope()
     var description by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
@@ -1260,7 +1264,7 @@ private fun CarbEstimator(estimate: suspend (String, List<ByteArray>) -> CarbEst
     var error by remember { mutableStateOf<String?>(null) }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(stringResource(R.string.carb_ai_estimate), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, lineHeight = 29.sp, color = MaterialTheme.colorScheme.onBackground)
-        OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text(stringResource(R.string.carb_ai_describe)) }, modifier = Modifier.fillMaxWidth())
+        SukoonTextField(value = description, onValueChange = { description = it }, label = stringResource(R.string.carb_ai_describe), modifier = Modifier.fillMaxWidth())
         if (photos.isNotEmpty()) Text(pluralStringResource(R.plurals.carb_ai_photos_added, photos.size, photos.size), fontSize = 12.sp, color = SageDeep)
         val canEstimate = !busy && (description.isNotBlank() || photos.isNotEmpty())
         Box(
@@ -1287,7 +1291,12 @@ private fun CarbEstimator(estimate: suspend (String, List<ByteArray>) -> CarbEst
                 Text(r.items.joinToString(" · ") { (name, grams) -> "$name ${formatAmountLocalized(grams.toDouble())}g" }, fontSize = 12.5.sp, color = CaptionMuted)
             }
             Text(stringResource(R.string.carb_ai_confidence, r.confidence, r.note), fontSize = 12.sp, color = CaptionMuted)
-            PillButton(stringResource(R.string.carb_ai_use, formatAmountLocalized(r.carbsGrams.toDouble()))) { onUse(r.carbsGrams, r.title) }
+            listOfNotNull(
+                r.proteinGrams?.let { stringResource(R.string.carb_ai_protein, formatAmountLocalized(it.toDouble())) },
+                r.fatGrams?.let { stringResource(R.string.carb_ai_fat, formatAmountLocalized(it.toDouble())) },
+                r.kcal?.let { formatAmountLocalized(it.toDouble()) + " " + stringResource(R.string.entry_unit_kcal) },
+            ).takeIf { it.isNotEmpty() }?.let { Text(it.joinToString(" · "), fontSize = 12.5.sp, color = CaptionMuted) }
+            PillButton(stringResource(R.string.carb_ai_use, formatAmountLocalized(r.carbsGrams.toDouble()))) { onUse(r) }
         }
         error?.let { Text(it, fontSize = 12.5.sp, color = StateLow) }
         Text(stringResource(R.string.carb_ai_disclaimer), fontSize = 11.5.sp, color = CaptionMuted)

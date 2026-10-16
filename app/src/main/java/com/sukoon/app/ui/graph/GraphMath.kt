@@ -6,7 +6,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
-import com.sukoon.app.ui.widget.arrow
+import com.sukoon.app.data.source.TrendDirection
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -25,7 +25,7 @@ internal fun downsample(readings: List<GlucoseReading>, bucketMillis: Long): Lis
     }
 
 /** One row of the readings list, its text ready before it reaches the screen. */
-internal data class ReadingRowText(val key: Long, val time: String, val value: String, val mgDl: Int, val arrow: String, val delta: String?)
+internal data class ReadingRowText(val key: Long, val time: String, val value: String, val mgDl: Int, val trend: TrendDirection, val delta: String?)
 
 /** A day of the readings list: newest day first, newest reading first. */
 internal data class ReadingDay(val date: LocalDate, val rows: List<ReadingRowText>)
@@ -44,7 +44,7 @@ internal fun readingDays(readings: List<GlucoseReading>, zone: ZoneId, locale: L
             time = time.format(r.timestamp),
             value = String.format(locale, "%d", r.glucoseMgDl),
             mgDl = r.glucoseMgDl,
-            arrow = r.trend.arrow,
+            trend = r.trend,
             delta = older?.let { String.format(locale, "%+d", r.glucoseMgDl - it.glucoseMgDl) },
         )
     }.groupBy({ it.first }, { it.second }).map { (date, rows) -> ReadingDay(date, rows) }

@@ -8,7 +8,13 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.LayoutDirection
+import com.sukoon.app.ui.components.TrendArrow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -76,7 +82,6 @@ import com.sukoon.app.ui.theme.Sage
 import com.sukoon.app.ui.theme.StateHigh
 import com.sukoon.app.ui.theme.StateLow
 import com.sukoon.app.ui.theme.SukoonTheme
-import com.sukoon.app.ui.widget.arrow
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -192,6 +197,14 @@ private fun Header(latest: GlucoseReading?, title: String?) {
     Column {
         Text(title ?: stringResource(R.string.graph_title), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, lineHeight = 29.sp, color = MaterialTheme.colorScheme.onBackground)
         if (latest == null) return@Column
+        // Demo data must never pass for glucose: a coral chip says so above the number.
+        if (latest.source == SourceKind.SIMULATED) {
+            Text(
+                stringResource(R.string.graph_demo_chip),
+                modifier = Modifier.padding(top = 6.dp).clip(RoundedCornerShape(50)).background(com.sukoon.app.ui.theme.PillLowBg).padding(horizontal = 10.dp, vertical = 4.dp),
+                fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.6.sp, color = com.sukoon.app.ui.theme.PillLowText,
+            )
+        }
         val minutes = Duration.between(latest.timestamp, Instant.now()).toMinutes().coerceAtLeast(0)
         val stale = minutes > HomeUiStateMapper.STALE_AFTER.toMinutes()
         val color = if (stale) CaptionMuted else valueColor(latest.glucoseMgDl)
@@ -220,7 +233,7 @@ private fun Header(latest: GlucoseReading?, title: String?) {
     }
 }
 
-/** Also Home's last-3-hours chart: shorter there, and without tap-to-read ([interactive] = false). */
+/** Also Home's last-3-hours chart: shorter there, and without tap-to-read or scrubbing ([interactive] = false). */
 @Composable
 internal fun GlucoseChart(
     readings: List<GlucoseReading>,
@@ -257,23 +270,37 @@ internal fun GlucoseChart(
     val pinColors = LogEventType.entries.associateWith { colorForLogEventType(it) }
     val span = (tEnd - tStart).toFloat()
     var selected by remember(range) { mutableStateOf<GlucoseReading?>(null) }
-    // Graph draw-on (motion spec): 900 ms left to right on each range; "remove animations" shows it whole.
+    val view = LocalView.current
+    val lastTick = remember { longArrayOf(0) }
+    // The reading nearest the finger; a soft tick on reaching a new one while scrubbing, at most every 40 ms.
+    fun pick(x: Float, width: Int, tick: Boolean) {
+        val t = tStart + (x.coerceIn(0f, width.toFloat()) / width * span).toLong()
+        val r = points.minByOrNull { abs(it.timestamp.toEpochMilli() - t) } ?: return
+        if (r == selected) return
+        selected = r
+        val now = System.currentTimeMillis()
+        if (tick && now - lastTick[0] >= 40) { lastTick[0] = now; view.performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK) }
+    }
+    // Graph draw-on (motion spec): left to right once per range on the calm curve, the band fading up with it;
+    // a new reading or a recomposition doesn't redraw it. "Remove animations" shows it whole.
     val reduced = Motion.reduced()
     val reveal = remember(range) { Animatable(if (reduced) 1f else 0f) }
-    LaunchedEffect(range) { reveal.animateTo(1f, tween(Motion.DRAW, easing = Motion.Out)) }
+    LaunchedEffect(range) { reveal.animateTo(1f, tween(Motion.CHART, easing = Motion.Calm)) }
 
     Column {
         val sel = selected
-        if (interactive) Text(
-            text = if (sel != null) {
-                "${hm.format(sel.timestamp)} · ${String.format(Locale.getDefault(), "%d", sel.glucoseMgDl)} ${stringResource(R.string.home_unit_mgdl)} ${sel.trend.arrow}"
-            } else {
-                stringResource(R.string.graph_tap_hint)
-            },
-            color = if (sel != null) onBg else CaptionMuted,
-            fontWeight = if (sel != null) FontWeight.SemiBold else FontWeight.Normal,
-            fontSize = if (sel != null) 14.sp else 12.sp,
-        )
+        if (interactive && sel != null) Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("${hm.format(sel.timestamp)} · ", color = onBg, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+            // The arrow right of the number in Arabic too, as on the sensor's own screens.
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(String.format(Locale.getDefault(), "%d", sel.glucoseMgDl), color = onBg, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                    Spacer(Modifier.width(4.dp))
+                    TrendArrow(sel.trend, onBg, size = 15.dp)
+                }
+            }
+            Text(" " + stringResource(R.string.home_unit_mgdl), color = onBg, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+        } else if (interactive) Text(stringResource(R.string.graph_tap_hint), color = CaptionMuted, fontSize = 12.sp, lineHeight = 19.sp)
         if (interactive) Spacer(Modifier.height(8.dp))
         Canvas(
             modifier = Modifier
@@ -283,9 +310,14 @@ internal fun GlucoseChart(
                 .graphicsLayer() // its own layer: scrolling the readings list moves it instead of redrawing every point each frame
                 .pointerInput(points, range, interactive) {
                     if (!interactive) return@pointerInput
-                    detectTapGestures { offset ->
-                        val t = tStart + (offset.x / size.width * span).toLong()
-                        selected = points.minByOrNull { abs(it.timestamp.toEpochMilli() - t) }
+                    detectTapGestures { offset -> pick(offset.x, size.width, tick = false) }
+                }
+                // Press and slide sideways to scrub minute by minute; an up-and-down drag stays the page's scroll.
+                .pointerInput(points, range, interactive) {
+                    if (!interactive) return@pointerInput
+                    detectHorizontalDragGestures(onDragStart = { pick(it.x, size.width, tick = true) }) { change, _ ->
+                        change.consume()
+                        pick(change.position.x, size.width, tick = true)
                     }
                 },
         ) {
@@ -294,7 +326,7 @@ internal fun GlucoseChart(
             fun y(mgDl: Int) = plotHeight * (1f - (mgDl.coerceIn(Y_MIN, yMax) - Y_MIN).toFloat() / (yMax - Y_MIN))
 
             // Target band; its two edges are the only y-axis numbers.
-            drawRect(com.sukoon.app.ui.theme.InRange.copy(alpha = 0.10f), topLeft = Offset(0f, y(HIGH)), size = Size(size.width, y(LOW) - y(HIGH)))
+            drawRect(com.sukoon.app.ui.theme.InRange.copy(alpha = 0.10f * (reveal.value * 2).coerceAtMost(1f)), topLeft = Offset(0f, y(HIGH)), size = Size(size.width, y(LOW) - y(HIGH)))
             val dash = PathEffect.dashPathEffect(floatArrayOf(8f, 8f))
             listOf(LOW, HIGH).forEach { level ->
                 drawLine(onBg.copy(alpha = 0.15f), Offset(0f, y(level)), Offset(size.width, y(level)), strokeWidth = 1.dp.toPx(), pathEffect = dash)
@@ -366,14 +398,15 @@ private fun RangeSelector(selected: GraphRange, onSelect: (GraphRange) -> Unit) 
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(8.dp))
-                    .then(if (isSelected) Modifier.background(Sage) else Modifier.border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f), RoundedCornerShape(8.dp)))
+                    .background(Motion.tint(if (isSelected) Sage else Sage.copy(alpha = 0f)))
+                    .border(1.dp, Motion.tint(if (isSelected) Color.Transparent else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)), RoundedCornerShape(8.dp))
                     .clickable { onSelect(range) }
                     .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = rangeLabel(range),
-                    color = if (isSelected) Color.White else CaptionMuted,
+                    color = Motion.tint(if (isSelected) Color.White else CaptionMuted),
                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                     fontSize = 12.sp,
                 )
@@ -410,16 +443,19 @@ internal fun RangeStats(summary: RangeSummary, title: String, showGmi: Boolean) 
         }
         // A tighter range of your own sits beside the international 70–180, which the bands keep.
         yours?.let { Text(stringResource(R.string.graph_in_your_range, it, percent(summary.inYourRange)), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = SageDeep) }
-        Row(
+        // The bands grow in from the start when first shown (reduced: drawn at once).
+        Box(
             Modifier
                 .fillMaxWidth()
                 .height(12.dp)
                 .clip(RoundedCornerShape(6.dp))
                 .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)),
         ) {
+        Row(Modifier.fillMaxWidth(Motion.fill(1f)).fillMaxHeight()) {
             bands.forEach { (_, share, color) ->
                 if (share > 0) Box(Modifier.weight(share.toFloat()).fillMaxHeight().background(color))
             }
+        }
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             bands.forEach { (label, share, color) ->
@@ -465,9 +501,13 @@ private fun ReadingRow(row: ReadingRowText) {
     val color = valueColor(row.mgDl)
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(row.time, fontSize = 14.sp, color = CaptionMuted, modifier = Modifier.width(56.dp))
-        Text(row.value, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = color)
-        Spacer(Modifier.width(8.dp))
-        Text(row.arrow, fontSize = 16.sp, color = color)
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(row.value, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = color)
+                Spacer(Modifier.width(8.dp))
+                TrendArrow(row.trend, color, size = 16.dp)
+            }
+        }
         Spacer(Modifier.weight(1f))
         if (row.delta != null) Text(row.delta, fontSize = 12.sp, color = CaptionMuted)
     }

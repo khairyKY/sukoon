@@ -19,7 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -139,7 +139,7 @@ private fun PenCard(kind: PenKind, s: Stock, remaining: Double, perDay: Double?,
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Box(Modifier.size(76.dp), contentAlignment = Alignment.Center) {
                 val track = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
-                val share = ((days ?: 0) / 30f).coerceIn(0.02f, 1f)
+                val share = com.sukoon.app.ui.theme.Motion.fill(((days ?: 0) / 30f).coerceIn(0.02f, 1f)) // sweeps to its value (motion spec: progress)
                 Canvas(Modifier.size(76.dp)) {
                     val w = 7.dp.toPx()
                     drawArc(track, 0f, 360f, false, Offset(w / 2, w / 2), Size(size.width - w, size.height - w), style = Stroke(w))
@@ -236,7 +236,7 @@ private fun StockDialog(kind: PenKind, s: Stock?, onSave: (Stock) -> Unit, onRem
                     Text(java.text.NumberFormat.getIntegerInstance().format(pens), fontFamily = HeadlineSerifFontFamily, fontSize = 28.sp)
                     Link("+") { pens += 1 }
                 }
-                OutlinedTextField(open, { open = it.filter(Char::isDigit).take(3) }, label = { Text(stringResource(R.string.supply_open_left)) },
+                SukoonTextField(open, { open = it.filter(Char::isDigit).take(3) }, label = stringResource(R.string.supply_open_left),
                     singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
             }
         },

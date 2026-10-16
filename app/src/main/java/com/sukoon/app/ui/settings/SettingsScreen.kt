@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import com.sukoon.app.ui.theme.Motion
+import com.sukoon.app.ui.theme.Motion.staggerIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,7 +43,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -140,6 +141,10 @@ enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
     REPORTS(R.string.you_reports, R.drawable.ic_doc),
     APPEARANCE(R.string.you_appearance, R.drawable.ic_contrast),
     HELP(R.string.you_help, R.drawable.ic_help),
+    /** Opens the Guide itself (no page of its own); Help & about links it too. */
+    GUIDE(R.string.help_title, R.drawable.ic_book),
+    /** The profile card's page: your name, About you and the parent lock (not a tile on the hub). */
+    PROFILE(R.string.you_profile, R.drawable.ic_people),
 }
 
 /**
@@ -210,6 +215,8 @@ fun SettingsScreen(
     /** Home's learning notice: open You → Insulin with the Learning screen up. */
     openLearning: Boolean = false,
     onOpenedLearning: () -> Unit = {},
+    /** A guide-style link to somewhere outside You ("trends_report"): MainScaffold.openLink. */
+    onLink: (String) -> Unit = {},
 ) {
     // The parent lock: while it's on (and not unlocked on this visit), changes ask for the PIN first.
     var unlocked by rememberSaveable { mutableStateOf(false) }
@@ -231,6 +238,7 @@ fun SettingsScreen(
     // Push / pop (motion spec): a page slides 30 dp in from the trailing edge (mirrored in Arabic) as it fades in over the hub; back reverses it.
     val travel = with(LocalDensity.current) { 30.dp.roundToPx() } * if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1 else 1
     val hubScroll = rememberScrollState()
+    val entering = Motion.firstShow() // the hub's cards stagger in once, not on every pop back to it
     AnimatedContent(
         page,
         modifier.fillMaxSize(),
@@ -257,7 +265,7 @@ fun SettingsScreen(
                 null -> {
                     Text(stringResource(R.string.home_nav_you), fontFamily = HeadlineSerifFontFamily, fontSize = 30.sp, lineHeight = 36.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(horizontal = 4.dp))
                     Spacer(Modifier.height(14.dp))
-                    ProfileCard(emergency.yourName, wears = pairing != null) { page = YouPage.PEOPLE }
+                    ProfileCard(emergency.yourName, wears = pairing != null) { page = YouPage.PROFILE }
                     if (missing.isNotEmpty()) {
                         Spacer(Modifier.height(10.dp))
                         NeedsYou(missing.size, stringResource(missing.first().titleRes)) { page = YouPage.HELP }
@@ -275,10 +283,11 @@ fun SettingsScreen(
                         YouPage.REPORTS to stringResource(R.string.you_reports_summary),
                         YouPage.APPEARANCE to "${themeLabel(themeMode)} · ${stringResource(colourName(com.sukoon.app.ui.theme.Themes.current))} · ${languageLabel()}",
                         YouPage.HELP to stringResource(R.string.you_help_summary),
+                        YouPage.GUIDE to stringResource(R.string.you_guide_summary),
                     )
-                    (if (wears) YouPage.entries else FOLLOWER_PAGES).chunked(2).forEach { row ->
+                    (if (wears) YouPage.entries - YouPage.PROFILE else FOLLOWER_PAGES).chunked(2).forEachIndexed { r, row ->
                         Row(Modifier.padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            row.forEach { p -> SectionCard(p, summaries.getValue(p), Modifier.weight(1f)) { page = p } }
+                            row.forEachIndexed { c, p -> SectionCard(p, summaries.getValue(p), Modifier.weight(1f).then(if (entering) Modifier.staggerIn(r * 2 + c) else Modifier)) { if (p == YouPage.GUIDE) onOpenGuide() else page = p } }
                             if (row.size == 1) Spacer(Modifier.weight(1f))
                         }
                     }
@@ -336,6 +345,14 @@ fun SettingsScreen(
                             SourceOption(SourceKind.SIMULATED, sourceKind, R.string.settings_source_demo, R.string.settings_source_demo_body) {
                                 onSelectSource(SourceKind.SIMULATED)
                                 context.toast(context.getString(R.string.toast_source_demo))
+                            }
+                            SourceOption(SourceKind.NONE, sourceKind, R.string.settings_source_none, R.string.settings_source_none_body) {
+                                onSelectSource(SourceKind.NONE)
+                            }
+                            // Their sign-ins live under People; from here, one tap there.
+                            if (lluAccount == null || dexcomAccount == null) {
+                                Spacer(Modifier.height(8.dp))
+                                LinkRow(stringResource(R.string.settings_source_cloud), stringResource(R.string.settings_source_cloud_body)) { page = YouPage.PEOPLE }
                             }
                             Gap()
                             SectionLabel(stringResource(R.string.readings_title))
@@ -402,15 +419,39 @@ fun SettingsScreen(
                             Gap()
                             InsulinSection(insulinAction, onInsulinAction, doseSettings.step) { onDoseSettings(doseSettings.copy(step = it)) }
                             Gap()
-                            DoseCard(doseSettings, guarded(onDoseSettings), doseStartingPoints, learningReport, insulinAction.durationMinutes / 60, profile, guarded(onProfile), locked, { askingPin = true }, parentPin, onParentPin, openLearning, onOpenedLearning)
+                            DoseCard(doseSettings, guarded(onDoseSettings), doseStartingPoints, learningReport, insulinAction.durationMinutes / 60, profile, locked, { askingPin = true }, parentPin, onParentPin, openLearning, onOpenedLearning)
+                            // The same setting as Fitness & food → Training: a dose change, so it sits with the others too.
+                            AfterWorkoutCut((context.applicationContext as com.sukoon.app.SukoonApp).container.modes, enabled = !locked)
+                            Spacer(Modifier.height(10.dp))
+                            // About you (weight for the starting ratios, age for the lock) and the parent lock moved to the profile page.
+                            LinkRow(stringResource(R.string.you_profile_link), stringResource(R.string.you_profile_link_body)) { page = YouPage.PROFILE }
+                        }
+                        YouPage.PROFILE -> {
+                            var name by rememberSaveable { mutableStateOf(emergency.yourName) }
+                            SukoonTextField(
+                                value = name,
+                                onValueChange = { name = it; onEmergency(emergency.copy(yourName = it)) },
+                                label = stringResource(R.string.emergency_your_name),
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            Gap()
+                            SectionLabel(stringResource(R.string.profile_title))
+                            // Age turns the lock off from 18, so under the lock it's guarded like the rest.
+                            if (locked) LockedNotice { askingPin = true } else ProfileFields(profile, onProfile)
+                            if (wears && !locked && com.sukoon.app.platform.ParentLock.appliesTo(profile.ageYears)) {
+                                Gap()
+                                ParentLockRow(parentPin, onParentPin)
+                            }
                         }
                         YouPage.SUPPLIES -> SuppliesPage()
-                        YouPage.CLINIC -> ClinicPage(onOpenReports = { page = YouPage.REPORTS })
+                        YouPage.CLINIC -> ClinicPage(onOpenReports = { onLink("trends_report") })
                         YouPage.FITNESS -> FitnessPage(
                             (context.applicationContext as com.sukoon.app.SukoonApp).container.modes,
                             profile,
-                            onEditProfile = { page = YouPage.INSULIN },
+                            onEditProfile = { page = YouPage.PROFILE },
                             onWhy = { onOpenGuideTopic("modes") },
+                            locked = locked,
                         )
                         YouPage.APPS -> {
                             HealthConnectSection(healthConnect)
@@ -441,6 +482,14 @@ fun SettingsScreen(
                                     prominent = geminiKey.isBlank() && service != "ai",
                                 ) { service = if (service == "ai") null else "ai" }
                                 ExpandedPanel(service == "ai", inset = 0.dp) { AiKey(geminiKey, onSaveGeminiKey) }
+                                HorizontalDivider(color = outline().copy(alpha = 0.08f))
+                                ServiceRow(
+                                    stringResource(R.string.widget_link_title),
+                                    stringResource(R.string.widget_link_summary),
+                                    stringResource(if (service == "feed") R.string.apps_close else R.string.apps_set_up),
+                                    prominent = false,
+                                ) { service = if (service == "feed") null else "feed" }
+                                ExpandedPanel(service == "feed", inset = 0.dp) { WidgetLink() }
                             }
                         }
                         YouPage.REPORTS -> {
@@ -467,24 +516,15 @@ fun SettingsScreen(
                             Gap()
                             SectionLabel(stringResource(R.string.widgets_title))
                             WidgetsCard()
+                            Gap()
+                            SectionLabel(stringResource(R.string.now_layout_section))
+                            NowLayoutRow()
                         }
+                        YouPage.GUIDE -> Unit // opens the Guide, never a page
                         YouPage.HELP -> {
-                            Text(
-                                stringResource(R.string.settings_guide),
-                                modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onOpenGuide).padding(vertical = 10.dp),
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = SageDeep,
-                            )
-                            Text(
-                                stringResource(R.string.privacy_link),
-                                modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable {
-                                    runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(com.sukoon.app.PRIVACY_URL))) }
-                                }.padding(vertical = 10.dp),
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = SageDeep,
-                            )
+                            HelpLinks(onGuide = onOpenGuide) {
+                                runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(com.sukoon.app.PRIVACY_URL))) }
+                            }
                             Gap()
                             SectionLabel(stringResource(R.string.setup_title))
                             SetupChecklist(only = if (wears) null else FOLLOWER_SETUP_ITEMS)
@@ -645,6 +685,8 @@ private fun sectionHue(page: YouPage): androidx.compose.ui.graphics.Color = andr
         YouPage.REPORTS -> 0xFF6F5F4E
         YouPage.APPEARANCE -> 0xFF56687A
         YouPage.HELP -> 0xFF5E6B64
+        YouPage.GUIDE -> 0xFFA65A2A
+        YouPage.PROFILE -> 0xFF3A6E93
     },
 )
 
@@ -676,6 +718,40 @@ private fun SectionCard(page: YouPage, summary: String, modifier: Modifier, onCl
     }
 }
 
+/** Help & about's Guide and privacy policy: rows like the rest of You, not bare links. */
+@Composable
+private fun HelpLinks(onGuide: () -> Unit, onPrivacy: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, outline(), RoundedCornerShape(18.dp)),
+    ) {
+        HelpLink(R.drawable.ic_book, stringResource(R.string.help_title), stringResource(R.string.you_guide_summary), onGuide)
+        Box(Modifier.fillMaxWidth().padding(start = 64.dp).height(1.dp).background(outline()))
+        HelpLink(R.drawable.ic_lock, stringResource(R.string.privacy_link), stringResource(R.string.help_privacy_body), onPrivacy)
+    }
+}
+
+@Composable
+private fun HelpLink(@DrawableRes icon: Int, title: String, body: String, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Box(Modifier.size(36.dp).clip(RoundedCornerShape(11.dp)).background(SageMist), contentAlignment = Alignment.Center) {
+            Icon(painterResource(icon), contentDescription = null, tint = SageDeep, modifier = Modifier.size(20.dp))
+        }
+        Column(Modifier.weight(1f)) {
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+            Text(body, fontSize = 12.5.sp, color = CaptionMuted)
+        }
+        Icon(painterResource(R.drawable.ic_chevron), contentDescription = null, tint = CaptionMuted, modifier = Modifier.size(18.dp))
+    }
+}
+
 @Composable
 private fun PageHeader(title: String, onBack: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -693,6 +769,7 @@ private fun PageHeader(title: String, onBack: () -> Unit) {
 @Composable
 private fun sensorSummary(sourceKind: SourceKind, status: SourceStatus, pairing: SensorPairing?): String {
     if (sourceKind == SourceKind.SIMULATED) return stringResource(R.string.you_sensor_demo)
+    if (sourceKind == SourceKind.NONE) return stringResource(R.string.you_sensor_none)
     if (pairing == null) return stringResource(R.string.you_sensor_none)
     val now = Instant.now()
     return when (SensorLifecycle.of(pairing.startMillis, pairing.lifetimeMinutes, now)) {
@@ -767,10 +844,10 @@ private fun AiKey(geminiKey: String, onSave: (String) -> Unit) {
     var keyInput by rememberSaveable(geminiKey) { mutableStateOf(geminiKey) }
     Text(stringResource(R.string.settings_ai_body), fontSize = 12.5.sp, color = CaptionMuted)
     Spacer(Modifier.height(10.dp))
-    OutlinedTextField(
+    SukoonTextField(
         value = keyInput,
         onValueChange = { keyInput = it },
-        label = { Text(stringResource(R.string.settings_ai_key)) },
+        label = stringResource(R.string.settings_ai_key),
         singleLine = true,
         visualTransformation = PasswordVisualTransformation(),
         modifier = Modifier.fillMaxWidth(),
@@ -974,6 +1051,28 @@ private fun SectionLabel(text: String) {
     Spacer(Modifier.height(8.dp))
 }
 
+/** A row that opens another page: what's there, a line on why, and a chevron. */
+@Composable
+private fun LinkRow(title: String, body: String, onClick: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 52.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+            Text(body, fontSize = 12.5.sp, color = CaptionMuted)
+        }
+        Icon(painterResource(R.drawable.ic_chevron), contentDescription = null, tint = CaptionMuted, modifier = Modifier.size(18.dp))
+    }
+}
+
 @Composable
 private fun SourceOption(kind: SourceKind, selected: SourceKind, titleRes: Int, bodyRes: Int, onSelect: () -> Unit) =
     SourceRow(stringResource(titleRes), stringResource(bodyRes), kind == selected, onSelect)
@@ -1017,5 +1116,30 @@ private fun PrimaryButton(label: String, onClick: () -> Unit) {
             .padding(horizontal = 20.dp, vertical = 11.dp),
     ) {
         Text(label, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+    }
+}
+
+/** Appearance › Now: opens "Make Now yours". */
+@Composable
+private fun NowLayoutRow() {
+    val settings = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.settings
+    var open by remember { mutableStateOf(false) }
+    if (open) com.sukoon.app.ui.home.NowLayoutSheet(settings.nowLayout, onChange = { settings.nowLayout = it }, onDismiss = { open = false })
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, outline(), RoundedCornerShape(18.dp))
+            .clickable { open = true }
+            .heightIn(min = 56.dp)
+            .padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f).padding(vertical = 10.dp)) {
+            Text(stringResource(R.string.now_layout_title), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+            Text(stringResource(R.string.now_layout_row_body), fontSize = 12.5.sp, color = com.sukoon.app.ui.theme.CaptionMuted)
+        }
+        Text("›", fontSize = 20.sp, color = com.sukoon.app.ui.theme.CaptionMuted)
     }
 }

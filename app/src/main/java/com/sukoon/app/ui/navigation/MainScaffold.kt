@@ -17,7 +17,8 @@ import com.sukoon.app.insulin.Dose
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import com.sukoon.app.ui.help.startDone
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -180,10 +181,19 @@ fun MainScaffold() {
         trendsRequest = tab
         navController.navigateToTab(SukoonTab.TRENDS)
     }
+    // Now's Today sheet asked for from elsewhere (a guide link); Now opens it once.
+    var todayRequest by remember { mutableStateOf(false) }
     /** A guide link ("link" in assets/guide) to the screen it names. */
     fun openLink(link: String) {
         when (link) {
             "now" -> navController.navigateToTab(SukoonTab.NOW)
+            "today" -> {
+                todayRequest = true
+                navController.navigateToTab(SukoonTab.NOW)
+            }
+            "profile" -> openYou(YouPage.PROFILE)
+            "supplies" -> openYou(YouPage.SUPPLIES)
+            "clinic" -> openYou(YouPage.CLINIC)
             "sensor" -> openYou(YouPage.SENSOR)
             "sensor_start" -> {
                 appContainer.requestedStartSensor.value = true
@@ -245,9 +255,9 @@ fun MainScaffold() {
                     Column {
                         val missing = rememberMissingSetup().filter { it in FOLLOWER_SETUP }
                         var later by rememberSaveable { mutableStateOf(false) }
-                        if (missing.isNotEmpty() && !later) SetupBanner(missing, onFix = { openYou() }, onLater = { later = true })
-                        if (com.sukoon.app.BuildConfig.SELF_UPDATE) UpdateBanner(home.updates, onBackUp = { openYou() })
-                        FollowingHome(home.sharing, home.settings, onAddPerson = { openYou() }, modifier = Modifier.weight(1f))
+                        if (missing.isNotEmpty() && !later) SetupBanner(missing, onFix = { openYou(YouPage.HELP) }, onLater = { later = true })
+                        if (com.sukoon.app.BuildConfig.SELF_UPDATE) UpdateBanner(home.updates, onBackUp = { openYou(YouPage.REPORTS) })
+                        FollowingHome(home.sharing, home.settings, onAddPerson = { openYou(YouPage.PEOPLE) }, modifier = Modifier.weight(1f))
                     }
                     return@composable
                 }
@@ -273,12 +283,13 @@ fun MainScaffold() {
                 val stats by homeViewModel.stats.collectAsStateWithLifecycle()
                 var chosenStats by remember { mutableStateOf(home.settings.homeStats) }
                 var pickingStats by remember { mutableStateOf(false) }
+                // Read each time Now opens: it's arranged in You › Appearance › Now.
+                val nowLayout = remember { home.settings.nowLayout }
                 if (pickingStats) {
                     StatsPicker(chosenStats, home.healthConnect, onChange = { home.settings.homeStats = it; chosenStats = it }, onDismiss = { pickingStats = false })
                 }
                 val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
                 val brief by homeViewModel.brief.collectAsStateWithLifecycle()
-                val toYou = { openYou() }
                 val toSensor = { openYou(YouPage.SENSOR) }
                 val alarms = (LocalContext.current.applicationContext as SukoonApp).container.alarms
                 val settings = (LocalContext.current.applicationContext as SukoonApp).container.settings
@@ -310,6 +321,7 @@ fun MainScaffold() {
                 // Beta: a correction when you're above your range and haven't eaten in 2 hours.
                 val recentEvents by remember { home.logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofHours(6).toMillis()) }.collectAsStateWithLifecycle(initialValue = emptyList())
                 var showModes by rememberSaveable { mutableStateOf(false) }
+                LaunchedEffect(todayRequest) { if (todayRequest) { showModes = true; todayRequest = false } }
                 // ponytail: the newest 150 rows cover 2 hours at the 1-minute save interval (sparser saves cover more).
                 val lastReadings by remember { repository.recentReadings(150) }.collectAsStateWithLifecycle(initialValue = emptyList())
                 // A value under 70 in the last 2 hours: Home suggests no dose (the carbs since are treating it).
@@ -332,6 +344,7 @@ fun MainScaffold() {
                         slot = InsightEngine.slotFor(now.atZone(ZoneId.systemDefault()).hour),
                         lowAt = lowAt,
                         change = com.sukoon.app.modes.Modes.doseChange(home.modes.now(), now, null, ZoneId.systemDefault(), home.modes.afterWorkoutCut),
+                        lastInsulinAt = recentEvents.lastOrNull { it.logType == LogEventType.INSULIN && (it.value ?: 0.0) > 0 }?.let { Instant.ofEpochMilli(it.timestampMillis) },
                     )
                 }
                 // Beta: a meal in the last hour with no insulin logged and none working.
@@ -363,24 +376,29 @@ fun MainScaffold() {
                 viewing?.let { id ->
                     Dialog(onDismissRequest = { viewing = null }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
                         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                            FollowingHome(home.sharing, home.settings, onAddPerson = { viewing = null; toYou() }, personId = id)
+                            FollowingHome(home.sharing, home.settings, onAddPerson = { viewing = null; openYou(YouPage.PEOPLE) }, personId = id)
                         }
                     }
                 }
                 Column {
                     // Wearing and following: the people followed sit above your own Home.
                     if (role == UserRole.BOTH) FollowingStrip(home.sharing) { viewing = it.id }
-                    if (missingSetup.isNotEmpty() && !setupLater) {
-                        SetupBanner(missingSetup, onFix = toYou, onLater = { setupLater = true })
-                    }
                     val app = (context.applicationContext as SukoonApp).container
                     var startDismissed by remember { mutableStateOf(app.settings.gettingStartedDismissed) }
-                    val sensorConnected = app.pairingStore.load()?.started == true
-                    val hasContact = app.settings.emergency.contacts.isNotEmpty()
-                    val alarmsReach = missingSetup.isEmpty()
-                    if (!startDismissed && !(sensorConnected && hasContact && alarmsReach)) {
+                    val startSteps = startDone()
+                    // All three ticked once: the card is gone for good; later problems show in the setup banner only.
+                    if (!startDismissed && startSteps.all { it }) LaunchedEffect(Unit) {
+                        app.settings.gettingStartedDismissed = true
+                        startDismissed = true
+                    }
+                    val showStart = !startDismissed && !startSteps.all { it }
+                    // The banner or the card, never both.
+                    if (missingSetup.isNotEmpty() && !setupLater && !showStart) {
+                        SetupBanner(missingSetup, onFix = { openYou(YouPage.HELP) }, onLater = { setupLater = true })
+                    }
+                    if (showStart) {
                         GettingStartedCard(
-                            done = listOf(sensorConnected, alarmsReach, hasContact),
+                            done = startSteps,
                             onStep = ::openLink,
                             onGuide = { showGuide = true },
                             onDismiss = {
@@ -415,7 +433,7 @@ fun MainScaffold() {
                     val chips = com.sukoon.app.ui.home.statusChips(
                         m = modesNow,
                         paused = alarmsPaused,
-                        goal = com.sukoon.app.modes.Goals.targets(home.settings.profile, goal)?.let { t ->
+                        goal = com.sukoon.app.modes.Goals.targets(home.settings.profile, goal)?.takeIf { nowLayout.shows(com.sukoon.app.ui.home.NowPart.GOAL) }?.let { t ->
                             val gym = home.modes.gymToday()
                             val day = if (goal.gymDays.isEmpty()) t else t.copy(kcal = t.kcal?.let { com.sukoon.app.modes.Goals.dayKcal(it, goal, gym) })
                             day to (stats[com.sukoon.app.ui.home.HomeStat.PROTEIN] to stats[com.sukoon.app.ui.home.HomeStat.KCAL])
@@ -461,23 +479,22 @@ fun MainScaffold() {
                         )
                     }
                     (life as? SensorLife.Running)
-                        ?.takeIf { Duration.between(Instant.now(), it.endsAt) <= Duration.ofHours(24) }
+                        ?.takeIf { nowLayout.shows(com.sukoon.app.ui.home.NowPart.SENSOR_ENDING) && Duration.between(Instant.now(), it.endsAt) <= Duration.ofHours(24) }
                         ?.let { SensorEndingBanner(it, onClick = toSensor) }
-                    if (com.sukoon.app.BuildConfig.SELF_UPDATE) UpdateBanner(home.updates, onBackUp = toYou)
+                    if (com.sukoon.app.BuildConfig.SELF_UPDATE) UpdateBanner(home.updates, onBackUp = { openYou(YouPage.REPORTS) })
                     HomeScreen(
                         state = homeState,
                         brief = brief,
                         onSync = syncMfp,
                         modifier = Modifier.weight(1f),
-                        onPairSensor = toYou,
-                        onEnterCodeManually = toYou,
+                        onPairSensor = toSensor,
                         onTroubleshoot = toSensor,
                         onTreated = { scope.launch { alarms.treated() } },
-                        onSnooze = { scope.launch { alarms.acknowledge(AlarmType.LOW, 15) } },
+                        onSnooze = { scope.launch { alarms.acknowledge(AlarmType.LOW, home.settings.alarmSettings.lowSnoozeMinutes) } }, // the snooze you set, not a fixed 15
                         onAlertEmergencyContact = {
                             if (emergencyAlerts.contacts.isEmpty()) {
                                 context.toast(context.getString(R.string.toast_emergency_no_contacts), long = true)
-                                toYou()
+                                openYou(YouPage.PEOPLE)
                             } else {
                                 askingForHelp = true
                             }
@@ -505,6 +522,9 @@ fun MainScaffold() {
                         stats = stats,
                         chosenStats = chosenStats,
                         onChooseStats = { pickingStats = true },
+                        layout = nowLayout,
+                        dosing = home.settings.doseSettings.enabled,
+                        demo = source == SourceKind.SIMULATED,
                     )
                 }
             }
@@ -522,8 +542,11 @@ fun MainScaffold() {
                 val graphState by graphViewModel.uiState.collectAsStateWithLifecycle()
                 val logbookViewModel: LogbookViewModel = viewModel(factory = LogbookViewModel.factory(container.logbookRepository, container.glucoseRepository, container.gemini, container.entryPhotos) { container.settings.insulinAction })
                 val logbookState by logbookViewModel.uiState.collectAsStateWithLifecycle()
+                // The Guide as text, read once (~25 KB of assets), so Ask can answer questions about the app.
+                val guideContext = LocalContext.current
+                val askGuide = remember { runCatching { com.sukoon.app.ui.help.GuideContent.load(guideContext).asText() }.getOrDefault("") }
                 val askViewModel: AskViewModel = viewModel(
-                    factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini, doseSettings = { container.settings.doseSettings }, profile = { container.settings.profile }, goal = { container.modes.goalLine(container.settings.profile) }) { container.settings.insulinAction },
+                    factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini, doseSettings = { container.settings.doseSettings }, profile = { container.settings.profile }, goal = { container.modes.goalLine(container.settings.profile) }, guide = { askGuide }) { container.settings.insulinAction },
                 )
                 val askState by askViewModel.uiState.collectAsStateWithLifecycle()
                 val insightsViewModel: InsightsViewModel = viewModel(
@@ -619,7 +642,7 @@ fun MainScaffold() {
                     onForgetSensor = {
                         container.pairingStore.clear()
                         pairing = null
-                        container.selectSource(SourceKind.SIMULATED)
+                        container.selectSource(SourceKind.NONE)
                     },
                     onSaveGeminiKey = { key ->
                         container.settings.geminiApiKey = key
@@ -729,6 +752,7 @@ fun MainScaffold() {
                     },
                     onUploadNow = container.nightscout::uploadNow,
                     buildCsv = container::exportCsv,
+                    onLink = ::openLink,
                 )
             }
         }
@@ -784,7 +808,7 @@ private fun BottomBarItem(label: String, @DrawableRes icon: Int, @DrawableRes ic
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick)
+            .selectable(selected = selected, role = androidx.compose.ui.semantics.Role.Tab, onClick = onClick)
             .padding(horizontal = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(3.dp),

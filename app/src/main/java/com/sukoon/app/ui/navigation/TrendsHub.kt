@@ -17,6 +17,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -57,6 +61,19 @@ import com.sukoon.app.ui.reports.ReportUiState
 import java.time.Instant
 import com.sukoon.app.ui.logbook.EntryDraft
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.launch
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.positionInParent
+import com.sukoon.app.ui.theme.Motion
 
 enum class TrendsSubTab { GRAPH, LOGBOOK, INSIGHTS, REPORT, ASK }
 
@@ -112,8 +129,10 @@ fun TrendsHub(
 
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         SegmentedTabs(subTab) { subTab = it }
-        when (subTab) {
-            TrendsSubTab.GRAPH -> GraphScreen(state = graphState, onSelectRange = onSelectRange, modifier = Modifier.weight(1f), onDay = onGraphDay)
+        // Tab content crossfades (motion spec: content changes); reduced, the short crossfade.
+        Crossfade(subTab, Modifier.weight(1f), tween(if (Motion.reduced()) Motion.REDUCED else Motion.BASE, easing = Motion.Standard), label = "trendsTab") { shownTab ->
+        when (shownTab) {
+            TrendsSubTab.GRAPH -> GraphScreen(state = graphState, onSelectRange = onSelectRange, modifier = Modifier.fillMaxSize(), onDay = onGraphDay)
             TrendsSubTab.LOGBOOK -> LogbookScreen(
                 state = logbookState,
                 onSaveEntry = onSaveEntry,
@@ -121,7 +140,7 @@ fun TrendsHub(
                 onUpdateEvent = onUpdateEvent,
                 onDay = onLogbookDay,
                 onDeleteEvent = onDeleteEvent,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxSize(),
                 onEstimateCarbs = onEstimateCarbs,
                 onEntryPhoto = onEntryPhoto,
                 onSync = onSync,
@@ -143,9 +162,9 @@ fun TrendsHub(
                         else -> onInsightAction(action)
                     }
                 },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxSize(),
             )
-            TrendsSubTab.REPORT -> ReportScreen(reportState, reportName, onSelectReportDays, Modifier.weight(1f))
+            TrendsSubTab.REPORT -> ReportScreen(reportState, reportName, onSelectReportDays, Modifier.fillMaxSize())
             TrendsSubTab.ASK -> AskScreen(
                 state = askState,
                 hasKey = hasAiKey,
@@ -153,37 +172,62 @@ fun TrendsHub(
                 onClear = onClearAsk,
                 onOpenSettings = onOpenSettings,
                 insightFinding = insightsState.digest?.oneThing,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxSize(),
             )
+        }
         }
     }
 }
 
-/** Graph · Logbook · Insights · Report · ✦ Ask (Redesign Canvas §8): one track, the chosen segment raised. */
+/**
+ * Graph · Logbook · Insights · Report · ✦ Ask (Redesign Canvas §8): one track, the chosen segment raised.
+ * A long name wraps to two lines (Arabic on a narrow phone) rather than being cut; TalkBack hears tabs.
+ */
 @Composable
 private fun SegmentedTabs(selected: TrendsSubTab, onSelect: (TrendsSubTab) -> Unit) {
+    // The raised segment slides to the chosen tab on the calm curve (reduced: it moves at once).
+    val bounds = remember { mutableStateMapOf<TrendsSubTab, Pair<Float, Float>>() }
+    val left = remember { Animatable(-1f) }
+    val width = remember { Animatable(0f) }
+    val reduced = Motion.reduced()
+    val target = bounds[selected]
+    LaunchedEffect(selected, target) {
+        val (l, w) = target ?: return@LaunchedEffect
+        if (left.value < 0f || reduced) {
+            left.snapTo(l)
+            width.snapTo(w)
+        } else {
+            launch { left.animateTo(l, tween(Motion.CALM, easing = Motion.Calm)) }
+            width.animateTo(w, tween(Motion.CALM, easing = Motion.Calm))
+        }
+    }
+    val raised = MaterialTheme.colorScheme.surface
     Row(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 10.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f))
-            .padding(3.dp),
+            .padding(3.dp)
+            .drawBehind {
+                if (left.value >= 0f) drawRoundRect(raised, Offset(left.value, 0f), Size(width.value, size.height), CornerRadius(11.dp.toPx()))
+            },
     ) {
         TrendsSubTab.entries.forEach { tab ->
             val on = tab == selected
             Row(
                 Modifier
                     .weight(if (tab == TrendsSubTab.INSIGHTS || tab == TrendsSubTab.LOGBOOK) 1.12f else 1f)
+                    .onPlaced { bounds[tab] = it.positionInParent().x to it.size.width.toFloat() }
                     .clip(RoundedCornerShape(11.dp))
-                    .background(if (on) MaterialTheme.colorScheme.surface else Color.Transparent)
-                    .clickable { onSelect(tab) }
-                    .padding(vertical = 8.dp),
+                    .selectable(selected = on, role = Role.Tab) { onSelect(tab) }
+                    .heightIn(min = 48.dp)
+                    .padding(horizontal = 2.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (tab == TrendsSubTab.ASK) {
-                    Icon(painterResource(R.drawable.ic_sparkle), null, tint = if (on) Sage else CaptionMuted, modifier = Modifier.size(13.dp))
+                    Icon(painterResource(R.drawable.ic_sparkle), null, tint = Motion.tint(if (on) Sage else CaptionMuted), modifier = Modifier.size(13.dp))
                     Spacer(Modifier.width(3.dp))
                 }
                 Text(
@@ -197,10 +241,11 @@ private fun SegmentedTabs(selected: TrendsSubTab, onSelect: (TrendsSubTab) -> Un
                         },
                     ),
                     fontSize = 12.5.sp,
-                    maxLines = 1,
-                    softWrap = false,
+                    lineHeight = 14.sp,
+                    maxLines = 2,
+                    textAlign = TextAlign.Center,
                     fontWeight = if (on) FontWeight.SemiBold else FontWeight.Medium,
-                    color = if (on) MaterialTheme.colorScheme.onBackground else CaptionMuted,
+                    color = Motion.tint(if (on) MaterialTheme.colorScheme.onBackground else CaptionMuted),
                 )
             }
         }
@@ -213,19 +258,14 @@ internal fun SubTabChip(label: String, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
-            .then(
-                if (selected) {
-                    Modifier.background(Sage)
-                } else {
-                    Modifier.border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
-                },
-            )
+            .background(Motion.tint(if (selected) Sage else Sage.copy(alpha = 0f)))
+            .border(1.dp, Motion.tint(if (selected) Color.Transparent else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)), RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         Text(
             text = label,
-            color = if (selected) Color.White else CaptionMuted,
+            color = Motion.tint(if (selected) Color.White else CaptionMuted),
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
             fontSize = 12.sp,
         )

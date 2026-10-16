@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.components
 
+import androidx.compose.runtime.getValue
 import com.sukoon.app.domain.metrics.TargetRange
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -40,6 +41,11 @@ fun MiniGraph(
 ) {
     val bars = homeBars(readings, now)
     val top = maxOf(260, bars.filterNotNull().maxOrNull() ?: 0)
+    val reduced = com.sukoon.app.ui.theme.Motion.reduced()
+    val grow = androidx.compose.runtime.remember { androidx.compose.animation.core.Animatable(if (reduced) 1f else 0f) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        grow.animateTo(1f, androidx.compose.animation.core.tween(com.sukoon.app.ui.theme.Motion.BARS, easing = com.sukoon.app.ui.theme.Motion.Calm))
+    }
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -48,14 +54,17 @@ fun MiniGraph(
         horizontalArrangement = Arrangement.spacedBy(5.dp),
         verticalAlignment = Alignment.Bottom,
     ) {
-        bars.forEach { value ->
+        bars.forEachIndexed { i, value ->
             if (value == null) {
                 Spacer(Modifier.weight(1f))
             } else {
+                // Each bar rises in its turn (a 6-bar overlap: about a second each), then eases to new values.
+                val share by androidx.compose.animation.core.animateFloatAsState((value.toFloat() / top).coerceIn(0.08f, 1f), androidx.compose.animation.core.tween(com.sukoon.app.ui.theme.Motion.SLOW, easing = com.sukoon.app.ui.theme.Motion.Calm), label = "bar")
+                val turn = ((grow.value * (bars.size + 6) - i) / 6f).coerceIn(0f, 1f)
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(height * (value.toFloat() / top).coerceIn(0.08f, 1f))
+                        .height(height * share * turn)
                         .clip(RoundedCornerShape(3.dp))
                         .background(colorFor(value)),
                 )

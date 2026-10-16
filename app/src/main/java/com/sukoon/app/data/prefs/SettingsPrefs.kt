@@ -32,9 +32,18 @@ enum class ThemeMode { AUTO, LIGHT, DARK }
 class SettingsPrefs(context: Context) {
     private val prefs = context.getSharedPreferences("sukoon_prefs", Context.MODE_PRIVATE)
 
-    /** Unknown/retired values (e.g. the removed NIGHTSCOUT/BROADCAST sources) fall back to demo data. */
+    /**
+     * Unknown/retired values (e.g. the removed NIGHTSCOUT/BROADCAST sources) fall back to demo data.
+     * Nothing saved: a new install starts with no source (demo data only when picked); one set up
+     * before that keeps the demo data it had by default. Saved on first read, so finishing onboarding
+     * doesn't turn a new install into an old one.
+     */
     var sourceKind: SourceKind
-        get() = SourceKind.entries.firstOrNull { it.name == prefs.getString(KEY_SOURCE, null) } ?: SourceKind.SIMULATED
+        get() {
+            val saved = prefs.getString(KEY_SOURCE, null)
+                ?: return (if (onboarded) SourceKind.SIMULATED else SourceKind.NONE).also { sourceKind = it }
+            return SourceKind.entries.firstOrNull { it.name == saved } ?: SourceKind.SIMULATED
+        }
         set(value) = prefs.edit().putString(KEY_SOURCE, value.name).apply()
 
     var geminiApiKey: String
@@ -241,6 +250,11 @@ class SettingsPrefs(context: Context) {
         } ?: DEFAULT_HOME_STATS
         set(value) = prefs.edit().putString(KEY_HOME_STATS, value.take(MAX_HOME_STATS).joinToString(",") { it.name }).apply()
 
+    /** What shows on Now, and in what order ("Make Now yours"). */
+    var nowLayout: com.sukoon.app.ui.home.NowLayout
+        get() = com.sukoon.app.ui.home.NowLayout.decode(prefs.getString(KEY_NOW_LAYOUT, null))
+        set(value) = prefs.edit().putString(KEY_NOW_LAYOUT, value.encode()).apply()
+
     /** Home's getting-started card, once the user has said "Got it". */
     var gettingStartedDismissed: Boolean
         get() = prefs.getBoolean(KEY_START_DISMISSED, false)
@@ -263,6 +277,7 @@ class SettingsPrefs(context: Context) {
         private const val KEY_AFTER_WORKOUT = "after_workout_check"
         private const val KEY_ROLE = "user_role"
         private const val KEY_HOME_STATS = "home_stats"
+        private const val KEY_NOW_LAYOUT = "now_layout"
         private const val KEY_ONBOARDED = "onboarded"
         private const val KEY_OLD_DISCLAIMER = "disclaimer_accepted" // the disclaimer gate's key, from before onboarding
         private const val KEY_FOLLOWED_PHONE = "followed_phone_"

@@ -110,7 +110,10 @@ class LogbookViewModel(
      * the new entries' ids, for Undo. Runs in the ViewModel's scope, so leaving the screen can't cut
      * a save in half.
      */
-    fun save(draft: EntryDraft): Deferred<List<Long>> = viewModelScope.async {
+    fun save(entry: EntryDraft): Deferred<List<Long>> = viewModelScope.async {
+        // Insulin "after the meal" that would be in the future (logged now): the meal moves back instead, the dose is now.
+        val ahead = java.time.Duration.between(java.time.Instant.now(), entry.at.minusSeconds(entry.preBolusMinutes * 60L))
+        val draft = if (entry.insulin != null && entry.preBolusMinutes < 0 && !ahead.isNegative) entry.copy(at = entry.at.minus(ahead)) else entry
         val ids = mutableListOf<Long>()
         val n = draft.nutrients
         val id = repository.insert(

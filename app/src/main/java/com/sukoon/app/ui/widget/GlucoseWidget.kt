@@ -44,6 +44,7 @@ import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
+import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
@@ -104,7 +105,8 @@ class GlucoseWidget : GlanceAppWidget() {
             val zone = ZoneId.systemDefault()
             WidgetBody(
                 WidgetModel.build(current, now, zone, options.graphHours),
-                WidgetExtras.build(logged, now, zone, container.settings.insulinAction, personFor(options, people, now)),
+                WidgetExtras.build(logged, now, zone, container.settings.insulinAction, personFor(options, people, now))
+                    .copy(next = if (options.style == WidgetStyle.NOW) nextFor(context, current, logged, now, zone) else null),
                 options,
                 LocalSize.current,
             )
@@ -171,6 +173,14 @@ class GlucoseWidget : GlanceAppWidget() {
 
         val RECEIVERS = WidgetSize.entries.map(::receiverFor)
 
+        /** Now's message for the Now widget; none on a low (the low widgets say what to do). */
+        fun nextFor(context: Context, readings: List<com.sukoon.app.data.source.GlucoseReading>, events: List<com.sukoon.app.data.db.EventEntity>, now: Instant, zone: ZoneId): Pair<String, String>? {
+            val container = (context.applicationContext as SukoonApp).container
+            val brief = com.sukoon.app.ui.home.HomeBriefs.of(readings.sortedBy { it.timestamp }, events, now, zone, container.settings.insulinAction, modes = container.modes.now())
+                ?.takeIf { it !is com.sukoon.app.ui.home.Brief.Low && it !is com.sukoon.app.ui.home.Brief.Treated } ?: return null
+            return com.sukoon.app.ui.home.briefLines(context, brief)
+        }
+
         private fun personFor(options: WidgetOptions, people: List<Followed>, now: Instant): PersonReading? {
             if (options.style != WidgetStyle.FOLLOWING) return null
             val who = people.firstOrNull { it.id == options.person } ?: people.firstOrNull() ?: return null
@@ -220,19 +230,27 @@ private fun WidgetBodyContent(model: WidgetModel, extras: WidgetExtras, options:
     val context = LocalContext.current
     val night = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
     val palette = Palette.of(options.background, night)
-    val pad = if (minOf(size.width, size.height) < 80.dp) 6.dp else 14.dp
+    val pad = if (minOf(size.width, size.height) < 80.dp) 6.dp else if (options.style in NEW_STYLES) 16.dp else 14.dp
+    val surface = when (options.style) {
+        WidgetStyle.BOLD -> ColorProvider(boldColor(model))
+        WidgetStyle.NOW -> ColorProvider(NOW_SURFACE)
+        else -> palette.background
+    }
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
             .appWidgetBackground()
-            .background(palette.background)
-            .cornerRadius(20.dp)
+            .background(surface)
+            .cornerRadius(if (options.style in NEW_STYLES) 26.dp else 20.dp)
             .let { if (LocalInteractive.current) it.clickable(actionStartActivity<MainActivity>()) else it }
             .padding(pad),
         contentAlignment = Alignment.Center,
     ) {
         val inner = DpSize(size.width - pad * 2, size.height - pad * 2)
         when (options.style) {
+            WidgetStyle.QUIET -> QuietStyle(model, extras, options, palette, inner)
+            WidgetStyle.BOLD -> BoldStyle(model, extras, options, inner)
+            WidgetStyle.NOW -> NowStyle(model, extras, options, inner)
             WidgetStyle.CARD -> when (layoutFor(size.width.value, size.height.value)) {
                 WidgetLayout.TINY -> Tiny(model, options, palette, inner)
                 WidgetLayout.STRIP -> Strip(model, options, palette, inner)
@@ -264,7 +282,7 @@ private fun Tiny(model: WidgetModel, options: WidgetOptions, palette: Palette, s
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalAlignment = Alignment.CenterVertically) {
         Reading(model, palette, numberSp, showArrow = !stacked && options.shows(WidgetInfo.ARROW))
         if (stacked) {
-            if (options.shows(WidgetInfo.ARROW)) model.trend?.takeIf { !model.stale }?.let { Text(it.arrow, style = small(palette, numberSp * 0.45f)) }
+            if (options.shows(WidgetInfo.ARROW)) model.trend?.takeIf { !model.stale }?.let { Image(ImageProvider(arrowIcon(it)), contentDescription = null, colorFilter = androidx.glance.ColorFilter.tint(palette.muted), modifier = GlanceModifier.size((numberSp * 0.45f).dp)) }
             if (options.shows(WidgetInfo.AGO)) Text(ago(model), style = small(palette, detailSp).copy(textAlign = TextAlign.Center), maxLines = 1)
         } else if (options.shows(WidgetInfo.AGO) && size.height >= 76.dp) {
             Text(ago(model), style = small(palette, detailSp))
@@ -339,7 +357,7 @@ private fun WideNumber(model: WidgetModel, options: WidgetOptions, palette: Pale
         Reading(model, palette, numberSp, showArrow = false)
         Spacer(GlanceModifier.width(8.dp))
         Column {
-            if (options.shows(WidgetInfo.ARROW) && !model.stale) model.trend?.let { Text(it.arrow, style = TextStyle(color = palette.text, fontSize = (numberSp * 0.5f).sp)) }
+            if (options.shows(WidgetInfo.ARROW) && !model.stale) model.trend?.let { Image(ImageProvider(arrowIcon(it)), contentDescription = null, colorFilter = androidx.glance.ColorFilter.tint(palette.text), modifier = GlanceModifier.size((numberSp * 0.5f).dp)) }
             if (options.showDetails) Text(metaLine(model, options), style = small(palette, 11.5f), maxLines = 1)
         }
     }
@@ -512,7 +530,7 @@ private fun FollowingStyle(person: PersonReading?, options: WidgetOptions, palet
     val color = rangeColor(person.mgDl, person.stale, palette)
     val numberSp = if (size.height < 100.dp) (size.height.value * 0.5f).coerceIn(16f, 40f) else minOf(size.width.value * 0.3f, 56f)
     val number = if (person.stale || person.mgDl == null) "---" else person.mgDl.toString()
-    val arrow = if (options.shows(WidgetInfo.ARROW) && !person.stale) person.trend?.arrow?.let { " $it" }.orEmpty() else ""
+    val trend = person.trend?.takeIf { options.shows(WidgetInfo.ARROW) && !person.stale }
     val ago = person.minutesAgo?.let { if (it < 1) context.getString(R.string.widget_now) else context.resources.getQuantityString(R.plurals.widget_minutes_ago, it.toInt(), it.toInt()) }
     val wide = size.width > size.height * 1.6f
     if (wide) {
@@ -521,7 +539,7 @@ private fun FollowingStyle(person: PersonReading?, options: WidgetOptions, palet
             Spacer(GlanceModifier.width(10.dp))
             Column {
                 Text(person.name, style = small(palette, 11.5f), maxLines = 1)
-                Text(number + arrow, style = TextStyle(color = color, fontSize = numberSp.sp, fontFamily = FontFamily.Serif), maxLines = 1)
+                NumberArrow(number, trend, color, numberSp)
             }
             Spacer(GlanceModifier.defaultWeight())
             if (options.shows(WidgetInfo.AGO) && ago != null) Text(ago, style = small(palette, 11f), maxLines = 1)
@@ -529,7 +547,7 @@ private fun FollowingStyle(person: PersonReading?, options: WidgetOptions, palet
     } else {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalAlignment = Alignment.CenterVertically) {
             Text(person.name, style = small(palette, (numberSp * 0.32f).coerceIn(10f, 14f)), maxLines = 1)
-            Text(number + arrow, style = TextStyle(color = color, fontSize = numberSp.sp, fontFamily = FontFamily.Serif), maxLines = 1)
+            NumberArrow(number, trend, color, numberSp)
             if (options.shows(WidgetInfo.AGO) && ago != null) Text(ago, style = small(palette, (numberSp * 0.28f).coerceIn(9f, 13f)), maxLines = 1)
         }
     }
@@ -552,16 +570,30 @@ private fun Reading(model: WidgetModel, palette: Palette, numberSp: Float, showA
         model.bracket == RangeBracket.HIGH || model.bracket == RangeBracket.VERY_HIGH -> ColorProvider(StateHigh)
         else -> palette.text
     }
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        // Stale values are never shown as current (PLAN §5) — the number gives way to dashes.
-        Text(
-            if (model.stale || model.mgDl == null) "---" else model.mgDl.toString(),
-            style = TextStyle(color = color, fontSize = numberSp.sp, fontFamily = FontFamily.Serif),
-        )
-        if (showArrow && !model.stale && model.trend != null) {
-            Text(" " + model.trend.arrow, style = TextStyle(color = color, fontSize = (numberSp * 0.5f).sp))
-        }
+    // Stale values are never shown as current (PLAN §5) — the number gives way to dashes.
+    NumberArrow(if (model.stale || model.mgDl == null) "---" else model.mgDl.toString(), model.trend?.takeIf { showArrow && !model.stale }, color, numberSp)
+}
+
+/** The number and Sukoon's drawn arrow after it; in a right-to-left language the order is swapped so it still reads number, arrow. */
+@Composable
+private fun NumberArrow(number: String, trend: com.sukoon.app.data.source.TrendDirection?, color: ColorProvider, numberSp: Float) {
+    val rtl = LocalContext.current.resources.configuration.layoutDirection == android.view.View.LAYOUT_DIRECTION_RTL
+    val text = @Composable { Text(number, style = TextStyle(color = color, fontSize = numberSp.sp, fontFamily = FontFamily.Serif), maxLines = 1) }
+    val arrow = @Composable {
+        if (trend != null) Image(ImageProvider(arrowIcon(trend)), contentDescription = null, colorFilter = androidx.glance.ColorFilter.tint(color), modifier = GlanceModifier.size((numberSp * 0.5f).dp))
     }
+    val gap = @Composable { if (trend != null) Spacer(GlanceModifier.width((numberSp * 0.08f).coerceAtLeast(3f).dp)) }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        if (rtl) { arrow(); gap(); text() } else { text(); gap(); arrow() }
+    }
+}
+
+private fun arrowIcon(trend: com.sukoon.app.data.source.TrendDirection) = when (trend) {
+    com.sukoon.app.data.source.TrendDirection.RISING_FAST -> R.drawable.ic_trend_up_fast
+    com.sukoon.app.data.source.TrendDirection.RISING -> R.drawable.ic_trend_up
+    com.sukoon.app.data.source.TrendDirection.STEADY -> R.drawable.ic_trend_flat
+    com.sukoon.app.data.source.TrendDirection.FALLING -> R.drawable.ic_trend_down
+    com.sukoon.app.data.source.TrendDirection.FALLING_FAST -> R.drawable.ic_trend_down_fast
 }
 
 @Composable
@@ -623,3 +655,196 @@ private fun amount(value: Double): String =
     if (value % 1.0 == 0.0) String.format(Locale.getDefault(), "%,.0f", value) else String.format(Locale.getDefault(), "%.1f", value)
 
 private fun small(palette: Palette, sp: Float) = TextStyle(color = palette.muted, fontSize = sp.sp, fontWeight = FontWeight.Medium)
+
+// --- the redesign (design canvas "Widgets redesign": A quiet, B colour, C now) -----------------------
+
+private val NEW_STYLES = setOf(WidgetStyle.QUIET, WidgetStyle.BOLD, WidgetStyle.NOW)
+private val NOW_SURFACE = Color(0xF21E2B26)
+private val NOW_BUTTON = Color(0xFF26453A)
+
+/** B's tile: the range's colour (grey when the reading is old). */
+private fun boldColor(model: WidgetModel): Color = when {
+    model.stale || model.mgDl == null -> NeutralWarm
+    model.mgDl < 70 -> StateLow
+    model.mgDl > TargetRange.high -> StateHigh
+    else -> com.sukoon.app.ui.theme.InRange
+}
+
+/** "In range", "High", "Low" or "No signal". */
+private fun stateLabel(context: Context, model: WidgetModel): String = context.getString(
+    when {
+        model.stale || model.mgDl == null -> R.string.widget_state_stale
+        model.mgDl < 70 -> R.string.widget_state_low
+        model.mgDl > TargetRange.high -> R.string.widget_state_high
+        else -> R.string.widget_state_in_range
+    },
+)
+
+private fun iobLine(context: Context, extras: WidgetExtras, options: WidgetOptions): String? =
+    if (options.shows(WidgetInfo.IOB) && extras.iob >= 0.05) context.getString(R.string.home_iob, String.format(Locale.getDefault(), "%.1f", extras.iob)) else null
+
+/** A: quiet. Large: state and time, the number beside the line, the units under. Square: time, number, state. Strip: number, line, time. */
+@Composable
+private fun QuietStyle(model: WidgetModel, extras: WidgetExtras, options: WidgetOptions, palette: Palette, size: DpSize) {
+    val context = LocalContext.current
+    val tone = rangeColor(model.mgDl, model.stale, palette).takeIf { model.mgDl != null && !model.stale && (model.mgDl < 70 || model.mgDl > TargetRange.high) } ?: palette.text
+    val state = TextStyle(color = rangeColor(model.mgDl, model.stale, palette), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+    if (size.height < 100.dp) {
+        val numberSp = (size.height.value * 0.55f).coerceIn(18f, 46f)
+        Row(GlanceModifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+            NumberArrow(if (model.stale || model.mgDl == null) "---" else model.mgDl.toString(), model.trend?.takeIf { options.shows(WidgetInfo.ARROW) && !model.stale }, tone, numberSp)
+            Spacer(GlanceModifier.width(12.dp))
+            val w = size.width - (numberSp * 2.3f).dp - 56.dp
+            if (options.shows(WidgetInfo.GRAPH) && w >= 48.dp) Graph(model, options, palette, DpSize(w, size.height * 0.7f), GlanceModifier.width(w).height(size.height * 0.7f))
+            Spacer(GlanceModifier.defaultWeight())
+            if (options.shows(WidgetInfo.AGO)) Text(ago(model), style = small(palette, 11.5f), maxLines = 1)
+        }
+        return
+    }
+    if (size.width < 250.dp) {
+        val numberSp = minOf(size.width.value * 0.32f, size.height.value * 0.34f).coerceIn(28f, 66f)
+        Column(GlanceModifier.fillMaxSize()) {
+            if (options.shows(WidgetInfo.AGO)) Text(ago(model), style = small(palette, 12f), maxLines = 1)
+            Spacer(GlanceModifier.defaultWeight())
+            Reading(model, palette, numberSp, showArrow = options.shows(WidgetInfo.ARROW))
+            Spacer(GlanceModifier.defaultWeight())
+            Text(listOfNotNull(stateLabel(context, model), iobLine(context, extras, options)).joinToString(" · "), style = state, maxLines = 1)
+        }
+        return
+    }
+    val numberSp = (size.height.value * 0.36f).coerceIn(34f, 70f)
+    Column(GlanceModifier.fillMaxSize()) {
+        Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text("● " + stateLabel(context, model), style = state, maxLines = 1)
+            Spacer(GlanceModifier.defaultWeight())
+            if (options.shows(WidgetInfo.AGO)) Text(ago(model), style = small(palette, 12f), maxLines = 1)
+        }
+        Spacer(GlanceModifier.defaultWeight())
+        Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Reading(model, palette, numberSp, showArrow = options.shows(WidgetInfo.ARROW))
+            Spacer(GlanceModifier.width(16.dp))
+            val w = size.width - (numberSp * 2.3f).dp - 16.dp
+            val h = (numberSp * 1.1f).dp
+            if (options.shows(WidgetInfo.GRAPH) && w >= 60.dp) Graph(model, options, palette, DpSize(w, h), GlanceModifier.width(w).height(h))
+        }
+        Spacer(GlanceModifier.defaultWeight())
+        Text(listOfNotNull(context.getString(R.string.home_unit_mgdl), iobLine(context, extras, options)).joinToString(" · "), style = small(palette, 12.5f), maxLines = 1)
+    }
+}
+
+/** B: the colour says it, white on the range's colour. */
+@Composable
+private fun BoldStyle(model: WidgetModel, extras: WidgetExtras, options: WidgetOptions, size: DpSize) {
+    val context = LocalContext.current
+    val white = ColorProvider(Color.White)
+    val soft = ColorProvider(Color.White.copy(alpha = 0.88f))
+    val number = if (model.stale || model.mgDl == null) "---" else model.mgDl.toString()
+    val trend = model.trend?.takeIf { options.shows(WidgetInfo.ARROW) && !model.stale }
+    val label = listOfNotNull(stateLabel(context, model).uppercase(), if (options.shows(WidgetInfo.AGO)) ago(model) else null).joinToString(" · ")
+    val labelStyle = TextStyle(color = soft, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+    val low = model.mgDl != null && !model.stale && model.mgDl < 70
+    val sub = if (low) context.getString(R.string.widget_low_carbs) else iobLine(context, extras, options)
+    if (size.height < 100.dp) {
+        Row(GlanceModifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+            NumberArrow(number, trend, white, (size.height.value * 0.55f).coerceIn(18f, 46f))
+            Spacer(GlanceModifier.width(12.dp))
+            Text(listOfNotNull(stateLabel(context, model), sub).joinToString(" · "), style = TextStyle(color = soft, fontSize = 13.sp), maxLines = 1, modifier = GlanceModifier.defaultWeight())
+            if (options.shows(WidgetInfo.AGO)) Text(ago(model), style = TextStyle(color = soft, fontSize = 12.sp), maxLines = 1)
+        }
+        return
+    }
+    val square = size.width < 250.dp
+    val numberSp = if (square) minOf(size.width.value * 0.32f, size.height.value * 0.34f).coerceIn(28f, 68f) else (size.height.value * 0.38f).coerceIn(34f, 76f)
+    Row(GlanceModifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+        Column(GlanceModifier.defaultWeight().fillMaxHeight()) {
+            Text(label, style = labelStyle, maxLines = 1)
+            Spacer(GlanceModifier.defaultWeight())
+            NumberArrow(number, trend, white, numberSp)
+            Spacer(GlanceModifier.defaultWeight())
+            sub?.let { Text(it, style = TextStyle(color = white, fontSize = 12.5.sp, fontWeight = if (low) FontWeight.Bold else FontWeight.Medium), maxLines = 1) }
+        }
+        if (!square && options.shows(WidgetInfo.TIR)) {
+            val side = minOf(size.height, 140.dp)
+            val density = context.resources.displayMetrics.density
+            Spacer(GlanceModifier.width(14.dp))
+            Box(GlanceModifier.size(side), contentAlignment = Alignment.Center) {
+                Image(ImageProvider(WidgetGraph.ring(model.tirTodayPercent, (side.value * density).toInt(), dark = false, white = true)), contentDescription = model.tirTodayPercent?.let { context.getString(R.string.widget_ring_today, it) }, modifier = GlanceModifier.size(side))
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(model.tirTodayPercent?.let { "$it%" } ?: "–", style = TextStyle(color = white, fontSize = (side.value * 0.22f).sp, fontFamily = FontFamily.Serif), maxLines = 1)
+                    Text(context.getString(R.string.widget_in_range), style = TextStyle(color = soft, fontSize = 11.sp), maxLines = 1)
+                }
+            }
+        }
+    }
+}
+
+/** C: a small Now. Large: number and state, the next step, + Food and + Insulin. Square: number, state, units. 1 × 1: number and a dot. */
+@Composable
+private fun NowStyle(model: WidgetModel, extras: WidgetExtras, options: WidgetOptions, size: DpSize) {
+    val context = LocalContext.current
+    val text = ColorProvider(OnCanvasDark)
+    val muted = ColorProvider(NeutralWarm)
+    val tone = when {
+        model.stale || model.mgDl == null -> muted
+        model.mgDl < 70 -> ColorProvider(StateLow)
+        model.mgDl > TargetRange.high -> ColorProvider(StateHigh)
+        else -> ColorProvider(com.sukoon.app.ui.theme.InRangeLight)
+    }
+    val number = if (model.stale || model.mgDl == null) "---" else model.mgDl.toString()
+    val trend = model.trend?.takeIf { options.shows(WidgetInfo.ARROW) && !model.stale }
+    if (size.width < 120.dp || size.height < 100.dp) {
+        Column(GlanceModifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalAlignment = Alignment.CenterVertically) {
+            Text(number, style = TextStyle(color = text, fontSize = (minOf(size.width, size.height).value * 0.36f).coerceIn(16f, 40f).sp, fontFamily = FontFamily.Serif), maxLines = 1)
+            Spacer(GlanceModifier.height(4.dp))
+            Box(GlanceModifier.size(8.dp).cornerRadius(4.dp).background(tone)) {}
+        }
+        return
+    }
+    val status = listOfNotNull(stateLabel(context, model), if (options.shows(WidgetInfo.AGO)) ago(model) else null).joinToString(" · ")
+    val square = size.width < 250.dp
+    Column(GlanceModifier.fillMaxSize()) {
+        Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            NumberArrow(number, trend, text, if (square) (size.width.value * 0.3f).coerceIn(28f, 60f) else (size.height.value * 0.26f).coerceIn(30f, 58f))
+            if (!square) {
+                Spacer(GlanceModifier.width(14.dp))
+                Column {
+                    Text(status, style = TextStyle(color = tone, fontSize = 12.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+                    iobLine(context, extras, options)?.let { Text(it, style = TextStyle(color = muted, fontSize = 12.sp), maxLines = 1) }
+                }
+            }
+        }
+        if (square) {
+            Text(status, style = TextStyle(color = tone, fontSize = 12.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+            iobLine(context, extras, options)?.let { Text(it, style = TextStyle(color = muted, fontSize = 12.sp), maxLines = 1) }
+            return@Column
+        }
+        extras.next?.let { (title, body) ->
+            Spacer(GlanceModifier.height(6.dp))
+            Text(title, style = TextStyle(color = text, fontSize = 14.sp, fontWeight = FontWeight.Medium), maxLines = 1)
+            Text(body, style = TextStyle(color = muted, fontSize = 12.5.sp), maxLines = if (size.height >= 200.dp) 2 else 1)
+        }
+        Spacer(GlanceModifier.defaultWeight())
+        Row(GlanceModifier.fillMaxWidth()) {
+            LogButton(context.getString(R.string.widget_add_food), com.sukoon.app.data.db.LogEventType.CARB, GlanceModifier.defaultWeight())
+            Spacer(GlanceModifier.width(10.dp))
+            LogButton(context.getString(R.string.widget_add_insulin), com.sukoon.app.data.db.LogEventType.INSULIN, GlanceModifier.defaultWeight())
+        }
+    }
+}
+
+/** Opens the Logbook's entry for [type] (the same extra the long-acting reminder uses). */
+@Composable
+private fun LogButton(label: String, type: com.sukoon.app.data.db.LogEventType, modifier: GlanceModifier) {
+    val context = LocalContext.current
+    val open = android.content.Intent(context, MainActivity::class.java)
+        .setData(android.net.Uri.parse("sukoon://widget/log/${type.name}")) // a distinct intent per button
+        .putExtra(MainActivity.EXTRA_ENTRY, type.name)
+        .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP)
+    Box(
+        modifier.height(40.dp).cornerRadius(14.dp).background(ColorProvider(NOW_BUTTON))
+            .let { if (LocalInteractive.current) it.clickable(androidx.glance.appwidget.action.actionStartActivity(open)) else it },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, style = TextStyle(color = ColorProvider(Color(0xFFCFE6DA)), fontSize = 13.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+    }
+}

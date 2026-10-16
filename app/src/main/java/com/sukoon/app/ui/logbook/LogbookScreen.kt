@@ -88,6 +88,7 @@ import com.sukoon.app.ui.theme.CanvasDark
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
 import com.sukoon.app.ui.theme.Motion.staggerIn
+import com.sukoon.app.ui.theme.Motion.arrivalGlow
 import com.sukoon.app.ui.theme.PillHighBg
 import com.sukoon.app.ui.theme.PillHighText
 import com.sukoon.app.ui.theme.PillLowBg
@@ -153,18 +154,27 @@ fun LogbookScreen(
     mealRecord: suspend (Long) -> HealthConnectSync.MealRecord? = { null },
 ) {
     val context = LocalContext.current
+    // Say it and the AI estimate need a Gemini key: without one they aren't offered (the key is in You → Apps & data).
+    val hasAiKey = (context.applicationContext as com.sukoon.app.SukoonApp).container.gemini.hasKey
     val view = LocalView.current
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
     var adding by remember { mutableStateOf(false) }
     var voicing by remember { mutableStateOf(false) }
+    var mealGap by remember { mutableStateOf<com.sukoon.app.insulin.MealGap?>(null) }
+    var deleting by remember { mutableStateOf<Pair<EventEntity, EventEntity>?>(null) }
+    var confirmDelete by remember { mutableStateOf<Pair<EventEntity, Boolean>?>(null) }
+    val app = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container
     var editor by remember { mutableStateOf<EditorRequest?>(null) }
     var detail by remember { mutableStateOf<EventEntity?>(null) }
-    var cascade by remember { mutableStateOf(true) }
-    LaunchedEffect(Unit) {
-        delay(1_500)
-        cascade = false
-    }
+    // Rows cascade in when a day first shows (and again on another day), sliding in from the arrow's side.
+    val cascade = Motion.firstShow(state.day)
+    val dayKey = state.day ?: java.time.LocalDate.now()
+    val lastDay = remember { arrayOf(dayKey) }
+    val dayShift = remember(dayKey) { dayKey.compareTo(lastDay[0]).coerceIn(-1, 1).also { lastDay[0] = dayKey } }
+    // An entry added while the day is open: it rises in and glows softly once (ids only grow).
+    var newestSeen by remember(state.day) { androidx.compose.runtime.mutableLongStateOf(-1L) }
+    LaunchedEffect(state.events) { if (newestSeen < 0 && state.events.isNotEmpty()) newestSeen = state.events.maxOf { it.id } }
     LaunchedEffect(openNewEntry) {
         if (openNewEntry != null) {
             val container = (context.applicationContext as com.sukoon.app.SukoonApp).container
@@ -223,7 +233,12 @@ fun LogbookScreen(
                 LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(bottom = 96.dp)) {
                     itemsIndexed(groups, key = { _, g -> g.main.id }) { i, group ->
                         // Only when the list first appears: rows scrolled back into view just show.
-                        Column(if (cascade) Modifier.staggerIn(i) else Modifier) {
+                        val added = newestSeen >= 0 && group.main.id > newestSeen
+                        Column(
+                            Modifier
+                                .then(if (Motion.reduced()) Modifier else Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null, placementSpec = tween(Motion.CALM, easing = Motion.Standard)))
+                                .then(if (cascade) Modifier.staggerIn(i, key = state.day, fromX = dayShift) else if (added) Modifier.staggerIn(0).arrivalGlow(Sage.copy(alpha = 0.14f)) else Modifier),
+                        ) {
                             val main = group.main
                             val mealAt = Instant.ofEpochMilli(main.timestampMillis)
                             EntryRow(
@@ -291,7 +306,7 @@ fun LogbookScreen(
             showKetones = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.modes.active.value.sick || (state.glucoseNow?.glucoseMgDl ?: 0) > 250,
             repeats = remember(state.events) { recentRepeats(state.events) },
             usual = remember(state.events) { usualMeals(state.events, java.time.Instant.now()) },
-            onVoice = { adding = false; voicing = true },
+            onVoice = if (hasAiKey) ({ adding = false; voicing = true }) else null,
             glucoseNow = state.glucoseNow,
             insulinOnBoard = state.insulinOnBoard,
             mealsFromApps = state.events.any { it.source != null },
@@ -300,6 +315,63 @@ fun LogbookScreen(
                 editor = EditorRequest(type, prefill = repeat)
             },
             onDismiss = { adding = false },
+        )
+    }
+    mealGap?.let { gap ->
+        MealChangedSheet(
+            gap = gap,
+            target = doseSettings().target,
+            onEatNow = { grams ->
+                mealGap = null
+                app.modes.startMealWatch(gap.by)
+                editor = EditorRequest(LogEventType.CARB, prefill = EventEntity(timestampMillis = System.currentTimeMillis(), type = LogEventType.CARB.name, value = grams.toDouble()))
+            },
+            onLater = {
+                mealGap = null
+                app.modes.startMealWatch(gap.by)
+                announce(context.getString(R.string.meal_changed_later_toast))
+            },
+            onWatch = {
+                mealGap = null
+                app.modes.startMealWatch(gap.by)
+                announce(context.getString(R.string.meal_changed_watching))
+            },
+            onTopUp = { units ->
+                mealGap = null
+                editor = EditorRequest(LogEventType.INSULIN, prefill = EventEntity(timestampMillis = System.currentTimeMillis(), type = LogEventType.INSULIN.name, value = units))
+            },
+            // Heading low: the watch stays on even if the sheet is just closed.
+            onDismiss = { if (gap.ateLess && (gap.ahead ?: 0) < 70) app.modes.startMealWatch(gap.by); mealGap = null },
+        )
+    }
+    confirmDelete?.let { (event, hide) ->
+        ConfirmDeleteSheet(
+            event, hide,
+            onDelete = {
+                confirmDelete = null
+                onDeleteEvent(event)
+                announce(context.getString(if (hide) R.string.toast_meal_hidden else R.string.toast_entry_deleted))
+            },
+            onDismiss = { confirmDelete = null },
+        )
+    }
+    deleting?.let { (meal, dose) ->
+        TookInsulinDialog(
+            units = dose.value ?: 0.0,
+            onKeep = {
+                deleting = null
+                onDeleteEvent(meal)
+                announce(context.getString(R.string.toast_entry_deleted))
+                // The insulin stays: with nothing eaten, all of it is extra.
+                mealGap = assessMealEdit(meal.value ?: 0.0, 0.0, meal, state, doseSettings(), app.settings.insulinAction)
+            },
+            onDeleteBoth = {
+                deleting = null
+                onDeleteEvent(meal)
+                onDeleteEvent(dose)
+                announce(context.getString(R.string.toast_entry_deleted))
+            },
+            onDismiss = { deleting = null },
         )
     }
     if (voicing) {
@@ -326,7 +398,7 @@ fun LogbookScreen(
             siteHistory = state.siteHistory,
             doseSettings = remember(request) { doseSettings() },
             lowAt = state.lowAt,
-            onEstimateCarbs = onEstimateCarbs,
+            onEstimateCarbs = onEstimateCarbs.takeIf { hasAiKey },
             onSave = { draft ->
                 editor = null
                 val saving = onSaveEntry(draft)
@@ -337,12 +409,18 @@ fun LogbookScreen(
                 onUpdateEvent(event)
                 photos?.let { onEntryPhoto(event.id, it) }
                 announce(context.getString(R.string.toast_entry_updated))
+                // A meal changed after its insulin: what that means now (meal-edit-logic.md).
+                val before = existing
+                if (before != null && event.logType == LogEventType.CARB && !event.treatment && before.value != event.value) {
+                    mealGap = assessMealEdit(before.value ?: 0.0, event.value ?: 0.0, event, state, doseSettings(), app.settings.insulinAction)
+                }
             },
             onDelete = existing?.let { event ->
                 {
                     editor = null
-                    onDeleteEvent(event)
-                    announce(context.getString(R.string.toast_entry_deleted))
+                    val dose = if (event.logType == LogEventType.CARB) linkedDose(event, state.events) else null
+                    // Did you take the insulin? (its entry stays unless you say no); anything else is confirmed first.
+                    if (dose != null) deleting = event to dose else confirmDelete = event to false
                 }
             },
             onDismiss = { editor = null },
@@ -375,8 +453,7 @@ fun LogbookScreen(
             },
             onHide = {
                 detail = null
-                onDeleteEvent(meal)
-                announce(context.getString(R.string.toast_meal_hidden))
+                confirmDelete = meal to true
             },
             onEdit = {
                 detail = null
@@ -535,21 +612,22 @@ private fun LogbookEmptyState(onLogFirst: () -> Unit, modifier: Modifier = Modif
     }
 }
 
-/** "142 ↗", tinted like Home's pills: low red, high amber, in range neutral. */
+/** "142" and Sukoon's arrow (then [suffix], e.g. "now"), tinted like Home's pills: low red, high amber, in range neutral. */
 @Composable
-internal fun GlucosePill(reading: GlucoseReading, label: String = String.format(Locale.getDefault(), "%d %s", reading.glucoseMgDl, reading.trend.arrow)) {
+internal fun GlucosePill(reading: GlucoseReading, suffix: String? = null) {
     val (background, text) = when {
         reading.glucoseMgDl < 70 -> PillLowBg to PillLowText
         reading.glucoseMgDl > 180 -> PillHighBg to PillHighText
         else -> PillNeutralBg to MaterialTheme.colorScheme.onBackground
     }
-    Text(
-        label,
-        modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(background).padding(horizontal = 8.dp, vertical = 4.dp),
-        fontSize = 12.sp,
-        fontWeight = FontWeight.SemiBold,
-        color = text,
-    )
+    Row(
+        Modifier.clip(RoundedCornerShape(8.dp)).background(background).padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        com.sukoon.app.ui.components.NumberWithTrend(String.format(Locale.getDefault(), "%d", reading.glucoseMgDl), reading.trend, text, 12.sp, fontWeight = FontWeight.SemiBold)
+        suffix?.let { Text(it, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = text) }
+    }
 }
 
 /** A small rounded preview, decoded off the main thread at a fraction of full size. */
@@ -623,3 +701,22 @@ private fun LogbookEmptyPreview() {
         LogbookScreen(state = LogbookUiState(), onSaveEntry = { CompletableDeferred(emptyList()) }, onUndoEntry = {}, onUpdateEvent = {}, onDeleteEvent = {})
     }
 }
+
+/** The rapid insulin taken for [meal]: linked to it, or within 30 minutes of it. */
+internal fun linkedDose(meal: EventEntity, events: List<EventEntity>): EventEntity? =
+    events.filter { it.logType == LogEventType.INSULIN && (it.value ?: 0.0) > 0 && (it.mealId == meal.id || (it.mealId == null && kotlin.math.abs(it.timestampMillis - meal.timestampMillis) <= 30 * 60_000L)) }
+        .minByOrNull { kotlin.math.abs(it.timestampMillis - meal.timestampMillis) }
+
+/** What an edit from [planned] to [eaten] grams means for [meal]'s insulin now; null when it doesn't matter. */
+internal fun assessMealEdit(planned: Double, eaten: Double, meal: EventEntity, state: LogbookUiState, dose: com.sukoon.app.insulin.DoseSettings, action: com.sukoon.app.insulin.InsulinAction): com.sukoon.app.insulin.MealGap? {
+    val insulin = linkedDose(meal, state.events) ?: return null
+    val mealAt = java.time.Instant.ofEpochMilli(meal.timestampMillis)
+    val slot = com.sukoon.app.insights.InsightEngine.slotFor(mealAt.atZone(java.time.ZoneId.systemDefault()).hour)
+    return com.sukoon.app.insulin.MealChange.assess(
+        planned = planned, eaten = eaten, dose = insulin.value ?: 0.0, doseAt = java.time.Instant.ofEpochMilli(insulin.timestampMillis),
+        mealAt = mealAt, now = java.time.Instant.now(), ratio = dose.carbRatio[slot], factor = dose.correctionFactor,
+        glucose = state.glucoseNow?.glucoseMgDl, action = action, step = dose.step,
+        lowSince2h = state.lowAt != null,
+    )
+}
+

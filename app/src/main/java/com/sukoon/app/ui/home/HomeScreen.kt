@@ -85,10 +85,22 @@ import com.sukoon.app.ui.theme.Motion
 import com.sukoon.app.ui.components.NoticeBanner
 import com.sukoon.app.ui.components.drawSensor
 import com.sukoon.app.ui.theme.Motion.pressScale
+import com.sukoon.app.ui.theme.Motion.settleSize
+import com.sukoon.app.ui.theme.Motion.staggerIn
 import kotlin.math.roundToInt
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInParent
+import kotlinx.coroutines.launch
 import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.data.source.SourceKind
 import com.sukoon.app.ui.components.durationText
@@ -128,7 +140,6 @@ fun HomeScreen(
     onAlertEmergencyContact: () -> Unit = {},
     onTroubleshoot: () -> Unit = {},
     onPairSensor: () -> Unit = {},
-    onEnterCodeManually: () -> Unit = {},
     onAddFood: () -> Unit = {},
     onAddInsulin: () -> Unit = {},
     /** Opens Today (pause alarms, workout, fasting, sick day). */
@@ -152,10 +163,16 @@ fun HomeScreen(
     /** Beta: a meal in the last hour with no insulin ([com.sukoon.app.insulin.Dose.mealDose]) and its dose. */
     mealDose: Pair<EventEntity, DoseAdvice.Suggestion>? = null,
     onMealDose: (EventEntity) -> Unit = {},
+    /** What shows on Now and in what order (You › Appearance › Now). */
+    layout: NowLayout = NowLayout(),
+    /** Made-up readings (You › Sensor › Demo): Now says so instead of LIVE. */
+    demo: Boolean = false,
+    /** Dose suggestions (beta) are on: Now can say why there's no correction. */
+    dosing: Boolean = false,
 ) {
-    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss, mealDose, onMealDose, onModes, status)) {
+    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss, mealDose, onMealDose, onModes, status, layout, demo, dosing), LocalEntrance provides Motion.firstShow()) {
         PullToSync(onSync, modifier) {
-            HomeContent(state, brief, Modifier.fillMaxSize(), onTreated, onSnooze, onAlertEmergencyContact, onTroubleshoot, onPairSensor, onEnterCodeManually)
+            HomeContent(state, brief, Modifier.fillMaxSize(), onTreated, onSnooze, onAlertEmergencyContact, onTroubleshoot, onPairSensor)
         }
     }
 }
@@ -176,8 +193,14 @@ private class Shortcuts(
     val onMealDose: (EventEntity) -> Unit = {},
     val onModes: () -> Unit = {},
     val status: List<StatusChip> = emptyList(),
+    val layout: NowLayout = NowLayout(),
+    val demo: Boolean = false,
+    val dosing: Boolean = false,
 )
 private val LocalShortcuts = staticCompositionLocalOf { Shortcuts({}, {}) }
+
+/** Now's first appearance (the cards under the number cascade in); held here so crossing 180 doesn't replay it. */
+private val LocalEntrance = staticCompositionLocalOf { false }
 
 @Composable
 private fun HomeContent(
@@ -189,7 +212,6 @@ private fun HomeContent(
     onAlertEmergencyContact: () -> Unit,
     onTroubleshoot: () -> Unit,
     onPairSensor: () -> Unit,
-    onEnterCodeManually: () -> Unit,
 ) {
     Column(
         modifier = modifier
@@ -203,8 +225,8 @@ private fun HomeContent(
             is HomeUiState.Urgent -> UrgentContent(state, brief, onTreated, onAlertEmergencyContact)
             is HomeUiState.WarmingUp -> WarmingUpContent(state)
             is HomeUiState.Stale -> StaleContent(state, onTroubleshoot)
-            HomeUiState.NoSensor -> NoSensorContent(onPairSensor, onEnterCodeManually)
-            HomeUiState.SensorEnded -> NoSensorContent(onPairSensor, onEnterCodeManually, ended = true)
+            HomeUiState.NoSensor -> NoSensorContent(onPairSensor)
+            HomeUiState.SensorEnded -> NoSensorContent(onPairSensor, ended = true)
         }
     }
 }
@@ -231,18 +253,25 @@ private fun PulsingDot(color: Color, pulsing: Boolean, size: androidx.compose.ui
 }
 
 @Composable
-private fun HomeStatusBar(statusLabel: String, dotColor: Color, pulsing: Boolean, labelColor: Color = CaptionMuted) {
+private fun HomeStatusBar(statusLabel: String, dotColor: Color, pulsing: Boolean, labelColor: Color = CaptionMuted, top: androidx.compose.ui.unit.Dp = 16.dp) {
+    if (LocalShortcuts.current.demo) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(top = top), horizontalArrangement = Arrangement.End) {
+            Text(stringResource(R.string.home_status_demo), fontWeight = FontWeight.SemiBold, fontSize = 11.sp, letterSpacing = 0.5.sp, color = PillLowText,
+                modifier = Modifier.clip(RoundedCornerShape(50)).background(PillLowBg).padding(horizontal = 10.dp, vertical = 3.dp))
+        }
+        return
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
-            .padding(top = 16.dp),
+            .padding(top = top),
         horizontalArrangement = Arrangement.End, // the design mock's fake "9:41" clock is gone; the system bar shows real time
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             PulsingDot(color = dotColor, pulsing = pulsing)
-            Text(text = statusLabel, fontWeight = FontWeight.SemiBold, fontSize = 9.sp, letterSpacing = 1.sp, color = labelColor)
+            Text(text = statusLabel, fontWeight = FontWeight.SemiBold, fontSize = 11.sp, letterSpacing = 1.sp, color = labelColor)
         }
     }
 }
@@ -278,15 +307,17 @@ private fun HomeAppBarRow(dimmed: Boolean) {
             )
         }
         val shortcuts = LocalShortcuts.current
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (shortcuts.insulinOnBoard >= 0.05) {
-                Text(
-                    stringResource(R.string.home_iob, String.format(Locale.getDefault(), "%.1f", shortcuts.insulinOnBoard)),
-                    fontSize = 12.sp,
-                    color = CaptionMuted,
-                )
+        Row(horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.CenterVertically) {
+            // The sliders icon alone didn't say "pause alarms, workout, fasting": it has its word.
+            Row(
+                Modifier.padding(end = 4.dp).clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
+                    .clickable(onClick = shortcuts.onModes).padding(start = 10.dp, end = 12.dp).height(40.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+            ) {
+                Icon(painterResource(R.drawable.ic_modes), contentDescription = null, tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(20.dp))
+                Text(stringResource(R.string.today_title), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
             }
-            ShortcutIcon(R.drawable.ic_modes, stringResource(R.string.today_title), shortcuts.onModes)
             ShortcutIcon(R.drawable.ic_food, stringResource(R.string.home_add_food), shortcuts.onFood)
             ShortcutIcon(R.drawable.ic_insulin, stringResource(R.string.home_add_insulin), shortcuts.onInsulin)
         }
@@ -295,15 +326,11 @@ private fun HomeAppBarRow(dimmed: Boolean) {
 
 @Composable
 private fun ShortcutIcon(iconRes: Int, description: String, onClick: () -> Unit) {
-    Box(
-        Modifier
-            .size(40.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(painterResource(iconRes), contentDescription = description, tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(22.dp))
+    // A 40 dp circle in a 48 dp touch target.
+    Box(Modifier.size(48.dp).clip(CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)), contentAlignment = Alignment.Center) {
+            Icon(painterResource(iconRes), contentDescription = description, tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(22.dp))
+        }
     }
 }
 
@@ -324,13 +351,18 @@ private fun StatusPill(label: String, dotColor: Color, backgroundColor: Color, t
 
 @Composable
 private fun HeroNumber(value: String, trend: TrendDirection?, color: Color, fontSize: androidx.compose.ui.unit.TextUnit = 100.sp) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(text = value, fontFamily = HeadlineSerifFontFamily, fontWeight = FontWeight.Light, fontSize = fontSize, color = color)
-        if (trend != null) com.sukoon.app.ui.components.TrendArrow(trend, color, size = 34.dp, modifier = Modifier.padding(top = 18.dp), label = trendArrow(trend))
+    // Left to right in every language: the arrow is a trend on a timeline, so it stays right of the number.
+    CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(text = value, fontFamily = HeadlineSerifFontFamily, fontWeight = FontWeight.Light, fontSize = fontSize, color = color)
+            if (trend != null) com.sukoon.app.ui.components.TrendArrow(trend, color, size = 34.dp, modifier = Modifier.padding(top = 18.dp), label = trendArrow(trend))
+        }
     }
 }
 
 private fun trendArrow(trend: TrendDirection): String = trend.arrow
+
+private fun digits(n: Int) = String.format(Locale.getDefault(), "%d", n)
 
 /**
  * Count-up (motion spec): a new reading counts from the last one shown over 560 ms on the calm
@@ -401,28 +433,120 @@ private fun ActionButton(label: String, filled: Boolean, onClick: () -> Unit) {
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-private fun ColumnScope.InRangeContent(state: HomeUiState.InRange, brief: Brief?) {
-    Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-        HomeStatusBar(stringResource(R.string.home_status_live), Sage, pulsing = true)
-        HomeAppBar()
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 20.dp)) {
-            StatusPill(stringResource(R.string.home_pill_in_range), com.sukoon.app.ui.theme.InRange, com.sukoon.app.ui.theme.InRangeMist, com.sukoon.app.ui.theme.InRangeDeep)
-            Spacer(Modifier.height(8.dp))
-            HeroNumber(countUp(state.glucoseMgDl).toString(), state.trend, MaterialTheme.colorScheme.onBackground)
-            Text(
-                text = "${stringResource(R.string.home_unit_mgdl)} · ${trendLabel(state.trend)} · ${stringResource(R.string.home_updated_now)}",
-                fontSize = 12.sp,
-                color = CaptionMuted,
-            )
+private fun ColumnScope.InRangeContent(state: HomeUiState.InRange, brief: Brief?) = CalmContent(
+    pill = { StatusPill(stringResource(R.string.home_pill_in_range), com.sukoon.app.ui.theme.InRange, com.sukoon.app.ui.theme.InRangeMist, com.sukoon.app.ui.theme.InRangeDeep) },
+    mgDl = state.glucoseMgDl, trend = state.trend, color = MaterialTheme.colorScheme.onBackground, dot = Sage,
+    readings = state.recentReadings, brief = brief, updated = true,
+)
+
+/**
+ * In range and high (design A, "Calm: one number, one next step"): chips, the number, then what
+ * the user keeps under it (Make Now yours): next step, the 3-hour graph, today's numbers, dose cards.
+ * Arranged in You › Appearance › Now.
+ */
+@Composable
+private fun ColumnScope.CalmContent(
+    pill: @Composable () -> Unit,
+    mgDl: Int,
+    trend: TrendDirection,
+    color: Color,
+    dot: Color,
+    readings: List<GlucoseReading>,
+    brief: Brief?,
+    updated: Boolean,
+) {
+    val s = LocalShortcuts.current
+    val scroll = rememberScrollState()
+    val scope = rememberCoroutineScope()
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    var viewport by remember { mutableIntStateOf(0) }
+    var doseTop by remember { mutableIntStateOf(-1) }
+    val hasDose = s.layout.shows(NowPart.DOSE) && (s.mealDose != null || s.correction != null || s.nudge != null)
+    Box(Modifier.weight(1f).onSizeChanged { viewport = it.height }) {
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(scroll)) {
+        HomeAppBarRow(dimmed = false)
+        HomeStatusBar(stringResource(R.string.home_status_live), dot, pulsing = true, top = 2.dp)
+        // Alarms paused, a missed long-acting, supplies, a meal watch: these show even with chips off.
+        val iob = if (s.insulinOnBoard >= 0.05) StatusChip(stringResource(R.string.home_iob, String.format(Locale.getDefault(), "%.1f", s.insulinOnBoard)), onClick = null) else null
+        // Chips fade in as their row opens and out as it closes; one more or one fewer settles the row's size.
+        val chips = listOfNotNull(iob) + if (s.layout.shows(NowPart.CHIPS)) s.status else s.status.filter { it.attention }
+        val lastChips = remember { arrayOf(chips) }
+        val shownChips = if (chips.isNotEmpty()) chips.also { lastChips[0] = it } else lastChips[0]
+        androidx.compose.animation.AnimatedVisibility(chips.isNotEmpty(), enter = Motion.appear(), exit = Motion.vanish()) {
+            StatusChips(shownChips, Modifier.padding(horizontal = 16.dp).settleSize())
         }
-        Spacer(Modifier.height(22.dp))
-        RecentChart(state.recentReadings)
+        NoticeBanner(Modifier.padding(horizontal = 16.dp).padding(top = 12.dp))
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
+        ) {
+            pill()
+            Spacer(Modifier.height(8.dp))
+            HeroNumber(digits(countUp(mgDl)), trend, color)
+            Motion.Swap(
+                listOfNotNull(
+                    stringResource(R.string.home_unit_mgdl),
+                    trendLabel(trend),
+                    if (updated) stringResource(R.string.home_updated_now) else null,
+                ).joinToString(" · "),
+            ) { Text(text = it, fontSize = 12.sp, color = CaptionMuted) }
+        }
+        Spacer(Modifier.height(18.dp))
+        // List & card stagger on Now's first appearance (not on a low or urgent screen: those show at once).
+        val entering = LocalEntrance.current
+        s.layout.order.filter(s.layout::shows).forEachIndexed { i, part ->
+            val enter = if (entering) Modifier.staggerIn(i) else Modifier
+            when (part) {
+                NowPart.NEXT -> Box(Modifier.fillMaxWidth().then(enter).settleSize()) { NextCard(brief) }
+                NowPart.GRAPH -> Box(Modifier.fillMaxWidth().then(enter)) { Column { RecentChart(readings); Spacer(Modifier.height(16.dp)) } }
+                NowPart.STATS -> Box(Modifier.fillMaxWidth().then(enter)) { Column { StatsRow(); Spacer(Modifier.height(12.dp)) } }
+                NowPart.DOSE -> Box(Modifier.onGloballyPositioned { doseTop = it.positionInParent().y.toInt() }.then(enter).settleSize()) { DoseCards() }
+                else -> Unit
+            }
+        }
         Spacer(Modifier.height(16.dp))
-        StatsRow()
-        Spacer(Modifier.height(12.dp))
-        BriefCards(brief)
+    }
+    // More under the fold gets a "more below" arrow (like a chat's jump-to-latest); a hidden beta card is named.
+    val doseHidden = hasDose && doseTop >= 0 && viewport > 0 && doseTop > scroll.value + viewport - with(density) { 56.dp.roundToPx() }
+    androidx.compose.animation.AnimatedVisibility(
+        visible = doseHidden || scroll.canScrollForward,
+        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 14.dp),
+        enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { it / 2 },
+        exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically { it / 2 },
+    ) {
+        MoreBelow(if (doseHidden) stringResource(R.string.home_more_below) else null) {
+            scope.launch { if (doseHidden) scroll.animateScrollTo(doseTop) else scroll.animateScrollTo(scroll.value + viewport * 3 / 4) }
+        }
+    }
     }
 }
+
+/** A chevron floating at the bottom of Now; with [label] ("Beta suggestion below") a pill that says what's there. */
+@Composable
+private fun MoreBelow(label: String?, onClick: () -> Unit) {
+    val more = stringResource(R.string.home_more_content)
+    Row(
+        Modifier
+            .shadow(6.dp, RoundedCornerShape(50))
+            .clip(RoundedCornerShape(50))
+            .background(if (label != null) Sage else MaterialTheme.colorScheme.surface)
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = label ?: more }
+            .padding(start = if (label != null) 14.dp else 13.dp, end = if (label != null) 16.dp else 13.dp)
+            .height(40.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        val ink = if (label != null) Color.White else Sage
+        Canvas(Modifier.size(14.dp)) {
+            val w = 2.dp.toPx()
+            drawLine(ink, Offset(size.width * 0.15f, size.height * 0.35f), Offset(size.width * 0.5f, size.height * 0.7f), w, StrokeCap.Round)
+            drawLine(ink, Offset(size.width * 0.5f, size.height * 0.7f), Offset(size.width * 0.85f, size.height * 0.35f), w, StrokeCap.Round)
+        }
+        if (label != null) Text(label, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 13.5.sp)
+    }
+}
+
 
 // ---------------------------------------------------------------------------------------------
 // Low — screens 5b / 7c
@@ -437,7 +561,7 @@ private fun ColumnScope.LowContent(state: HomeUiState.Low, brief: Brief?, onTrea
             StatusPill(stringResource(R.string.home_pill_low), StateLow, PillLowBg, PillLowText)
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
-            HeroNumber(state.glucoseMgDl.toString(), state.trend, StateLow, fontSize = 104.sp)
+            HeroNumber(digits(state.glucoseMgDl), state.trend, StateLow, fontSize = 104.sp)
             Text(text = "${stringResource(R.string.home_unit_mgdl)} · ${trendLabel(state.trend)}", fontSize = 12.sp, color = CaptionMuted)
         }
         Text(
@@ -481,7 +605,7 @@ private fun ColumnScope.LowContent(state: HomeUiState.Low, brief: Brief?, onTrea
                 ActionButton(stringResource(R.string.home_btn_log_carbs), filled = false, onClick = LocalShortcuts.current.onFood)
             } else {
                 ActionButton(stringResource(R.string.home_btn_treated), filled = true, onClick = treatedWithHaptic(onTreated))
-                ActionButton(stringResource(R.string.home_btn_snooze_15), filled = false, onClick = onSnooze)
+                ActionButton(stringResource(R.string.home_btn_snooze_for, com.sukoon.app.ui.components.durationText(LocalContext.current, ((LocalContext.current.applicationContext as? com.sukoon.app.SukoonApp)?.container?.settings?.alarmSettings?.lowSnoozeMinutes ?: 15).toLong())), filled = false, onClick = onSnooze)
             }
         }
     }
@@ -492,24 +616,11 @@ private fun ColumnScope.LowContent(state: HomeUiState.Low, brief: Brief?, onTrea
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-private fun ColumnScope.HighContent(state: HomeUiState.High, brief: Brief?) {
-    Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-        HomeStatusBar(stringResource(R.string.home_status_live), StateHigh, pulsing = true)
-        HomeAppBar()
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 20.dp)) {
-            StatusPill(stringResource(R.string.home_pill_high), StateHigh, PillHighBg, PillHighText)
-            Spacer(Modifier.height(8.dp))
-            HeroNumber(countUp(state.glucoseMgDl).toString(), state.trend, StateHigh)
-            Text(text = "${stringResource(R.string.home_unit_mgdl)} · ${trendLabel(state.trend)}", fontSize = 12.sp, color = CaptionMuted)
-        }
-        Spacer(Modifier.height(22.dp))
-        RecentChart(state.recentReadings)
-        Spacer(Modifier.height(16.dp))
-        StatsRow()
-        Spacer(Modifier.height(12.dp))
-        BriefCards(brief)
-    }
-}
+private fun ColumnScope.HighContent(state: HomeUiState.High, brief: Brief?) = CalmContent(
+    pill = { StatusPill(stringResource(R.string.home_pill_high), StateHigh, PillHighBg, PillHighText) },
+    mgDl = state.glucoseMgDl, trend = state.trend, color = StateHigh, dot = StateHigh,
+    readings = state.recentReadings, brief = brief, updated = false,
+)
 
 // ---------------------------------------------------------------------------------------------
 // Urgent — screen 8f
@@ -538,7 +649,7 @@ private fun ColumnScope.UrgentContent(state: HomeUiState.Urgent, brief: Brief?, 
             )
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
-            HeroNumber(state.glucoseMgDl.toString(), state.trend, StateLow, fontSize = 104.sp)
+            HeroNumber(digits(state.glucoseMgDl), state.trend, StateLow, fontSize = 104.sp)
             Text(text = "${stringResource(R.string.home_unit_mgdl)} · ${trendLabel(state.trend)}", fontSize = 12.sp, color = CaptionMuted)
         }
         Spacer(Modifier.height(20.dp))
@@ -695,23 +806,60 @@ private fun StatTile(stat: HomeStat, value: Double?, modifier: Modifier) {
             .padding(horizontal = 10.dp, vertical = 9.dp),
     ) {
         Text(statLabel(stat), fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted, maxLines = 1)
-        Text(value?.let { statValue(stat, it) } ?: "—", fontFamily = HeadlineSerifFontFamily, fontSize = 21.sp, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, modifier = Modifier.padding(top = 2.dp))
+        Motion.Swap(value?.let { statValue(stat, it) } ?: "—", Modifier.padding(top = 2.dp), rise = true) {
+            Text(it, fontFamily = HeadlineSerifFontFamily, fontSize = 21.sp, color = MaterialTheme.colorScheme.onBackground, maxLines = 1)
+        }
         Text(statUnit(stat), fontSize = 11.5.sp, color = CaptionMuted, maxLines = 1)
     }
 }
 
-/** Home's message and, under it, the one thing to do now, or that there's nothing to do. */
+/** The message and the one thing to do now, as one card (design A); the low screens word their own. */
 @Composable
-private fun BriefCards(brief: Brief?) {
-    if (brief == null || brief is Brief.Low || brief is Brief.Treated) return // the low screens say it themselves
-    val (title, body) = briefText(brief)
-    val shortcuts = LocalShortcuts.current
-    Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        MessageCard(title, body)
-        shortcuts.mealDose?.let { (meal, dose) -> MealDoseCard(meal, dose) { shortcuts.onMealDose(meal) } }
-        shortcuts.correction?.let { CorrectionCard(it, shortcuts.onInsulin) }
-        shortcuts.nudge?.let { NudgeCard(it, shortcuts.onNudge, shortcuts.onNudgeDismiss) }
-        NextStep(brief.step)
+private fun NextCard(brief: Brief?) {
+    if (brief == null || brief is Brief.Low || brief is Brief.Treated) return
+    val s = LocalShortcuts.current
+    val (title, base) = briefText(brief)
+    val working = (brief as? Brief.VeryHighFor)?.insulin?.takeIf { it > 0 } ?: (brief as? Brief.InsulinWorking)?.units
+    // With insulin working: either the correction card below takes over, or it says why there is none.
+    val body = if (working != null && s.dosing && s.correction == null) base + " " + stringResource(R.string.home_no_correction_yet) else base
+    val step = brief.step?.takeUnless { it == Step.DONT_STACK && s.correction != null }
+    Column(
+        Modifier
+            .padding(horizontal = 20.dp).padding(bottom = 14.dp)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, Sage.copy(alpha = 0.55f), RoundedCornerShape(18.dp))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(stringResource(R.string.home_next_step).uppercase(), fontWeight = FontWeight.SemiBold, fontSize = 11.sp, letterSpacing = 1.sp, color = Sage)
+        Text(title, fontFamily = HeadlineSerifFontFamily, fontSize = 18.sp, lineHeight = 23.sp, color = MaterialTheme.colorScheme.onSurface)
+        Text(body, fontSize = 13.sp, lineHeight = 18.sp, color = CaptionMuted)
+        if (step != null) {
+            Text(stepText(step), fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(top = 6.dp))
+            if (step == Step.LOG_MEAL) {
+                Text(
+                    stringResource(R.string.home_add_food),
+                    fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = Sage,
+                    modifier = Modifier.clip(RoundedCornerShape(50)).clickable(onClick = LocalShortcuts.current.onFood).padding(vertical = 8.dp),
+                )
+            }
+        } else {
+            Text(stringResource(R.string.home_nothing_to_do), fontSize = 12.sp, color = CaptionMuted, modifier = Modifier.padding(top = 4.dp))
+        }
+    }
+}
+
+/** Beta dose cards: a meal with no insulin, a correction, a learned ratio. */
+@Composable
+private fun DoseCards() {
+    val s = LocalShortcuts.current
+    if (s.mealDose == null && s.correction == null && s.nudge == null) return
+    Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        s.mealDose?.let { (meal, dose) -> MealDoseCard(meal, dose) { s.onMealDose(meal) } }
+        s.correction?.let { CorrectionCard(it, s.onInsulin) }
+        s.nudge?.let { NudgeCard(it, s.onNudge, s.onNudgeDismiss) }
     }
 }
 
@@ -803,47 +951,11 @@ private fun CorrectionCard(c: DoseAdvice.Suggestion, onLog: () -> Unit) {
             )
         }
         Text(
-            stringResource(R.string.home_correction_body, c.glucose ?: 0, c.target, String.format(Locale.getDefault(), "%.0f", c.factor ?: 0.0)),
+            stringResource(R.string.home_correction_body, c.glucose ?: 0, c.target, String.format(Locale.getDefault(), "%.0f", c.factor ?: 0.0)) +
+                if (c.onBoardUsed >= 0.05) " " + stringResource(R.string.home_correction_less_working, String.format(Locale.getDefault(), "%.1f", c.onBoardUsed)) else "",
             fontSize = 13.sp,
             color = CaptionMuted,
         )
-    }
-}
-
-@Composable
-private fun NextStep(step: Step?) {
-    if (step == null) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Box(Modifier.size(7.dp).clip(CircleShape).background(Sage))
-            Text(stringResource(R.string.home_nothing_to_do), fontSize = 12.sp, color = CaptionMuted)
-        }
-        return
-    }
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, Sage.copy(alpha = 0.55f), RoundedCornerShape(16.dp))
-            .padding(16.dp),
-    ) {
-        Text(stringResource(R.string.home_next_step).uppercase(), fontWeight = FontWeight.SemiBold, fontSize = 11.sp, letterSpacing = 1.sp, color = Sage)
-        Spacer(Modifier.height(6.dp))
-        Text(stepText(step), fontSize = 13.5.sp, lineHeight = 19.sp, color = MaterialTheme.colorScheme.onSurface)
-        if (step == Step.LOG_MEAL) {
-            Spacer(Modifier.height(10.dp))
-            Text(
-                stringResource(R.string.home_add_food),
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 13.sp,
-                color = Sage,
-                modifier = Modifier.clip(RoundedCornerShape(50)).clickable(onClick = LocalShortcuts.current.onFood).padding(vertical = 4.dp),
-            )
-        }
     }
 }
 
@@ -870,48 +982,51 @@ private fun stepText(step: Step): String = stringResource(
     },
 )
 
-/** Title and body for [brief]. */
 @Composable
-private fun briefText(brief: Brief): Pair<String, String> {
-    val context = LocalContext.current
+private fun briefText(brief: Brief): Pair<String, String> = briefLines(LocalContext.current, brief)
+
+/** Title and body for [brief] (Now's message card, and the Now widget). */
+internal fun briefLines(context: android.content.Context, brief: Brief): Pair<String, String> {
     fun units(u: Double) = String.format(Locale.getDefault(), "%.1f", u)
     return when (brief) {
-        is Brief.HeadingLow -> stringResource(R.string.home_brief_heading_low_title) to listOfNotNull(
-            pluralStringResource(R.plurals.home_brief_heading_low_body, brief.minutes.toInt(), brief.minutes),
-            if (brief.insulin > 0) stringResource(R.string.home_insulin_working, units(brief.insulin)) else null,
+        is Brief.HeadingLow -> context.getString(R.string.home_brief_heading_low_title) to listOfNotNull(
+            context.resources.getQuantityString(R.plurals.home_brief_heading_low_body, brief.minutes.toInt(), brief.minutes),
+            if (brief.insulin > 0) context.getString(R.string.home_insulin_working, units(brief.insulin)) else null,
         ).joinToString(" ")
-        is Brief.VeryHighFor -> stringResource(R.string.home_brief_very_high_title) to
-            stringResource(R.string.home_brief_very_high_body, durationText(context, brief.minutes))
-        is Brief.Rebound -> stringResource(R.string.home_brief_rebound_title) to stringResource(R.string.home_brief_rebound_body, HM.format(brief.lowAt))
-        is Brief.InsulinWorking -> stringResource(R.string.home_brief_insulin_title) to stringResource(R.string.home_insulin_working, units(brief.units))
-        is Brief.HighFor -> stringResource(R.string.home_brief_high_title) to
-            if (brief.minutes < 5) stringResource(R.string.home_brief_high_just_now) else stringResource(R.string.home_brief_high_body, durationText(context, brief.minutes))
-        is Brief.AfterMeal -> stringResource(R.string.home_brief_meal_title) to (
-            if (brief.grams != null) stringResource(R.string.home_brief_meal_body_grams, brief.grams, HM.format(brief.at))
-            else stringResource(R.string.home_brief_meal_body, HM.format(brief.at))
+        is Brief.VeryHighFor -> context.getString(R.string.home_brief_very_high_title) to listOfNotNull(
+            context.getString(R.string.home_brief_very_high_body, durationText(context, brief.minutes)),
+            if (brief.insulin > 0) context.getString(R.string.home_insulin_working, units(brief.insulin)) else null,
+        ).joinToString(" ")
+        is Brief.Rebound -> context.getString(R.string.home_brief_rebound_title) to context.getString(R.string.home_brief_rebound_body, HM.format(brief.lowAt))
+        is Brief.InsulinWorking -> context.getString(R.string.home_brief_insulin_title) to context.getString(R.string.home_insulin_working, units(brief.units))
+        is Brief.HighFor -> context.getString(R.string.home_brief_high_title) to
+            if (brief.minutes < 5) context.getString(R.string.home_brief_high_just_now) else context.getString(R.string.home_brief_high_body, durationText(context, brief.minutes))
+        is Brief.AfterMeal -> context.getString(R.string.home_brief_meal_title) to (
+            if (brief.grams != null) context.getString(R.string.home_brief_meal_body_grams, brief.grams, HM.format(brief.at))
+            else context.getString(R.string.home_brief_meal_body, HM.format(brief.at))
             )
-        is Brief.BackFromLow -> stringResource(R.string.home_brief_back_title) to stringResource(R.string.home_brief_back_body, HM.format(brief.lowAt))
-        Brief.DawnRise -> stringResource(R.string.home_brief_dawn_title) to stringResource(R.string.home_brief_dawn_body)
-        Brief.RisingNoMeal -> stringResource(R.string.home_brief_rising_title) to stringResource(R.string.home_brief_rising_body)
-        is Brief.Bedtime -> stringResource(R.string.home_brief_bedtime_title) to
-            stringResource(if (brief.insulin) R.string.home_brief_bedtime_insulin else R.string.home_brief_bedtime_falling, brief.mgDl)
-        is Brief.ActiveToday -> stringResource(R.string.home_brief_active_title) to stringResource(R.string.home_brief_active_body)
-        Brief.NewSensor -> stringResource(R.string.home_brief_new_sensor_title) to stringResource(R.string.home_brief_new_sensor_body)
-        Brief.QuietNight -> stringResource(R.string.home_brief_quiet_night_title) to stringResource(R.string.home_brief_quiet_night_body)
-        Brief.GoodNight -> stringResource(R.string.home_brief_good_night_title) to stringResource(R.string.home_brief_good_night_body)
-        is Brief.InRangeFor -> stringResource(R.string.home_brief_streak_title) to stringResource(R.string.home_brief_streak_body, durationText(context, brief.minutes))
-        is Brief.GoodDay -> stringResource(R.string.home_brief_good_day_title) to stringResource(R.string.home_brief_good_day_body, brief.percent)
-        is Brief.Steady -> STEADY[brief.variant % STEADY.size].let { (title, body) -> stringResource(title) to stringResource(body) }
-        Brief.BreakFastHigh -> stringResource(R.string.home_brief_break_fast_high_title) to stringResource(R.string.home_brief_break_fast_high_body)
-        is Brief.FastCheck -> stringResource(R.string.home_brief_fast_check_title, brief.mgDl) to stringResource(R.string.home_brief_fast_check_body)
-        is Brief.Ketones -> stringResource(R.string.home_brief_ketones_title, String.format(Locale.getDefault(), "%.1f", brief.mmol)) to stringResource(
+        is Brief.BackFromLow -> context.getString(R.string.home_brief_back_title) to context.getString(R.string.home_brief_back_body, HM.format(brief.lowAt))
+        Brief.DawnRise -> context.getString(R.string.home_brief_dawn_title) to context.getString(R.string.home_brief_dawn_body)
+        Brief.RisingNoMeal -> context.getString(R.string.home_brief_rising_title) to context.getString(R.string.home_brief_rising_body)
+        is Brief.Bedtime -> context.getString(R.string.home_brief_bedtime_title) to
+            context.getString(if (brief.insulin) R.string.home_brief_bedtime_insulin else R.string.home_brief_bedtime_falling, brief.mgDl)
+        is Brief.ActiveToday -> context.getString(R.string.home_brief_active_title) to context.getString(R.string.home_brief_active_body)
+        Brief.NewSensor -> context.getString(R.string.home_brief_new_sensor_title) to context.getString(R.string.home_brief_new_sensor_body)
+        Brief.QuietNight -> context.getString(R.string.home_brief_quiet_night_title) to context.getString(R.string.home_brief_quiet_night_body)
+        Brief.GoodNight -> context.getString(R.string.home_brief_good_night_title) to context.getString(R.string.home_brief_good_night_body)
+        is Brief.InRangeFor -> context.getString(R.string.home_brief_streak_title) to context.getString(R.string.home_brief_streak_body, durationText(context, brief.minutes))
+        is Brief.GoodDay -> context.getString(R.string.home_brief_good_day_title) to context.getString(R.string.home_brief_good_day_body, brief.percent)
+        is Brief.Steady -> STEADY[brief.variant % STEADY.size].let { (title, body) -> context.getString(title) to context.getString(body) }
+        Brief.BreakFastHigh -> context.getString(R.string.home_brief_break_fast_high_title) to context.getString(R.string.home_brief_break_fast_high_body)
+        is Brief.FastCheck -> context.getString(R.string.home_brief_fast_check_title, brief.mgDl) to context.getString(R.string.home_brief_fast_check_body)
+        is Brief.Ketones -> context.getString(R.string.home_brief_ketones_title, String.format(Locale.getDefault(), "%.1f", brief.mmol)) to context.getString(
             when (brief.band) {
                 com.sukoon.app.modes.Modes.KetoneBand.DANGER -> R.string.home_brief_ketones_danger
                 com.sukoon.app.modes.Modes.KetoneBand.HIGH -> R.string.home_brief_ketones_high
                 else -> R.string.home_brief_ketones_raised
             },
         )
-        Brief.KetonesDue -> stringResource(R.string.home_brief_ketones_due_title) to stringResource(R.string.home_brief_ketones_due_body)
+        Brief.KetonesDue -> context.getString(R.string.home_brief_ketones_due_title) to context.getString(R.string.home_brief_ketones_due_body)
         is Brief.Low, is Brief.Treated -> "" to "" // the low screens word these (see BriefCards)
     }
 }
@@ -1078,7 +1193,7 @@ private fun ColumnScope.StaleContent(state: HomeUiState.Stale, onTroubleshoot: (
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-private fun ColumnScope.NoSensorContent(onPairSensor: () -> Unit, onEnterCodeManually: () -> Unit, ended: Boolean = false) {
+private fun ColumnScope.NoSensorContent(onPairSensor: () -> Unit, ended: Boolean = false) {
     Column(modifier = Modifier.weight(1f)) {
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(top = 16.dp), horizontalArrangement = Arrangement.End) {
             Text(
@@ -1121,15 +1236,6 @@ private fun ColumnScope.NoSensorContent(onPairSensor: () -> Unit, onEnterCodeMan
         }
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp)) {
             ActionButton(stringResource(if (ended) R.string.home_btn_new_sensor else R.string.home_btn_pair_sensor), filled = true, onClick = onPairSensor)
-            if (!ended) Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onEnterCodeManually)
-                    .padding(12.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(text = stringResource(R.string.home_btn_enter_code), fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp, color = Sage)
-            }
         }
     }
 }

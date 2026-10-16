@@ -43,10 +43,20 @@ enum class SourceKind {
     LIBRE_LINK_UP,
     /** A Dexcom Share account (G6, G7, ONE through Dexcom's servers). */
     DEXCOM_SHARE,
+    /** Nothing picked yet (a new install's default): no readings, so Now says "No sensor connected". */
+    NONE,
     ;
 
-    /** Real glucose (not demo data): alarms sound for it, it's shared, it goes to other apps. */
-    val real: Boolean get() = this != SIMULATED
+    /** Real glucose (not demo data, not nothing): alarms sound for it, it's shared, it goes to other apps. */
+    val real: Boolean get() = this != SIMULATED && this != NONE
+}
+
+/** The source while none is picked: never connects, never reads. */
+class NoSource : GlucoseSource {
+    override val readings: Flow<GlucoseReading> = kotlinx.coroutines.flow.emptyFlow()
+    override val status: StateFlow<SourceStatus> = kotlinx.coroutines.flow.MutableStateFlow(SourceStatus.Disconnected)
+    override suspend fun connect() = Unit
+    override suspend fun disconnect() = Unit
 }
 
 sealed interface SourceStatus {

@@ -55,6 +55,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        // Ramadan times from where you are: catch up if you've moved city since.
+        (application as SukoonApp).container.modes.followPlace()
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         takeEntry(intent)

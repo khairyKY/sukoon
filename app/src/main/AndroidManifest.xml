@@ -236,6 +236,14 @@
             android:exported="false" />
 
         <receiver
+            android:name=".modes.MealWatchCheck"
+            android:exported="false" />
+
+        <receiver
+            android:name=".platform.UpdateAction"
+            android:exported="false" />
+
+        <receiver
             android:name=".platform.BootReceiver"
             android:exported="false">
             <intent-filter>

@@ -54,6 +54,8 @@ class AskViewModel(
     private val insulinAction: () -> InsulinAction = { InsulinAction() },
     /** Kai's goal (the bulk and its targets), "" when none. */
     private val goal: () -> String = { "" },
+    /** The in-app Guide as text (Ask answers questions about the app from it). */
+    private val guide: () -> String = { "" },
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AskUiState())
@@ -95,6 +97,7 @@ class AskViewModel(
                     dose = doseSettings(),
                     profile = profile(),
                     goal = goal(),
+                    appGuide = guide(),
                 )
                 gemini.stream(system, turns) { soFar -> _uiState.update { it.copy(streaming = soFar) } }
             }
@@ -116,8 +119,8 @@ class AskViewModel(
     companion object {
         private val WINDOW_MILLIS = TimeUnit.DAYS.toMillis(7)
 
-        fun factory(glucoseRepository: GlucoseRepository, logbookRepository: LogbookRepository, gemini: GeminiClient, doseSettings: () -> DoseSettings = { DoseSettings() }, profile: () -> Profile = { Profile() }, goal: () -> String = { "" }, insulinAction: () -> InsulinAction = { InsulinAction() }) = viewModelFactory {
-            initializer { AskViewModel(glucoseRepository, logbookRepository, gemini, doseSettings, profile, insulinAction, goal) }
+        fun factory(glucoseRepository: GlucoseRepository, logbookRepository: LogbookRepository, gemini: GeminiClient, doseSettings: () -> DoseSettings = { DoseSettings() }, profile: () -> Profile = { Profile() }, goal: () -> String = { "" }, guide: () -> String = { "" }, insulinAction: () -> InsulinAction = { InsulinAction() }) = viewModelFactory {
+            initializer { AskViewModel(glucoseRepository, logbookRepository, gemini, doseSettings, profile, insulinAction, goal, guide) }
         }
     }
 }

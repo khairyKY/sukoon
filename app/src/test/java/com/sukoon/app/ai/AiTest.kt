@@ -83,8 +83,9 @@ class AiTest {
     fun `gemini reply skips thought parts and maps errors to readable messages`() {
         val reply = """{"candidates":[{"content":{"parts":[{"text":"thinking…","thought":true},{"text":"You were steady."}]}}]}"""
         assertEquals("You were steady.", GeminiClient.replyText(reply))
-        assertTrue(GeminiClient.errorMessage(400, """{"error":{"message":"API key not valid."}}""").contains("rejected the API key"))
-        assertTrue(GeminiClient.errorMessage(503, "").contains("busy"))
+        assertEquals(com.sukoon.app.R.string.ai_err_bad_key, GeminiClient.errorText(400, """{"error":{"message":"API key not valid."}}"""))
+        assertEquals(com.sukoon.app.R.string.ai_err_busy, GeminiClient.errorText(503, ""))
+        assertEquals(null, GeminiClient.replyText("""{"candidates":[]}"""))
     }
 
     /** Hits the real API with the dev machine's key; skipped anywhere GEMINI_API_KEY isn't set. */
@@ -94,7 +95,7 @@ class AiTest {
         assumeTrue("GEMINI_API_KEY not set", key.isNotBlank())
         // Calls Google: only when asked (SUKOON_LIVE_AI=1), so a busy Gemini never fails a build.
         assumeTrue("set SUKOON_LIVE_AI=1 to run", System.getenv("SUKOON_LIVE_AI") == "1")
-        val client = GeminiClient { key }
+        val client = GeminiClient(null) { key }
 
         val system = AiPrompts.askSystemPrompt(readings, emptyList(), now, zone)
         val answer = client.generate(system, listOf(ChatTurn(true, "What was my highest reading in the last 24 hours? Just the number.")))

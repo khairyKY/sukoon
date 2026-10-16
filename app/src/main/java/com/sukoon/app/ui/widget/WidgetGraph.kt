@@ -25,7 +25,7 @@ object WidgetGraph {
     private const val MAX_PIXELS = 1_200_000
 
     /** Today's time in range as a ring (sage arc over a faint track), for the Ring widget; null = no readings today. */
-    fun ring(percent: Int?, sizePx: Int, dark: Boolean): Bitmap {
+    fun ring(percent: Int?, sizePx: Int, dark: Boolean, white: Boolean = false): Bitmap {
         val s = sizePx.coerceIn(1, 1000)
         val bitmap = Bitmap.createBitmap(s, s, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
@@ -36,8 +36,8 @@ object WidgetGraph {
             strokeWidth = stroke
             strokeCap = Paint.Cap.ROUND
         }
-        paint.color = (if (dark) com.sukoon.app.ui.theme.InRangeLight else com.sukoon.app.ui.theme.InRange).toArgb()
-        paint.alpha = if (dark) 50 else 40
+        paint.color = if (white) android.graphics.Color.WHITE else (if (dark) com.sukoon.app.ui.theme.InRangeLight else com.sukoon.app.ui.theme.InRange).toArgb()
+        paint.alpha = if (white) 60 else if (dark) 50 else 40
         canvas.drawArc(box, 0f, 360f, false, paint)
         if (percent != null && percent > 0) {
             paint.alpha = 255

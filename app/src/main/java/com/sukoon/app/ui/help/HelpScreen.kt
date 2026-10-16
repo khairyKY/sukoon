@@ -28,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,6 +56,8 @@ import androidx.compose.ui.window.DialogProperties
 import com.sukoon.app.R
 import com.sukoon.app.SukoonApp
 import com.sukoon.app.ui.settings.rememberMissingSetup
+import com.sukoon.app.platform.SetupItem
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
 import com.sukoon.app.ui.theme.Sage
@@ -79,22 +82,48 @@ fun HelpDialog(onClose: () -> Unit, onLink: (String) -> Unit = {}, startTopic: S
                 BackHandler { openId = null }
                 TopicPage(topic, guide, onBack = { openId = null }, onOpen = { openId = it }, onLink = onLink)
             } else {
-                Hub(guide, startDone(), onClose, onOpen = { openId = it }, onLink = onLink)
+                Hub(guide, rememberStartSteps(), onClose, onOpen = { openId = it }, onLink = onLink)
             }
         }
     }
 }
 
-/** Start here, ticked from the phone: a sensor paired, alarms able to reach you, an emergency contact. */
+/**
+ * Start here, ticked from the phone (the Guide's hub, Now's card, onboarding's last page): real
+ * glucose coming in (any source but demo data), alarms able to reach you, an emergency contact.
+ */
 @Composable
 internal fun startDone(): List<Boolean> {
     val container = (LocalContext.current.applicationContext as SukoonApp).container
-    val missing = rememberMissingSetup()
-    return listOf(container.pairingStore.load()?.started == true, missing.isEmpty(), container.settings.emergency.contacts.isNotEmpty())
+    val source by container.sourceKind.collectAsStateWithLifecycle()
+    val latest by container.glucoseRepository.latestReading.collectAsStateWithLifecycle(initialValue = null)
+    return listOf(source.real && latest?.source?.real == true, alarmsCanReach(rememberMissingSetup()), container.settings.emergency.contacts.isNotEmpty())
+}
+
+/**
+ * Alarms reach you when nothing they can't work without is missing: notifications, an unrestricted
+ * battery, and full-screen alerts where Android asks. Do Not Disturb, the overlay and texts stay in
+ * the checklist; many phones lack or refuse them, and the step shouldn't wait on them.
+ */
+internal fun alarmsCanReach(missing: List<SetupItem>): Boolean = missing.none { it in CORE_SETUP }
+
+private val CORE_SETUP = setOf(SetupItem.NOTIFICATIONS, SetupItem.BATTERY, SetupItem.FULL_SCREEN)
+
+/**
+ * Start here's ticks while it still shows; null for good once all three have ticked or Now's card
+ * got "Got it" (the same flag), so the Guide doesn't keep it pinned after setup.
+ */
+@Composable
+internal fun rememberStartSteps(): List<Boolean>? {
+    val settings = (LocalContext.current.applicationContext as SukoonApp).container.settings
+    val done = startDone()
+    val finished = done.all { it }
+    if (finished && !settings.gettingStartedDismissed) LaunchedEffect(Unit) { settings.gettingStartedDismissed = true }
+    return done.takeUnless { finished || settings.gettingStartedDismissed }
 }
 
 @Composable
-private fun Hub(guide: Guide, done: List<Boolean>, onClose: () -> Unit, onOpen: (String) -> Unit, onLink: (String) -> Unit) {
+private fun Hub(guide: Guide, done: List<Boolean>?, onClose: () -> Unit, onOpen: (String) -> Unit, onLink: (String) -> Unit) {
     var query by rememberSaveable { mutableStateOf("") }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -111,7 +140,7 @@ private fun Hub(guide: Guide, done: List<Boolean>, onClose: () -> Unit, onOpen: 
             TopicList(found, onOpen)
             return@Column
         }
-        if (guide.start.isNotEmpty()) StartHere(guide.start, done, eyebrow = stringResource(R.string.guide_start_here), title = stringResource(R.string.guide_start_title), onStep = onLink)
+        if (guide.start.isNotEmpty() && done != null) StartHere(guide.start, done, eyebrow = stringResource(R.string.guide_start_here), title = stringResource(R.string.guide_start_title), onStep = onLink)
         guide.groups.forEach { group ->
             Eyebrow(group.title)
             TopicList(group.topics, onOpen)

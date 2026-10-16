@@ -40,6 +40,7 @@ Dark-aware tokens read `LocalDarkTheme`, which `SukoonTheme` provides. Material3
 - Durations (ms): INSTANT 90 · QUICK 160 · BASE 240 · CALM 360 · SLOW 560 · DRAW 900 · LOOP 2400.
 - Easing: Standard `(0.4, 0, 0.2, 1)` · Out `(0, 0, 0.2, 1)` · In `(0.4, 0, 1, 1)` · Calm `(0.22, 1, 0.36, 1)` (the signature curve).
 - Slow in, quick out. Loops only for live or urgent states.
-- `staggerIn`: first 8 items rise 14dp and fade, 70 ms apart, on first appearance.
+- `staggerIn`: first 8 items rise 10dp (RISE) and fade, 36 ms (STAGGER) apart, once on first appearance.
 - `pressScale`: dips to 96% while pressed.
 - Reduced motion (system "Remove animations") shows end states; presses fall back to 85% alpha.
+- Never on alarm, low or urgent surfaces. Full spec, every pattern and where it is used: [motion.md](motion.md).

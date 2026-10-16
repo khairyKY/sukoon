@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -72,10 +72,10 @@ fun DexcomSection(dexcom: DexcomShare, sharing: Sharing, watch: FollowerWatch) {
         val signedIn = account
         if (signedIn == null) {
             Text(stringResource(R.string.dexcom_body), fontSize = 12.5.sp, color = CaptionMuted)
-            OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.dexcom_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(username, { username = it }, label = { Text(stringResource(R.string.dexcom_username)) }, singleLine = true,
+            SukoonTextField(name, { name = it }, label = stringResource(R.string.dexcom_name), singleLine = true, modifier = Modifier.fillMaxWidth())
+            SukoonTextField(username, { username = it }, label = stringResource(R.string.dexcom_username), singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(password, { password = it }, label = { Text(stringResource(R.string.llu_password)) }, singleLine = true,
+            SukoonTextField(password, { password = it }, label = stringResource(R.string.llu_password), singleLine = true,
                 visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password), modifier = Modifier.fillMaxWidth())
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(DexcomShare.Region.OUTSIDE_US to R.string.dexcom_region_world, DexcomShare.Region.US to R.string.dexcom_region_us).forEach { (r, label) ->
@@ -131,7 +131,7 @@ fun DexcomSection(dexcom: DexcomShare, sharing: Sharing, watch: FollowerWatch) {
                 TextButton(onClick = {
                     dexcom.signOut()
                     watch.refreshNow()
-                }) { Text(stringResource(R.string.sharing_sign_out), color = StateLow, fontSize = 12.sp) }
+                }) { Text(stringResource(R.string.sharing_sign_out), color = com.sukoon.app.ui.theme.PillLowText, fontSize = 12.sp) }
             }
             person?.let { p ->
                 Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).clickable { viewing = p }.padding(vertical = 4.dp)) {

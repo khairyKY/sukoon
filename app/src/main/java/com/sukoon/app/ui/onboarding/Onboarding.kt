@@ -52,7 +52,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -407,7 +407,7 @@ private fun AccountStep(container: AppContainer, role: UserRole, startWithSignIn
                         }
                     },
                 )
-                problem?.let { Text(it, fontSize = 13.5.sp, color = StateLow) }
+                problem?.let { Text(it, fontSize = 13.5.sp, color = com.sukoon.app.ui.theme.PillLowText) }
                 if (signIn) com.sukoon.app.ui.sharing.ForgotPassword(supabase, email)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 4.dp)) {
                     Icon(painterResource(R.drawable.ic_lock), contentDescription = null, tint = SageDeep, modifier = Modifier.size(18.dp))
@@ -727,7 +727,7 @@ private fun ReadyStep(container: AppContainer, onDone: () -> Unit) {
             Spacer(Modifier.height(24.dp))
             Card {
                 Done(life != null && life !is SensorLife.Ended, stringResource(R.string.ob_done_sensor))
-                Done(true, stringResource(R.string.ob_done_alarms))
+                Done(com.sukoon.app.ui.help.startDone()[1], stringResource(R.string.ob_done_alarms)) // the same check as Now's card
                 Done(contacts.isNotEmpty(), if (contacts.isNotEmpty()) stringResource(R.string.ob_done_contact, contacts.first().name) else stringResource(R.string.ob_done_no_contact))
                 val session by container.sharing.supabase.session.collectAsState()
                 Done(session != null, stringResource(R.string.ob_done_sharing))
@@ -788,7 +788,7 @@ private fun CodeStep(container: AppContainer, progress: Pair<Int, Int>, onBack: 
     ) {
         CodeBoxes(code, { code = it; problem = null })
         if (code.length < InviteCode.LENGTH) PasteCodeChip(onCode = { code = it }, onNone = { problem = context.getString(R.string.ob_paste_none) })
-        problem?.let { Text(it, fontSize = 13.5.sp, color = StateLow) }
+        problem?.let { Text(it, fontSize = 13.5.sp, color = com.sukoon.app.ui.theme.PillLowText) }
         Card {
             Text(stringResource(R.string.ob_code_no_app), fontSize = 15.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
             Text(stringResource(R.string.ob_code_no_app_body), fontSize = 13.5.sp, lineHeight = 19.sp, color = CaptionMuted)
@@ -943,14 +943,14 @@ private fun Field(
     hidden: Boolean = false,
     trailing: (@Composable () -> Unit)? = null,
 ) {
-    OutlinedTextField(
+    SukoonTextField(
         value = value,
         onValueChange = onChange,
-        label = { Text(label) },
+        label = label,
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = keyboard),
         visualTransformation = if (hidden) PasswordVisualTransformation() else VisualTransformation.None,
-        supportingText = helper?.let { { Text(it) } },
+        supportingText = helper,
         trailingIcon = trailing,
         modifier = Modifier.fillMaxWidth(),
     )

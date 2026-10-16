@@ -169,7 +169,7 @@ class AppContainer(private val context: Context) {
         InsulinOnBoard.total(logbookRepository.eventsSince(now.minus(Duration.ofHours(9)).toEpochMilli()).first(), now, settings.insulinAction)
     }
 
-    val gemini = GeminiClient(apiKey = { settings.geminiApiKey })
+    val gemini = GeminiClient(context, apiKey = { settings.geminiApiKey })
 
     val nightscout = NightscoutUploader(context, glucoseRepository, logbookRepository, appScope)
 
@@ -223,10 +223,11 @@ class AppContainer(private val context: Context) {
                     sickSince = m.sickSince,
                     ketones = k?.value.takeIf { m.sick }, ketonesAt = k?.let { java.time.Instant.ofEpochMilli(it.timestampMillis) }.takeIf { m.sick },
                     pausedUntil = paused,
+                    mealWatchUntil = m.mealWatchUntil,
                 )
             }.distinctUntilChanged().collectLatest { shared ->
                 while (true) {
-                    val on = sharing.shareModes && (shared.workoutUntil != null || shared.nightLow || shared.iftar != null || shared.sickSince != null || shared.pausedUntil != null)
+                    val on = sharing.shareModes && (shared.workoutUntil != null || shared.nightLow || shared.iftar != null || shared.sickSince != null || shared.pausedUntil != null || shared.mealWatchUntil != null)
                     runCatching { sharing.publishModes(if (on) shared.copy(at = java.time.Instant.now()) else null) }
                     delay(java.util.concurrent.TimeUnit.MINUTES.toMillis(15))
                 }
@@ -268,6 +269,7 @@ class AppContainer(private val context: Context) {
     val requestedCheckSensor = MutableStateFlow(false)
 
     init {
+        LibreNfc.appContext = context // sensor refusals read in the app's language
         glucoseRepository.start()
         BasalReminder.schedule(context, settings.basalReminder)
         // Every few hours, not just at start: the sensor service keeps Sukoon running for days, and a release
@@ -407,6 +409,7 @@ class AppContainer(private val context: Context) {
     private fun sourceFor(kind: SourceKind): GlucoseSource = when (kind) {
         SourceKind.LIBRE_BLE -> LibreBleSource(context, pairingStore, connectionLog)
         SourceKind.SIMULATED -> SimulatedSource(scope = appScope)
+        SourceKind.NONE -> com.sukoon.app.data.source.NoSource()
         // ponytail: shares the connected-device foreground service that keeps the process alive; a
         // data-sync service of its own if a phone ever refuses it without Bluetooth permission.
         SourceKind.LIBRE_LINK_UP -> CloudSource(

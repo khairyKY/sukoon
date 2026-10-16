@@ -26,7 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -129,18 +129,18 @@ private fun SignIn(sharing: Sharing, watch: FollowerWatch) {
         return
     }
     if (creating) {
-        OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.sharing_your_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+        SukoonTextField(name, { name = it }, label = stringResource(R.string.sharing_your_name), singleLine = true, modifier = Modifier.fillMaxWidth())
     }
-    OutlinedTextField(
+    SukoonTextField(
         email, { email = it },
-        label = { Text(stringResource(R.string.sharing_email)) },
+        label = stringResource(R.string.sharing_email),
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         modifier = Modifier.fillMaxWidth(),
     )
-    OutlinedTextField(
+    SukoonTextField(
         password, { password = it },
-        label = { Text(stringResource(R.string.sharing_password)) },
+        label = stringResource(R.string.sharing_password),
         singleLine = true,
         visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -223,11 +223,11 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session, l
                 watch.refreshNow()
                 context.toast(context.getString(R.string.toast_sharing_signed_out))
             }
-        }) { Text(stringResource(R.string.sharing_sign_out), color = StateLow, fontSize = 12.sp) }
+        }) { Text(stringResource(R.string.sharing_sign_out), color = com.sukoon.app.ui.theme.PillLowText, fontSize = 12.sp) }
     }
     // Deleting the account: it, its readings and every follow, both ways, gone for good (Play requires it in the app).
     var deleting by remember { mutableStateOf(false) }
-    TextButton(onClick = { guard { deleting = true } }) { Text(stringResource(R.string.account_delete), color = StateLow, fontSize = 12.sp) }
+    TextButton(onClick = { guard { deleting = true } }) { Text(stringResource(R.string.account_delete), color = com.sukoon.app.ui.theme.PillLowText, fontSize = 12.sp) }
     if (deleting) {
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { deleting = false },
@@ -242,14 +242,14 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session, l
                         watch.refreshNow()
                         context.getString(R.string.account_deleted)
                     }
-                }) { Text(stringResource(R.string.account_delete_go), color = StateLow) }
+                }) { Text(stringResource(R.string.account_delete_go), color = com.sukoon.app.ui.theme.PillLowText) }
             },
             dismissButton = { TextButton(onClick = { deleting = false }) { Text(stringResource(R.string.sensor_cancel)) } },
         )
     }
-    problem?.let { Text(it, fontSize = 12.sp, color = StateLow) }
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.sharing_your_name)) }, singleLine = true, modifier = Modifier.weight(1f))
+    problem?.let { Text(it, fontSize = 12.sp, color = com.sukoon.app.ui.theme.PillLowText) }
+    Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        SukoonTextField(name, { name = it }, label = stringResource(R.string.sharing_your_name), singleLine = true, modifier = Modifier.weight(1f))
         Pill(stringResource(R.string.settings_save), filled = false) {
             act {
                 sharing.setName(name)
@@ -340,7 +340,7 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session, l
                             context.getString(R.string.toast_sharing_follower_removed, person.name)
                         }
                     }
-                }) { Text(stringResource(R.string.emergency_remove), color = StateLow, fontSize = 12.sp) }
+                }) { Text(stringResource(R.string.emergency_remove), color = com.sukoon.app.ui.theme.PillLowText, fontSize = 12.sp) }
             }
         }
     }
@@ -367,7 +367,7 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session, l
                         refresh++
                         context.getString(R.string.toast_invite_cancelled)
                     }
-                }) { Text(stringResource(R.string.invite_cancel), color = StateLow, fontSize = 12.sp) }
+                }) { Text(stringResource(R.string.invite_cancel), color = com.sukoon.app.ui.theme.PillLowText, fontSize = 12.sp) }
             }
         }
     }
@@ -397,7 +397,7 @@ private fun SignedIn(sharing: Sharing, watch: FollowerWatch, session: Session, l
                         refresh++
                         context.getString(R.string.toast_sharing_unfollowed, person.name)
                     }
-                }) { Text(stringResource(R.string.sharing_stop_following), color = StateLow, fontSize = 12.sp) }
+                }) { Text(stringResource(R.string.sharing_stop_following), color = com.sukoon.app.ui.theme.PillLowText, fontSize = 12.sp) }
             }
         }
     }
@@ -487,7 +487,7 @@ internal fun CodeDialog(onRedeem: (String) -> Unit, onDismiss: () -> Unit, initi
                 Text(stringResource(R.string.sharing_enter_code_body), fontSize = 13.sp, color = CaptionMuted)
                 CodeBoxes(code, { code = it; problem = null }, onDone = { onRedeem(code) }, autoFocus = initial.isEmpty())
                 if (!ready) PasteCodeChip(onCode = { code = it }, onNone = { problem = context.getString(R.string.ob_paste_none) })
-                problem?.let { Text(it, fontSize = 13.sp, color = StateLow) }
+                problem?.let { Text(it, fontSize = 13.sp, color = com.sukoon.app.ui.theme.PillLowText) }
             }
         },
         confirmButton = { TextButton(enabled = ready, onClick = { onRedeem(code) }) { Text(stringResource(R.string.sharing_follow)) } },

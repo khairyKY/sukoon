@@ -392,7 +392,18 @@ fun SensorCard(
                         CardButton(stringResource(R.string.sensor_check), filled = false) { step = SensorStep.Holding(TapMode.CHECK) }
                     }
                     Text(stringResource(R.string.sensor_connect_hint) + " " + stringResource(R.string.sensor_check_hint), fontSize = 12.sp, color = CaptionMuted)
-                    StartRow { step = SensorStep.Confirm }
+                    // Sukoon follows one sensor at a time: while this one runs well, starting another is a
+                    // quiet line (it would replace it); the full row comes back in its last day or once it ends.
+                    val running = pairing?.takeIf { it.started }?.let { SensorLifecycle.of(it.startMillis, it.lifetimeMinutes, java.time.Instant.now()) }
+                    val settled = running is SensorLife.Running && Duration.between(java.time.Instant.now(), running.endsAt) > Duration.ofDays(1)
+                    if (settled) {
+                        Text(
+                            stringResource(R.string.sensor_replace_link), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = SageDeep,
+                            modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable { step = SensorStep.Confirm }.heightIn(min = 44.dp).padding(vertical = 12.dp),
+                        )
+                    } else {
+                        StartRow { step = SensorStep.Confirm }
+                    }
                 }
             }
             when (val s = step) {

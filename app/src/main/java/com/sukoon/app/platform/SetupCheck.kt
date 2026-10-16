@@ -101,9 +101,6 @@ object SetupCheck {
         }.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 
-    /** Samsung/Xiaomi/… kill background apps beyond Android's own rules; we can't read that state, only open the page. */
-    fun hasOemBackgroundSettings(): Boolean = BatteryOptimization.candidatesFor(Build.MANUFACTURER).isNotEmpty()
-
     private val EMERGENCY_PERMISSIONS = listOf(Manifest.permission.SEND_SMS, Manifest.permission.CALL_PHONE)
 
     private fun bluetoothPermissions() = if (Build.VERSION.SDK_INT >= 31) {

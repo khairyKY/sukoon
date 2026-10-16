@@ -28,7 +28,7 @@ object MealPhoto {
         while (max(bounds.outWidth, bounds.outHeight) / (sample * 2) >= MAX_EDGE) sample *= 2
         val decoded = resolver.openInputStream(uri)?.use {
             BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample })
-        } ?: throw AiException("Couldn't read that photo.")
+        } ?: throw AiException(context.getString(com.sukoon.app.R.string.ai_err_photo))
         val scale = MAX_EDGE.toFloat() / max(decoded.width, decoded.height)
         val bitmap = if (scale < 1f) {
             Bitmap.createScaledBitmap(decoded, (decoded.width * scale).toInt(), (decoded.height * scale).toInt(), true)
