@@ -2268,4 +2268,17 @@
     <string name="ramadan_no_city_name">City name unavailable (no connection, or this phone can\'t look places up). The times are still for where you are.</string>
     <string name="after_workout_custom">Custom</string>
     <string name="home_more_content">More below</string>
+    <string name="widget_link_title">Widget link (Nightscout)</string>
+    <string name="widget_link_summary">For a laptop widget or watch face, no VPN</string>
+    <string name="widget_link_body">A private address that gives your readings in Nightscout\'s format, so a Nightscout widget (Rainmeter on a laptop, a watch face) shows them without a Nightscout server or a VPN.</string>
+    <string name="widget_link_sign_in">Sign in under You › People first: the link reads the readings Sukoon shares from your account.</string>
+    <string name="widget_link_make">Make my link</string>
+    <string name="widget_link_new">Make a new link (the old one stops)</string>
+    <string name="widget_link_address">Nightscout address</string>
+    <string name="widget_link_token">Token</string>
+    <string name="widget_link_full">Full link (readings)</string>
+    <string name="widget_link_copy">Copy</string>
+    <string name="widget_link_copied">Copied</string>
+    <string name="widget_link_private">Anyone with the token can see your glucose. Keep it to your own devices, and make a new one if it leaks.</string>
+    <string name="widget_link_failed">Couldn\'t make the link. Check the internet and try again.</string>
 </resources>

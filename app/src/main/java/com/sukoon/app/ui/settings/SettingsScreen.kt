@@ -482,6 +482,14 @@ fun SettingsScreen(
                                     prominent = geminiKey.isBlank() && service != "ai",
                                 ) { service = if (service == "ai") null else "ai" }
                                 ExpandedPanel(service == "ai", inset = 0.dp) { AiKey(geminiKey, onSaveGeminiKey) }
+                                HorizontalDivider(color = outline().copy(alpha = 0.08f))
+                                ServiceRow(
+                                    stringResource(R.string.widget_link_title),
+                                    stringResource(R.string.widget_link_summary),
+                                    stringResource(if (service == "feed") R.string.apps_close else R.string.apps_set_up),
+                                    prominent = false,
+                                ) { service = if (service == "feed") null else "feed" }
+                                ExpandedPanel(service == "feed", inset = 0.dp) { WidgetLink() }
                             }
                         }
                         YouPage.REPORTS -> {

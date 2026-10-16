@@ -2403,4 +2403,17 @@
     <string name="ramadan_no_city_name">اسم المدينة مش متاح (مفيش نت، أو الموبايل ده مش بيعرف يدوّر على الأماكن). المواعيد لسه محسوبة لمكانك.</string>
     <string name="after_workout_custom">نسبة تانية</string>
     <string name="home_more_content">فيه أكتر تحت</string>
+    <string name="widget_link_title">رابط الأداة (Nightscout)</string>
+    <string name="widget_link_summary">لأداة على اللابتوب أو وش ساعة، من غير VPN</string>
+    <string name="widget_link_body">عنوان خاص بيدّي قراءاتك بصيغة Nightscout، علشان أي أداة Nightscout (Rainmeter على اللابتوب أو وش ساعة) تعرضها من غير سيرفر Nightscout ولا VPN.</string>
+    <string name="widget_link_sign_in">سجّل دخول الأول من إنت › الناس: الرابط بيقرا القراءات اللي سكون بيشاركها من حسابك.</string>
+    <string name="widget_link_make">اعمل الرابط بتاعي</string>
+    <string name="widget_link_new">اعمل رابط جديد (القديم هيقف)</string>
+    <string name="widget_link_address">عنوان Nightscout</string>
+    <string name="widget_link_token">الرمز</string>
+    <string name="widget_link_full">الرابط كامل (القراءات)</string>
+    <string name="widget_link_copy">انسخ</string>
+    <string name="widget_link_copied">اتنسخ</string>
+    <string name="widget_link_private">أي حد معاه الرمز هيشوف السكر بتاعك. خليه على أجهزتك بس، واعمل واحد جديد لو اتسرّب.</string>
+    <string name="widget_link_failed">معرفناش نعمل الرابط. شوف النت وجرب تاني.</string>
 </resources>

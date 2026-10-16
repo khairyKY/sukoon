@@ -2407,4 +2407,17 @@
     <string name="ramadan_no_city_name">اسم المدينة غير متاح (لا يوجد اتصال، أو لا يستطيع هذا الهاتف البحث عن الأماكن). الأوقات ما زالت لمكانك.</string>
     <string name="after_workout_custom">مخصّص</string>
     <string name="home_more_content">المزيد في الأسفل</string>
+    <string name="widget_link_title">رابط الأداة (Nightscout)</string>
+    <string name="widget_link_summary">لأداة على الحاسوب أو واجهة ساعة، بلا VPN</string>
+    <string name="widget_link_body">عنوان خاص يعطي قراءاتك بصيغة Nightscout، فتعرضها أداة Nightscout (Rainmeter على الحاسوب أو واجهة ساعة) بلا خادم Nightscout ولا VPN.</string>
+    <string name="widget_link_sign_in">سجّل الدخول أولًا من حسابي › الأشخاص: الرابط يقرأ القراءات التي يشاركها سكون من حسابك.</string>
+    <string name="widget_link_make">أنشئ رابطي</string>
+    <string name="widget_link_new">أنشئ رابطًا جديدًا (يتوقف القديم)</string>
+    <string name="widget_link_address">عنوان Nightscout</string>
+    <string name="widget_link_token">الرمز</string>
+    <string name="widget_link_full">الرابط الكامل (القراءات)</string>
+    <string name="widget_link_copy">نسخ</string>
+    <string name="widget_link_copied">تم النسخ</string>
+    <string name="widget_link_private">من لديه الرمز يرى سكرك. احتفظ به لأجهزتك، وأنشئ رمزًا جديدًا إن تسرّب.</string>
+    <string name="widget_link_failed">تعذّر إنشاء الرابط. تحقق من الإنترنت وحاول مجددًا.</string>
 </resources>
