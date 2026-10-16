@@ -158,6 +158,9 @@ fun LogbookScreen(
     val snackbar = remember { SnackbarHostState() }
     var adding by remember { mutableStateOf(false) }
     var voicing by remember { mutableStateOf(false) }
+    var mealGap by remember { mutableStateOf<com.sukoon.app.insulin.MealGap?>(null) }
+    var deleting by remember { mutableStateOf<Pair<EventEntity, EventEntity>?>(null) }
+    val app = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container
     var editor by remember { mutableStateOf<EditorRequest?>(null) }
     var detail by remember { mutableStateOf<EventEntity?>(null) }
     var cascade by remember { mutableStateOf(true) }
@@ -302,6 +305,52 @@ fun LogbookScreen(
             onDismiss = { adding = false },
         )
     }
+    mealGap?.let { gap ->
+        MealChangedSheet(
+            gap = gap,
+            target = doseSettings().target,
+            onEatNow = { grams ->
+                mealGap = null
+                app.modes.startMealWatch(gap.by)
+                editor = EditorRequest(LogEventType.CARB, prefill = EventEntity(timestampMillis = System.currentTimeMillis(), type = LogEventType.CARB.name, value = grams.toDouble()))
+            },
+            onLater = {
+                mealGap = null
+                app.modes.startMealWatch(gap.by)
+                announce(context.getString(R.string.meal_changed_later_toast))
+            },
+            onWatch = {
+                mealGap = null
+                app.modes.startMealWatch(gap.by)
+                announce(context.getString(R.string.meal_changed_watching))
+            },
+            onTopUp = { units ->
+                mealGap = null
+                editor = EditorRequest(LogEventType.INSULIN, prefill = EventEntity(timestampMillis = System.currentTimeMillis(), type = LogEventType.INSULIN.name, value = units))
+            },
+            // Heading low: the watch stays on even if the sheet is just closed.
+            onDismiss = { if (gap.ateLess && (gap.ahead ?: 0) < 70) app.modes.startMealWatch(gap.by); mealGap = null },
+        )
+    }
+    deleting?.let { (meal, dose) ->
+        TookInsulinDialog(
+            units = dose.value ?: 0.0,
+            onKeep = {
+                deleting = null
+                onDeleteEvent(meal)
+                announce(context.getString(R.string.toast_entry_deleted))
+                // The insulin stays: with nothing eaten, all of it is extra.
+                mealGap = assessMealEdit(meal.value ?: 0.0, 0.0, meal, state, doseSettings(), app.settings.insulinAction)
+            },
+            onDeleteBoth = {
+                deleting = null
+                onDeleteEvent(meal)
+                onDeleteEvent(dose)
+                announce(context.getString(R.string.toast_entry_deleted))
+            },
+            onDismiss = { deleting = null },
+        )
+    }
     if (voicing) {
         VoiceSheet(
             glucoseNow = state.glucoseNow?.glucoseMgDl,
@@ -337,12 +386,23 @@ fun LogbookScreen(
                 onUpdateEvent(event)
                 photos?.let { onEntryPhoto(event.id, it) }
                 announce(context.getString(R.string.toast_entry_updated))
+                // A meal changed after its insulin: what that means now (meal-edit-logic.md).
+                val before = existing
+                if (before != null && event.logType == LogEventType.CARB && !event.treatment && before.value != event.value) {
+                    mealGap = assessMealEdit(before.value ?: 0.0, event.value ?: 0.0, event, state, doseSettings(), app.settings.insulinAction)
+                }
             },
             onDelete = existing?.let { event ->
                 {
                     editor = null
-                    onDeleteEvent(event)
-                    announce(context.getString(R.string.toast_entry_deleted))
+                    val dose = if (event.logType == LogEventType.CARB) linkedDose(event, state.events) else null
+                    if (dose != null) {
+                        // Did you take the insulin? Its entry stays unless you say no.
+                        deleting = event to dose
+                    } else {
+                        onDeleteEvent(event)
+                        announce(context.getString(R.string.toast_entry_deleted))
+                    }
                 }
             },
             onDismiss = { editor = null },
@@ -623,3 +683,22 @@ private fun LogbookEmptyPreview() {
         LogbookScreen(state = LogbookUiState(), onSaveEntry = { CompletableDeferred(emptyList()) }, onUndoEntry = {}, onUpdateEvent = {}, onDeleteEvent = {})
     }
 }
+
+/** The rapid insulin taken for [meal]: linked to it, or within 30 minutes of it. */
+internal fun linkedDose(meal: EventEntity, events: List<EventEntity>): EventEntity? =
+    events.filter { it.logType == LogEventType.INSULIN && (it.value ?: 0.0) > 0 && (it.mealId == meal.id || (it.mealId == null && kotlin.math.abs(it.timestampMillis - meal.timestampMillis) <= 30 * 60_000L)) }
+        .minByOrNull { kotlin.math.abs(it.timestampMillis - meal.timestampMillis) }
+
+/** What an edit from [planned] to [eaten] grams means for [meal]'s insulin now; null when it doesn't matter. */
+internal fun assessMealEdit(planned: Double, eaten: Double, meal: EventEntity, state: LogbookUiState, dose: com.sukoon.app.insulin.DoseSettings, action: com.sukoon.app.insulin.InsulinAction): com.sukoon.app.insulin.MealGap? {
+    val insulin = linkedDose(meal, state.events) ?: return null
+    val mealAt = java.time.Instant.ofEpochMilli(meal.timestampMillis)
+    val slot = com.sukoon.app.insights.InsightEngine.slotFor(mealAt.atZone(java.time.ZoneId.systemDefault()).hour)
+    return com.sukoon.app.insulin.MealChange.assess(
+        planned = planned, eaten = eaten, dose = insulin.value ?: 0.0, doseAt = java.time.Instant.ofEpochMilli(insulin.timestampMillis),
+        mealAt = mealAt, now = java.time.Instant.now(), ratio = dose.carbRatio[slot], factor = dose.correctionFactor,
+        glucose = state.glucoseNow?.glucoseMgDl, action = action, step = dose.step,
+        lowSince2h = state.lowAt != null,
+    )
+}
+
