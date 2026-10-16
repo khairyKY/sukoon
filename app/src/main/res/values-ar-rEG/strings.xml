@@ -2364,4 +2364,5 @@
     <string name="nfc_ended">الحساس ده خلص أو باظ. ركّب واحد جديد.</string>
     <string name="nfc_started_not_paired">الحساس اشتغل وبيسخن، بس الربط مكملش. دوس «اربطه تاني» وهو بيسخن.</string>
     <string name="nfc_no_stream">الحساس مرضيش يتوصّل بسكون. جرّب تاني.</string>
+    <string name="home_more_below">اقتراح تجريبي تحت</string>
 </resources>

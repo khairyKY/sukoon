@@ -2368,4 +2368,5 @@
     <string name="nfc_ended">انتهى هذا المستشعر أو تعطّل. ركّب مستشعرًا جديدًا.</string>
     <string name="nfc_started_not_paired">بدأ المستشعر ويمرّ بالتهيئة، لكن الربط لم يكتمل. اضغط «الربط من جديد» أثناء التهيئة.</string>
     <string name="nfc_no_stream">لم يقبل المستشعر الاتصال بسكون. حاول مجددًا.</string>
+    <string name="home_more_below">اقتراح تجريبي في الأسفل</string>
 </resources>

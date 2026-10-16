@@ -89,6 +89,14 @@ import kotlin.math.roundToInt
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInParent
+import kotlinx.coroutines.launch
 import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.data.source.SourceKind
 import com.sukoon.app.ui.components.durationText
@@ -235,9 +243,9 @@ private fun PulsingDot(color: Color, pulsing: Boolean, size: androidx.compose.ui
 }
 
 @Composable
-private fun HomeStatusBar(statusLabel: String, dotColor: Color, pulsing: Boolean, labelColor: Color = CaptionMuted) {
+private fun HomeStatusBar(statusLabel: String, dotColor: Color, pulsing: Boolean, labelColor: Color = CaptionMuted, top: androidx.compose.ui.unit.Dp = 16.dp) {
     if (LocalShortcuts.current.demo) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(top = 16.dp), horizontalArrangement = Arrangement.End) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(top = top), horizontalArrangement = Arrangement.End) {
             Text(stringResource(R.string.home_status_demo), fontWeight = FontWeight.SemiBold, fontSize = 11.sp, letterSpacing = 0.5.sp, color = PillLowText,
                 modifier = Modifier.clip(RoundedCornerShape(50)).background(PillLowBg).padding(horizontal = 10.dp, vertical = 3.dp))
         }
@@ -247,7 +255,7 @@ private fun HomeStatusBar(statusLabel: String, dotColor: Color, pulsing: Boolean
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
-            .padding(top = 16.dp),
+            .padding(top = top),
         horizontalArrangement = Arrangement.End, // the design mock's fake "9:41" clock is gone; the system bar shows real time
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -435,9 +443,16 @@ private fun ColumnScope.CalmContent(
     updated: Boolean,
 ) {
     val s = LocalShortcuts.current
-    Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-        HomeStatusBar(stringResource(R.string.home_status_live), dot, pulsing = true)
+    val scroll = rememberScrollState()
+    val scope = rememberCoroutineScope()
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    var viewport by remember { mutableIntStateOf(0) }
+    var doseTop by remember { mutableIntStateOf(-1) }
+    val hasDose = s.layout.shows(NowPart.DOSE) && (s.mealDose != null || s.correction != null || s.nudge != null)
+    Box(Modifier.weight(1f).onSizeChanged { viewport = it.height }) {
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(scroll)) {
         HomeAppBarRow(dimmed = false)
+        HomeStatusBar(stringResource(R.string.home_status_live), dot, pulsing = true, top = 2.dp)
         // Alarms paused, a missed long-acting, supplies, a meal watch: these show even with chips off.
         StatusChips(if (s.layout.shows(NowPart.CHIPS)) s.status else s.status.filter { it.attention })
         NoticeBanner(Modifier.padding(horizontal = 16.dp).padding(top = 12.dp))
@@ -465,11 +480,45 @@ private fun ColumnScope.CalmContent(
                 NowPart.NEXT -> NextCard(brief)
                 NowPart.GRAPH -> { RecentChart(readings); Spacer(Modifier.height(16.dp)) }
                 NowPart.STATS -> { StatsRow(); Spacer(Modifier.height(12.dp)) }
-                NowPart.DOSE -> DoseCards()
+                NowPart.DOSE -> Box(Modifier.onGloballyPositioned { doseTop = it.positionInParent().y.toInt() }) { DoseCards() }
                 else -> Unit
             }
         }
         Spacer(Modifier.height(16.dp))
+    }
+    // A beta card under the fold gets a "more below" pill (like a chat's jump-to-latest), so it isn't missed.
+    val below = hasDose && doseTop >= 0 && viewport > 0 && doseTop > scroll.value + viewport - with(density) { 56.dp.roundToPx() }
+    androidx.compose.animation.AnimatedVisibility(
+        visible = below,
+        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 14.dp),
+        enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { it / 2 },
+        exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically { it / 2 },
+    ) {
+        MoreBelow { scope.launch { scroll.animateScrollTo(doseTop) } }
+    }
+    }
+}
+
+/** "Beta suggestion below" with a chevron, floating at the bottom of Now. */
+@Composable
+private fun MoreBelow(onClick: () -> Unit) {
+    Row(
+        Modifier
+            .shadow(6.dp, RoundedCornerShape(50))
+            .clip(RoundedCornerShape(50))
+            .background(Sage)
+            .clickable(onClick = onClick)
+            .padding(start = 14.dp, end = 16.dp)
+            .height(40.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Canvas(Modifier.size(14.dp)) {
+            val w = 2.dp.toPx()
+            drawLine(Color.White, Offset(size.width * 0.15f, size.height * 0.35f), Offset(size.width * 0.5f, size.height * 0.7f), w, StrokeCap.Round)
+            drawLine(Color.White, Offset(size.width * 0.5f, size.height * 0.7f), Offset(size.width * 0.85f, size.height * 0.35f), w, StrokeCap.Round)
+        }
+        Text(stringResource(R.string.home_more_below), color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 13.5.sp)
     }
 }
 

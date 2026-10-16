@@ -2228,4 +2228,5 @@
     <string name="nfc_ended">This sensor has ended or failed. Put a new one on.</string>
     <string name="nfc_started_not_paired">The sensor has started and is warming up, but pairing didn\'t finish. Tap Pair again while it warms up.</string>
     <string name="nfc_no_stream">The sensor wouldn\'t connect to Sukoon. Try again.</string>
+    <string name="home_more_below">Beta suggestion below</string>
 </resources>
