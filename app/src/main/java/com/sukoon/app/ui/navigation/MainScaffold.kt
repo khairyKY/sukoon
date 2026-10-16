@@ -273,6 +273,11 @@ fun MainScaffold() {
                 val stats by homeViewModel.stats.collectAsStateWithLifecycle()
                 var chosenStats by remember { mutableStateOf(home.settings.homeStats) }
                 var pickingStats by remember { mutableStateOf(false) }
+                var nowLayout by remember { mutableStateOf(home.settings.nowLayout) }
+                var arrangingNow by remember { mutableStateOf(false) }
+                if (arrangingNow) {
+                    com.sukoon.app.ui.home.NowLayoutSheet(nowLayout, onChange = { home.settings.nowLayout = it; nowLayout = it }, onDismiss = { arrangingNow = false })
+                }
                 if (pickingStats) {
                     StatsPicker(chosenStats, home.healthConnect, onChange = { home.settings.homeStats = it; chosenStats = it }, onDismiss = { pickingStats = false })
                 }
@@ -461,7 +466,7 @@ fun MainScaffold() {
                         )
                     }
                     (life as? SensorLife.Running)
-                        ?.takeIf { Duration.between(Instant.now(), it.endsAt) <= Duration.ofHours(24) }
+                        ?.takeIf { nowLayout.shows(com.sukoon.app.ui.home.NowPart.SENSOR_ENDING) && Duration.between(Instant.now(), it.endsAt) <= Duration.ofHours(24) }
                         ?.let { SensorEndingBanner(it, onClick = toSensor) }
                     if (com.sukoon.app.BuildConfig.SELF_UPDATE) UpdateBanner(home.updates, onBackUp = toYou)
                     HomeScreen(
@@ -470,7 +475,6 @@ fun MainScaffold() {
                         onSync = syncMfp,
                         modifier = Modifier.weight(1f),
                         onPairSensor = toYou,
-                        onEnterCodeManually = toYou,
                         onTroubleshoot = toSensor,
                         onTreated = { scope.launch { alarms.treated() } },
                         onSnooze = { scope.launch { alarms.acknowledge(AlarmType.LOW, home.settings.alarmSettings.lowSnoozeMinutes) } }, // the snooze you set, not a fixed 15
@@ -505,6 +509,9 @@ fun MainScaffold() {
                         stats = stats,
                         chosenStats = chosenStats,
                         onChooseStats = { pickingStats = true },
+                        layout = nowLayout,
+                        onCustomize = { arrangingNow = true },
+                        demo = source == SourceKind.SIMULATED,
                     )
                 }
             }

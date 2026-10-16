@@ -2172,4 +2172,26 @@
     <string name="meal_delete_body">This meal had %1$s u with it. If you took it, keep it: Sukoon will watch for a low.</string>
     <string name="meal_delete_keep">Yes, keep it</string>
     <string name="meal_delete_both">No, delete it too</string>
+    <string name="home_status_demo">DEMO · not your glucose</string>
+    <string name="now_layout_title">Make Now yours</string>
+    <string name="now_layout_section">Now</string>
+    <string name="now_layout_body">Turn parts on or off. Drag the ones under the number to change their order. Low and urgent screens stay the same.</string>
+    <string name="now_layout_row_body">What shows on Now, and in what order</string>
+    <string name="now_layout_top">Above the number</string>
+    <string name="now_layout_below">Under the number</string>
+    <string name="now_layout_up">Move up</string>
+    <string name="now_layout_down">Move down</string>
+    <string name="now_layout_reset">Back to Sukoon\'s order</string>
+    <string name="now_part_chips">Status chips</string>
+    <string name="now_part_chips_what">Workout, fasting, goal, steps. Alarms paused and things due always show.</string>
+    <string name="now_part_sensor">Sensor ending</string>
+    <string name="now_part_sensor_what">In its last day</string>
+    <string name="now_part_next">Next step</string>
+    <string name="now_part_next_what">What is happening and what to do now</string>
+    <string name="now_part_graph">Graph</string>
+    <string name="now_part_graph_what">The last 3 hours</string>
+    <string name="now_part_stats">Today\'s numbers</string>
+    <string name="now_part_stats_what">The ones you choose: carbs, steps, time in range</string>
+    <string name="now_part_dose">Dose cards</string>
+    <string name="now_part_dose_what">Meal and correction suggestions (beta)</string>
 </resources>

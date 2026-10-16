@@ -89,6 +89,8 @@ import kotlin.math.roundToInt
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.data.source.SourceKind
 import com.sukoon.app.ui.components.durationText
@@ -128,7 +130,6 @@ fun HomeScreen(
     onAlertEmergencyContact: () -> Unit = {},
     onTroubleshoot: () -> Unit = {},
     onPairSensor: () -> Unit = {},
-    onEnterCodeManually: () -> Unit = {},
     onAddFood: () -> Unit = {},
     onAddInsulin: () -> Unit = {},
     /** Opens Today (pause alarms, workout, fasting, sick day). */
@@ -152,10 +153,15 @@ fun HomeScreen(
     /** Beta: a meal in the last hour with no insulin ([com.sukoon.app.insulin.Dose.mealDose]) and its dose. */
     mealDose: Pair<EventEntity, DoseAdvice.Suggestion>? = null,
     onMealDose: (EventEntity) -> Unit = {},
+    /** What shows on Now and in what order ("Make Now yours"); [onCustomize] opens that sheet. */
+    layout: NowLayout = NowLayout(),
+    onCustomize: () -> Unit = {},
+    /** Made-up readings (You › Sensor › Demo): Now says so instead of LIVE. */
+    demo: Boolean = false,
 ) {
-    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss, mealDose, onMealDose, onModes, status)) {
+    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss, mealDose, onMealDose, onModes, status, layout, onCustomize, demo)) {
         PullToSync(onSync, modifier) {
-            HomeContent(state, brief, Modifier.fillMaxSize(), onTreated, onSnooze, onAlertEmergencyContact, onTroubleshoot, onPairSensor, onEnterCodeManually)
+            HomeContent(state, brief, Modifier.fillMaxSize(), onTreated, onSnooze, onAlertEmergencyContact, onTroubleshoot, onPairSensor)
         }
     }
 }
@@ -176,6 +182,9 @@ private class Shortcuts(
     val onMealDose: (EventEntity) -> Unit = {},
     val onModes: () -> Unit = {},
     val status: List<StatusChip> = emptyList(),
+    val layout: NowLayout = NowLayout(),
+    val onCustomize: () -> Unit = {},
+    val demo: Boolean = false,
 )
 private val LocalShortcuts = staticCompositionLocalOf { Shortcuts({}, {}) }
 
@@ -189,7 +198,6 @@ private fun HomeContent(
     onAlertEmergencyContact: () -> Unit,
     onTroubleshoot: () -> Unit,
     onPairSensor: () -> Unit,
-    onEnterCodeManually: () -> Unit,
 ) {
     Column(
         modifier = modifier
@@ -203,8 +211,8 @@ private fun HomeContent(
             is HomeUiState.Urgent -> UrgentContent(state, brief, onTreated, onAlertEmergencyContact)
             is HomeUiState.WarmingUp -> WarmingUpContent(state)
             is HomeUiState.Stale -> StaleContent(state, onTroubleshoot)
-            HomeUiState.NoSensor -> NoSensorContent(onPairSensor, onEnterCodeManually)
-            HomeUiState.SensorEnded -> NoSensorContent(onPairSensor, onEnterCodeManually, ended = true)
+            HomeUiState.NoSensor -> NoSensorContent(onPairSensor)
+            HomeUiState.SensorEnded -> NoSensorContent(onPairSensor, ended = true)
         }
     }
 }
@@ -232,6 +240,13 @@ private fun PulsingDot(color: Color, pulsing: Boolean, size: androidx.compose.ui
 
 @Composable
 private fun HomeStatusBar(statusLabel: String, dotColor: Color, pulsing: Boolean, labelColor: Color = CaptionMuted) {
+    if (LocalShortcuts.current.demo) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(top = 16.dp), horizontalArrangement = Arrangement.End) {
+            Text(stringResource(R.string.home_status_demo), fontWeight = FontWeight.SemiBold, fontSize = 11.sp, letterSpacing = 0.5.sp, color = PillLowText,
+                modifier = Modifier.clip(RoundedCornerShape(50)).background(PillLowBg).padding(horizontal = 10.dp, vertical = 3.dp))
+        }
+        return
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -242,7 +257,7 @@ private fun HomeStatusBar(statusLabel: String, dotColor: Color, pulsing: Boolean
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             PulsingDot(color = dotColor, pulsing = pulsing)
-            Text(text = statusLabel, fontWeight = FontWeight.SemiBold, fontSize = 9.sp, letterSpacing = 1.sp, color = labelColor)
+            Text(text = statusLabel, fontWeight = FontWeight.SemiBold, fontSize = 11.sp, letterSpacing = 1.sp, color = labelColor)
         }
     }
 }
@@ -278,15 +293,17 @@ private fun HomeAppBarRow(dimmed: Boolean) {
             )
         }
         val shortcuts = LocalShortcuts.current
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (shortcuts.insulinOnBoard >= 0.05) {
-                Text(
-                    stringResource(R.string.home_iob, String.format(Locale.getDefault(), "%.1f", shortcuts.insulinOnBoard)),
-                    fontSize = 12.sp,
-                    color = CaptionMuted,
-                )
+        Row(horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.CenterVertically) {
+            // The sliders icon alone didn't say "pause alarms, workout, fasting": it has its word.
+            Row(
+                Modifier.padding(end = 4.dp).clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
+                    .clickable(onClick = shortcuts.onModes).padding(start = 10.dp, end = 12.dp).height(40.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+            ) {
+                Icon(painterResource(R.drawable.ic_modes), contentDescription = null, tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(20.dp))
+                Text(stringResource(R.string.today_title), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
             }
-            ShortcutIcon(R.drawable.ic_modes, stringResource(R.string.today_title), shortcuts.onModes)
             ShortcutIcon(R.drawable.ic_food, stringResource(R.string.home_add_food), shortcuts.onFood)
             ShortcutIcon(R.drawable.ic_insulin, stringResource(R.string.home_add_insulin), shortcuts.onInsulin)
         }
@@ -295,15 +312,11 @@ private fun HomeAppBarRow(dimmed: Boolean) {
 
 @Composable
 private fun ShortcutIcon(iconRes: Int, description: String, onClick: () -> Unit) {
-    Box(
-        Modifier
-            .size(40.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(painterResource(iconRes), contentDescription = description, tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(22.dp))
+    // A 40 dp circle in a 48 dp touch target.
+    Box(Modifier.size(48.dp).clip(CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)), contentAlignment = Alignment.Center) {
+            Icon(painterResource(iconRes), contentDescription = description, tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(22.dp))
+        }
     }
 }
 
@@ -331,6 +344,8 @@ private fun HeroNumber(value: String, trend: TrendDirection?, color: Color, font
 }
 
 private fun trendArrow(trend: TrendDirection): String = trend.arrow
+
+private fun digits(n: Int) = String.format(Locale.getDefault(), "%d", n)
 
 /**
  * Count-up (motion spec): a new reading counts from the last one shown over 560 ms on the calm
@@ -401,26 +416,73 @@ private fun ActionButton(label: String, filled: Boolean, onClick: () -> Unit) {
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-private fun ColumnScope.InRangeContent(state: HomeUiState.InRange, brief: Brief?) {
+private fun ColumnScope.InRangeContent(state: HomeUiState.InRange, brief: Brief?) = CalmContent(
+    pill = { StatusPill(stringResource(R.string.home_pill_in_range), com.sukoon.app.ui.theme.InRange, com.sukoon.app.ui.theme.InRangeMist, com.sukoon.app.ui.theme.InRangeDeep) },
+    mgDl = state.glucoseMgDl, trend = state.trend, color = MaterialTheme.colorScheme.onBackground, dot = Sage,
+    readings = state.recentReadings, brief = brief, updated = true,
+)
+
+/**
+ * In range and high (design A, "Calm: one number, one next step"): chips, the number, then what
+ * the user keeps under it (Make Now yours): next step, the 3-hour graph, today's numbers, dose cards.
+ * Long-press the number, or the link at the bottom, to arrange it.
+ */
+@Composable
+private fun ColumnScope.CalmContent(
+    pill: @Composable () -> Unit,
+    mgDl: Int,
+    trend: TrendDirection,
+    color: Color,
+    dot: Color,
+    readings: List<GlucoseReading>,
+    brief: Brief?,
+    updated: Boolean,
+) {
+    val s = LocalShortcuts.current
+    val haptic = LocalHapticFeedback.current
     Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-        HomeStatusBar(stringResource(R.string.home_status_live), Sage, pulsing = true)
-        HomeAppBar()
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 20.dp)) {
-            StatusPill(stringResource(R.string.home_pill_in_range), com.sukoon.app.ui.theme.InRange, com.sukoon.app.ui.theme.InRangeMist, com.sukoon.app.ui.theme.InRangeDeep)
+        HomeStatusBar(stringResource(R.string.home_status_live), dot, pulsing = true)
+        HomeAppBarRow(dimmed = false)
+        // Alarms paused, a missed long-acting, supplies, a meal watch: these show even with chips off.
+        StatusChips(if (s.layout.shows(NowPart.CHIPS)) s.status else s.status.filter { it.attention })
+        NoticeBanner(Modifier.padding(horizontal = 16.dp).padding(top = 12.dp))
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth().padding(top = 20.dp)
+                .pointerInput(Unit) { detectTapGestures(onLongPress = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); s.onCustomize() }) },
+        ) {
+            pill()
             Spacer(Modifier.height(8.dp))
-            HeroNumber(countUp(state.glucoseMgDl).toString(), state.trend, MaterialTheme.colorScheme.onBackground)
+            HeroNumber(digits(countUp(mgDl)), trend, color)
             Text(
-                text = "${stringResource(R.string.home_unit_mgdl)} · ${trendLabel(state.trend)} · ${stringResource(R.string.home_updated_now)}",
+                text = listOfNotNull(
+                    stringResource(R.string.home_unit_mgdl),
+                    trendLabel(trend),
+                    if (updated) stringResource(R.string.home_updated_now) else null,
+                    if (s.insulinOnBoard >= 0.05) stringResource(R.string.home_iob, String.format(Locale.getDefault(), "%.1f", s.insulinOnBoard)) else null,
+                ).joinToString(" · "),
                 fontSize = 12.sp,
                 color = CaptionMuted,
             )
         }
-        Spacer(Modifier.height(22.dp))
-        RecentChart(state.recentReadings)
-        Spacer(Modifier.height(16.dp))
-        StatsRow()
-        Spacer(Modifier.height(12.dp))
-        BriefCards(brief)
+        Spacer(Modifier.height(18.dp))
+        s.layout.order.filter(s.layout::shows).forEach { part ->
+            when (part) {
+                NowPart.NEXT -> NextCard(brief)
+                NowPart.GRAPH -> { RecentChart(readings); Spacer(Modifier.height(16.dp)) }
+                NowPart.STATS -> SlimStats()
+                NowPart.DOSE -> DoseCards()
+                else -> Unit
+            }
+        }
+        Text(
+            stringResource(R.string.now_layout_title),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = CaptionMuted,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 16.dp).clickable(onClick = s.onCustomize).padding(12.dp),
+        )
     }
 }
 
@@ -437,7 +499,7 @@ private fun ColumnScope.LowContent(state: HomeUiState.Low, brief: Brief?, onTrea
             StatusPill(stringResource(R.string.home_pill_low), StateLow, PillLowBg, PillLowText)
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
-            HeroNumber(state.glucoseMgDl.toString(), state.trend, StateLow, fontSize = 104.sp)
+            HeroNumber(digits(state.glucoseMgDl), state.trend, StateLow, fontSize = 104.sp)
             Text(text = "${stringResource(R.string.home_unit_mgdl)} · ${trendLabel(state.trend)}", fontSize = 12.sp, color = CaptionMuted)
         }
         Text(
@@ -492,24 +554,11 @@ private fun ColumnScope.LowContent(state: HomeUiState.Low, brief: Brief?, onTrea
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-private fun ColumnScope.HighContent(state: HomeUiState.High, brief: Brief?) {
-    Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-        HomeStatusBar(stringResource(R.string.home_status_live), StateHigh, pulsing = true)
-        HomeAppBar()
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 20.dp)) {
-            StatusPill(stringResource(R.string.home_pill_high), StateHigh, PillHighBg, PillHighText)
-            Spacer(Modifier.height(8.dp))
-            HeroNumber(countUp(state.glucoseMgDl).toString(), state.trend, StateHigh)
-            Text(text = "${stringResource(R.string.home_unit_mgdl)} · ${trendLabel(state.trend)}", fontSize = 12.sp, color = CaptionMuted)
-        }
-        Spacer(Modifier.height(22.dp))
-        RecentChart(state.recentReadings)
-        Spacer(Modifier.height(16.dp))
-        StatsRow()
-        Spacer(Modifier.height(12.dp))
-        BriefCards(brief)
-    }
-}
+private fun ColumnScope.HighContent(state: HomeUiState.High, brief: Brief?) = CalmContent(
+    pill = { StatusPill(stringResource(R.string.home_pill_high), StateHigh, PillHighBg, PillHighText) },
+    mgDl = state.glucoseMgDl, trend = state.trend, color = StateHigh, dot = StateHigh,
+    readings = state.recentReadings, brief = brief, updated = false,
+)
 
 // ---------------------------------------------------------------------------------------------
 // Urgent — screen 8f
@@ -538,7 +587,7 @@ private fun ColumnScope.UrgentContent(state: HomeUiState.Urgent, brief: Brief?, 
             )
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
-            HeroNumber(state.glucoseMgDl.toString(), state.trend, StateLow, fontSize = 104.sp)
+            HeroNumber(digits(state.glucoseMgDl), state.trend, StateLow, fontSize = 104.sp)
             Text(text = "${stringResource(R.string.home_unit_mgdl)} · ${trendLabel(state.trend)}", fontSize = 12.sp, color = CaptionMuted)
         }
         Spacer(Modifier.height(20.dp))
@@ -662,56 +711,73 @@ private fun RecentChart(readings: List<GlucoseReading>, dimmed: Boolean = false)
     }
 }
 
-/** Today's chosen numbers (design "Home · your stats"); "Choose" opens the picker. */
+/** Today's chosen numbers in one slim row (design A); tap to choose which. */
 @Composable
-private fun StatsRow() {
+private fun SlimStats() {
     val s = LocalShortcuts.current
-    Column(Modifier.padding(horizontal = 20.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.home_today).uppercase(), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp, color = CaptionMuted, modifier = Modifier.weight(1f))
-            Text(
-                stringResource(R.string.home_choose_stats),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = s.onChooseStats).padding(horizontal = 6.dp, vertical = 8.dp),
-            )
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 14.dp).clip(RoundedCornerShape(14.dp))
+            .clickable(onClick = s.onChooseStats).padding(vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+    ) {
+        if (s.chosenStats.isEmpty()) {
+            Text(stringResource(R.string.home_choose_stats), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
         }
-        if (s.chosenStats.isNotEmpty()) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                s.chosenStats.forEach { stat -> StatTile(stat, s.stats[stat], Modifier.weight(1f)) }
+        s.chosenStats.forEach { stat ->
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                Text(
+                    (s.stats[stat]?.let { statValue(stat, it) } ?: "—") + " " + statUnit(stat),
+                    fontFamily = HeadlineSerifFontFamily, fontSize = 19.sp, color = MaterialTheme.colorScheme.onBackground, maxLines = 1,
+                )
+                Text(statLabel(stat), fontSize = 11.5.sp, color = CaptionMuted, maxLines = 1)
             }
         }
     }
 }
 
+/** The message and the one thing to do now, as one card (design A); the low screens word their own. */
 @Composable
-private fun StatTile(stat: HomeStat, value: Double?, modifier: Modifier) {
+private fun NextCard(brief: Brief?) {
+    if (brief == null || brief is Brief.Low || brief is Brief.Treated) return
+    val (title, body) = briefText(brief)
+    val step = brief.step
     Column(
-        modifier
-            .clip(RoundedCornerShape(14.dp))
+        Modifier
+            .padding(horizontal = 20.dp).padding(bottom = 14.dp)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f), RoundedCornerShape(14.dp))
-            .padding(horizontal = 10.dp, vertical = 9.dp),
+            .border(1.dp, Sage.copy(alpha = 0.55f), RoundedCornerShape(18.dp))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text(statLabel(stat), fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted, maxLines = 1)
-        Text(value?.let { statValue(stat, it) } ?: "—", fontFamily = HeadlineSerifFontFamily, fontSize = 21.sp, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, modifier = Modifier.padding(top = 2.dp))
-        Text(statUnit(stat), fontSize = 11.5.sp, color = CaptionMuted, maxLines = 1)
+        Text(stringResource(R.string.home_next_step).uppercase(), fontWeight = FontWeight.SemiBold, fontSize = 11.sp, letterSpacing = 1.sp, color = Sage)
+        Text(title, fontFamily = HeadlineSerifFontFamily, fontSize = 18.sp, lineHeight = 23.sp, color = MaterialTheme.colorScheme.onSurface)
+        Text(body, fontSize = 13.sp, lineHeight = 18.sp, color = CaptionMuted)
+        if (step != null) {
+            Text(stepText(step), fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(top = 6.dp))
+            if (step == Step.LOG_MEAL) {
+                Text(
+                    stringResource(R.string.home_add_food),
+                    fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = Sage,
+                    modifier = Modifier.clip(RoundedCornerShape(50)).clickable(onClick = LocalShortcuts.current.onFood).padding(vertical = 8.dp),
+                )
+            }
+        } else {
+            Text(stringResource(R.string.home_nothing_to_do), fontSize = 12.sp, color = CaptionMuted, modifier = Modifier.padding(top = 4.dp))
+        }
     }
 }
 
-/** Home's message and, under it, the one thing to do now, or that there's nothing to do. */
+/** Beta dose cards: a meal with no insulin, a correction, a learned ratio. */
 @Composable
-private fun BriefCards(brief: Brief?) {
-    if (brief == null || brief is Brief.Low || brief is Brief.Treated) return // the low screens say it themselves
-    val (title, body) = briefText(brief)
-    val shortcuts = LocalShortcuts.current
-    Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        MessageCard(title, body)
-        shortcuts.mealDose?.let { (meal, dose) -> MealDoseCard(meal, dose) { shortcuts.onMealDose(meal) } }
-        shortcuts.correction?.let { CorrectionCard(it, shortcuts.onInsulin) }
-        shortcuts.nudge?.let { NudgeCard(it, shortcuts.onNudge, shortcuts.onNudgeDismiss) }
-        NextStep(brief.step)
+private fun DoseCards() {
+    val s = LocalShortcuts.current
+    if (s.mealDose == null && s.correction == null && s.nudge == null) return
+    Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        s.mealDose?.let { (meal, dose) -> MealDoseCard(meal, dose) { s.onMealDose(meal) } }
+        s.correction?.let { CorrectionCard(it, s.onInsulin) }
+        s.nudge?.let { NudgeCard(it, s.onNudge, s.onNudgeDismiss) }
     }
 }
 
@@ -807,43 +873,6 @@ private fun CorrectionCard(c: DoseAdvice.Suggestion, onLog: () -> Unit) {
             fontSize = 13.sp,
             color = CaptionMuted,
         )
-    }
-}
-
-@Composable
-private fun NextStep(step: Step?) {
-    if (step == null) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Box(Modifier.size(7.dp).clip(CircleShape).background(Sage))
-            Text(stringResource(R.string.home_nothing_to_do), fontSize = 12.sp, color = CaptionMuted)
-        }
-        return
-    }
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, Sage.copy(alpha = 0.55f), RoundedCornerShape(16.dp))
-            .padding(16.dp),
-    ) {
-        Text(stringResource(R.string.home_next_step).uppercase(), fontWeight = FontWeight.SemiBold, fontSize = 11.sp, letterSpacing = 1.sp, color = Sage)
-        Spacer(Modifier.height(6.dp))
-        Text(stepText(step), fontSize = 13.5.sp, lineHeight = 19.sp, color = MaterialTheme.colorScheme.onSurface)
-        if (step == Step.LOG_MEAL) {
-            Spacer(Modifier.height(10.dp))
-            Text(
-                stringResource(R.string.home_add_food),
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 13.sp,
-                color = Sage,
-                modifier = Modifier.clip(RoundedCornerShape(50)).clickable(onClick = LocalShortcuts.current.onFood).padding(vertical = 4.dp),
-            )
-        }
     }
 }
 
@@ -1078,7 +1107,7 @@ private fun ColumnScope.StaleContent(state: HomeUiState.Stale, onTroubleshoot: (
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-private fun ColumnScope.NoSensorContent(onPairSensor: () -> Unit, onEnterCodeManually: () -> Unit, ended: Boolean = false) {
+private fun ColumnScope.NoSensorContent(onPairSensor: () -> Unit, ended: Boolean = false) {
     Column(modifier = Modifier.weight(1f)) {
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(top = 16.dp), horizontalArrangement = Arrangement.End) {
             Text(
@@ -1121,15 +1150,6 @@ private fun ColumnScope.NoSensorContent(onPairSensor: () -> Unit, onEnterCodeMan
         }
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp)) {
             ActionButton(stringResource(if (ended) R.string.home_btn_new_sensor else R.string.home_btn_pair_sensor), filled = true, onClick = onPairSensor)
-            if (!ended) Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onEnterCodeManually)
-                    .padding(12.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(text = stringResource(R.string.home_btn_enter_code), fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp, color = Sage)
-            }
         }
     }
 }

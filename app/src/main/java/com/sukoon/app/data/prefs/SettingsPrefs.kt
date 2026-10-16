@@ -241,6 +241,11 @@ class SettingsPrefs(context: Context) {
         } ?: DEFAULT_HOME_STATS
         set(value) = prefs.edit().putString(KEY_HOME_STATS, value.take(MAX_HOME_STATS).joinToString(",") { it.name }).apply()
 
+    /** What shows on Now, and in what order ("Make Now yours"). */
+    var nowLayout: com.sukoon.app.ui.home.NowLayout
+        get() = com.sukoon.app.ui.home.NowLayout.decode(prefs.getString(KEY_NOW_LAYOUT, null))
+        set(value) = prefs.edit().putString(KEY_NOW_LAYOUT, value.encode()).apply()
+
     /** Home's getting-started card, once the user has said "Got it". */
     var gettingStartedDismissed: Boolean
         get() = prefs.getBoolean(KEY_START_DISMISSED, false)
@@ -263,6 +268,7 @@ class SettingsPrefs(context: Context) {
         private const val KEY_AFTER_WORKOUT = "after_workout_check"
         private const val KEY_ROLE = "user_role"
         private const val KEY_HOME_STATS = "home_stats"
+        private const val KEY_NOW_LAYOUT = "now_layout"
         private const val KEY_ONBOARDED = "onboarded"
         private const val KEY_OLD_DISCLAIMER = "disclaimer_accepted" // the disclaimer gate's key, from before onboarding
         private const val KEY_FOLLOWED_PHONE = "followed_phone_"

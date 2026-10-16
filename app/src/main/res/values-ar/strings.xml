@@ -2312,4 +2312,26 @@
     <string name="meal_delete_body">كان مع هذه الوجبة %1$s وحدة. إن أخذتها فأبقِها: سيراقب سكون الهبوط.</string>
     <string name="meal_delete_keep">نعم، أبقِها</string>
     <string name="meal_delete_both">لا، احذفها أيضًا</string>
+    <string name="home_status_demo">تجريبي · ليس سكرك</string>
+    <string name="now_layout_title">اجعل «الآن» لك</string>
+    <string name="now_layout_section">الآن</string>
+    <string name="now_layout_body">شغّل الأجزاء أو أوقفها. اسحب ما تحت الرقم لتغيير ترتيبه. شاشات الهبوط والحالات العاجلة تبقى كما هي.</string>
+    <string name="now_layout_row_body">ما يظهر في «الآن» وبأي ترتيب</string>
+    <string name="now_layout_top">فوق الرقم</string>
+    <string name="now_layout_below">تحت الرقم</string>
+    <string name="now_layout_up">تحريك لأعلى</string>
+    <string name="now_layout_down">تحريك لأسفل</string>
+    <string name="now_layout_reset">العودة لترتيب سكون</string>
+    <string name="now_part_chips">شارات الحالة</string>
+    <string name="now_part_chips_what">تمرين، صيام، هدف، خطوات. إيقاف التنبيهات وما حان وقته يظهر دائمًا.</string>
+    <string name="now_part_sensor">انتهاء المستشعر</string>
+    <string name="now_part_sensor_what">في يومه الأخير</string>
+    <string name="now_part_next">الخطوة التالية</string>
+    <string name="now_part_next_what">ما يحدث وما تفعله الآن</string>
+    <string name="now_part_graph">الرسم</string>
+    <string name="now_part_graph_what">آخر 3 ساعات</string>
+    <string name="now_part_stats">أرقام اليوم</string>
+    <string name="now_part_stats_what">ما تختاره: الكربوهيدرات، الخطوات، الوقت في النطاق</string>
+    <string name="now_part_dose">بطاقات الجرعات</string>
+    <string name="now_part_dose_what">اقتراحات الوجبة والتصحيح (تجريبي)</string>
 </resources>

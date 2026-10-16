@@ -2308,4 +2308,26 @@
     <string name="meal_delete_body">الأكلة دي كان معاها %1$s وحدة. لو خدتها سيبها: سكون هيراقب الهبوط.</string>
     <string name="meal_delete_keep">أيوه، سيبها</string>
     <string name="meal_delete_both">لأ، امسحها هي كمان</string>
+    <string name="home_status_demo">تجريبي · مش سكرك</string>
+    <string name="now_layout_title">خلّي «دلوقتي» على مزاجك</string>
+    <string name="now_layout_section">دلوقتي</string>
+    <string name="now_layout_body">شغّل أو اقفل الأجزاء. اسحب اللي تحت الرقم علشان تغيّر ترتيبه. شاشات الهبوط والحالات المستعجلة زي ما هي.</string>
+    <string name="now_layout_row_body">إيه اللي يظهر في «دلوقتي» وبأي ترتيب</string>
+    <string name="now_layout_top">فوق الرقم</string>
+    <string name="now_layout_below">تحت الرقم</string>
+    <string name="now_layout_up">طلّعه لفوق</string>
+    <string name="now_layout_down">نزّله لتحت</string>
+    <string name="now_layout_reset">رجّع ترتيب سكون</string>
+    <string name="now_part_chips">شارات الحالة</string>
+    <string name="now_part_chips_what">تمرين، صيام، هدف، خطوات. إيقاف التنبيهات واللي معاده جه بيظهروا على طول.</string>
+    <string name="now_part_sensor">السنسور بيخلص</string>
+    <string name="now_part_sensor_what">في آخر يوم ليه</string>
+    <string name="now_part_next">الخطوة الجاية</string>
+    <string name="now_part_next_what">إيه اللي بيحصل وتعمل إيه دلوقتي</string>
+    <string name="now_part_graph">الرسم</string>
+    <string name="now_part_graph_what">آخر 3 ساعات</string>
+    <string name="now_part_stats">أرقام النهارده</string>
+    <string name="now_part_stats_what">اللي تختارها: النشويات، الخطوات، الوقت في المعدل</string>
+    <string name="now_part_dose">كروت الجرعات</string>
+    <string name="now_part_dose_what">اقتراحات الأكلة والتصحيح (تجريبي)</string>
 </resources>

@@ -467,6 +467,9 @@ fun SettingsScreen(
                             Gap()
                             SectionLabel(stringResource(R.string.widgets_title))
                             WidgetsCard()
+                            Gap()
+                            SectionLabel(stringResource(R.string.now_layout_section))
+                            NowLayoutRow()
                         }
                         YouPage.HELP -> {
                             Text(
@@ -1017,5 +1020,30 @@ private fun PrimaryButton(label: String, onClick: () -> Unit) {
             .padding(horizontal = 20.dp, vertical = 11.dp),
     ) {
         Text(label, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+    }
+}
+
+/** Appearance › Now: opens "Make Now yours". */
+@Composable
+private fun NowLayoutRow() {
+    val settings = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.settings
+    var open by remember { mutableStateOf(false) }
+    if (open) com.sukoon.app.ui.home.NowLayoutSheet(settings.nowLayout, onChange = { settings.nowLayout = it }, onDismiss = { open = false })
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, outline(), RoundedCornerShape(18.dp))
+            .clickable { open = true }
+            .heightIn(min = 56.dp)
+            .padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f).padding(vertical = 10.dp)) {
+            Text(stringResource(R.string.now_layout_title), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+            Text(stringResource(R.string.now_layout_row_body), fontSize = 12.5.sp, color = com.sukoon.app.ui.theme.CaptionMuted)
+        }
+        Text("›", fontSize = 20.sp, color = com.sukoon.app.ui.theme.CaptionMuted)
     }
 }
