@@ -87,7 +87,7 @@ fun WidgetMaker(editId: Int?, onClose: () -> Unit) {
     val container = (context.applicationContext as SukoonApp).container
     val scope = rememberCoroutineScope()
     val placedSize = remember(editId) { editId?.let { sizeOfPlaced(context, it) } }
-    val loaded by produceState<WidgetOptions?>(if (editId == null) WidgetOptions(WidgetStyle.CARD) else null, editId) {
+    val loaded by produceState<WidgetOptions?>(if (editId == null) WidgetOptions(WidgetStyle.QUIET) else null, editId) {
         if (editId != null) {
             value = getAppWidgetState(context, PreferencesGlanceStateDefinition, GlanceAppWidgetManager(context).getGlanceIdBy(editId)).toWidgetOptions()
         }
@@ -128,6 +128,7 @@ fun WidgetMaker(editId: Int?, onClose: () -> Unit) {
         val model = WidgetModel.build(readings, now, zone, options.graphHours)
         val person = if (options.style == WidgetStyle.FOLLOWING) (people.firstOrNull { it.id == options.person } ?: people.firstOrNull())?.let { WidgetExtras.person(it.name, it.latest, now) } else null
         val extras = WidgetExtras.build(events, now, zone, container.settings.insulinAction, person)
+            .copy(next = if (options.style == WidgetStyle.NOW) GlucoseWidget.nextFor(context, readings, events, now, zone) else null)
         val shown = if (editId == null) size else placedSize ?: size
         val dp = DpSize((shown.cols * 82 + (shown.cols - 1) * 10).dp * if (shown.cols == 4) 0.95f else 1f, (shown.rows * 92 + (shown.rows - 1) * 10).dp)
         val views by produceState<RemoteViews?>(null, options, shown, model, extras) {
@@ -158,7 +159,10 @@ fun WidgetMaker(editId: Int?, onClose: () -> Unit) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
             Label(R.string.widget_maker_style)
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                WidgetStyle.entries.forEach { style -> Chip(styleName(style), style == options.style, rounded = true) { pick(style) } }
+                WidgetStyle.entries.forEach { style ->
+                    val name = styleName(style)
+                    Chip(if (style == WidgetStyle.QUIET) stringResource(R.string.widget_recommended, name) else name, style == options.style, rounded = true) { pick(style) }
+                }
             }
 
             Label(R.string.widget_maker_size)
@@ -295,6 +299,9 @@ private fun Chip(label: String, on: Boolean, modifier: Modifier = Modifier, roun
 @Composable
 internal fun styleName(style: WidgetStyle) = stringResource(
     when (style) {
+        WidgetStyle.QUIET -> R.string.widget_style_quiet
+        WidgetStyle.BOLD -> R.string.widget_style_bold
+        WidgetStyle.NOW -> R.string.widget_style_now
         WidgetStyle.NUMBER -> R.string.widget_style_number
         WidgetStyle.CARD -> R.string.widget_style_card
         WidgetStyle.GRAPH -> R.string.widget_style_graph

@@ -2241,4 +2241,15 @@
     <string name="ramadan_city_cairo">Cairo</string>
     <string name="ramadan_city_alexandria">Alexandria</string>
     <string name="ramadan_city_tanta">Tanta</string>
+    <string name="widget_style_quiet">Quiet</string>
+    <string name="widget_style_bold">Colour</string>
+    <string name="widget_style_now">Now</string>
+    <string name="widget_recommended">%1$s · recommended</string>
+    <string name="widget_state_in_range">In range</string>
+    <string name="widget_state_high">High</string>
+    <string name="widget_state_low">Low</string>
+    <string name="widget_state_stale">No signal</string>
+    <string name="widget_low_carbs">Take 15 g fast carbs</string>
+    <string name="widget_add_food">+ Food</string>
+    <string name="widget_add_insulin">+ Insulin</string>
 </resources>

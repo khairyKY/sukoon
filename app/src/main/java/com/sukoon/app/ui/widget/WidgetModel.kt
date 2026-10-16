@@ -27,6 +27,24 @@ enum class WidgetInfo { ARROW, CHANGE, AGO, GRAPH, TIR, CARBS, KCAL, IOB, LONG }
 
 /** The widget designs (design canvas "Round 3 · Widgets"), the sizes each reads well at, and what each can show. */
 enum class WidgetStyle(val sizes: List<WidgetSize>, val infos: List<WidgetInfo>, val defaults: Set<WidgetInfo>) {
+    /** Design A (recommended): a pale card, the serif number and arrow, the 3-hour line; colour only out of range. */
+    QUIET(
+        listOf(WidgetSize.LARGE, WidgetSize.SQUARE, WidgetSize.STRIP),
+        listOf(WidgetInfo.ARROW, WidgetInfo.AGO, WidgetInfo.GRAPH, WidgetInfo.IOB),
+        setOf(WidgetInfo.ARROW, WidgetInfo.AGO, WidgetInfo.GRAPH, WidgetInfo.IOB),
+    ),
+    /** Design B: the whole tile in the range's colour, a white number, today's time in range as a ring. */
+    BOLD(
+        listOf(WidgetSize.LARGE, WidgetSize.SQUARE, WidgetSize.STRIP),
+        listOf(WidgetInfo.ARROW, WidgetInfo.AGO, WidgetInfo.TIR, WidgetInfo.IOB),
+        setOf(WidgetInfo.ARROW, WidgetInfo.AGO, WidgetInfo.TIR, WidgetInfo.IOB),
+    ),
+    /** Design C: a small Now: the number, the next step, and buttons to log food or insulin. */
+    NOW(
+        listOf(WidgetSize.LARGE, WidgetSize.SQUARE, WidgetSize.SMALL),
+        listOf(WidgetInfo.ARROW, WidgetInfo.AGO, WidgetInfo.IOB),
+        setOf(WidgetInfo.ARROW, WidgetInfo.AGO, WidgetInfo.IOB),
+    ),
     NUMBER(listOf(WidgetSize.SMALL, WidgetSize.WIDE), listOf(WidgetInfo.ARROW, WidgetInfo.CHANGE, WidgetInfo.AGO), setOf(WidgetInfo.ARROW, WidgetInfo.AGO)),
     CARD(
         listOf(WidgetSize.SQUARE, WidgetSize.LARGE, WidgetSize.WIDE),
@@ -144,6 +162,8 @@ data class WidgetExtras(
     /** The last long-acting amount: what the widget's "Took it" logs. */
     val lastLongDose: Double?,
     val person: PersonReading? = null,
+    /** [WidgetStyle.NOW]: Now's message and its body ([com.sukoon.app.ui.home.HomeBriefs]). */
+    val next: Pair<String, String>? = null,
 ) {
     companion object {
         val NONE = WidgetExtras(0.0, null, 0.0, null, null, null, null)

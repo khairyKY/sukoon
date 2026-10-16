@@ -2380,4 +2380,15 @@
     <string name="ramadan_city_cairo">القاهرة</string>
     <string name="ramadan_city_alexandria">الإسكندرية</string>
     <string name="ramadan_city_tanta">طنطا</string>
+    <string name="widget_style_quiet">هادئ</string>
+    <string name="widget_style_bold">ملوّن</string>
+    <string name="widget_style_now">الآن</string>
+    <string name="widget_recommended">%1$s · موصى به</string>
+    <string name="widget_state_in_range">في النطاق</string>
+    <string name="widget_state_high">مرتفع</string>
+    <string name="widget_state_low">منخفض</string>
+    <string name="widget_state_stale">لا إشارة</string>
+    <string name="widget_low_carbs">تناول 15 غ كربوهيدرات سريعة</string>
+    <string name="widget_add_food">+ طعام</string>
+    <string name="widget_add_insulin">+ أنسولين</string>
 </resources>

@@ -952,50 +952,51 @@ private fun stepText(step: Step): String = stringResource(
     },
 )
 
-/** Title and body for [brief]. */
 @Composable
-private fun briefText(brief: Brief): Pair<String, String> {
-    val context = LocalContext.current
+private fun briefText(brief: Brief): Pair<String, String> = briefLines(LocalContext.current, brief)
+
+/** Title and body for [brief] (Now's message card, and the Now widget). */
+internal fun briefLines(context: android.content.Context, brief: Brief): Pair<String, String> {
     fun units(u: Double) = String.format(Locale.getDefault(), "%.1f", u)
     return when (brief) {
-        is Brief.HeadingLow -> stringResource(R.string.home_brief_heading_low_title) to listOfNotNull(
-            pluralStringResource(R.plurals.home_brief_heading_low_body, brief.minutes.toInt(), brief.minutes),
-            if (brief.insulin > 0) stringResource(R.string.home_insulin_working, units(brief.insulin)) else null,
+        is Brief.HeadingLow -> context.getString(R.string.home_brief_heading_low_title) to listOfNotNull(
+            context.resources.getQuantityString(R.plurals.home_brief_heading_low_body, brief.minutes.toInt(), brief.minutes),
+            if (brief.insulin > 0) context.getString(R.string.home_insulin_working, units(brief.insulin)) else null,
         ).joinToString(" ")
-        is Brief.VeryHighFor -> stringResource(R.string.home_brief_very_high_title) to listOfNotNull(
-            stringResource(R.string.home_brief_very_high_body, durationText(context, brief.minutes)),
-            if (brief.insulin > 0) stringResource(R.string.home_insulin_working, units(brief.insulin)) + " " + stringResource(R.string.home_no_correction_yet) else null,
+        is Brief.VeryHighFor -> context.getString(R.string.home_brief_very_high_title) to listOfNotNull(
+            context.getString(R.string.home_brief_very_high_body, durationText(context, brief.minutes)),
+            if (brief.insulin > 0) context.getString(R.string.home_insulin_working, units(brief.insulin)) + " " + context.getString(R.string.home_no_correction_yet) else null,
         ).joinToString(" ")
-        is Brief.Rebound -> stringResource(R.string.home_brief_rebound_title) to stringResource(R.string.home_brief_rebound_body, HM.format(brief.lowAt))
-        is Brief.InsulinWorking -> stringResource(R.string.home_brief_insulin_title) to stringResource(R.string.home_insulin_working, units(brief.units))
-        is Brief.HighFor -> stringResource(R.string.home_brief_high_title) to
-            if (brief.minutes < 5) stringResource(R.string.home_brief_high_just_now) else stringResource(R.string.home_brief_high_body, durationText(context, brief.minutes))
-        is Brief.AfterMeal -> stringResource(R.string.home_brief_meal_title) to (
-            if (brief.grams != null) stringResource(R.string.home_brief_meal_body_grams, brief.grams, HM.format(brief.at))
-            else stringResource(R.string.home_brief_meal_body, HM.format(brief.at))
+        is Brief.Rebound -> context.getString(R.string.home_brief_rebound_title) to context.getString(R.string.home_brief_rebound_body, HM.format(brief.lowAt))
+        is Brief.InsulinWorking -> context.getString(R.string.home_brief_insulin_title) to context.getString(R.string.home_insulin_working, units(brief.units))
+        is Brief.HighFor -> context.getString(R.string.home_brief_high_title) to
+            if (brief.minutes < 5) context.getString(R.string.home_brief_high_just_now) else context.getString(R.string.home_brief_high_body, durationText(context, brief.minutes))
+        is Brief.AfterMeal -> context.getString(R.string.home_brief_meal_title) to (
+            if (brief.grams != null) context.getString(R.string.home_brief_meal_body_grams, brief.grams, HM.format(brief.at))
+            else context.getString(R.string.home_brief_meal_body, HM.format(brief.at))
             )
-        is Brief.BackFromLow -> stringResource(R.string.home_brief_back_title) to stringResource(R.string.home_brief_back_body, HM.format(brief.lowAt))
-        Brief.DawnRise -> stringResource(R.string.home_brief_dawn_title) to stringResource(R.string.home_brief_dawn_body)
-        Brief.RisingNoMeal -> stringResource(R.string.home_brief_rising_title) to stringResource(R.string.home_brief_rising_body)
-        is Brief.Bedtime -> stringResource(R.string.home_brief_bedtime_title) to
-            stringResource(if (brief.insulin) R.string.home_brief_bedtime_insulin else R.string.home_brief_bedtime_falling, brief.mgDl)
-        is Brief.ActiveToday -> stringResource(R.string.home_brief_active_title) to stringResource(R.string.home_brief_active_body)
-        Brief.NewSensor -> stringResource(R.string.home_brief_new_sensor_title) to stringResource(R.string.home_brief_new_sensor_body)
-        Brief.QuietNight -> stringResource(R.string.home_brief_quiet_night_title) to stringResource(R.string.home_brief_quiet_night_body)
-        Brief.GoodNight -> stringResource(R.string.home_brief_good_night_title) to stringResource(R.string.home_brief_good_night_body)
-        is Brief.InRangeFor -> stringResource(R.string.home_brief_streak_title) to stringResource(R.string.home_brief_streak_body, durationText(context, brief.minutes))
-        is Brief.GoodDay -> stringResource(R.string.home_brief_good_day_title) to stringResource(R.string.home_brief_good_day_body, brief.percent)
-        is Brief.Steady -> STEADY[brief.variant % STEADY.size].let { (title, body) -> stringResource(title) to stringResource(body) }
-        Brief.BreakFastHigh -> stringResource(R.string.home_brief_break_fast_high_title) to stringResource(R.string.home_brief_break_fast_high_body)
-        is Brief.FastCheck -> stringResource(R.string.home_brief_fast_check_title, brief.mgDl) to stringResource(R.string.home_brief_fast_check_body)
-        is Brief.Ketones -> stringResource(R.string.home_brief_ketones_title, String.format(Locale.getDefault(), "%.1f", brief.mmol)) to stringResource(
+        is Brief.BackFromLow -> context.getString(R.string.home_brief_back_title) to context.getString(R.string.home_brief_back_body, HM.format(brief.lowAt))
+        Brief.DawnRise -> context.getString(R.string.home_brief_dawn_title) to context.getString(R.string.home_brief_dawn_body)
+        Brief.RisingNoMeal -> context.getString(R.string.home_brief_rising_title) to context.getString(R.string.home_brief_rising_body)
+        is Brief.Bedtime -> context.getString(R.string.home_brief_bedtime_title) to
+            context.getString(if (brief.insulin) R.string.home_brief_bedtime_insulin else R.string.home_brief_bedtime_falling, brief.mgDl)
+        is Brief.ActiveToday -> context.getString(R.string.home_brief_active_title) to context.getString(R.string.home_brief_active_body)
+        Brief.NewSensor -> context.getString(R.string.home_brief_new_sensor_title) to context.getString(R.string.home_brief_new_sensor_body)
+        Brief.QuietNight -> context.getString(R.string.home_brief_quiet_night_title) to context.getString(R.string.home_brief_quiet_night_body)
+        Brief.GoodNight -> context.getString(R.string.home_brief_good_night_title) to context.getString(R.string.home_brief_good_night_body)
+        is Brief.InRangeFor -> context.getString(R.string.home_brief_streak_title) to context.getString(R.string.home_brief_streak_body, durationText(context, brief.minutes))
+        is Brief.GoodDay -> context.getString(R.string.home_brief_good_day_title) to context.getString(R.string.home_brief_good_day_body, brief.percent)
+        is Brief.Steady -> STEADY[brief.variant % STEADY.size].let { (title, body) -> context.getString(title) to context.getString(body) }
+        Brief.BreakFastHigh -> context.getString(R.string.home_brief_break_fast_high_title) to context.getString(R.string.home_brief_break_fast_high_body)
+        is Brief.FastCheck -> context.getString(R.string.home_brief_fast_check_title, brief.mgDl) to context.getString(R.string.home_brief_fast_check_body)
+        is Brief.Ketones -> context.getString(R.string.home_brief_ketones_title, String.format(Locale.getDefault(), "%.1f", brief.mmol)) to context.getString(
             when (brief.band) {
                 com.sukoon.app.modes.Modes.KetoneBand.DANGER -> R.string.home_brief_ketones_danger
                 com.sukoon.app.modes.Modes.KetoneBand.HIGH -> R.string.home_brief_ketones_high
                 else -> R.string.home_brief_ketones_raised
             },
         )
-        Brief.KetonesDue -> stringResource(R.string.home_brief_ketones_due_title) to stringResource(R.string.home_brief_ketones_due_body)
+        Brief.KetonesDue -> context.getString(R.string.home_brief_ketones_due_title) to context.getString(R.string.home_brief_ketones_due_body)
         is Brief.Low, is Brief.Treated -> "" to "" // the low screens word these (see BriefCards)
     }
 }
