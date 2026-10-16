@@ -9,12 +9,15 @@
 A native Android app for the FreeStyle Libre 2 and 2 Plus (EU). It reads the sensor over Bluetooth with no reader app in between,<br/>
 sounds alarms that actually reach you, texts and calls your family when a low goes unanswered, and costs $0 a month.
 
+In the #WeAreNotWaiting tradition: free, built in the open, outside the app stores.<br/>
+Arabic-first, in English, Standard Arabic and Egyptian Arabic.
+
 ![Release](https://img.shields.io/github/v/release/khairyKY/sukoon?style=flat-square&color=3E7A63&label=release)
 ![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B_(API_26--35)-2E5C4A?style=flat-square)
 ![Kotlin + Compose](https://img.shields.io/badge/Kotlin_2.0-Jetpack_Compose-3b6e8f?style=flat-square)
 ![Libre 2 direct](https://img.shields.io/badge/sensor-Libre_2_%2F_2_Plus_EU,_direct_BLE-82BBA0?style=flat-square)
 ![English + Egyptian Arabic](https://img.shields.io/badge/language-English_%C2%B7_%D8%B9%D8%B1%D8%A8%D9%8A-C88A3E?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-162_passing-3E7A63?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-284_unit-3E7A63?style=flat-square)
 ![Monthly cost: $0](https://img.shields.io/badge/monthly_cost-%240-6b8f5e?style=flat-square)
 
 [**Why**](#-why-this-exists) · [**Tour**](#-a-tour) · [**Install**](#-install) · [**Features**](#-what-it-does) · [**Alarms**](#-alarms-that-reach-you) · [**How it works**](#%EF%B8%8F-how-it-works) · [**Privacy**](#-what-leaves-your-phone) · [**Troubleshooting**](#-troubleshooting) · [**Develop**](#%EF%B8%8F-development) · [**Roadmap**](#%EF%B8%8F-roadmap)
@@ -86,9 +89,11 @@ I have type 1 diabetes and I live in Egypt, on EU-bought Libre 2 sensors. The of
 3. Accept the not-a-medical-device screen, pick who you are (**I wear a sensor**, **I follow someone**, or **both**), and follow the steps for that role.
 
 > [!NOTE]
-> **Why Android warns you.** Sukoon isn't on the Play Store, so Android treats it like any app from outside the store. Every release lists the APK's SHA-256 so you can check the file you downloaded, and the whole source is here to read. Updates from the Releases page install over the old version and keep your data.
+> **Why Android warns you.** Sukoon isn't on the Play Store, so Android treats it like any app from outside the store. Every release lists the APK's SHA-256 so you can check the file you downloaded, and the whole source is here to read.
 >
-> **Coming from 0.6 or earlier?** Those builds were signed with a debug key; later ones are signed with Sukoon's own key, and Android won't update across keys. Once: **You → Reports → Backup → Back up everything**, uninstall, install the new build, then **Restore**. Readings, logbook, settings, alarms, the sensor pairing and meal photos all come back ([`docs/signing.md`](docs/signing.md)).
+> **Updates come to you.** Sukoon checks GitHub for a new version every few hours and tells you with a notification. Tap **Update**: it downloads with a bar in the notification, then installs over your current app and keeps your data. You can also check any time in **You → Help & about**.
+>
+> **Coming from 0.6 or earlier?** Those builds were signed with a debug key; later ones are signed with Sukoon's own key, and Android won't update across keys. Once: **You → Export & backup → Back up everything**, uninstall, install the new build, then **Restore**. Readings, logbook, settings, alarms, the sensor pairing and meal photos all come back ([`docs/signing.md`](docs/signing.md)).
 
 ### On iPhone, or without the app
 
@@ -98,7 +103,7 @@ Someone who only follows sees a simpler app: no sensor, insulin or dose settings
 
 ### Pairing a sensor
 
-**A new sensor:** You → Sensor → **Start a new sensor**, then hold the phone to it. Sukoon starts it over NFC (no LibreLink or DiaBox needed), checks its memory says it's warming up, and pairs it. **A running sensor:** **You → Sensor → Connect**, then hold the phone to the sensor. Sukoon reads it over NFC, checks that it can decode it, and only then switches on its Bluetooth stream. From there a reading arrives every minute, a new sensor counts down its 60-minute warm-up on Home (any first-hour reading shows in grey and counts for nothing: no alarms, reports or AI), and Sukoon reminds you 3 days, a day and an hour before the sensor ends.
+**A new sensor:** You → Sensor → **Start a new sensor** → **Start it**, then hold the phone to it. Sukoon starts it over NFC (no LibreLink or DiaBox needed), checks its memory says it's warming up, and pairs it. **A running sensor:** **You → Sensor → Connect sensor**, then hold the phone to the sensor. Sukoon reads it over NFC, checks that it can decode it, and only then switches on its Bluetooth stream. From there a reading arrives every minute, a new sensor shows its 60-minute warm-up on Now (any first-hour reading shows in grey and counts for nothing: no alarms, reports or AI), and Sukoon reminds you 3 days, a day and an hour before the sensor ends.
 
 > [!WARNING]
 > **A Libre 2 streams to one phone at a time.** Pairing Sukoon takes the sensor's Bluetooth from whichever app had it (LibreLink, DiaBox, xDrip+). To hand it back, scan the sensor once with the other app. To try Sukoon on a second phone, use **Follower** with an invite code from the first phone, or demo data.
@@ -111,47 +116,50 @@ Someone who only follows sees a simpler app: no sensor, insulin or dose settings
 
 ### Now: the number, and what to do about it
 
-- ✅ **Home in one glance.** A large serif reading, the trend arrow, how old it is, the last 3 hours as one bar per 15 minutes (a low or a high inside one shows instead of being averaged away), insulin still active, and up to four stats you pick (carbs, calories, active insulin, time in range, steps, water…).
+- ✅ **Now in one glance.** Chips on top (a workout, fasting, steps, today's calories and protein, insulin still active), then a large serif reading with its arrow and age, one **Next** card, the last 3 hours as bars, and tiles for the stats you pick. Beta dose cards sit underneath, and an arrow says when there's more below. Turn parts on or off and reorder them in You → Appearance → Now (*Arrange Now*). On demo data the header says **DEMO**, not LIVE.
 - ✅ **One message, one next step.** Sixteen rules, most urgent first: *heading low, have carbs ready*; *insulin still working, don't stack another dose*; *rebound after a low, let it settle*; *quiet night*. The message never suggests an insulin dose (dose suggestions are a separate beta, below). The full list is in [`docs/behaviour.md`](docs/behaviour.md).
-- ✅ **Your own range.** 70 to a top you choose, 120–180 (70–140 is *time in tight range*). Home, the graph, widgets and the status bar use it; Insights and the doctor report keep the international 70–180 and show yours beside it.
+- ✅ **Your own range.** 70 to a top you choose, 120–180 (70–140 is *time in tight range*). Now, the graph, widgets and the status bar use it; Insights and the doctor report keep the international 70–180 and show yours beside it.
 - ✅ **Lows walk you through the 15-15 rule.** *I've treated it* stops the alarm, counts down 15 minutes, then asks you to check, and says *Still low, have another 15 g* if you are.
 - ✅ **Every state has its own screen:** no sensor, warming up, in range, high, low, urgent, signal lost (the last value greyed with how long ago), and sensor ended.
 - ✅ **Glucose in the status bar.** The number itself is the notification icon, with the arrow and age in the shade.
-- ✅ **Home-screen widgets.** Seven styles (Number, Number + graph, Graph, Ring, Today, Insulin with a *Took it* button, Following), from 1×1 to half the screen, built in a widget maker that previews the real widget with your numbers.
+- ✅ **Home-screen widgets.** Ten styles: **Quiet** (recommended), **Colour** and **Now** (the next step, with *+ Food* and *+ Insulin*), plus Number, Number + graph, Graph, Ring, Today, Insulin with a *Took it* button, and Following. From 1×1 to half the screen, built in a widget maker that previews the real widget with your numbers. Trend arrows are Sukoon's own drawing, in widgets and everywhere else.
 
 ### Log: quick entry first
 
-- 🌱 **Meals built from foods.** Search foods and brands in Arabic or English, or scan a barcode with Sukoon's own camera (it opens at once and reads offline). Packaged foods come from [Open Food Facts](https://world.openfoodfacts.org) with their photos; 88 Egyptian and Middle-Eastern home dishes (ملوخية, كشري, محشي, عيش بلدي…) are built in with sourced carbs; anything else, *Ask the AI*. Pick ¼, ½ or a whole pack, a bowl or a serving, or type your amount in grams or portions. The plate adds up the carbs, fibre, protein, fat and calories, the dose suggestion works from it, and your usual foods are one tap at the amount you last had.
-- ✅ **Meals, rapid and long-acting insulin, finger-pricks and activity** from big tiles and a number pad. A meal and its insulin save together, with pre-bolus minutes and *when it happened* (now, 15/30/60 minutes ago, or a picked time). Every entry shows the glucose at that moment. Undo on every save.
-- ✅ **Insulin on board** on the exponential curve OpenAPS and Loop use (peak 75 minutes, 5 hours by default), shown on Home and before you log another dose.
+- 🌱 **Meals built from foods.** Search foods and brands in Arabic or English, or scan a barcode with Sukoon's own camera (it opens at once and reads offline). Packaged foods come from [Open Food Facts](https://world.openfoodfacts.org) with their photos, everyday foods (scrambled eggs, cooked rice) from [USDA FoodData Central](https://fdc.nal.usda.gov), searched side by side; 88 Egyptian and Middle-Eastern home dishes (ملوخية, كشري, محشي, عيش بلدي…) are built in with sourced carbs; anything else, *Ask the AI*. Pick ¼, ½ or a whole pack, a bowl or a serving, or type your amount in grams or portions. The plate adds up the carbs, fibre, protein, fat and calories, the dose suggestion works from it, and your usual foods are one tap at the amount you last had.
+- ✅ **Meals, rapid and long-acting insulin, finger-pricks and activity** from big tiles and a number pad. A meal and its insulin save together, with when you injected (before, with, or 15, 30 or 60 minutes after eating) and *when it happened* (now, 15/30/60 minutes ago, or a picked time). Every entry shows the glucose at that moment. Undo on every save.
+- ✅ **Insulin on board** on the exponential curve OpenAPS and Loop use (peak 75 minutes, 5 hours by default), shown on Now and before you log another dose.
 - ✅ **Finger-pricks beside the sensor.** Each check shows the sensor reading at that minute and whether the two agree, and sits on the graph as a ring.
 - 🌱 **After-workout check.** Log a workout and, 30 to 90 minutes after it ends, Sukoon asks for a reading if it can't see one, since lows often come later. On by default, under You → Alarms.
 - ✅ **Long-acting reminder.** A daily nudge at your time unless the dose was already logged, with *Took it* right on the notification.
 - 🌱 **Injection sites.** *Where?* on rapid and long-acting entries: two figures, front and back, one tap for the spot and the side. The spot rested longest is suggested, the last 30 days show as a body map, and an insight says when one spot takes most of your doses.
-- 🌱 **Dose suggestions (beta, off by default).** Carb counting with a ratio per meal (breakfast, lunch, dinner, late), how far 1 unit lowers you, and a target; any box can stay empty. A new rapid entry shows the suggested dose with its maths line by line, rounded down to your pen (whole units by default) and capped at your maximum. Nothing is suggested when you're low or dropping. *Use* fills the amount; only Save logs it. Above your range and not eating, Home shows a correction the same way.
+- 🌱 **Dose suggestions (beta, off by default).** Carb counting with a ratio per meal (breakfast, lunch, dinner, late), how far 1 unit lowers you, and a target; any box can stay empty. A new rapid entry shows the suggested dose with its maths line by line, rounded down to your pen (whole units by default) and capped at your maximum. Nothing is suggested when you're low or dropping. *Use* fills the amount; only Save logs it. Above your range and not eating, Now offers a correction the same way, minus the insulin still working: only when what's left is at least one pen step, and never within 2 hours of the last dose.
+- 🌱 **When a meal changes after its insulin.** Ate less than you dosed for? A sheet shows planned against eaten, where you may be heading, and three ways on: *I'll eat X g now*, *I'll eat the rest soon*, or *Just watch me*. Each starts a watch until the extra insulin is spent: low alarm at 90, check-ins at 30 and 60 minutes. Ate more? It offers a top-up. Deleting anything asks first.
+- 🌱 **Say it.** Tell Sukoon what you ate, took or did, in Arabic, English or both in one sentence (powered by Sotto). It keeps listening through pauses until you're done, shows what it heard so you can fix it, and only then has the AI (your key) turn it into entries for you to save.
 - 🌱 **Starting ratios for when you don't know yours.** From your logged daily insulin (the 500 and 1800 rules), else your weight and age (0.5 u/kg a day for adults, 1.0 for 12–17, 0.7 under 12: the cautious end of the ADA and ISPAD ranges), else the common adult start.
-- 🌱 **Learning from your meals.** Every meal of the last 30 days gets a verdict. Clean ones (logged with their insulin, nothing else eaten for 4 hours, none still working, no workout) say what ratio they needed; a least-squares fit over every usable meal and correction finds how far 1 unit lowers you and each meal's ratio, with no numbers to start from. Each suggestion shows its meals, moves your number at most 20% per *Use*, and Home says when one is ready. Never changed by itself. The whole review exports as CSV.
+- 🌱 **Learning from your meals.** Every meal of the last 30 days gets a verdict. Clean ones (logged with their insulin, nothing else eaten for 4 hours, none still working, no workout) say what ratio they needed; a least-squares fit over every usable meal and correction finds how far 1 unit lowers you and each meal's ratio, with no numbers to start from. Each suggestion shows its meals, moves your number at most 20% per *Use*, and Now says when one is ready. Never changed by itself. The whole review exports as CSV.
 - 🌱 **Parent lock.** A PIN (kept as a salted hash) that guards the alarms, your range, dose settings and profile. Under 18, dose suggestions only switch on behind one.
 - ✅ **Every meal shows what it did.** Tap any meal: its carbs and the insulin taken for it (or *Add insulin*), its photos, a *rich meal* note when fat and protein can keep you rising for hours, the glucose curve around it, and one list of everything in it.
 - ✅ **As many photos as you like** on a meal, and the AI carb estimate reads them all.
-- ✅ **MyFitnessPal through Health Connect.** MyFitnessPal shares a running total per day, not meals, so Sukoon splits it back into meals at the time you log each one; *When did you eat?* sets the real time and *What was it?* names it (the foods themselves stay in MyFitnessPal). Workouts, steps and water come in too. Pull down on Home to sync. Readings go back out to Health Connect as blood glucose.
+- ✅ **MyFitnessPal through Health Connect.** MyFitnessPal shares a running total per day, not meals, so Sukoon splits it back into meals at the time you log each one; *When did you eat?* sets the real time and *What was it?* names it (the foods themselves stay in MyFitnessPal). Workouts, steps and water come in too. Pull down on Now to sync. Readings go back out to Health Connect as blood glucose.
 
 ### Trends: understand the week
 
-- ✅ **The graph:** 3 hours to 14 days, the line coloured by range with gaps left as gaps, time in range in five bands, average and GMI, and every reading listed underneath.
+- ✅ **The graph:** 3 hours to 14 days, the line coloured by range with gaps left as gaps, time in range in five bands, average and GMI, and every reading listed underneath. Press and slide along the line to read it reading by reading.
 - ✅ **Any day, back as far as you have data.** The logbook and the graph both have a *‹ Today ›* bar: a day back, a day on, or tap it for a calendar.
 - 🌱 **Insights, one thing at a time.** The last 14 days in one line, then *the one thing* worth doing this week with a button that does it (turn on the going-low alarm or the after-workout check, set up doses, log a meal, open the doctor report; a button for something already on is replaced by the next one), up to three more worth knowing, and the rest behind *More*. Under a week of data it says so instead of guessing. Each finding keeps its source: time in range against the international consensus targets, variability (CV), recurring lows and highs, the dawn rise, what each meal did, pre-bolus timing, insulin stacking, this week against last, lows after workouts, highs after treating a low, one injection spot taking most doses. With a tighter range of your own, its share sits beside the international one.
 - ✅ **Report for your doctor:** an Ambulatory Glucose Profile (5–95, 25–75 and median by time of day) over 7, 14 or 30 days with GMI and CV, exported as a one-page A4 PDF.
-- ✅ **Ask.** A chat about your own data, and carb estimates from a meal photo or a description, through Google's Gemini with **your own free API key**. It sees summaries, not raw readings, and an estimate only ever pre-fills a field you confirm.
+- ✅ **Ask.** A chat about your own data, and estimates of carbs, protein, fat and calories from a meal photo or a description, through Google's Gemini with **your own free API key**. It knows Sukoon's own Guide, answers short with proper bold and lists, and offers follow-up questions. It sees summaries, not raw readings, and an estimate only ever pre-fills a field you confirm.
 
 ### Share: the people who'd want to know
 
 - ✅ **Emergency contacts** from the phone book. See [the escalation](#-alarms-that-reach-you) below.
-- 🌱 **Followers.** Invite someone with a link or a QR code: on Android it opens Sukoon with the one-time code filled in, anywhere else the follow page. They see your live number, chart and Home message on their own phone and get your alarms with your name on them; you choose which alarms (urgent low always). Unused invites can be shown again or cancelled, and you're told when someone new follows you, with *Remove* right there. Accounts confirm their email and can reset a forgotten password ([how](docs/accounts.md)). Runs on Supabase with row-level security; an account is optional if you only wear a sensor.
+- 🌱 **Followers.** Invite someone with a link or a QR code: on Android it opens Sukoon with the one-time code filled in, anywhere else the follow page. They see your live number, chart and Now message on their own phone and get your alarms with your name on them; you choose which alarms (urgent low always). Unused invites can be shown again or cancelled, and you're told when someone new follows you, with *Remove* right there. Accounts confirm their email and can reset a forgotten password ([how](docs/accounts.md)). Runs on Supabase with row-level security; an account is optional if you only wear a sensor.
 - 🌱 **Follow from any phone's browser, iPhone included.** The [follow page](https://khairyky.github.io/sukoon/) shows the same number, arrow, 3-hour chart and words, in English or Arabic, installs to the home screen, and sounds an alarm while it's open. *Send* in You → People shares the code and the link in one message.
-- 🌱 **Follow anyone on Abbott's or Dexcom's apps.** Sign in to LibreLinkUp or Dexcom Share and those people sit next to your Sukoon follows, with the same Home, widget and alarms. Either connection can also be *this phone's* glucose, which is how a Libre 3 wearer can use Sukoon.
+- 🌱 **Follow anyone on Abbott's or Dexcom's apps.** Sign in to LibreLinkUp or Dexcom Share and those people sit next to your Sukoon follows, with the same Now, widget and alarms. Either connection can also be *this phone's* glucose, which is how a Libre 3 wearer can use Sukoon.
 - ✅ **Nightscout upload** (readings, treatments and finger-pricks), **CSV export**, and **Backup**: one zip with the database, every setting, the sensor pairing and the meal photos, restored in one step.
-- 🌱 **Daily backup to your own cloud** (opt-in): pick a file in Google Drive, OneDrive, Dropbox or any cloud app on the phone with Android's own *save to*, and Sukoon refreshes it once a day. *Back up now* and *Stop* in You → Reports.
+- 🌱 **Widget link (Nightscout format).** You → Apps & data → *Widget link* makes a private link that serves your readings in Nightscout's format from Sukoon's cloud, for a laptop widget (a Rainmeter Nightscout skin, say) or a watch face. No Nightscout server, no VPN. It serves the readings you share with followers, so it needs you signed in with *Share my readings* on. Keep the token private: anyone with it sees your glucose, and making a new link stops the old one.
+- 🌱 **Daily backup to your own cloud** (opt-in): pick a file in Google Drive, OneDrive, Dropbox or any cloud app on the phone with Android's own *save to*, and Sukoon refreshes it once a day. *Back up now* and *Stop* in You → Export & backup.
 
 ### On your watch (Wear OS)
 
@@ -159,13 +167,13 @@ Someone who only follows sees a simpler app: no sensor, insulin or dose settings
 
 ### Everything else
 
-- ✅ **Your sensor at a glance.** You → Sensor says *Live*, *Reconnecting* or *No signal* from the last reading, puts what needs you on top in red or amber (Bluetooth off, no readings, sensor ending, ended) with the fix one tap away, and shows the sensor's life as a bar that turns amber 3 days before the end. *Connection* lists the last 24 hours' drops: when, how long the link had lasted, why Android says it dropped, and how soon it came back. Bluetooth off also shows on Home, and a notice comes 3 days, 1 day and 1 hour before the sensor stops.
-- ✅ **English, Standard Arabic and Egyptian Arabic**, right to left, with the language picked inside the app (1,404 strings in each, checked for parity; Arabic phones in Egypt get Egyptian, elsewhere Standard), and a **12- or 24-hour clock** (or the phone's).
-- ✅ **Light, dark or like the phone**, with motion from the design spec that turns off when the phone's *Remove animations* is on.
-- ✅ **A built-in guide** (You → Guide) and a getting-started card on Home.
-- 🌱 **Notices from Sukoon**: a short message to every install (a known problem, "please update"), as a notification and a card on Now, read every 6 hours from a file on GitHub Pages ([how](docs/notices.md)).
+- ✅ **Your sensor at a glance.** You → Sensor says *Live*, *Reconnecting* or *No signal* from the last reading, puts what needs you on top in red or amber (Bluetooth off, no readings, sensor ending, ended) with the fix one tap away, and shows the sensor's life as a bar that turns amber 3 days before the end. *Connection* lists the last 24 hours' drops: when, how long the link had lasted, why Android says it dropped, and how soon it came back. Bluetooth off also shows on Now, and a notice comes 3 days, 1 day and 1 hour before the sensor stops.
+- ✅ **English, Standard Arabic and Egyptian Arabic**, right to left, with the language picked inside the app (2,096 strings in each, checked for parity; Arabic phones in Egypt get Egyptian, elsewhere Standard), and a **12- or 24-hour clock** (or the phone's).
+- ✅ **Light, dark or like the phone**, with calm motion ([`docs/motion.md`](docs/motion.md)) that turns off with Android's *Remove animations*, and never on alarm, low or urgent screens.
+- ✅ **You, in sections**: your profile page under your name, then Sensor, Alarms & sounds, People, Insulin & doses, Apps & data, Export & backup, Appearance, **Guide** (the built-in guide, also a getting-started card on Now) and Help & about.
+- 🌱 **Notices from Sukoon**: a short message to every install (a known problem, "please update"), as a notification and a card on Now, read every 15 minutes from a file on GitHub Pages ([how](docs/notices.md)).
 - ✅ **A parent lock for children**: a PIN over the alarms, range, doses, profile and everything that would cut a parent off as a follower. From 18 it doesn't apply.
-- 🌱 **Modes** for a workout (low alarm 100, a day of watching for late lows, the meal after it cut), fasting in Ramadan (when to break the fast, a lower suhoor dose, a suhoor reminder) and sick days (ketones every 2 hours, with what each level means). Every number cites its guideline ([sources](docs/research/modes-sources.md)).
+- 🌱 **Modes** for a workout (low alarm 100, a day of watching for late lows, and less meal insulin for 2 hours after it: the same, 25 or 50% less, or your own 0–75%, in Insulin & doses or Fitness & food), fasting in Ramadan (suhoor and iftar times from where you are, named by your city; when to break the fast, a lower suhoor dose, a suhoor reminder) and sick days (ketones every 2 hours, with what each level means). Every number cites its guideline ([sources](docs/research/modes-sources.md)).
 - 🌱 **Falling fast** alarm while still in range, and **rising fast** if you want it; a vibration pattern per alarm; **pause all alarms** (urgent low always sounds).
 - 🌱 **Fill gaps from the sensor**: one tap reads its 8-hour memory into whatever Bluetooth missed.
 - 🌱 **Low treatments**: what you treat lows with is kept apart from meals, and Insights says how much you usually take and how often it overshoots.
@@ -188,6 +196,8 @@ A CGM app is only as good as the alarm that wakes you at 3 a.m. Every alarm here
 Alarms only ever come from real readings: the sensor, or a LibreLinkUp or Dexcom connection used as this phone's glucose. Demo data never sounds one.
 
 **Can alarms reach you?** You → Alarms checks notifications, full-screen permission, display over other apps, Do Not Disturb access, and battery restrictions, with a one-tap fix for each. **What your alarms did** keeps the last 60 alarm events and says in red when one didn't get through. **See and hear each alarm** runs any alarm's real path with a sample value, marked TEST.
+
+The alarm screen has one snooze control, for **This alarm** or **All alarms** with the same times. All alarms means every one but urgent low, which can only be snoozed.
 
 ### When nobody answers
 
@@ -253,7 +263,7 @@ flowchart TD
   REPO --> UI
   REPO --> ALARM --> EMER
 
-  REPO -. optional .-> SB[("Supabase<br/>followers")]
+  REPO -. optional .-> SB[("Supabase<br/>followers, Widget link")]
   REPO -. optional .-> NS[("Nightscout")]
   REPO <-. optional .-> HC["Health Connect<br/>MyFitnessPal"]
   UI -. "optional, your key" .-> GEM["Gemini"]
@@ -261,7 +271,7 @@ flowchart TD
 
 **Three decisions shape everything else:**
 
-1. **One `GlucoseSource` interface, very different sources behind it.** The whole app (Home, graph, alarms, widgets, uploads) reads from the repository, which reads from whichever source is active: the sensor over Bluetooth, a LibreLinkUp or Dexcom connection, or demo data. The UI was built and tested on simulated data while the sensor pipeline was being reverse-engineered, and switching to the real sensor changed nothing downstream. The rule that only real readings may sound an alarm lives in one place.
+1. **One `GlucoseSource` interface, very different sources behind it.** The whole app (Now, graph, alarms, widgets, uploads) reads from the repository, which reads from whichever source is active: the sensor over Bluetooth, a LibreLinkUp or Dexcom connection, or demo data. The UI was built and tested on simulated data while the sensor pipeline was being reverse-engineered, and switching to the real sensor changed nothing downstream. The rule that only real readings may sound an alarm lives in one place.
 2. **Never take over a sensor we can't read.** Enable Streaming is the one command that changes the sensor's state. Sukoon sends it only after the sensor's memory has decrypted with valid checksums, so a firmware it doesn't understand stays with the app that does. Every Bluetooth packet is CRC-checked before it becomes a number. Wrong crypto doesn't crash, it produces plausible wrong glucose, so the pipeline was checked against DiaBox on the same sensor (within ±3% minute by minute) before anyone trusted it.
 3. **Stored readings stay raw.** Calibration (opt-in, from your finger-pricks) is a weighted least-squares fit applied when readings are read out, capped at ×0.8–1.25 and ±20 mg/dL, with fast-moving and disagreeing pairs left out, and it never raises a reading under 70. Turn it off and every past number is exactly what the sensor said.
 
@@ -313,7 +323,7 @@ The decoding is a Kotlin port of [GlucoseDirect](https://github.com/creepymonste
 | Online (all optional) | Supabase over plain HTTPS (Auth, PostgREST, RLS; no SDK), LibreLinkUp and Dexcom Share (the APIs their own apps use), Nightscout API, Gemini REST |
 | Follow page | One static page in [`web/`](web/) on GitHub Pages, reading the same Supabase with the publishable key |
 | Reports | Android `PdfDocument`, same renderer as the screen |
-| Quality | 162 unit tests: metrics, Libre crypto vectors, alarm rules, Home messages, insights, calibration, insulin on board, LibreLinkUp and Dexcom parsers |
+| Quality | 284 unit tests: metrics, Libre crypto vectors, alarm rules, Now messages, insights, calibration, insulin on board, LibreLinkUp and Dexcom parsers |
 
 </details>
 
@@ -327,15 +337,17 @@ Nothing, unless you turn it on. There are no analytics, no ads and no tracking o
 | :-- | :-- | :-- |
 | Readings, logbook, photos, your profile and dose settings | Your phone (app-private) | always |
 | Readings out, meals in | Health Connect, on the phone | you grant Health Connect access |
-| Your live readings, and which alarms your followers get | Your Supabase account, readable only by people you approved (row-level security) | you sign in and invite a follower |
+| Your live readings, and which alarms your followers get | Your Supabase account, readable only by people you approved (row-level security) | you sign in and turn on *Share my readings* |
 | Your LibreLinkUp or Dexcom login | Abbott's or Dexcom's servers, to fetch the readings you're allowed to see | you sign in to follow someone there, or use it as your glucose |
 | Your newest reading | Your Wear OS watch, through Google Play Services' Data Layer (which can relay through Google when the watch is out of Bluetooth range) | always on a phone with Play Services; it only reaches a watch with Sukoon installed |
 | Readings and treatments | Your own Nightscout site | you add its address and token |
-| Summaries of your data, your profile and dose settings, meal photos, a dish you ask about | Google Gemini, with your own API key | you add a key and ask a question or for an estimate |
-| What you type in food search, or a barcode you scan | Open Food Facts (free, open data), to find the food | you search or scan |
+| Your readings, in Nightscout's format | Whoever has your Widget link's token (a laptop widget, a watch face), served from Sukoon's cloud | you make a Widget link; a new link stops the old one |
+| Summaries of your data, your profile and dose settings, meal photos, a dish you ask about, what you say to *Say it* | Google Gemini, with your own API key | you add a key and ask a question or for an estimate |
+| What you type in food search, or a barcode you scan | Open Food Facts and USDA FoodData Central (both free, open data), to find the food | you search or scan |
+| Your rough location (about 1 km) | The phone's own place lookup (Google's on most phones), to name your city; the times are worked out on the phone | you turn on Ramadan times from your location |
 | A full backup (readings, logbook, photos, settings, your AI key) | One file in the cloud app you chose | you turn on the daily cloud backup |
 | Glucose, how long, location | Your emergency contacts by SMS and phone call | an urgent low goes unanswered |
-| Nothing about you: a request for two public files (notices, latest version) | GitHub, which hosts Sukoon | every 6 hours while Sukoon runs |
+| Nothing about you: a request for two public files (notices, latest version) | GitHub, which hosts Sukoon | notices every 15 minutes and the version every few hours while Sukoon runs |
 
 **Cost:** Supabase, Gemini's free tier and Nightscout on your own machine are all $0. The app itself has no subscription, no account requirement and no server of its own.
 
@@ -348,7 +360,7 @@ Nothing, unless you turn it on. There are no analytics, no ads and no tracking o
 | An alarm didn't sound | Open **You → Alarms**. *Can alarms reach you?* lists what's blocking it, and *What your alarms did* shows what got through each time. |
 | Readings stop when the screen is off | Your phone maker is killing background apps. Set Sukoon's battery to **Unrestricted** in the setup checklist; on Samsung or Xiaomi also check the phone's own app settings (Autostart on Xiaomi; see [dontkillmyapp.com](https://dontkillmyapp.com)). |
 | "Signal lost" every so often | **You → Sensor** shows the last 24 hours of gaps. Short gaps are usually distance: keep the phone on the same side of your body as the sensor. |
-| Sukoon can't find the sensor after pairing | Another app has it. Force-stop LibreLink, DiaBox or xDrip+, then **You → Sensor → Connect** and scan again. |
+| Sukoon can't find the sensor after pairing | Another app has it. Force-stop LibreLink, DiaBox or xDrip+, then **You → Sensor → Connect sensor** and scan again. |
 | No MyFitnessPal meals | **You → Apps & data → Resync** says how many meals Health Connect has. If it has none, sharing is off on MyFitnessPal's side (More → Apps & Devices → Health Connect). |
 | A MyFitnessPal meal shows the wrong time | MyFitnessPal shares totals, not meal times: a meal is timed when you logged it. Tap it, then *When did you eat?* |
 | Food search finds nothing | Open Food Facts needs the internet; your own foods and the home dishes work offline. Missing a product? Scan it and add it as your own, or *Ask the AI*. |
@@ -374,7 +386,7 @@ git clone https://github.com/khairyKY/sukoon.git
 | Google Play bundle (updated by Play, its own package name) | `./gradlew :app:bundlePlayRelease`, see [`docs/play-store.md`](docs/play-store.md) |
 | Release APK, debug-signed (updates 0.6-era installs in place) | `./gradlew :app:assembleGithubRelease -PdebugSigned` |
 
-On the emulator, pick **Demo** as the source to try every screen without a sensor. Followers need a Supabase project: run [`supabase/migrations/`](supabase/migrations/) in its SQL editor and put the project URL and *publishable* key in `local.properties` (gitignored). Never put the service-role key in the app. The release key and its passwords live only on the build machine ([`docs/signing.md`](docs/signing.md)).
+On the emulator, pick **Demo** as the source to try every screen without a sensor. Followers need a Supabase project: run [`supabase/migrations/`](supabase/migrations/) in its SQL editor and put the project URL and *publishable* key in `local.properties` (gitignored). Never put the service-role key in the app. The Widget link also needs the [`nightscout`](supabase/functions/nightscout/) edge function and its migration (`20261017000000_nightscout_feed.sql`): `supabase functions deploy nightscout --no-verify-jwt`, since widgets can't sign in. The release key and its passwords live only on the build machine ([`docs/signing.md`](docs/signing.md)).
 
 <details>
 <summary><b>Repository layout</b></summary>
@@ -390,15 +402,16 @@ sukoon/
 │  ├─ sharing/             Supabase accounts and invites, LibreLinkUp, Dexcom Share, follower watch
 │  ├─ health/              Health Connect sync (MyFitnessPal)
 │  ├─ insights/ reports/   insight engine, AGP + PDF
-│  ├─ insulin/ calibration/ reminders/ ai/
+│  ├─ insulin/ calibration/ reminders/ ai/ food/ modes/
 │  └─ ui/                  Now · Trends · You, logbook, onboarding, guide, widgets, theme
 ├─ app/src/test/           162 unit tests
 ├─ wear/                   the Wear OS tile and complication, fed by the phone (platform/WearSync.kt)
 ├─ web/                    the follow page (any browser, iPhone included), published to GitHub Pages
-├─ supabase/migrations/    followers schema with row-level security
+├─ supabase/               followers schema with row-level security, and the Widget link's edge function
 ├─ tools/                  Libre test-vector reference in Python, and the alarm-sound synthesizer
 ├─ docs/
 │  ├─ behaviour.md         every state, rule and answer: the contract the code follows
+│  ├─ guide.md · motion.md  the in-app Guide's source, and the motion spec
 │  ├─ full-build-backlog.md  what's built and what's next
 │  ├─ signing.md           the release key, and moving a phone off the old debug key
 │  ├─ PLAN.md · track-a-plan.md · track-b-plan.md   the original plan and both tracks
@@ -417,9 +430,9 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for branch and commit conventions. Sens
 | | Status |
 | :-- | :-- |
 | Direct Libre 2 / 2 Plus EU, alarms with Sukoon's own sounds, emergency escalation, logbook, insulin on board, calibration, insights, AGP report, widgets, Health Connect, Nightscout, CSV, backup, English + Arabic | ✅ built |
-| Followers on Supabase, the follow page for iPhone and any browser, LibreLinkUp and Dexcom Share | 🌱 built, being set up for daily use |
-| Dose suggestions and learning your ratios (beta), injection sites, your own range, parent lock, sound packs | 🌱 built, being tested daily |
-| Meals from foods (Open Food Facts, barcodes, home dishes, the AI), any day in the logbook and graph, cloud backup | 🌱 built, being tested daily |
+| Followers on Supabase, the follow page for iPhone and any browser, LibreLinkUp and Dexcom Share, the Widget link | 🌱 built, being set up for daily use |
+| Dose suggestions and learning your ratios (beta), meal changes after insulin, injection sites, your own range, parent lock, sound packs | 🌱 built, being tested daily |
+| Meals from foods (Open Food Facts, USDA, barcodes, home dishes, the AI), *Say it*, any day in the logbook and graph, cloud backup, the new widgets | 🌱 built, being tested daily |
 | Libre 1 and 2 through a Bubble transmitter | 🗓 possible: portable from GlucoseDirect, needs a transmitter to test |
 | Libre 3 / 3 Plus over Bluetooth | ✖ the open implementations depend on Abbott code under GPL, so it can't be ported. A Libre 3 works today through LibreLinkUp. |
 
