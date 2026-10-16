@@ -141,7 +141,20 @@ fun AskScreen(
             }
         }
         state.error?.let { Text(it, fontSize = 12.sp, color = StateLow, modifier = Modifier.padding(vertical = 6.dp)) }
-        val speak = com.sukoon.app.ui.logbook.rememberSpeech(stringResource(R.string.ask_mic)) { said -> said?.let { input = it } }
+        val noVoice = stringResource(R.string.voice_no_recognizer)
+        val askContext = androidx.compose.ui.platform.LocalContext.current
+        val (voice, speak) = com.sukoon.app.ui.logbook.rememberVoiceCapture(stringResource(R.string.ask_mic), onUnavailable = { android.widget.Toast.makeText(askContext, noVoice, android.widget.Toast.LENGTH_LONG).show() }) { said ->
+            said?.let { input = it }
+        }
+        // Ask doesn't work entries out: once the words are in the box, the pill goes.
+        androidx.compose.runtime.LaunchedEffect(voice.state) { if (voice.state == com.sukoon.app.ui.components.PillState.POLISHING || voice.state == com.sukoon.app.ui.components.PillState.ERROR) { kotlinx.coroutines.delay(600); voice.settle(null) } }
+        voice.state?.let { st ->
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                com.sukoon.app.ui.components.SottoPill(st, voice.level, onTap = voice::finish, onCancel = voice::cancel)
+                if (voice.partial.isNotBlank()) Text(voice.partial, fontSize = 13.sp, color = CaptionMuted)
+                com.sukoon.app.ui.components.PoweredBySotto()
+            }
+        }
         InputRow(input, { input = it }, canSend = input.isNotBlank() && !state.thinking, onMic = { speak() }) {
             onAsk(input)
             input = ""

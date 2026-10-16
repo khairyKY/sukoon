@@ -63,5 +63,16 @@
     "link": "https://github.com/khairyKY/sukoon/releases/latest",
     "until": "2026-10-30",
     "below": "0.17.0"
+  },
+  {
+    "id": "2026-10-16-sukoon-0.18.0",
+    "date": "2026-10-16",
+    "title": "Sukoon 0.18.0: voice, powered by Sotto",
+    "body": "Say it now listens right in the app: the pill moves with your voice and your words appear as you speak. Tap to update.",
+    "title_ar": "سكون 0.18.0: الصوت بدعم من Sotto",
+    "body_ar": "«قولها» بقت بتسمعك جوه التطبيق: الكبسولة بتتحرك مع صوتك والكلام بيظهر وإنت بتتكلم. اضغط للتحديث.",
+    "link": "https://github.com/khairyKY/sukoon/releases/latest",
+    "until": "2026-10-30",
+    "below": "0.18.0"
   }
 ]

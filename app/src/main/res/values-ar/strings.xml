@@ -2258,4 +2258,12 @@
     <string name="meal_source_title">أضف الوجبة</string>
     <string name="meal_source_estimate_body">صِفها أو أضف صورًا: يقدّر سكون الكربوهيدرات</string>
     <string name="chip_ratios">%1$d وجبات جديدة: راجع نسبك</string>
+    <string name="pill_listening">أستمع. اضغط حين تنتهي</string>
+    <string name="pill_transcribing">أكتب ما قلته</string>
+    <string name="pill_polishing">أرتّب الإدخالات</string>
+    <string name="pill_done">تم</string>
+    <string name="pill_error">لم أسمع جيدًا</string>
+    <string name="powered_by_sotto">بدعم من Sotto</string>
+    <string name="voice_listening_hint">قل ما أكلت أو أخذت أو فعلت</string>
+    <string name="voice_nothing_heard">لم يُسمع شيء. اضغط «قلها مجددًا» وتكلّم أقرب قليلًا.</string>
 </resources>
