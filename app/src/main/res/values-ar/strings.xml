@@ -2282,4 +2282,10 @@
     <string name="meal_watch_check_falling">تنخفض أو تحت 100: تناول 15 غ كربوهيدرات.</string>
     <string name="meal_watch_check_fine">يبدو جيدًا. سكون يواصل المراقبة.</string>
     <string name="follow_meal_watch">%1$s: مراقبة الهبوط · حتى %2$s</string>
+    <string name="update_action">تحديث</string>
+    <string name="update_notif_downloading">جارٍ تنزيل سكون %1$s</string>
+    <string name="update_install_title">سكون %1$s جاهز للتثبيت</string>
+    <string name="update_install_body">اضغط للتثبيت. بياناتك باقية.</string>
+    <string name="update_failed_title">تعذّر تنزيل التحديث</string>
+    <string name="update_failed_body">تحقق من الإنترنت واضغط «تحديث» مجددًا، أو جرّب من حسابي › المساعدة وحول.</string>
 </resources>

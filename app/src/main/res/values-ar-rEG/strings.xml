@@ -2278,4 +2278,10 @@
     <string name="meal_watch_check_falling">نازل أو تحت 100: خد 15 جم نشويات.</string>
     <string name="meal_watch_check_fine">شكله تمام. سكون لسه بيراقب.</string>
     <string name="follow_meal_watch">%1$s: مراقبة الهبوط · لحد %2$s</string>
+    <string name="update_action">حدّث</string>
+    <string name="update_notif_downloading">بننزّل سكون %1$s</string>
+    <string name="update_install_title">سكون %1$s جاهز يتثبت</string>
+    <string name="update_install_body">دوس علشان تثبته. بياناتك هتفضل زي ما هي.</string>
+    <string name="update_failed_title">معرفناش ننزّل التحديث</string>
+    <string name="update_failed_body">شوف النت ودوس «حدّث» تاني، أو جرب من إنت › المساعدة وعن التطبيق.</string>
 </resources>

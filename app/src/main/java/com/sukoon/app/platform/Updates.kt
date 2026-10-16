@@ -90,8 +90,76 @@ class Updates(private val context: Context, private val scope: CoroutineScope) {
             .setContentText(context.getString(com.sukoon.app.R.string.update_ready_body))
             .setContentIntent(open)
             .setAutoCancel(true)
+            // The same Update as You › Help & about: it downloads right here, with its bar in this notification.
+            .addAction(0, context.getString(com.sukoon.app.R.string.update_action), android.app.PendingIntent.getBroadcast(
+                context, 51, Intent(context, UpdateAction::class.java), android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT,
+            ))
             .build()
-        runCatching { manager.notify(5000, n) }
+        runCatching { manager.notify(NOTIFICATION, n) }
+    }
+
+    /** From the notification's Update: the release found, or look again first. */
+    fun updateFromNotification() {
+        scope.launch {
+            (_state.value as? State.Available)?.release?.let { update(it); return@launch }
+            check()
+            (_state.value as? State.Available)?.release?.let(::update)
+        }
+    }
+
+    /**
+     * The download's progress, mirrored in the notification (as in Help & about), then "Tap to
+     * install": Android doesn't let an app open the installer from the background, so the tap does.
+     */
+    private fun mirror() {
+        scope.launch {
+            var shownPercent = -1
+            _state.collect { s ->
+                val manager = context.getSystemService(android.app.NotificationManager::class.java)
+                fun base() = androidx.core.app.NotificationCompat.Builder(context, CHANNEL)
+                    .setSmallIcon(com.sukoon.app.R.drawable.ic_stat_sukoon)
+                    .setColor(0xFF3E7A63.toInt())
+                when (s) {
+                    is State.Downloading -> {
+                        val percent = (s.progress * 100).toInt()
+                        if (percent == shownPercent) return@collect
+                        shownPercent = percent
+                        val n = base().setContentTitle(context.getString(com.sukoon.app.R.string.update_notif_downloading, s.release.version))
+                            .setContentText(context.getString(com.sukoon.app.R.string.update_downloading, percent))
+                            .setProgress(100, percent, percent == 0).setOngoing(true).setOnlyAlertOnce(true).setSilent(true).build()
+                        runCatching { manager.notify(NOTIFICATION, n) }
+                    }
+                    is State.Ready -> {
+                        shownPercent = -1
+                        val n = base().setContentTitle(context.getString(com.sukoon.app.R.string.update_install_title, s.release.version))
+                            .setContentText(context.getString(com.sukoon.app.R.string.update_install_body))
+                            .setContentIntent(android.app.PendingIntent.getActivity(context, 52, installIntent(s.file), android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT))
+                            .setAutoCancel(true).build()
+                        runCatching { manager.notify(NOTIFICATION, n) }
+                    }
+                    is State.Failed -> if (shownPercent >= 0) {
+                        shownPercent = -1
+                        val n = base().setContentTitle(context.getString(com.sukoon.app.R.string.update_failed_title))
+                            .setContentText(context.getString(com.sukoon.app.R.string.update_failed_body)).setAutoCancel(true).build()
+                        runCatching { manager.notify(NOTIFICATION, n) }
+                    }
+                    else -> Unit
+                }
+            }
+        }
+    }
+
+    /** The installer for [file], or first the switch that lets Sukoon install updates. */
+    private fun installIntent(file: File): Intent =
+        if (Build.VERSION.SDK_INT >= 26 && !context.packageManager.canRequestPackageInstalls()) {
+            Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${context.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        } else {
+            Intent(Intent.ACTION_VIEW).setDataAndType(FileProvider.getUriForFile(context, "${context.packageName}.files", file), "application/vnd.android.package-archive")
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+    init {
+        mirror()
     }
 
     /** [quiet]: a failure stays Idle (the daily check shouldn't show errors). */
@@ -211,6 +279,7 @@ class Updates(private val context: Context, private val scope: CoroutineScope) {
         private const val KEY_LAST_CHECK = "last_check"
         private const val KEY_ANNOUNCED = "announced"
         private const val CHANNEL = "updates"
+        private const val NOTIFICATION = 5000
         /** GitHub allows 60 unauthenticated calls an hour; this is one every few hours. */
         const val CHECK_EVERY_HOURS = 3L
         private const val KEY_DISMISSED = "dismissed"
@@ -241,5 +310,12 @@ class Updates(private val context: Context, private val scope: CoroutineScope) {
             }
             return false
         }
+    }
+}
+
+/** The update notification's Update button. */
+class UpdateAction : android.content.BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        (context.applicationContext as com.sukoon.app.SukoonApp).container.updates.updateFromNotification()
     }
 }

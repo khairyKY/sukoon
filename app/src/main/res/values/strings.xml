@@ -2142,4 +2142,10 @@
     <string name="meal_watch_check_falling">Dropping or under 100: have 15 g of carbs.</string>
     <string name="meal_watch_check_fine">Looking fine. Sukoon keeps watching.</string>
     <string name="follow_meal_watch">%1$s: watching for a low · until %2$s</string>
+    <string name="update_action">Update</string>
+    <string name="update_notif_downloading">Downloading Sukoon %1$s</string>
+    <string name="update_install_title">Sukoon %1$s is ready to install</string>
+    <string name="update_install_body">Tap to install. Your data stays.</string>
+    <string name="update_failed_title">Couldn\'t download the update</string>
+    <string name="update_failed_body">Check your internet and tap Update again, or try from You › Help &amp; about.</string>
 </resources>
