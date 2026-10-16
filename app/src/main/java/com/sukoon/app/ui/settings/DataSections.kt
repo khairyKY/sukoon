@@ -17,7 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -103,19 +103,19 @@ fun NightscoutSection(
                 colors = SwitchDefaults.colors(checkedTrackColor = Sage),
             )
         }
-        OutlinedTextField(
+        SukoonTextField(
             value = url,
             onValueChange = { url = it },
-            label = { Text(stringResource(R.string.ns_url)) },
-            placeholder = { Text("http://100.x.y.z:1337") },
+            label = stringResource(R.string.ns_url),
+            placeholder = "http://100.x.y.z:1337",
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
             modifier = Modifier.fillMaxWidth(),
         )
-        OutlinedTextField(
+        SukoonTextField(
             value = secret,
             onValueChange = { secret = it },
-            label = { Text(stringResource(R.string.ns_secret)) },
+            label = stringResource(R.string.ns_secret),
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),

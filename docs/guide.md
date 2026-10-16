@@ -53,7 +53,7 @@ Paths are written as the app shows them: tab → page → control (You → Senso
 **For:** alarms that reach you at 3 a.m. too.
 
 1. You → Help & about → **Setup**: allow everything it lists.
-2. On Samsung or Xiaomi, open the battery page it links and set Sukoon to **Unrestricted** / **Never sleeping**.
+2. On Samsung or Xiaomi, also open the phone's Settings › Apps › Sukoon and set Battery to **Unrestricted**; on Xiaomi turn on **Autostart** too.
 3. Leave Sukoon's small notification on: it's what keeps it running, and it shows your number.
 
 **Good to know**

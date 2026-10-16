@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -86,12 +85,12 @@ fun NumberChips(
             onDismissRequest = { editing = false },
             title = { Text(stringResource(R.string.custom_value_title)) },
             text = {
-                OutlinedTextField(
+                SukoonTextField(
                     value = text,
                     onValueChange = { text = it.filter(Char::isDigit).take(4) },
                     singleLine = true,
                     isError = !valid,
-                    supportingText = { Text(stringResource(R.string.custom_value_range, range.first, range.last)) },
+                    supportingText = stringResource(R.string.custom_value_range, range.first, range.last),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 )
             },

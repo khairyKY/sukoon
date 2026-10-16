@@ -14,7 +14,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -54,19 +54,19 @@ internal fun PinDialog(setting: Boolean, stored: String?, onDone: (String) -> Un
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(if (setting) R.string.lock_set_body else R.string.lock_enter_body), fontSize = 13.5.sp)
-                OutlinedTextField(
+                SukoonTextField(
                     value = pin,
                     onValueChange = { pin = it.filter(Char::isDigit).take(8); wrong = false },
-                    label = { Text(stringResource(R.string.lock_pin)) },
+                    label = stringResource(R.string.lock_pin),
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                 )
                 if (setting) {
-                    OutlinedTextField(
+                    SukoonTextField(
                         value = again,
                         onValueChange = { again = it.filter(Char::isDigit).take(8) },
-                        label = { Text(stringResource(R.string.lock_pin_again)) },
+                        label = stringResource(R.string.lock_pin_again),
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),

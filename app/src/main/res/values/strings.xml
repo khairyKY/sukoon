@@ -228,10 +228,7 @@
     <string name="setup_overlay_why">Lets the urgent-low alert open on top of whatever app you\'re using.</string>
     <string name="setup_dnd">Do Not Disturb access</string>
     <string name="setup_dnd_why">Lets low and urgent-low alarms sound even when Do Not Disturb is on.</string>
-    <string name="setup_oem">Phone maker\'s battery settings</string>
-    <string name="setup_oem_why">Set Sukoon to Unrestricted / Never sleeping.</string>
     <string name="setup_allow">Allow</string>
-    <string name="setup_open">Open</string>
     <string name="setup_fix">Fix</string>
     <string name="setup_later">Later</string>
 
@@ -555,7 +552,6 @@
     <string name="report_pdf_footer">Made by Sukoon, which is not a medical device. Readings from a FreeStyle Libre 2 sensor read by Sukoon. Percentiles by time of day over the period; targets from the International Consensus on Time in Range (Battelino et al., Diabetes Care 2019).</string>
     <string name="toast_report_failed">Couldn\'t make the PDF: %1$s</string>
     <string name="service_stale_body">Last: %1$d mg/dL at %2$s. Reconnecting on its own.</string>
-    <string name="settings_guide">Guide: how Sukoon works →</string>
     <string name="help_title">Guide</string>
     <string name="help_intro">Every detail, in one place.</string>
     <string name="help_sensor_title">Connecting your sensor</string>
@@ -731,7 +727,7 @@
     <string name="you_insulin_summary">Peaks %1$d min · %2$s h</string>
     <string name="you_apps_summary">MyFitnessPal, Nightscout, AI</string>
     <string name="you_reports_summary">CSV and backups</string>
-    <string name="you_help_summary">Guide, setup check</string>
+    <string name="you_help_summary">Setup check, privacy, about</string>
     <string name="you_reports_body">The 14-day doctor report (PDF) is in Trends → Report.</string>
     <string name="ob_back">Back</string>
     <string name="ob_continue">Continue</string>
@@ -1889,8 +1885,8 @@
     <string name="fitness_kcal_change">%1$s kcal</string>
     <string name="fitness_maintenance_field">Your maintenance, kcal (optional)</string>
     <string name="fitness_training">Training</string>
-    <string name="fitness_after_meal">The meal after a workout</string>
-    <string name="fitness_as_usual">As usual</string>
+    <string name="fitness_after_meal">Meal insulin after a workout</string>
+    <string name="fitness_as_usual">Same dose</string>
     <string name="fitness_less">%1$d%% less</string>
     <string name="fitness_training_note">Overnight after a workout, the low alarm sits at %1$d.</string>
     <string name="fitness_ramadan">Ramadan</string>
@@ -2229,4 +2225,7 @@
     <string name="nfc_started_not_paired">The sensor has started and is warming up, but pairing didn\'t finish. Tap Pair again while it warms up.</string>
     <string name="nfc_no_stream">The sensor wouldn\'t connect to Sukoon. Try again.</string>
     <string name="home_more_below">Beta suggestion below</string>
+    <string name="fitness_after_meal_body">For a meal up to 2 hours after a workout ends, Sukoon suggests this much less meal insulin. Exercise makes insulin work harder for hours, so a smaller dose helps avoid a low.</string>
+    <string name="you_guide_summary">How Sukoon works</string>
+    <string name="help_privacy_body">What Sukoon keeps, and what leaves your phone</string>
 </resources>

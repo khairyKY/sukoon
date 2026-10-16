@@ -29,7 +29,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -457,7 +457,7 @@ private fun PhoneDialog(name: String, onSave: (String) -> Unit, onDismiss: () ->
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.follow_number_private), fontSize = 13.sp, color = CaptionMuted)
-                OutlinedTextField(number, { number = it }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone))
+                SukoonTextField(number, { number = it }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone))
             }
         },
         confirmButton = { TextButton(enabled = number.count { it.isDigit() } >= 7, onClick = { onSave(number) }) { Text(stringResource(R.string.entry_save)) } },

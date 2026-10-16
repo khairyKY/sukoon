@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -99,11 +99,11 @@ fun FitnessPage(keeper: ModesKeeper, profile: Profile, onEditProfile: () -> Unit
             ChoiceChips(choices, targets.change, { stringResource(R.string.fitness_kcal_change, (if (it > 0) "+" else "−") + n.format(kotlin.math.abs(it))) }) { keeper.goal = goal.copy(change = it) }
         }
         var typed by remember(goal.kind) { mutableStateOf(goal.maintenance?.toString().orEmpty()) }
-        OutlinedTextField(
+        SukoonTextField(
             typed,
             { v -> typed = v.filter(Char::isDigit).take(4); keeper.goal = goal.copy(maintenance = typed.toIntOrNull()?.takeIf { it in 1200..6000 }) },
-            label = { Text(stringResource(R.string.fitness_maintenance_field)) },
-            placeholder = { Goals.maintenance(profile)?.let { Text("~" + n.format(it)) } },
+            label = stringResource(R.string.fitness_maintenance_field),
+            placeholder = Goals.maintenance(profile)?.let { "~" + n.format(it) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
@@ -121,6 +121,7 @@ fun FitnessPage(keeper: ModesKeeper, profile: Profile, onEditProfile: () -> Unit
         cut = it
         keeper.afterWorkoutCut = it
     }
+    Small(stringResource(R.string.fitness_after_meal_body), muted = true)
     Small(stringResource(R.string.fitness_training_note, Modes.NIGHT_LOW), muted = true)
 
     Label(stringResource(R.string.fitness_ramadan))

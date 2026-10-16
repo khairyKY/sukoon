@@ -42,7 +42,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -140,6 +140,8 @@ enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
     REPORTS(R.string.you_reports, R.drawable.ic_doc),
     APPEARANCE(R.string.you_appearance, R.drawable.ic_contrast),
     HELP(R.string.you_help, R.drawable.ic_help),
+    /** Opens the Guide itself (no page of its own); Help & about links it too. */
+    GUIDE(R.string.help_title, R.drawable.ic_book),
     /** The profile card's page: your name, About you and the parent lock (not a tile on the hub). */
     PROFILE(R.string.you_profile, R.drawable.ic_people),
 }
@@ -279,10 +281,11 @@ fun SettingsScreen(
                         YouPage.REPORTS to stringResource(R.string.you_reports_summary),
                         YouPage.APPEARANCE to "${themeLabel(themeMode)} · ${stringResource(colourName(com.sukoon.app.ui.theme.Themes.current))} · ${languageLabel()}",
                         YouPage.HELP to stringResource(R.string.you_help_summary),
+                        YouPage.GUIDE to stringResource(R.string.you_guide_summary),
                     )
                     (if (wears) YouPage.entries - YouPage.PROFILE else FOLLOWER_PAGES).chunked(2).forEach { row ->
                         Row(Modifier.padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            row.forEach { p -> SectionCard(p, summaries.getValue(p), Modifier.weight(1f)) { page = p } }
+                            row.forEach { p -> SectionCard(p, summaries.getValue(p), Modifier.weight(1f)) { if (p == YouPage.GUIDE) onOpenGuide() else page = p } }
                             if (row.size == 1) Spacer(Modifier.weight(1f))
                         }
                     }
@@ -421,10 +424,10 @@ fun SettingsScreen(
                         }
                         YouPage.PROFILE -> {
                             var name by rememberSaveable { mutableStateOf(emergency.yourName) }
-                            OutlinedTextField(
+                            SukoonTextField(
                                 value = name,
                                 onValueChange = { name = it; onEmergency(emergency.copy(yourName = it)) },
-                                label = { Text(stringResource(R.string.emergency_your_name)) },
+                                label = stringResource(R.string.emergency_your_name),
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth(),
                             )
@@ -504,23 +507,11 @@ fun SettingsScreen(
                             SectionLabel(stringResource(R.string.now_layout_section))
                             NowLayoutRow()
                         }
+                        YouPage.GUIDE -> Unit // opens the Guide, never a page
                         YouPage.HELP -> {
-                            Text(
-                                stringResource(R.string.settings_guide),
-                                modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onOpenGuide).padding(vertical = 10.dp),
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = SageDeep,
-                            )
-                            Text(
-                                stringResource(R.string.privacy_link),
-                                modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable {
-                                    runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(com.sukoon.app.PRIVACY_URL))) }
-                                }.padding(vertical = 10.dp),
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = SageDeep,
-                            )
+                            HelpLinks(onGuide = onOpenGuide) {
+                                runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(com.sukoon.app.PRIVACY_URL))) }
+                            }
                             Gap()
                             SectionLabel(stringResource(R.string.setup_title))
                             SetupChecklist(only = if (wears) null else FOLLOWER_SETUP_ITEMS)
@@ -681,6 +672,7 @@ private fun sectionHue(page: YouPage): androidx.compose.ui.graphics.Color = andr
         YouPage.REPORTS -> 0xFF6F5F4E
         YouPage.APPEARANCE -> 0xFF56687A
         YouPage.HELP -> 0xFF5E6B64
+        YouPage.GUIDE -> 0xFFA65A2A
         YouPage.PROFILE -> 0xFF3A6E93
     },
 )
@@ -710,6 +702,40 @@ private fun SectionCard(page: YouPage, summary: String, modifier: Modifier, onCl
             Text(stringResource(page.title), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1)
             Text(summary, fontSize = 12.5.sp, color = CaptionMuted, maxLines = 1)
         }
+    }
+}
+
+/** Help & about's Guide and privacy policy: rows like the rest of You, not bare links. */
+@Composable
+private fun HelpLinks(onGuide: () -> Unit, onPrivacy: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, outline(), RoundedCornerShape(18.dp)),
+    ) {
+        HelpLink(R.drawable.ic_book, stringResource(R.string.help_title), stringResource(R.string.you_guide_summary), onGuide)
+        Box(Modifier.fillMaxWidth().padding(start = 64.dp).height(1.dp).background(outline()))
+        HelpLink(R.drawable.ic_lock, stringResource(R.string.privacy_link), stringResource(R.string.help_privacy_body), onPrivacy)
+    }
+}
+
+@Composable
+private fun HelpLink(@DrawableRes icon: Int, title: String, body: String, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Box(Modifier.size(36.dp).clip(RoundedCornerShape(11.dp)).background(SageMist), contentAlignment = Alignment.Center) {
+            Icon(painterResource(icon), contentDescription = null, tint = SageDeep, modifier = Modifier.size(20.dp))
+        }
+        Column(Modifier.weight(1f)) {
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+            Text(body, fontSize = 12.5.sp, color = CaptionMuted)
+        }
+        Icon(painterResource(R.drawable.ic_chevron), contentDescription = null, tint = CaptionMuted, modifier = Modifier.size(18.dp))
     }
 }
 
@@ -805,10 +831,10 @@ private fun AiKey(geminiKey: String, onSave: (String) -> Unit) {
     var keyInput by rememberSaveable(geminiKey) { mutableStateOf(geminiKey) }
     Text(stringResource(R.string.settings_ai_body), fontSize = 12.5.sp, color = CaptionMuted)
     Spacer(Modifier.height(10.dp))
-    OutlinedTextField(
+    SukoonTextField(
         value = keyInput,
         onValueChange = { keyInput = it },
-        label = { Text(stringResource(R.string.settings_ai_key)) },
+        label = stringResource(R.string.settings_ai_key),
         singleLine = true,
         visualTransformation = PasswordVisualTransformation(),
         modifier = Modifier.fillMaxWidth(),

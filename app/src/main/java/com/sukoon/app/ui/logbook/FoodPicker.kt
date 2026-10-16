@@ -41,7 +41,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -201,12 +201,11 @@ internal fun FoodPicker(
                     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         RoundIconButton(R.drawable.ic_close, stringResource(R.string.entry_close), onDismiss)
-                        OutlinedTextField(
+                        SukoonTextField(
                             query,
                             { query = it; notFound = null },
-                            placeholder = { Text(stringResource(R.string.food_search_hint)) },
+                            placeholder = stringResource(R.string.food_search_hint),
                             singleLine = true,
-                            shape = RoundedCornerShape(16.dp),
                             modifier = Modifier.weight(1f).focusRequester(focus),
                             trailingIcon = {
                                 Box(
@@ -344,26 +343,24 @@ private fun AmountView(food: Food, onBack: () -> Unit, onAdd: (PlateItem) -> Uni
             Text(amountText(food, amount), fontFamily = HeadlineSerifFontFamily, fontWeight = FontWeight.Light, fontSize = 44.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(horizontal = 22.dp))
             Stepper(R.drawable.ic_plus, stringResource(R.string.food_more)) { amount += step; typed = "" }
         }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
+        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SukoonTextField(
                 typed,
                 { t ->
                     typed = t.filter { it.isDigit() || it == '.' }.take(6)
                     typed.toDoubleOrNull()?.takeIf { it > 0 }?.let { n -> amount = if (inUnits && unitGrams != null) n * unitGrams else n }
                 },
-                label = { Text(stringResource(R.string.food_type_amount)) },
+                label = stringResource(R.string.food_type_amount),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                suffix = if (unitName == null) {
-                    { Text(stringResource(if (food.own) R.string.food_portions_unit else R.string.food_grams_unit)) }
-                } else null,
+                suffix = if (unitName == null) stringResource(if (food.own) R.string.food_portions_unit else R.string.food_grams_unit) else null,
                 modifier = Modifier.weight(1f),
             )
             unitName?.let { name ->
                 listOf(stringResource(R.string.food_grams_unit), name).forEachIndexed { i, label ->
                     val on = inUnits == (i == 1)
                     Box(
-                        Modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp))
+                        Modifier.heightIn(min = 52.dp).clip(RoundedCornerShape(12.dp))
                             .background(if (on) Sage.copy(alpha = 0.10f) else MaterialTheme.colorScheme.surface)
                             .border(if (on) 2.dp else 1.dp, if (on) Sage else outline(), RoundedCornerShape(12.dp))
                             .clickable { inUnits = i == 1; typed = "" }
@@ -414,11 +411,11 @@ private fun OwnFoodView(name: String, onBack: () -> Unit, onDone: (String, Doubl
             RoundIconButton(R.drawable.ic_back, stringResource(R.string.entry_close), onBack)
             Text(stringResource(R.string.food_own_title), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, lineHeight = 29.sp, color = MaterialTheme.colorScheme.onBackground)
         }
-        OutlinedTextField(title, { title = it }, label = { Text(stringResource(R.string.food_own_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(
+        SukoonTextField(title, { title = it }, label = stringResource(R.string.food_own_name), singleLine = true, modifier = Modifier.fillMaxWidth())
+        SukoonTextField(
             carbs,
             { carbs = it.filter { c -> c.isDigit() || c == '.' }.take(5) },
-            label = { Text(stringResource(R.string.food_own_carbs)) },
+            label = stringResource(R.string.food_own_carbs),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             modifier = Modifier.fillMaxWidth(),

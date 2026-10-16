@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.sukoon.app.ui.components.SukoonTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -74,9 +74,9 @@ fun LibreLinkUpSection(llu: LibreLinkUp, sharing: Sharing, watch: FollowerWatch)
         val signedIn = account
         if (signedIn == null) {
             Text(stringResource(R.string.llu_body), fontSize = 12.5.sp, color = CaptionMuted)
-            OutlinedTextField(email, { email = it }, label = { Text(stringResource(R.string.sharing_email)) }, singleLine = true,
+            SukoonTextField(email, { email = it }, label = stringResource(R.string.sharing_email), singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(password, { password = it }, label = { Text(stringResource(R.string.llu_password)) }, singleLine = true,
+            SukoonTextField(password, { password = it }, label = stringResource(R.string.llu_password), singleLine = true,
                 visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password), modifier = Modifier.fillMaxWidth())
             Text(
                 stringResource(if (busy) R.string.llu_connecting else R.string.llu_connect),
