@@ -8,7 +8,13 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.LayoutDirection
+import com.sukoon.app.ui.components.TrendArrow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -76,7 +82,6 @@ import com.sukoon.app.ui.theme.Sage
 import com.sukoon.app.ui.theme.StateHigh
 import com.sukoon.app.ui.theme.StateLow
 import com.sukoon.app.ui.theme.SukoonTheme
-import com.sukoon.app.ui.widget.arrow
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -228,7 +233,7 @@ private fun Header(latest: GlucoseReading?, title: String?) {
     }
 }
 
-/** Also Home's last-3-hours chart: shorter there, and without tap-to-read ([interactive] = false). */
+/** Also Home's last-3-hours chart: shorter there, and without tap-to-read or scrubbing ([interactive] = false). */
 @Composable
 internal fun GlucoseChart(
     readings: List<GlucoseReading>,
@@ -265,6 +270,17 @@ internal fun GlucoseChart(
     val pinColors = LogEventType.entries.associateWith { colorForLogEventType(it) }
     val span = (tEnd - tStart).toFloat()
     var selected by remember(range) { mutableStateOf<GlucoseReading?>(null) }
+    val view = LocalView.current
+    val lastTick = remember { longArrayOf(0) }
+    // The reading nearest the finger; a soft tick on reaching a new one while scrubbing, at most every 40 ms.
+    fun pick(x: Float, width: Int, tick: Boolean) {
+        val t = tStart + (x.coerceIn(0f, width.toFloat()) / width * span).toLong()
+        val r = points.minByOrNull { abs(it.timestamp.toEpochMilli() - t) } ?: return
+        if (r == selected) return
+        selected = r
+        val now = System.currentTimeMillis()
+        if (tick && now - lastTick[0] >= 40) { lastTick[0] = now; view.performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK) }
+    }
     // Graph draw-on (motion spec): 900 ms left to right on each range; "remove animations" shows it whole.
     val reduced = Motion.reduced()
     val reveal = remember(range) { Animatable(if (reduced) 1f else 0f) }
@@ -272,16 +288,18 @@ internal fun GlucoseChart(
 
     Column {
         val sel = selected
-        if (interactive) Text(
-            text = if (sel != null) {
-                "${hm.format(sel.timestamp)} · ${String.format(Locale.getDefault(), "%d", sel.glucoseMgDl)} ${stringResource(R.string.home_unit_mgdl)} ${sel.trend.arrow}"
-            } else {
-                stringResource(R.string.graph_tap_hint)
-            },
-            color = if (sel != null) onBg else CaptionMuted,
-            fontWeight = if (sel != null) FontWeight.SemiBold else FontWeight.Normal,
-            fontSize = if (sel != null) 14.sp else 12.sp,
-        )
+        if (interactive && sel != null) Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("${hm.format(sel.timestamp)} · ", color = onBg, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+            // The arrow right of the number in Arabic too, as on the sensor's own screens.
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(String.format(Locale.getDefault(), "%d", sel.glucoseMgDl), color = onBg, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                    Spacer(Modifier.width(4.dp))
+                    TrendArrow(sel.trend, onBg, size = 15.dp)
+                }
+            }
+            Text(" " + stringResource(R.string.home_unit_mgdl), color = onBg, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+        } else if (interactive) Text(stringResource(R.string.graph_tap_hint), color = CaptionMuted, fontSize = 12.sp, lineHeight = 19.sp)
         if (interactive) Spacer(Modifier.height(8.dp))
         Canvas(
             modifier = Modifier
@@ -291,9 +309,14 @@ internal fun GlucoseChart(
                 .graphicsLayer() // its own layer: scrolling the readings list moves it instead of redrawing every point each frame
                 .pointerInput(points, range, interactive) {
                     if (!interactive) return@pointerInput
-                    detectTapGestures { offset ->
-                        val t = tStart + (offset.x / size.width * span).toLong()
-                        selected = points.minByOrNull { abs(it.timestamp.toEpochMilli() - t) }
+                    detectTapGestures { offset -> pick(offset.x, size.width, tick = false) }
+                }
+                // Press and slide sideways to scrub minute by minute; an up-and-down drag stays the page's scroll.
+                .pointerInput(points, range, interactive) {
+                    if (!interactive) return@pointerInput
+                    detectHorizontalDragGestures(onDragStart = { pick(it.x, size.width, tick = true) }) { change, _ ->
+                        change.consume()
+                        pick(change.position.x, size.width, tick = true)
                     }
                 },
         ) {
@@ -473,9 +496,13 @@ private fun ReadingRow(row: ReadingRowText) {
     val color = valueColor(row.mgDl)
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(row.time, fontSize = 14.sp, color = CaptionMuted, modifier = Modifier.width(56.dp))
-        Text(row.value, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = color)
-        Spacer(Modifier.width(8.dp))
-        Text(row.arrow, fontSize = 16.sp, color = color)
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(row.value, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = color)
+                Spacer(Modifier.width(8.dp))
+                TrendArrow(row.trend, color, size = 16.dp)
+            }
+        }
         Spacer(Modifier.weight(1f))
         if (row.delta != null) Text(row.delta, fontSize = 12.sp, color = CaptionMuted)
     }

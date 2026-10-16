@@ -55,7 +55,12 @@ object AiPrompts {
         - ${if (doses) DOSE_RULE else NO_DOSE_RULE}
         - If the latest reading is under 70 mg/dL or falling fast toward it, start by saying to treat with
           15 g of fast carbs and recheck in 15 minutes.
-        - Be calm and brief: 2–6 short sentences or a few "•" bullets. Plain text — no markdown, no headings.
+        - Answer first: your first sentence answers the question (only the low warning above comes before it).
+          No preamble ("Great question", "Based on your data", "Let me look"), don't repeat the question,
+          no sign-off or offer to help more.
+        - Be calm and brief: usually 1–4 short sentences. When listing, at most 4 short "- " bullets.
+          **Bold** only the one or two numbers that matter most. No headings, no tables.
+        - Plain everyday words. Numbers always with units and times: 142 mg/dL at 07:30, 15 g carbs, 3 hours.
         - Reply in the language the user writes in (English or Egyptian Arabic).
         - If DATA SOURCE is DEMO, say once that this is demo data, not their real readings. Otherwise never call it demo data.
         - INSIGHTS are computed by the app from these readings with the cited consensus rules: use their

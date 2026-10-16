@@ -9,6 +9,7 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.floor
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 /**
  * Fajr (suhoor ends) and Maghrib (iftar) for a day and place, from the sun's position (the
@@ -21,6 +22,18 @@ object PrayerTimes {
     enum class Method(val fajrAngle: Double) { EGYPT(19.5), MWL(18.0), UMM_AL_QURA(18.5) }
 
     data class Day(val fajr: Instant, val maghrib: Instant)
+
+    /** Kai's cities, minutes apart: to name a place without a geocoder (where you are stays on the phone), and to pick by hand. */
+    enum class City(val lat: Double, val lng: Double) { CAIRO(30.0444, 31.2357), ALEXANDRIA(31.2001, 29.9187), TANTA(30.7865, 31.0004) }
+
+    /** The city within 25 km, if any. */
+    fun nearest(lat: Double, lng: Double): City? = City.entries.minBy { km(lat, lng, it.lat, it.lng) }.takeIf { km(lat, lng, it.lat, it.lng) <= 25 }
+
+    /** Great-circle distance (haversine). */
+    fun km(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
+        val a = sin(rad(lat2 - lat1) / 2).let { it * it } + cos(rad(lat1)) * cos(rad(lat2)) * sin(rad(lng2 - lng1) / 2).let { it * it }
+        return 6371 * 2 * atan2(sqrt(a), sqrt(1 - a))
+    }
 
     private fun rad(d: Double) = Math.toRadians(d)
     private fun deg(r: Double) = Math.toDegrees(r)

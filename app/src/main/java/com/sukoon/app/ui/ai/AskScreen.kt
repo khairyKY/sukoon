@@ -11,7 +11,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,7 +34,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -38,9 +48,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.findRootCoordinates
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
@@ -69,6 +87,7 @@ import java.time.LocalTime
  * when that's all there is), suggestions led by Insights' one thing, the conversation, and the input.
  * Without a key: one clear step to add it.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AskScreen(
     state: AskUiState,
@@ -92,6 +111,22 @@ fun AskScreen(
         NoKey(onOpenSettings, modifier)
         return
     }
+    // The keyboard: Ask's window neither pans nor resizes (edge to edge, the insets do it), and the
+    // bottom bar under this screen already covers part of the keyboard's height, so only the rest pads.
+    val view = LocalView.current
+    DisposableEffect(view) {
+        val window = (view.context as? android.app.Activity)?.window
+        val before = window?.attributes?.softInputMode
+        @Suppress("DEPRECATION") window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+        onDispose { before?.let { window.setSoftInputMode(it) } }
+    }
+    var below by remember { mutableIntStateOf(0) }
+    val belowDp = with(LocalDensity.current) { below.toDp() }
+    val keyboard = WindowInsets.isImeVisible
+    LaunchedEffect(keyboard) {
+        val last = state.turns.size + (if (state.thinking) 1 else 0)
+        if (keyboard && last > 0) listState.animateScrollToItem(last)
+    }
     val demo = state.basedOn?.demo == true
     val fromInsights = insightFinding?.takeIf { !demo }?.let { question(it) }
     val general = listOf(
@@ -101,8 +136,15 @@ fun AskScreen(
         stringResource(R.string.ask_suggest_week),
     )
 
-    Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(horizontal = 16.dp).imePadding()) {
-        LazyColumn(state = listState, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(
+        modifier
+            .fillMaxSize()
+            .onGloballyPositioned { below = (it.findRootCoordinates().size.height - it.boundsInRoot().bottom).toInt().coerceAtLeast(0) }
+            .background(MaterialTheme.colorScheme.background)
+            .consumeWindowInsets(PaddingValues(bottom = belowDp))
+            .imePadding(),
+    ) {
+        LazyColumn(state = listState, modifier = Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item {
                 Column(Modifier.padding(top = 6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -126,7 +168,8 @@ fun AskScreen(
                 Bubble(turn)
                 // Two more suggestions stay in reach under the last answer.
                 if (!turn.fromUser && i == state.turns.lastIndex && !state.thinking) {
-                    Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // One line each, never cut: the row scrolls sideways, edge to edge.
+                    Row(Modifier.padding(top = 10.dp).bleed(16.dp).horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         general.filterNot { q -> state.turns.any { it.fromUser && it.text == q } }.take(2).forEach { q -> Chip(q, small = true) { onAsk(q) } }
                     }
                 }
@@ -140,7 +183,7 @@ fun AskScreen(
                 }
             }
         }
-        state.error?.let { Text(it, fontSize = 12.sp, color = com.sukoon.app.ui.theme.PillLowText, modifier = Modifier.padding(vertical = 6.dp)) }
+        state.error?.let { Text(it, fontSize = 12.sp, color = com.sukoon.app.ui.theme.PillLowText, modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) }
         val noVoice = stringResource(R.string.voice_no_recognizer)
         val askContext = androidx.compose.ui.platform.LocalContext.current
         val (voice, speak) = com.sukoon.app.ui.logbook.rememberVoiceCapture(stringResource(R.string.ask_mic), onUnavailable = { android.widget.Toast.makeText(askContext, noVoice, android.widget.Toast.LENGTH_LONG).show() }) { said ->
@@ -212,6 +255,7 @@ private fun Chip(text: String, small: Boolean = false, onClick: () -> Unit) {
         fontSize = if (small) 12.5.sp else 13.5.sp,
         color = MaterialTheme.colorScheme.onBackground,
         maxLines = if (small) 1 else 2,
+        softWrap = !small,
         modifier = Modifier
             .clip(RoundedCornerShape(14.dp))
             .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), RoundedCornerShape(14.dp))
@@ -228,7 +272,7 @@ private fun Bubble(turn: ChatTurn) {
     val shape = if (user) RoundedCornerShape(18.dp, 18.dp, 6.dp, 18.dp) else RoundedCornerShape(18.dp, 18.dp, 18.dp, 6.dp)
     Column(Modifier.fillMaxWidth(), horizontalAlignment = if (user) Alignment.End else Alignment.Start) {
         Text(
-            turn.text,
+            if (user) AnnotatedString(turn.text) else markdown(turn.text),
             fontSize = 14.sp,
             lineHeight = 20.sp,
             color = if (user) Color.White else MaterialTheme.colorScheme.onBackground,
@@ -251,7 +295,7 @@ private fun Bubble(turn: ChatTurn) {
 
 @Composable
 private fun InputRow(value: String, onValue: (String) -> Unit, canSend: Boolean, onMic: () -> Unit = {}, onSend: () -> Unit) {
-    Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(
             Modifier
                 .weight(1f)
@@ -330,3 +374,10 @@ private fun question(f: Finding): String? = when (val i = f.insight) {
 }
 
 private fun clock(hour: Int): String = LocalTime.of(hour.coerceIn(0, 23), 0).format(TimeFormat.of())
+
+/** Wider than the parent's padding by [by] each side, so a sideways row scrolls from the screen's edge. */
+private fun Modifier.bleed(by: Dp) = layout { measurable, constraints ->
+    val extra = by.roundToPx() * 2
+    val placeable = measurable.measure(constraints.copy(minWidth = constraints.minWidth + extra, maxWidth = constraints.maxWidth + extra))
+    layout(placeable.width - extra, placeable.height) { placeable.place(-extra / 2, 0) }
+}
