@@ -2290,7 +2290,7 @@
     <string name="meal_changed_ahead_unknown">ده ممكن يوطّيك في الساعات الجاية</string>
     <string name="meal_changed_extra">حوالي %1$s وحدة زيادة عن اللي أكلته لسه شغالة. %2$d جم نشويات تغطيها.</string>
     <string name="meal_changed_eat">هاكل %1$d جم دلوقتي</string>
-    <string name="meal_changed_later">الباقي بعدين</string>
+    <string name="meal_changed_later">هاكل الباقي كمان شوية</string>
     <string name="meal_changed_watch">راقبني بس</string>
     <string name="meal_changed_watch_note">في الحالتين سكون بيراقب لحد ما الزيادة تخلص: تنبيه الهبوط على %1$d وقياس بعد 30 و60 دقيقة.</string>
     <string name="meal_changed_topup_line">حوالي %1$s وحدة زيادة تغطي النشويات الزيادة. بيفتح إدخال الإنسولين العادي علشان تتأكد.</string>
@@ -2298,7 +2298,7 @@
     <string name="meal_changed_topup">ضيف %1$s وحدة</string>
     <string name="meal_changed_not_now">مش دلوقتي</string>
     <string name="meal_changed_ok">تمام</string>
-    <string name="meal_changed_later_toast">بنراقب. كُل الباقي لما تقدر.</string>
+    <string name="meal_changed_later_toast">بنراقبك. حاول تاكل الباقي في خلال 30 دقيقة: سكون هيطمن عليك بعد 30 و60 دقيقة.</string>
     <string name="meal_changed_watching">بنراقب الهبوط</string>
     <string name="meal_delete_title">خدت الإنسولين؟</string>
     <string name="meal_delete_body">الأكلة دي كان معاها %1$s وحدة. لو خدتها سيبها: سكون هيراقب الهبوط.</string>

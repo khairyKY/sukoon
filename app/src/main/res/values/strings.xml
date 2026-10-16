@@ -2154,7 +2154,7 @@
     <string name="meal_changed_ahead_unknown">This can take you low in the next few hours</string>
     <string name="meal_changed_extra">About %1$s u more than you ate is still working. %2$d g of carbs would cover it.</string>
     <string name="meal_changed_eat">I\'ll eat %1$d g now</string>
-    <string name="meal_changed_later">Rest later</string>
+    <string name="meal_changed_later">I'll eat the rest soon</string>
     <string name="meal_changed_watch">Just watch me</string>
     <string name="meal_changed_watch_note">Either way, Sukoon watches until the extra is spent: low alarm at %1$d, a check at 30 and 60 min.</string>
     <string name="meal_changed_topup_line">About %1$s u more would cover the extra carbs. It opens the usual insulin entry to check.</string>
@@ -2162,7 +2162,7 @@
     <string name="meal_changed_topup">Add %1$s u</string>
     <string name="meal_changed_not_now">Not now</string>
     <string name="meal_changed_ok">OK</string>
-    <string name="meal_changed_later_toast">Watching. Eat the rest when you can.</string>
+    <string name="meal_changed_later_toast">Watching you. Try to eat the rest within 30 minutes: Sukoon checks in at 30 and 60.</string>
     <string name="meal_changed_watching">Watching for a low</string>
     <string name="meal_delete_title">Did you take the insulin?</string>
     <string name="meal_delete_body">This meal had %1$s u with it. If you took it, keep it: Sukoon will watch for a low.</string>
