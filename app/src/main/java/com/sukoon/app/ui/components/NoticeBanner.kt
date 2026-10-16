@@ -1,5 +1,6 @@
 package com.sukoon.app.ui.components
 
+import com.sukoon.app.platform.Updates
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -58,6 +59,12 @@ fun NoticeBanner(modifier: Modifier = Modifier) {
     val notice by notices.current.collectAsStateWithLifecycle()
     val read by notices.read.collectAsStateWithLifecycle()
     val shown = notice ?: return
+    // A release notice and the update banner are one thing: while the banner is up (or the update
+    // was put off) the notice steps back; tapped, it starts the same update, with its download bar.
+    val updates = (LocalContext.current.applicationContext as SukoonApp).container.updates
+    val update by updates.state.collectAsStateWithLifecycle()
+    val viaUpdater = shown.release && com.sukoon.app.BuildConfig.SELF_UPDATE
+    if (viaUpdater && (update is Updates.State.Available || update is Updates.State.Downloading || update is Updates.State.Ready || update is Updates.State.NeedsReinstall)) return
     val arabic = LocalContext.current.resources.configuration.locales[0].language == "ar"
     var open by rememberSaveable(shown.id) { mutableStateOf(false) }
     Row(
@@ -67,8 +74,8 @@ fun NoticeBanner(modifier: Modifier = Modifier) {
             .clip(RoundedCornerShape(14.dp))
             .background(SageMist)
             .clickable {
-                open = true
                 notices.markRead(shown.id)
+                if (viaUpdater) updates.updateFromNotification() else open = true
             }
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,

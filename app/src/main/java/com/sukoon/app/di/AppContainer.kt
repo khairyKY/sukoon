@@ -110,7 +110,10 @@ class AppContainer(private val context: Context) {
     val updates = Updates(context, appScope)
 
     /** Messages from Sukoon's maker to every install (docs/notices.md). */
-    val notices = com.sukoon.app.platform.Notices(context, appScope)
+    val notices = com.sukoon.app.platform.Notices(context, appScope).apply {
+        // A release notice: the updater checks now and announces it, with its Update button.
+        releaseNoticed = { updates.checkAndAnnounce() }
+    }
 
     /** Dexcom Share: a Dexcom wearer's readings through Dexcom's servers. */
     val dexcom = DexcomShare(context)
