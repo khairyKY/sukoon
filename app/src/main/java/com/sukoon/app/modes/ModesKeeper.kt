@@ -101,10 +101,10 @@ class ModesKeeper(private val context: Context, logbook: LogbookRepository, priv
         get() = prefs.getLong(K_WORKOUT_START, 0).takeIf { it > 0 }?.let(Instant::ofEpochMilli)
         set(v) = prefs.edit().putLong(K_WORKOUT_START, v?.toEpochMilli() ?: 0).apply()
 
-    /** The meal after a workout: how much less to suggest, 0, 25 or 50% (Riddell 2017: about 50%). */
+    /** The meal after a workout: how much less to suggest, in percent, 0–75 in 5s (Riddell 2017: about 50%). Old 0/25/50 read as is. */
     var afterWorkoutCut: Int
-        get() = prefs.getInt(K_AFTER_CUT, 50)
-        set(v) { prefs.edit().putInt(K_AFTER_CUT, v.coerceIn(0, 50)).apply(); refresh() }
+        get() = Modes.afterWorkoutCut(prefs.getInt(K_AFTER_CUT, 50))
+        set(v) { prefs.edit().putInt(K_AFTER_CUT, Modes.afterWorkoutCut(v)).apply(); refresh() }
 
     var fasting: FastingSettings
         get() {
@@ -131,20 +131,55 @@ class ModesKeeper(private val context: Context, logbook: LogbookRepository, priv
             runCatching { PrayerPlace(it[0].toDouble(), it[1].toDouble(), PrayerTimes.Method.valueOf(it[2])) }.getOrNull()
         }
         set(v) {
+            val old = prayerPlace
             prefs.edit().apply { if (v == null) remove(K_PLACE) else putString(K_PLACE, "${v.lat},${v.lng},${v.method.name}") }.apply()
+            if (v?.lat != old?.lat || v?.lng != old?.lng) saveName(null, null)
             _place.value = v
+            v?.let(::lookUpName)
             refresh()
         }
     private val _place = MutableStateFlow(prayerPlace)
     val place: StateFlow<PrayerPlace?> = _place.asStateFlow()
+
+    private val _placeName = MutableStateFlow(prefs.getString(K_PLACE_NAME, null))
+    /** The place's city in the app's language (القاهرة in Arabic), from the phone's geocoder; null until found. */
+    val placeName: StateFlow<String?> = _placeName.asStateFlow()
+
+    private fun saveName(name: String?, key: String?) {
+        prefs.edit().putString(K_PLACE_NAME, name).putString(K_PLACE_NAME_FOR, key).apply()
+        _placeName.value = name
+    }
+
+    /**
+     * Names [p] once per place and language. Off the main thread: the async geocoder on Android 13+
+     * (the old call can return nothing there), the blocking one on IO before. Needs a connection, so
+     * a miss is retried on the next [followPlace].
+     */
+    private fun lookUpName(p: PrayerPlace) {
+        val locale = context.resources.configuration.locales[0]
+        val key = "${p.lat},${p.lng},${locale.toLanguageTag()}"
+        if (prefs.getString(K_PLACE_NAME_FOR, null) == key || !android.location.Geocoder.isPresent()) return
+        val geocoder = android.location.Geocoder(context, locale)
+        fun found(list: List<android.location.Address>?) {
+            val a = list?.firstOrNull() ?: return
+            val name = PrayerTimes.placeName(a.locality, a.subAdminArea, a.adminArea) ?: return
+            if (prayerPlace?.let { it.lat == p.lat && it.lng == p.lng } == true) saveName(name, key)
+        }
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            runCatching { geocoder.getFromLocation(p.lat, p.lng, 1) { found(it) } }
+        } else {
+            scope.launch(kotlinx.coroutines.Dispatchers.IO) { found(runCatching { @Suppress("DEPRECATION") geocoder.getFromLocation(p.lat, p.lng, 1) }.getOrNull()) }
+        }
+    }
     private var freshFixAt = 0L
 
     /**
      * The place follows the phone (Cairo, Alexandria and Tanta are minutes apart): its rough last-known
      * location, and on Android 11+ a fresh one at most hourly; only a move of over 10 km moves the place.
-     * [start] turns it on from nothing. False when no location is known yet. Nothing leaves the phone.
+     * [start] turns it on from nothing. False when no location is known yet. Sukoon sends it nowhere; only the geocoder sees it, for the name.
      */
     fun followPlace(start: Boolean = false): Boolean {
+        prayerPlace?.let(::lookUpName) // a name missed offline, or the language changed
         if (prayerPlace == null && !start) return false
         if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED) return false
         val lm = context.getSystemService(android.location.LocationManager::class.java) ?: return false
@@ -165,7 +200,7 @@ class ModesKeeper(private val context: Context, logbook: LogbookRepository, priv
 
     private fun moveTo(loc: android.location.Location) {
         val cur = prayerPlace
-        if (cur != null && PrayerTimes.km(cur.lat, cur.lng, loc.latitude, loc.longitude) <= 10) return
+        if (cur != null && !PrayerTimes.moved(cur.lat, cur.lng, loc.latitude, loc.longitude)) return
         // Rounded to ~1 km: plenty for prayer times, and no more precise than it needs to be.
         prayerPlace = PrayerPlace(Math.round(loc.latitude * 100) / 100.0, Math.round(loc.longitude * 100) / 100.0, cur?.method ?: PrayerTimes.Method.EGYPT)
     }
@@ -297,6 +332,8 @@ class ModesKeeper(private val context: Context, logbook: LogbookRepository, priv
         const val K_BULK_ON = "bulk_on" // before goals
         const val K_GOAL = "goal"
         const val K_PLACE = "prayer_place"
+        const val K_PLACE_NAME = "prayer_place_name"
+        const val K_PLACE_NAME_FOR = "prayer_place_name_for"
         const val K_GOAL_PROTEIN = "goal_protein_per_kg"
         const val K_GOAL_CHANGE = "goal_change"
         const val K_GOAL_MAINTENANCE = "goal_maintenance"

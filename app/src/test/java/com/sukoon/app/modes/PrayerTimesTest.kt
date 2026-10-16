@@ -4,6 +4,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -47,6 +48,21 @@ class PrayerTimesTest {
         assertEquals(PrayerTimes.City.CAIRO, PrayerTimes.nearest(30.04, 31.24))
         assertEquals(PrayerTimes.City.TANTA, PrayerTimes.nearest(30.79, 31.0))
         assertNull(PrayerTimes.nearest(26.82, 30.8)) // the middle of Egypt: no name, just coordinates
+    }
+
+    @Test
+    fun `the place moves only past 10 km`() {
+        assertFalse(PrayerTimes.moved(30.04, 31.24, 30.08, 31.24)) // ~4.5 km across Cairo: stays
+        assertTrue(PrayerTimes.moved(30.04, 31.24, 30.79, 31.0)) // Cairo to Tanta
+        assertTrue(PrayerTimes.moved(30.92, 29.70, 31.20, 29.92)) // New Borg El Arab to Alexandria
+    }
+
+    @Test
+    fun `a geocoded place is named by its town, then district, then governorate`() {
+        assertEquals("Tanta", PrayerTimes.placeName("Tanta", "Tanta", "Gharbia Governorate"))
+        assertEquals("Borg El Arab", PrayerTimes.placeName(" ", "Borg El Arab", "Alexandria Governorate"))
+        assertEquals("محافظة الإسكندرية", PrayerTimes.placeName(null, null, "محافظة الإسكندرية"))
+        assertNull(PrayerTimes.placeName(null, "", null))
     }
 
     @Test

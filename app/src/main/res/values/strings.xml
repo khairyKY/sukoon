@@ -2027,7 +2027,7 @@
     <string name="update_ready_body">Tap to see what\'s new and update.</string>
     <string name="ramadan_auto">From my location</string>
     <string name="ramadan_auto_on">Fajr and Maghrib worked out for today, every day.</string>
-    <string name="ramadan_auto_off">Uses your rough location (about 1 km) to work out Fajr and Maghrib where you are. It stays on this phone.</string>
+    <string name="ramadan_auto_off">Uses your rough location (about 1 km) to work out Fajr and Maghrib where you are. Sukoon keeps it on this phone; to show the city\'s name, the phone\'s own place lookup (Google\'s on most phones) is asked with it.</string>
     <string name="ramadan_no_place">Couldn\'t find where you are. Pick your city, or type the times below.</string>
     <string name="ramadan_method">Fajr by</string>
     <string name="ramadan_method_egypt">Egypt</string>
@@ -2265,4 +2265,6 @@
     <string name="voice_heard_label">What I heard. Fix anything first</string>
     <string name="voice_use_this">Use this</string>
     <string name="voice_say_more">Say more</string>
+    <string name="ramadan_no_city_name">City name unavailable (no connection, or this phone can\'t look places up). The times are still for where you are.</string>
+    <string name="after_workout_custom">Custom</string>
 </resources>

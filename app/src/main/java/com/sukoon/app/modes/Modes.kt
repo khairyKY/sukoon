@@ -39,6 +39,9 @@ data class ActiveModes(
 /** Why a dose suggestion was changed, and by how much (shown with the suggestion). */
 data class DoseChange(val reason: Reason, val mealFactor: Double = 1.0, val correctionFactor: Double = 1.0) {
     enum class Reason { AFTER_WORKOUT, IN_WORKOUT, SUHOOR }
+
+    /** How much less meal insulin, in whole percent (rounded: 1 − 0.9 isn't exactly 0.1 in a Double). */
+    val mealCutPercent: Int get() = Math.round((1 - mealFactor) * 100).toInt()
 }
 
 object Modes {
@@ -51,6 +54,12 @@ object Modes {
     const val MEAL_WATCH_LOW = 90
     /** How long lows can follow exercise (Riddell et al., Lancet D&E 2017: at least 24 h). */
     val LATE_LOW: Duration = Duration.ofHours(24)
+    /** The most the meal after a workout can be cut by (Riddell 2017 goes to 75% for long aerobic sessions). */
+    const val AFTER_WORKOUT_CUT_MAX = 75
+
+    /** A cut as stored: whole 5% steps, 0 to [AFTER_WORKOUT_CUT_MAX]. */
+    fun afterWorkoutCut(percent: Int): Int = (Math.round(percent / 5.0).toInt() * 5).coerceIn(0, AFTER_WORKOUT_CUT_MAX)
+
     /** The meal "after" a workout: within this of its end. */
     val AFTER_WORKOUT: Duration = Duration.ofHours(2)
     /** Corrections during or just after lifting: half (Moser 2020, resistance-training rises). */
@@ -117,16 +126,17 @@ object Modes {
      * 50%); before lifting nothing is cut (Riddell: not advised for brief intense exercise).
      */
     fun doseChange(m: ActiveModes, now: Instant, mealAt: Instant?, zone: ZoneId, afterWorkoutCutPercent: Int): DoseChange? {
+        val cut = afterWorkoutCut(afterWorkoutCutPercent)
         val correction = if (m.workingOut || (m.lastWorkoutEnd != null && Duration.between(m.lastWorkoutEnd, now) <= AFTER_WORKOUT)) WORKOUT_CORRECTION_FACTOR else 1.0
         val afterWorkout = mealAt != null && m.lastWorkoutEnd != null && !mealAt.isBefore(m.lastWorkoutEnd) &&
-            Duration.between(m.lastWorkoutEnd, mealAt) <= AFTER_WORKOUT && afterWorkoutCutPercent > 0
+            Duration.between(m.lastWorkoutEnd, mealAt) <= AFTER_WORKOUT && cut > 0
         val suhoor = mealAt != null && m.fasting.on && mealAt.atZone(zone).toLocalTime().let { t ->
             val start = m.fasting.suhoorEnds.minus(SUHOOR_WINDOW)
             if (start.isBefore(m.fasting.suhoorEnds)) !t.isBefore(start) && t.isBefore(m.fasting.suhoorEnds)
             else !t.isBefore(start) || t.isBefore(m.fasting.suhoorEnds) // the window wraps midnight
         }
         return when {
-            afterWorkout -> DoseChange(DoseChange.Reason.AFTER_WORKOUT, mealFactor = 1 - afterWorkoutCutPercent / 100.0, correctionFactor = correction)
+            afterWorkout -> DoseChange(DoseChange.Reason.AFTER_WORKOUT, mealFactor = 1 - cut / 100.0, correctionFactor = correction)
             suhoor -> DoseChange(DoseChange.Reason.SUHOOR, mealFactor = 1 - SUHOOR_CUT_PERCENT / 100.0)
             correction < 1.0 -> DoseChange(DoseChange.Reason.IN_WORKOUT, correctionFactor = correction)
             else -> null

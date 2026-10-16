@@ -54,10 +54,11 @@ import java.time.LocalTime
 /**
  * You → Fitness & food: what lasts. Your goal and its daily numbers, the training default (the
  * meal after a workout) and your Ramadan times. What you switch on for a while is Now → Today; the
- * reasons and sources are the Guide's "Workouts, fasting, sick days and your goal".
+ * reasons and sources are the Guide's "Workouts, fasting, sick days and your goal". Under the parent
+ * lock ([locked]) the workout meal cut, a dose setting, can't be changed here either.
  */
 @Composable
-fun FitnessPage(keeper: ModesKeeper, profile: Profile, onEditProfile: () -> Unit, onWhy: () -> Unit) {
+fun FitnessPage(keeper: ModesKeeper, profile: Profile, onEditProfile: () -> Unit, onWhy: () -> Unit, locked: Boolean = false) {
     val goal by keeper.goalFlow.collectAsState()
     val n = NumberFormat.getIntegerInstance()
 
@@ -115,13 +116,7 @@ fun FitnessPage(keeper: ModesKeeper, profile: Profile, onEditProfile: () -> Unit
     WeightSection(goal.kind, profile)
 
     Label(stringResource(R.string.fitness_training))
-    var cut by remember { mutableStateOf(keeper.afterWorkoutCut) }
-    Small(stringResource(R.string.fitness_after_meal))
-    ChoiceChips(listOf(0, 25, 50), cut, { if (it == 0) stringResource(R.string.fitness_as_usual) else stringResource(R.string.fitness_less, it) }) {
-        cut = it
-        keeper.afterWorkoutCut = it
-    }
-    Small(stringResource(R.string.fitness_after_meal_body), muted = true)
+    AfterWorkoutCut(keeper, enabled = !locked)
     Small(stringResource(R.string.fitness_training_note, Modes.NIGHT_LOW), muted = true)
 
     Label(stringResource(R.string.fitness_ramadan))
@@ -245,6 +240,7 @@ private fun StepsToday() {
 private fun RamadanPlace(keeper: ModesKeeper) {
     val context = LocalContext.current
     val place by keeper.place.collectAsState()
+    val placeName by keeper.placeName.collectAsState()
     var failed by remember { mutableStateOf(false) }
     fun granted() = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
     androidx.compose.runtime.LaunchedEffect(Unit) { keeper.followPlace() }
@@ -276,10 +272,11 @@ private fun RamadanPlace(keeper: ModesKeeper) {
         pickCity(null)
     }
     place?.let { p ->
-        // Where the times are for, so you can see they follow you.
+        // Where the times are for, so you can see they follow you: the geocoded town, else one of Kai's cities, else coordinates.
         val city = com.sukoon.app.modes.PrayerTimes.nearest(p.lat, p.lng)
-        val coords = String.format(java.util.Locale.getDefault(), "%.2f, %.2f", p.lat, p.lng)
-        Text(city?.let { cityName(it) + " · " + coords } ?: coords, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 8.dp))
+        val shown = placeName ?: city?.let { cityName(it) }
+        Text(shown ?: String.format(java.util.Locale.getDefault(), "%.2f, %.2f", p.lat, p.lng), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 8.dp))
+        if (shown == null) Small(stringResource(R.string.ramadan_no_city_name), muted = true)
         if (granted()) Small(stringResource(R.string.ramadan_follows), muted = true)
         else {
             Small(stringResource(R.string.ramadan_pick_city), muted = true)

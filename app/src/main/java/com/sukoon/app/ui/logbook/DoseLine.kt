@@ -107,7 +107,7 @@ private fun Receipt(a: DoseAdvice.Suggestion) {
         if (a.onBoardUsed > 0) ReceiptRow(stringResource(R.string.dose_r_iob), stringResource(R.string.dose_r_iob_how), signed(-a.onBoardUsed))
     }
     a.change?.let { c ->
-        val less = ((1 - c.mealFactor) * 100).toInt()
+        val less = c.mealCutPercent
         ReceiptRow(
             stringResource(R.string.dose_r_mode),
             when (c.reason) {
