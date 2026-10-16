@@ -89,8 +89,6 @@ import kotlin.math.roundToInt
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.input.pointer.pointerInput
 import com.sukoon.app.data.source.GlucoseReading
 import com.sukoon.app.data.source.SourceKind
 import com.sukoon.app.ui.components.durationText
@@ -153,13 +151,12 @@ fun HomeScreen(
     /** Beta: a meal in the last hour with no insulin ([com.sukoon.app.insulin.Dose.mealDose]) and its dose. */
     mealDose: Pair<EventEntity, DoseAdvice.Suggestion>? = null,
     onMealDose: (EventEntity) -> Unit = {},
-    /** What shows on Now and in what order ("Make Now yours"); [onCustomize] opens that sheet. */
+    /** What shows on Now and in what order (You › Appearance › Now). */
     layout: NowLayout = NowLayout(),
-    onCustomize: () -> Unit = {},
     /** Made-up readings (You › Sensor › Demo): Now says so instead of LIVE. */
     demo: Boolean = false,
 ) {
-    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss, mealDose, onMealDose, onModes, status, layout, onCustomize, demo)) {
+    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss, mealDose, onMealDose, onModes, status, layout, demo)) {
         PullToSync(onSync, modifier) {
             HomeContent(state, brief, Modifier.fillMaxSize(), onTreated, onSnooze, onAlertEmergencyContact, onTroubleshoot, onPairSensor)
         }
@@ -183,7 +180,6 @@ private class Shortcuts(
     val onModes: () -> Unit = {},
     val status: List<StatusChip> = emptyList(),
     val layout: NowLayout = NowLayout(),
-    val onCustomize: () -> Unit = {},
     val demo: Boolean = false,
 )
 private val LocalShortcuts = staticCompositionLocalOf { Shortcuts({}, {}) }
@@ -425,7 +421,7 @@ private fun ColumnScope.InRangeContent(state: HomeUiState.InRange, brief: Brief?
 /**
  * In range and high (design A, "Calm: one number, one next step"): chips, the number, then what
  * the user keeps under it (Make Now yours): next step, the 3-hour graph, today's numbers, dose cards.
- * Long-press the number, or the link at the bottom, to arrange it.
+ * Arranged in You › Appearance › Now.
  */
 @Composable
 private fun ColumnScope.CalmContent(
@@ -439,7 +435,6 @@ private fun ColumnScope.CalmContent(
     updated: Boolean,
 ) {
     val s = LocalShortcuts.current
-    val haptic = LocalHapticFeedback.current
     Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
         HomeStatusBar(stringResource(R.string.home_status_live), dot, pulsing = true)
         HomeAppBarRow(dimmed = false)
@@ -448,8 +443,7 @@ private fun ColumnScope.CalmContent(
         NoticeBanner(Modifier.padding(horizontal = 16.dp).padding(top = 12.dp))
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth().padding(top = 20.dp)
-                .pointerInput(Unit) { detectTapGestures(onLongPress = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); s.onCustomize() }) },
+            modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
         ) {
             pill()
             Spacer(Modifier.height(8.dp))
@@ -470,19 +464,12 @@ private fun ColumnScope.CalmContent(
             when (part) {
                 NowPart.NEXT -> NextCard(brief)
                 NowPart.GRAPH -> { RecentChart(readings); Spacer(Modifier.height(16.dp)) }
-                NowPart.STATS -> SlimStats()
+                NowPart.STATS -> { StatsRow(); Spacer(Modifier.height(12.dp)) }
                 NowPart.DOSE -> DoseCards()
                 else -> Unit
             }
         }
-        Text(
-            stringResource(R.string.now_layout_title),
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = CaptionMuted,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 16.dp).clickable(onClick = s.onCustomize).padding(12.dp),
-        )
+        Spacer(Modifier.height(16.dp))
     }
 }
 
@@ -711,27 +698,41 @@ private fun RecentChart(readings: List<GlucoseReading>, dimmed: Boolean = false)
     }
 }
 
-/** Today's chosen numbers in one slim row (design A); tap to choose which. */
+/** Today's chosen numbers (design "Home · your stats"); "Choose" opens the picker. */
 @Composable
-private fun SlimStats() {
+private fun StatsRow() {
     val s = LocalShortcuts.current
-    Row(
-        Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 14.dp).clip(RoundedCornerShape(14.dp))
-            .clickable(onClick = s.onChooseStats).padding(vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-    ) {
-        if (s.chosenStats.isEmpty()) {
-            Text(stringResource(R.string.home_choose_stats), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+    Column(Modifier.padding(horizontal = 20.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.home_today).uppercase(), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp, color = CaptionMuted, modifier = Modifier.weight(1f))
+            Text(
+                stringResource(R.string.home_choose_stats),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = s.onChooseStats).padding(horizontal = 6.dp, vertical = 8.dp),
+            )
         }
-        s.chosenStats.forEach { stat ->
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
-                Text(
-                    (s.stats[stat]?.let { statValue(stat, it) } ?: "—") + " " + statUnit(stat),
-                    fontFamily = HeadlineSerifFontFamily, fontSize = 19.sp, color = MaterialTheme.colorScheme.onBackground, maxLines = 1,
-                )
-                Text(statLabel(stat), fontSize = 11.5.sp, color = CaptionMuted, maxLines = 1)
+        if (s.chosenStats.isNotEmpty()) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                s.chosenStats.forEach { stat -> StatTile(stat, s.stats[stat], Modifier.weight(1f)) }
             }
         }
+    }
+}
+
+@Composable
+private fun StatTile(stat: HomeStat, value: Double?, modifier: Modifier) {
+    Column(
+        modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f), RoundedCornerShape(14.dp))
+            .padding(horizontal = 10.dp, vertical = 9.dp),
+    ) {
+        Text(statLabel(stat), fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, color = CaptionMuted, maxLines = 1)
+        Text(value?.let { statValue(stat, it) } ?: "—", fontFamily = HeadlineSerifFontFamily, fontSize = 21.sp, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, modifier = Modifier.padding(top = 2.dp))
+        Text(statUnit(stat), fontSize = 11.5.sp, color = CaptionMuted, maxLines = 1)
     }
 }
 

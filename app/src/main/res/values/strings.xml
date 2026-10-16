@@ -2173,7 +2173,7 @@
     <string name="meal_delete_keep">Yes, keep it</string>
     <string name="meal_delete_both">No, delete it too</string>
     <string name="home_status_demo">DEMO · not your glucose</string>
-    <string name="now_layout_title">Make Now yours</string>
+    <string name="now_layout_title">Arrange Now</string>
     <string name="now_layout_section">Now</string>
     <string name="now_layout_body">Turn parts on or off. Drag the ones under the number to change their order. Low and urgent screens stay the same.</string>
     <string name="now_layout_row_body">What shows on Now, and in what order</string>

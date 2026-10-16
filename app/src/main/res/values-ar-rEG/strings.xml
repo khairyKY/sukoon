@@ -2309,7 +2309,7 @@
     <string name="meal_delete_keep">أيوه، سيبها</string>
     <string name="meal_delete_both">لأ، امسحها هي كمان</string>
     <string name="home_status_demo">تجريبي · مش سكرك</string>
-    <string name="now_layout_title">خلّي «دلوقتي» على مزاجك</string>
+    <string name="now_layout_title">ترتيب «دلوقتي»</string>
     <string name="now_layout_section">دلوقتي</string>
     <string name="now_layout_body">شغّل أو اقفل الأجزاء. اسحب اللي تحت الرقم علشان تغيّر ترتيبه. شاشات الهبوط والحالات المستعجلة زي ما هي.</string>
     <string name="now_layout_row_body">إيه اللي يظهر في «دلوقتي» وبأي ترتيب</string>

@@ -2313,7 +2313,7 @@
     <string name="meal_delete_keep">نعم، أبقِها</string>
     <string name="meal_delete_both">لا، احذفها أيضًا</string>
     <string name="home_status_demo">تجريبي · ليس سكرك</string>
-    <string name="now_layout_title">اجعل «الآن» لك</string>
+    <string name="now_layout_title">ترتيب «الآن»</string>
     <string name="now_layout_section">الآن</string>
     <string name="now_layout_body">شغّل الأجزاء أو أوقفها. اسحب ما تحت الرقم لتغيير ترتيبه. شاشات الهبوط والحالات العاجلة تبقى كما هي.</string>
     <string name="now_layout_row_body">ما يظهر في «الآن» وبأي ترتيب</string>

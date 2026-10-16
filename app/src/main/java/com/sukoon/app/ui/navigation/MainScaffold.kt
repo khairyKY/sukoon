@@ -283,11 +283,8 @@ fun MainScaffold() {
                 val stats by homeViewModel.stats.collectAsStateWithLifecycle()
                 var chosenStats by remember { mutableStateOf(home.settings.homeStats) }
                 var pickingStats by remember { mutableStateOf(false) }
-                var nowLayout by remember { mutableStateOf(home.settings.nowLayout) }
-                var arrangingNow by remember { mutableStateOf(false) }
-                if (arrangingNow) {
-                    com.sukoon.app.ui.home.NowLayoutSheet(nowLayout, onChange = { home.settings.nowLayout = it; nowLayout = it }, onDismiss = { arrangingNow = false })
-                }
+                // Read each time Now opens: it's arranged in You › Appearance › Now.
+                val nowLayout = remember { home.settings.nowLayout }
                 if (pickingStats) {
                     StatsPicker(chosenStats, home.healthConnect, onChange = { home.settings.homeStats = it; chosenStats = it }, onDismiss = { pickingStats = false })
                 }
@@ -525,7 +522,6 @@ fun MainScaffold() {
                         chosenStats = chosenStats,
                         onChooseStats = { pickingStats = true },
                         layout = nowLayout,
-                        onCustomize = { arrangingNow = true },
                         demo = source == SourceKind.SIMULATED,
                     )
                 }
