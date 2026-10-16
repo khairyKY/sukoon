@@ -307,7 +307,7 @@ private fun AmountView(food: Food, onBack: () -> Unit, onAdd: (PlateItem) -> Uni
             RoundIconButton(R.drawable.ic_back, stringResource(R.string.entry_close), onBack)
             FoodImage(food, 56.dp)
             Column(Modifier.weight(1f)) {
-                Text(food.name, fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground, maxLines = 2)
+                Text(food.name, fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, lineHeight = 29.sp, color = MaterialTheme.colorScheme.onBackground, maxLines = 2)
                 Text(
                     listOfNotNull(food.brand, food.packageGrams?.let { gramsText(it) }, if (food.own) stringResource(R.string.food_per_portion, gramsText(food.per100[Food.CARBS])) else stringResource(R.string.food_per_100, gramsText(food.per100[Food.CARBS]))).joinToString(" · "),
                     fontSize = 13.5.sp,
@@ -403,7 +403,7 @@ private fun OwnFoodView(name: String, onBack: () -> Unit, onDone: (String, Doubl
     Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding().padding(horizontal = 18.dp).padding(top = 10.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             RoundIconButton(R.drawable.ic_back, stringResource(R.string.entry_close), onBack)
-            Text(stringResource(R.string.food_own_title), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.food_own_title), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, lineHeight = 29.sp, color = MaterialTheme.colorScheme.onBackground)
         }
         OutlinedTextField(title, { title = it }, label = { Text(stringResource(R.string.food_own_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(

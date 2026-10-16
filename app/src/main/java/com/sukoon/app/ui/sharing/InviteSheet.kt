@@ -64,7 +64,7 @@ fun InviteSheet(code: String, expiresAt: Instant?, from: String, onDismiss: () -
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Text(stringResource(R.string.invite_sheet_title), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground, textAlign = TextAlign.Center)
+            Text(stringResource(R.string.invite_sheet_title), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, lineHeight = 31.sp, color = MaterialTheme.colorScheme.onBackground, textAlign = TextAlign.Center)
             Text(stringResource(R.string.invite_sheet_body), fontSize = 14.sp, lineHeight = 20.sp, color = CaptionMuted, textAlign = TextAlign.Center)
             // Always dark on white, whatever the theme: that's what cameras read best.
             Box(Modifier.clip(RoundedCornerShape(20.dp)).background(Color.White).padding(16.dp)) {

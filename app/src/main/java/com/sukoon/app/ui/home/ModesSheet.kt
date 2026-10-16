@@ -89,7 +89,7 @@ fun TodaySheet(
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text(stringResource(R.string.today_title), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.today_title), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, lineHeight = 31.sp, color = MaterialTheme.colorScheme.onBackground)
 
             // Pause alarms
             val pausedAt = paused
@@ -245,6 +245,9 @@ fun statusChips(
     /** The pickup line ("Pickup Sunday"), within its reminder days. */
     pickup: String? = null,
     onSupplies: () -> Unit = {},
+    /** New clean meals since Learning was last opened, when it's enough to learn from again. */
+    newMeals: Int? = null,
+    onRatios: () -> Unit = {},
 ): List<StatusChip> {
     val time = TimeFormat.of()
     val n = NumberFormat.getIntegerInstance()
@@ -269,6 +272,7 @@ fun statusChips(
         }
         if (t.proteinGrams != null) list += StatusChip(stringResource(R.string.chip_protein, n.format(protein?.toInt() ?: 0), t.proteinGrams), onClick = onFitness)
     }
+    newMeals?.let { list += StatusChip(stringResource(R.string.chip_ratios, it), onClick = onRatios) }
     steps?.takeIf { it > 0 }?.let { list += StatusChip(stringResource(R.string.chip_steps, n.format(it)), onClick = onFitness) }
     gap?.let { (from, to) -> list += StatusChip(stringResource(R.string.chip_gap, time.format(from), time.format(to)), onClick = onFillGap) }
     return list

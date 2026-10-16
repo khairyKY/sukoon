@@ -28,6 +28,8 @@ import com.sukoon.app.insulin.InsulinAction
 data class AskUiState(
     val turns: List<ChatTurn> = emptyList(),
     val thinking: Boolean = false,
+    /** The answer so far, while it streams in. */
+    val streaming: String? = null,
     val error: String? = null,
     /** A question whose answer failed — dropped from [turns] (Gemini needs strictly alternating turns) and handed back to the input box. */
     val unanswered: String? = null,
@@ -94,13 +96,13 @@ class AskViewModel(
                     profile = profile(),
                     goal = goal(),
                 )
-                gemini.generate(system, turns)
+                gemini.stream(system, turns) { soFar -> _uiState.update { it.copy(streaming = soFar) } }
             }
             _uiState.update { state ->
                 result.fold(
-                    onSuccess = { reply -> state.copy(turns = state.turns + ChatTurn(fromUser = false, text = reply), thinking = false) },
+                    onSuccess = { reply -> state.copy(turns = state.turns + ChatTurn(fromUser = false, text = reply), thinking = false, streaming = null) },
                     onFailure = { e ->
-                        state.copy(turns = state.turns.dropLast(1), thinking = false, error = e.message ?: "Something went wrong.", unanswered = text)
+                        state.copy(turns = state.turns.dropLast(1), thinking = false, streaming = null, error = e.message ?: "Something went wrong.", unanswered = text)
                     },
                 )
             }

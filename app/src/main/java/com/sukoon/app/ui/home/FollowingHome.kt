@@ -168,7 +168,7 @@ private fun PersonView(sharing: Sharing, settings: SettingsPrefs, person: Follow
                 }
                 Text(name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
             }
-            DropdownMenu(expanded = switching, onDismissRequest = { switching = false }) {
+            DropdownMenu(expanded = switching, onDismissRequest = { switching = false }, shape = RoundedCornerShape(18.dp), containerColor = MaterialTheme.colorScheme.surface, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f))) {
                 people.forEach { p ->
                     DropdownMenuItem(text = { Text(p.name.ifBlank { "…" }) }, onClick = { onSwitch(p.id); switching = false })
                 }
@@ -195,7 +195,7 @@ private fun PersonView(sharing: Sharing, settings: SettingsPrefs, person: Follow
         Text(pillLabel, modifier = Modifier.clip(RoundedCornerShape(50)).background(pillBg).padding(horizontal = 12.dp, vertical = 5.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = pillText)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
             Text(v?.let { String.format(Locale.getDefault(), "%d", it) } ?: "- - -", fontFamily = HeadlineSerifFontFamily, fontWeight = FontWeight.Light, fontSize = 104.sp, color = if (fresh) MaterialTheme.colorScheme.onBackground else TextMuted)
-            if (latest != null && fresh) Text(latest.trend.arrow, fontFamily = HeadlineSerifFontFamily, fontSize = 34.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 16.dp))
+            if (latest != null && fresh) com.sukoon.app.ui.components.TrendArrow(latest.trend, MaterialTheme.colorScheme.onBackground, size = 34.dp, modifier = Modifier.padding(top = 22.dp))
         }
         if (minutesAgo != null) {
             Text(
@@ -222,7 +222,7 @@ private fun PersonView(sharing: Sharing, settings: SettingsPrefs, person: Follow
             .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f), RoundedCornerShape(16.dp))
             .padding(16.dp),
     ) {
-        Text(title, fontFamily = HeadlineSerifFontFamily, fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface)
+        Text(title, fontFamily = HeadlineSerifFontFamily, fontSize = 18.sp, lineHeight = 22.sp, color = MaterialTheme.colorScheme.onSurface)
         if (body.isNotEmpty()) Text(body, fontSize = 13.5.sp, lineHeight = 19.sp, color = CaptionMuted, modifier = Modifier.padding(top = 3.dp))
     }
     Row(Modifier.padding(start = 6.dp, top = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -280,7 +280,7 @@ private fun FollowerChips(person: Followed) {
     if (pausing) {
         com.sukoon.app.ui.components.SukoonSheet(onDismissRequest = { pausing = false }) {
             Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.today_pause), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
+                Text(stringResource(R.string.today_pause), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, lineHeight = 29.sp, color = MaterialTheme.colorScheme.onBackground)
                 Text(stringResource(R.string.today_pause_note), fontSize = 13.sp, color = CaptionMuted)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(30, 60, 120, 240).forEach { m ->
@@ -428,7 +428,7 @@ private fun PhoneDialog(name: String, onSave: (String) -> Unit, onDismiss: () ->
 @Composable
 private fun NobodyYet(onAddPerson: () -> Unit) {
     Column(Modifier.fillMaxWidth().padding(top = 120.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(stringResource(R.string.follow_nobody_title), fontFamily = HeadlineSerifFontFamily, fontSize = 25.sp, color = MaterialTheme.colorScheme.onBackground, textAlign = TextAlign.Center)
+        Text(stringResource(R.string.follow_nobody_title), fontFamily = HeadlineSerifFontFamily, fontSize = 25.sp, lineHeight = 30.sp, color = MaterialTheme.colorScheme.onBackground, textAlign = TextAlign.Center)
         Text(stringResource(R.string.follow_nobody_body), fontSize = 14.sp, lineHeight = 20.sp, color = CaptionMuted, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 8.dp))
         Box(
             Modifier.padding(top = 22.dp).fillMaxWidth().heightIn(min = 54.dp).clip(RoundedCornerShape(14.dp)).background(Sage).clickable(onClick = onAddPerson),

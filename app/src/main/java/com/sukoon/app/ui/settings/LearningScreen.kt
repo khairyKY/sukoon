@@ -76,6 +76,9 @@ import kotlinx.coroutines.withContext
  */
 @Composable
 internal fun LearningScreen(report: RatioLearner.Report?, settings: DoseSettings, insulinHours: Int, onChange: (DoseSettings) -> Unit, onDismiss: () -> Unit) {
+    // Opened: the ratios have been looked at; Now counts new meals from here.
+    val reviewedPrefs = (androidx.compose.ui.platform.LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.settings
+    androidx.compose.runtime.LaunchedEffect(Unit) { reviewedPrefs.ratiosReviewedAt = System.currentTimeMillis() }
     var howTo by remember { mutableStateOf(false) }
     FullScreen(stringResource(R.string.learn_title), onDismiss) {
         Text(
@@ -341,7 +344,7 @@ private fun FullScreen(title: String, onDismiss: () -> Unit, content: @Composabl
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     RoundIconButton(R.drawable.ic_close, stringResource(R.string.entry_close), onDismiss)
-                    Text(title, fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground)
+                    Text(title, fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, lineHeight = 31.sp, color = MaterialTheme.colorScheme.onBackground)
                 }
                 content()
             }

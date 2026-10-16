@@ -106,7 +106,7 @@ fun AskScreen(
             item {
                 Column(Modifier.padding(top = 6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.ask_title), fontFamily = HeadlineSerifFontFamily, fontSize = 22.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.ask_title), fontFamily = HeadlineSerifFontFamily, fontSize = 22.sp, lineHeight = 26.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
                         if (state.turns.isNotEmpty()) TextButton(onClick = onClear) { Text(stringResource(R.string.ask_clear), color = CaptionMuted, fontSize = 12.sp) }
                     }
                     BasedOnLine(state.basedOn)
@@ -132,7 +132,12 @@ fun AskScreen(
                 }
             }
             if (state.thinking) {
-                item { Text(stringResource(R.string.ask_thinking), fontSize = 12.sp, color = CaptionMuted, modifier = Modifier.padding(4.dp)) }
+                // The answer as it's written; until the first words, "thinking".
+                item {
+                    val soFar = state.streaming
+                    if (soFar.isNullOrBlank()) Text(stringResource(R.string.ask_thinking), fontSize = 12.sp, color = CaptionMuted, modifier = Modifier.padding(4.dp))
+                    else Bubble(ChatTurn(fromUser = false, text = soFar))
+                }
             }
         }
         state.error?.let { Text(it, fontSize = 12.sp, color = StateLow, modifier = Modifier.padding(vertical = 6.dp)) }
@@ -280,7 +285,7 @@ private fun NoKey(onOpenSettings: () -> Unit, modifier: Modifier) {
             Icon(painterResource(R.drawable.ic_sparkle), null, tint = SageDeep, modifier = Modifier.size(28.dp))
         }
         Spacer(Modifier.height(18.dp))
-        Text(stringResource(R.string.ask2_no_key_title), fontFamily = HeadlineSerifFontFamily, fontSize = 23.sp, color = MaterialTheme.colorScheme.onBackground)
+        Text(stringResource(R.string.ask2_no_key_title), fontFamily = HeadlineSerifFontFamily, fontSize = 23.sp, lineHeight = 28.sp, color = MaterialTheme.colorScheme.onBackground)
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.ask2_no_key_body), fontSize = 14.sp, lineHeight = 20.sp, color = CaptionMuted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         Spacer(Modifier.height(20.dp))

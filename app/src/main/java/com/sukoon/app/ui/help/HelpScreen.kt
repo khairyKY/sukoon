@@ -102,7 +102,7 @@ private fun Hub(guide: Guide, done: List<Boolean>, onClose: () -> Unit, onOpen: 
                 Icon(painterResource(R.drawable.ic_back), stringResource(R.string.guide_close), tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(22.dp))
             }
             Spacer(Modifier.width(6.dp))
-            Text(stringResource(R.string.help_title), fontFamily = HeadlineSerifFontFamily, fontSize = 28.sp, color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.help_title), fontFamily = HeadlineSerifFontFamily, fontSize = 28.sp, lineHeight = 34.sp, color = MaterialTheme.colorScheme.onBackground)
         }
         SearchField(query) { query = it }
         if (query.isNotBlank()) {
@@ -148,7 +148,7 @@ internal fun StartHere(steps: List<GuideStart>, done: List<Boolean>, eyebrow: St
             Text(eyebrow.uppercase(), fontSize = 11.5.sp, letterSpacing = 1.sp, fontWeight = FontWeight.SemiBold, color = SageDeep, modifier = Modifier.weight(1f))
             Text(stringResource(R.string.guide_progress, count, steps.size), fontSize = 12.sp, color = CaptionMuted)
         }
-        Text(title, fontFamily = HeadlineSerifFontFamily, fontSize = 20.sp, color = MaterialTheme.colorScheme.onBackground)
+        Text(title, fontFamily = HeadlineSerifFontFamily, fontSize = 20.sp, lineHeight = 24.sp, color = MaterialTheme.colorScheme.onBackground)
         Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))) {
             Box(Modifier.fillMaxWidth(count.toFloat() / steps.size.coerceAtLeast(1)).height(4.dp).background(Sage))
         }

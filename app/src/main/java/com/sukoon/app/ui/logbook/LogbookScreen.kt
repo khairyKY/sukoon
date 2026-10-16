@@ -206,7 +206,7 @@ fun LogbookScreen(
         Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
             Spacer(Modifier.height(16.dp))
             Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
-                Text(stringResource(R.string.logbook_title), fontFamily = HeadlineSerifFontFamily, fontSize = 28.sp, color = MaterialTheme.colorScheme.onBackground)
+                Text(stringResource(R.string.logbook_title), fontFamily = HeadlineSerifFontFamily, fontSize = 28.sp, lineHeight = 34.sp, color = MaterialTheme.colorScheme.onBackground)
                 Text(
                     stringResource(if (state.day == null) R.string.logbook_today_totals else R.string.logbook_day_totals, formatAmountLocalized(totals.first), formatAmountLocalized(totals.second)),
                     fontSize = 13.sp,
@@ -425,7 +425,7 @@ private fun EntryRow(
             if (photo != null) PhotoThumb(photo, Modifier.size(34.dp)) else TypeChip(type)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(title, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onBackground, maxLines = 1)
+                Text(title, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 when {
                     event.source != null -> SourceLine(
                         rememberSourceApp(event.source),
@@ -517,7 +517,7 @@ private fun LogbookEmptyState(onLogFirst: () -> Unit, modifier: Modifier = Modif
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text(stringResource(R.string.logbook_empty_title), fontFamily = HeadlineSerifFontFamily, fontSize = 23.sp, color = MaterialTheme.colorScheme.onBackground)
+        Text(stringResource(R.string.logbook_empty_title), fontFamily = HeadlineSerifFontFamily, fontSize = 23.sp, lineHeight = 28.sp, color = MaterialTheme.colorScheme.onBackground)
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.logbook_empty_body), fontSize = 13.sp, color = CaptionMuted, textAlign = TextAlign.Center)
         Spacer(Modifier.height(20.dp))

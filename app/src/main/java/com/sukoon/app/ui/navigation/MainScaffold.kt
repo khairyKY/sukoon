@@ -429,6 +429,11 @@ fun MainScaffold() {
                         pickup = com.sukoon.app.supplies.Supply.daysToPickup(supplyPickup, java.time.LocalDate.now())?.takeIf { it <= supplyPickup.remindDays }
                             ?.let { com.sukoon.app.supplies.SuppliesReminder.pickupLine(context, it, supplyPickup.next!!) },
                         onSupplies = { openYou(YouPage.SUPPLIES) },
+                        newMeals = learningReport?.takeIf { doseNow.enabled && nudge == null }?.let { r ->
+                            val since = home.settings.ratiosReviewedAt
+                            r.meals.count { it.verdict == RatioLearner.Verdict.CLEAN && it.atMillis > since }.takeIf { it >= RatioLearner.MIN_POINTS }
+                        },
+                        onRatios = { home.requestedLearning.value = true; openYou(YouPage.INSULIN) },
                         steps = steps,
                         gap = if (source == SourceKind.LIBRE_BLE) com.sukoon.app.domain.metrics.MemoryGap.fillable(lastReadings, Instant.now()) else null,
                         ketonesDue = ketonesDue,

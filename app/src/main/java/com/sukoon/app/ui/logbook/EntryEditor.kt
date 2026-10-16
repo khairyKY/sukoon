@@ -275,7 +275,7 @@ internal fun AddSheet(
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     ) {
         Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
-            Text(stringResource(R.string.logbook_sheet_title_new), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.logbook_sheet_title_new), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, lineHeight = 31.sp, color = MaterialTheme.colorScheme.onBackground)
             ContextPills(glucoseNow, insulinOnBoard, Modifier.padding(top = 8.dp))
             onVoice?.let { voice ->
                 Row(
@@ -571,7 +571,10 @@ private fun EditorContent(
             Text(
                 if (meal != null) stringResource(R.string.entry_insulin_for, mealTitle(meal)) else typeLabel(type),
                 fontFamily = HeadlineSerifFontFamily,
-                fontSize = 26.sp,
+                fontSize = if (meal != null && mealTitle(meal).length > 18) 21.sp else 26.sp,
+                lineHeight = if (meal != null && mealTitle(meal).length > 18) 26.sp else 31.sp,
+                maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.weight(1f),
             )
@@ -945,7 +948,7 @@ private fun WhenButton(minutesAgo: Int, pickedAt: Instant, onAgo: (Int) -> Unit,
                 color = MaterialTheme.colorScheme.onBackground,
             )
         }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }, shape = RoundedCornerShape(18.dp), containerColor = MaterialTheme.colorScheme.surface, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f))) {
             listOf(0, 15, 30, 60).forEach { ago ->
                 DropdownMenuItem(
                     text = { Text(if (ago == 0) stringResource(R.string.logbook_when_now) else pluralStringResource(R.plurals.logbook_when_ago, ago.toInt(), ago)) },
@@ -1009,14 +1012,13 @@ private fun MealActions(
         else context.packageManager.getLaunchIntentForPackage(HealthConnectSync.MFP)?.let { runCatching { context.startActivity(it) } }
     }
     val photoChoices: @Composable () -> Unit = {
-        DropdownMenu(expanded = photoMenu, onDismissRequest = { photoMenu = false }) {
-            if (canEstimate) DropdownMenuItem(text = { Text(stringResource(R.string.carb_ai_estimate)) }, onClick = { photoMenu = false; onEstimate() })
-            DropdownMenuItem(text = { Text(stringResource(R.string.carb_ai_camera)) }, onClick = { photoMenu = false; takePhoto.launch(captureUri) })
-            DropdownMenuItem(text = { Text(stringResource(R.string.carb_ai_gallery)) }, onClick = {
-                photoMenu = false
-                pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-            })
-        }
+        if (photoMenu) MealSourceSheet(
+            canEstimate = canEstimate,
+            onEstimate = { photoMenu = false; onEstimate() },
+            onCamera = { photoMenu = false; takePhoto.launch(captureUri) },
+            onGallery = { photoMenu = false; pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+            onDismiss = { photoMenu = false },
+        )
     }
     if (hasPhoto) {
         // Every photo, each removable: as many as you took.
@@ -1161,7 +1163,7 @@ private fun AppMealPicker(meals: List<EventEntity>, onPick: (EventEntity) -> Uni
     val app = rememberSourceApp(meals.firstOrNull()?.source.orEmpty())
     SukoonSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.entry_from_app, app.label), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.entry_from_app, app.label), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, lineHeight = 29.sp, color = MaterialTheme.colorScheme.onBackground)
             Eyebrow(stringResource(R.string.entry_today_in_app, app.label), Modifier.padding(top = 6.dp))
             meals.forEach { meal ->
                 Row(
@@ -1185,6 +1187,47 @@ private fun AppMealPicker(meals: List<EventEntity>, onPick: (EventEntity) -> Uni
             }
             Text(stringResource(R.string.entry_app_stays, app.label), fontSize = 12.5.sp, color = CaptionMuted, modifier = Modifier.padding(top = 6.dp))
         }
+    }
+}
+
+/** Where the meal comes from: the AI estimate (sparkle, filled), the camera or the gallery, as tiles. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MealSourceSheet(canEstimate: Boolean, onEstimate: () -> Unit, onCamera: () -> Unit, onGallery: () -> Unit, onDismiss: () -> Unit) {
+    SukoonSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(stringResource(R.string.meal_source_title), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, lineHeight = 31.sp, color = MaterialTheme.colorScheme.onBackground)
+            if (canEstimate) {
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Sage).clickable(onClick = onEstimate).heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    Icon(painterResource(R.drawable.ic_sparkle), null, tint = Color.White, modifier = Modifier.size(26.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.carb_ai_estimate), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+                        Text(stringResource(R.string.meal_source_estimate_body), fontSize = 12.5.sp, color = Color.White.copy(alpha = 0.85f))
+                    }
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                SourceTile(R.drawable.ic_camera, stringResource(R.string.carb_ai_camera), Modifier.weight(1f), onCamera)
+                SourceTile(R.drawable.ic_gallery, stringResource(R.string.carb_ai_gallery), Modifier.weight(1f), onGallery)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SourceTile(icon: Int, label: String, modifier: Modifier, onClick: () -> Unit) {
+    Column(
+        modifier.heightIn(min = 96.dp).clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, outline(), RoundedCornerShape(18.dp)).clickable(onClick = onClick).padding(14.dp),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
+    ) {
+        Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(com.sukoon.app.ui.theme.SageMist), contentAlignment = Alignment.Center) {
+            Icon(painterResource(icon), null, tint = SageDeep, modifier = Modifier.size(22.dp))
+        }
+        Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
     }
 }
 
@@ -1216,7 +1259,7 @@ private fun CarbEstimator(estimate: suspend (String, List<ByteArray>) -> CarbEst
     var result by remember { mutableStateOf<CarbEstimate?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(stringResource(R.string.carb_ai_estimate), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
+        Text(stringResource(R.string.carb_ai_estimate), fontFamily = HeadlineSerifFontFamily, fontSize = 24.sp, lineHeight = 29.sp, color = MaterialTheme.colorScheme.onBackground)
         OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text(stringResource(R.string.carb_ai_describe)) }, modifier = Modifier.fillMaxWidth())
         if (photos.isNotEmpty()) Text(pluralStringResource(R.plurals.carb_ai_photos_added, photos.size, photos.size), fontSize = 12.sp, color = SageDeep)
         val canEstimate = !busy && (description.isNotBlank() || photos.isNotEmpty())

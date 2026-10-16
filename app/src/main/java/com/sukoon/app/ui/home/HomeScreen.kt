@@ -326,15 +326,7 @@ private fun StatusPill(label: String, dotColor: Color, backgroundColor: Color, t
 private fun HeroNumber(value: String, trend: TrendDirection?, color: Color, fontSize: androidx.compose.ui.unit.TextUnit = 100.sp) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(text = value, fontFamily = HeadlineSerifFontFamily, fontWeight = FontWeight.Light, fontSize = fontSize, color = color)
-        if (trend != null) {
-            Text(
-                text = trendArrow(trend),
-                fontFamily = HeadlineSerifFontFamily,
-                fontSize = 32.sp,
-                color = color,
-                modifier = Modifier.padding(top = 14.dp),
-            )
-        }
+        if (trend != null) com.sukoon.app.ui.components.TrendArrow(trend, color, size = 34.dp, modifier = Modifier.padding(top = 18.dp), label = trendArrow(trend))
     }
 }
 

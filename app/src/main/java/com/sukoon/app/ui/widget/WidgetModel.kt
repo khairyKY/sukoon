@@ -120,13 +120,14 @@ data class WidgetModel(
 
 /** CGM-convention arrows, one per trend bucket (shared by Home and the widgets). */
 val TrendDirection.arrow: String
+    // U+FE0E: the text form, so a phone never swaps in its emoji arrow (a coloured box on Samsung).
     get() = when (this) {
         TrendDirection.FALLING_FAST -> "↓"
         TrendDirection.FALLING -> "↘"
         TrendDirection.STEADY -> "→"
         TrendDirection.RISING -> "↗"
         TrendDirection.RISING_FAST -> "↑"
-    }
+    } + "\uFE0E"
 
 /** The followed person a [WidgetStyle.FOLLOWING] widget shows. */
 data class PersonReading(val name: String, val mgDl: Int?, val trend: TrendDirection?, val minutesAgo: Long?, val stale: Boolean)
