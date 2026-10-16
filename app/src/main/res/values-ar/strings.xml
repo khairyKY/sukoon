@@ -212,7 +212,7 @@
     <string name="alarm_high_title">ارتفاع</string>
     <string name="alarm_high_body">أعلى من حد تنبيه الارتفاع. افحص الكيتونات إذا استمر مرتفعًا.</string>
     <string name="alarm_signal_title">لا توجد قراءات</string>
-    <string name="alarm_action_treating">أعالجه الآن</string>
+    <string name="alarm_action_treating">عالجتُ الهبوط</string>
     <string name="alarm_action_ok">حسنًا</string>
     <!-- You → Setup checklist -->
     <string name="setup_title">الإعداد</string>
@@ -2268,4 +2268,10 @@
     <string name="voice_nothing_heard">لم يُسمع شيء. اضغط «قلها مجددًا» وتكلّم أقرب قليلًا.</string>
     <string name="carb_ai_protein">%1$s غ بروتين</string>
     <string name="carb_ai_fat">%1$s غ دهون</string>
+    <string name="alarm_scope_this">هذا التنبيه</string>
+    <string name="alarm_scope_all">كل التنبيهات</string>
+    <string name="alarm_scope_this_note">يعود إن بقيت خارج نطاقك بعدها.</string>
+    <string name="alarm_scope_all_note">كل التنبيهات إلا الهبوط الشديد، فهو يرن دائمًا.</string>
+    <string name="home_btn_snooze_for">تأجيل %1$s</string>
+    <string name="sensor_replace_link">تستبدل الحساس؟ ابدأ حساسًا جديدًا</string>
 </resources>

@@ -481,7 +481,7 @@ private fun ColumnScope.LowContent(state: HomeUiState.Low, brief: Brief?, onTrea
                 ActionButton(stringResource(R.string.home_btn_log_carbs), filled = false, onClick = LocalShortcuts.current.onFood)
             } else {
                 ActionButton(stringResource(R.string.home_btn_treated), filled = true, onClick = treatedWithHaptic(onTreated))
-                ActionButton(stringResource(R.string.home_btn_snooze_15), filled = false, onClick = onSnooze)
+                ActionButton(stringResource(R.string.home_btn_snooze_for, com.sukoon.app.ui.components.durationText(LocalContext.current, ((LocalContext.current.applicationContext as? com.sukoon.app.SukoonApp)?.container?.settings?.alarmSettings?.lowSnoozeMinutes ?: 15).toLong())), filled = false, onClick = onSnooze)
             }
         }
     }

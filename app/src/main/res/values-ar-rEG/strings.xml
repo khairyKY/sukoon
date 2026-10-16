@@ -212,7 +212,7 @@
     <string name="alarm_high_title">ارتفاع</string>
     <string name="alarm_high_body">أعلى من حد التنبيه. افحص الكيتونات لو فضل عالي.</string>
     <string name="alarm_signal_title">مفيش قرايات</string>
-    <string name="alarm_action_treating">بعالجه دلوقتي</string>
+    <string name="alarm_action_treating">تصرّفت خلاص</string>
     <string name="alarm_action_ok">تمام</string>
     <!-- You → Setup checklist -->
     <string name="setup_title">التجهيز</string>
@@ -2264,4 +2264,10 @@
     <string name="voice_nothing_heard">مسمعناش حاجة. دوس «قولها تاني» واتكلم أقرب شوية.</string>
     <string name="carb_ai_protein">%1$s جم بروتين</string>
     <string name="carb_ai_fat">%1$s جم دهون</string>
+    <string name="alarm_scope_this">التنبيه ده</string>
+    <string name="alarm_scope_all">كل التنبيهات</string>
+    <string name="alarm_scope_this_note">هيرجع لو لسه برا المعدل بعدها.</string>
+    <string name="alarm_scope_all_note">كل التنبيهات ماعدا الهبوط الشديد، ده بيرن دايمًا.</string>
+    <string name="home_btn_snooze_for">أجّل %1$s</string>
+    <string name="sensor_replace_link">هتغيّر الحساس؟ شغّل واحد جديد</string>
 </resources>

@@ -473,7 +473,7 @@ fun MainScaffold() {
                         onEnterCodeManually = toYou,
                         onTroubleshoot = toSensor,
                         onTreated = { scope.launch { alarms.treated() } },
-                        onSnooze = { scope.launch { alarms.acknowledge(AlarmType.LOW, 15) } },
+                        onSnooze = { scope.launch { alarms.acknowledge(AlarmType.LOW, home.settings.alarmSettings.lowSnoozeMinutes) } }, // the snooze you set, not a fixed 15
                         onAlertEmergencyContact = {
                             if (emergencyAlerts.contacts.isEmpty()) {
                                 context.toast(context.getString(R.string.toast_emergency_no_contacts), long = true)

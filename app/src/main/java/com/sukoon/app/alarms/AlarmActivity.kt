@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -148,7 +149,7 @@ class AlarmActivity : ComponentActivity() {
                             secondary = if (treatable && !s.test) stringResource(R.string.alarm_action_log_food) else null,
                             // Your own alarms, not urgent low, and not behind the parent lock.
                             pauseAll = if (s.person == null && !s.test && s.type != AlarmType.URGENT_LOW && !lockedAlarms(container)) {
-                                { answer { container.alarms.pauseAll(PAUSE_FROM_ALARM_MINUTES) } }
+                                { minutes -> answer { container.alarms.pauseAll(minutes) } }
                             } else null,
                             onSecondary = {
                                 startActivity(com.sukoon.app.MainActivity.logTreatment(this@AlarmActivity))
@@ -221,7 +222,6 @@ class AlarmActivity : ComponentActivity() {
 }
 
 /** "Pause all alarms" from an alarm's screen: an hour. */
-private const val PAUSE_FROM_ALARM_MINUTES = 60
 
 /** The parent lock guards alarms for under-18s: then pausing them needs the PIN, in You → Alarms. */
 private fun lockedAlarms(container: com.sukoon.app.di.AppContainer): Boolean =
@@ -257,7 +257,8 @@ private fun Takeover(
     secondary: String? = null,
     onSecondary: () -> Unit = {},
     /** "Pause all alarms for 1 h", as a link at the bottom; null hides it. */
-    pauseAll: (() -> Unit)? = null,
+    /** Design B: the same times can quiet every alarm (not urgent low); null when that isn't offered. */
+    pauseAll: ((Int) -> Unit)? = null,
     onAction: () -> Unit,
 ) {
     // Motion spec: scales in from 93 % over 560 ms; the reading breathes with the live-dot rhythm.
@@ -315,9 +316,27 @@ private fun Takeover(
             }
         }
         if (snoozes.isNotEmpty()) {
+            // One control (design B): the times quiet this alarm, or with the switch every alarm.
+            var everything by remember { mutableStateOf(false) }
             Spacer(Modifier.height(20.dp))
-            Text(stringResource(R.string.alarm_snooze_for), color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp)
-            Spacer(Modifier.height(10.dp))
+            if (pauseAll != null) {
+                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color.White.copy(alpha = 0.12f)).padding(4.dp)) {
+                    listOf(false to R.string.alarm_scope_this, true to R.string.alarm_scope_all).forEach { (all, label) ->
+                        val on = everything == all
+                        Box(
+                            Modifier.weight(1f).clip(RoundedCornerShape(11.dp)).background(if (on) Color.White.copy(alpha = 0.92f) else Color.Transparent)
+                                .clickable { everything = all }.heightIn(min = 44.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(stringResource(label), color = if (on) color else Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+            } else {
+                Text(stringResource(R.string.alarm_snooze_for), color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp)
+                Spacer(Modifier.height(10.dp))
+            }
             val context = LocalContext.current
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 snoozes.forEach { minutes ->
@@ -326,7 +345,8 @@ private fun Takeover(
                             .weight(1f)
                             .clip(RoundedCornerShape(14.dp))
                             .border(1.5.dp, Color.White.copy(alpha = 0.7f), RoundedCornerShape(14.dp))
-                            .clickable { onSnooze(minutes) }
+                            .clickable { if (everything) pauseAll?.invoke(minutes) else onSnooze(minutes) }
+                            .heightIn(min = 50.dp)
                             .padding(vertical = 14.dp),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -334,15 +354,10 @@ private fun Takeover(
                     }
                 }
             }
-        }
-        pauseAll?.let {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(10.dp))
             Text(
-                stringResource(R.string.alarm_pause_all),
-                color = Color.White,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = it).padding(horizontal = 12.dp, vertical = 12.dp),
+                stringResource(if (everything) R.string.alarm_scope_all_note else R.string.alarm_scope_this_note),
+                color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp, lineHeight = 18.sp, textAlign = TextAlign.Center,
             )
         }
     }

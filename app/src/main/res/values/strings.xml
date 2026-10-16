@@ -212,7 +212,7 @@
     <string name="alarm_high_title">High</string>
     <string name="alarm_high_body">Above your high alarm. Check ketones if it stays up.</string>
     <string name="alarm_signal_title">No readings</string>
-    <string name="alarm_action_treating">I\'m treating it</string>
+    <string name="alarm_action_treating">I\'ve treated it</string>
     <string name="alarm_action_ok">OK</string>
     <!-- You → Setup checklist -->
     <string name="setup_title">Setup</string>
@@ -2128,4 +2128,10 @@
     <string name="voice_nothing_heard">Nothing heard. Tap Say it again and speak a little closer.</string>
     <string name="carb_ai_protein">%1$s g protein</string>
     <string name="carb_ai_fat">%1$s g fat</string>
+    <string name="alarm_scope_this">This alarm</string>
+    <string name="alarm_scope_all">All alarms</string>
+    <string name="alarm_scope_this_note">It comes back if you\'re still out of range after.</string>
+    <string name="alarm_scope_all_note">Every alarm but urgent low, which always sounds.</string>
+    <string name="home_btn_snooze_for">Snooze %1$s</string>
+    <string name="sensor_replace_link">Replacing your sensor? Start a new one</string>
 </resources>
