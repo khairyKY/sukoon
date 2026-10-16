@@ -2402,4 +2402,5 @@
     <string name="voice_say_more">قول كمان</string>
     <string name="ramadan_no_city_name">اسم المدينة مش متاح (مفيش نت، أو الموبايل ده مش بيعرف يدوّر على الأماكن). المواعيد لسه محسوبة لمكانك.</string>
     <string name="after_workout_custom">نسبة تانية</string>
+    <string name="home_more_content">فيه أكتر تحت</string>
 </resources>

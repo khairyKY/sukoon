@@ -91,6 +91,8 @@ import kotlin.math.roundToInt
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -504,41 +506,47 @@ private fun ColumnScope.CalmContent(
         }
         Spacer(Modifier.height(16.dp))
     }
-    // A beta card under the fold gets a "more below" pill (like a chat's jump-to-latest), so it isn't missed.
-    val below = hasDose && doseTop >= 0 && viewport > 0 && doseTop > scroll.value + viewport - with(density) { 56.dp.roundToPx() }
+    // More under the fold gets a "more below" arrow (like a chat's jump-to-latest); a hidden beta card is named.
+    val doseHidden = hasDose && doseTop >= 0 && viewport > 0 && doseTop > scroll.value + viewport - with(density) { 56.dp.roundToPx() }
     androidx.compose.animation.AnimatedVisibility(
-        visible = below,
+        visible = doseHidden || scroll.canScrollForward,
         modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 14.dp),
         enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { it / 2 },
         exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically { it / 2 },
     ) {
-        MoreBelow { scope.launch { scroll.animateScrollTo(doseTop) } }
+        MoreBelow(if (doseHidden) stringResource(R.string.home_more_below) else null) {
+            scope.launch { if (doseHidden) scroll.animateScrollTo(doseTop) else scroll.animateScrollTo(scroll.value + viewport * 3 / 4) }
+        }
     }
     }
 }
 
-/** "Beta suggestion below" with a chevron, floating at the bottom of Now. */
+/** A chevron floating at the bottom of Now; with [label] ("Beta suggestion below") a pill that says what's there. */
 @Composable
-private fun MoreBelow(onClick: () -> Unit) {
+private fun MoreBelow(label: String?, onClick: () -> Unit) {
+    val more = stringResource(R.string.home_more_content)
     Row(
         Modifier
             .shadow(6.dp, RoundedCornerShape(50))
             .clip(RoundedCornerShape(50))
-            .background(Sage)
+            .background(if (label != null) Sage else MaterialTheme.colorScheme.surface)
             .clickable(onClick = onClick)
-            .padding(start = 14.dp, end = 16.dp)
+            .semantics { contentDescription = label ?: more }
+            .padding(start = if (label != null) 14.dp else 13.dp, end = if (label != null) 16.dp else 13.dp)
             .height(40.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        val ink = if (label != null) Color.White else Sage
         Canvas(Modifier.size(14.dp)) {
             val w = 2.dp.toPx()
-            drawLine(Color.White, Offset(size.width * 0.15f, size.height * 0.35f), Offset(size.width * 0.5f, size.height * 0.7f), w, StrokeCap.Round)
-            drawLine(Color.White, Offset(size.width * 0.5f, size.height * 0.7f), Offset(size.width * 0.85f, size.height * 0.35f), w, StrokeCap.Round)
+            drawLine(ink, Offset(size.width * 0.15f, size.height * 0.35f), Offset(size.width * 0.5f, size.height * 0.7f), w, StrokeCap.Round)
+            drawLine(ink, Offset(size.width * 0.5f, size.height * 0.7f), Offset(size.width * 0.85f, size.height * 0.35f), w, StrokeCap.Round)
         }
-        Text(stringResource(R.string.home_more_below), color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 13.5.sp)
+        if (label != null) Text(label, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 13.5.sp)
     }
 }
+
 
 // ---------------------------------------------------------------------------------------------
 // Low — screens 5b / 7c

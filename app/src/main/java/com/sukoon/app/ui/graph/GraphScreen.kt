@@ -285,7 +285,7 @@ internal fun GlucoseChart(
     // a new reading or a recomposition doesn't redraw it. "Remove animations" shows it whole.
     val reduced = Motion.reduced()
     val reveal = remember(range) { Animatable(if (reduced) 1f else 0f) }
-    LaunchedEffect(range) { reveal.animateTo(1f, tween(Motion.SLOW, easing = Motion.Calm)) }
+    LaunchedEffect(range) { reveal.animateTo(1f, tween(Motion.CHART, easing = Motion.Calm)) }
 
     Column {
         val sel = selected

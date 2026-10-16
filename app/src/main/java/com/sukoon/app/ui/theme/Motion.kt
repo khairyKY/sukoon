@@ -50,6 +50,8 @@ object Motion {
     const val CALM = 360
     const val SLOW = 560
     const val DRAW = 900
+    /** A chart arriving (the graph's line, Now's bars): unhurried, so it reads as a reveal. */
+    const val CHART = 1400
     const val LOOP = 2400
 
     /** Reduced motion: spatial moves (push, sheet, toast) become this crossfade in place. */

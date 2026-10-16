@@ -2267,4 +2267,5 @@
     <string name="voice_say_more">Say more</string>
     <string name="ramadan_no_city_name">City name unavailable (no connection, or this phone can\'t look places up). The times are still for where you are.</string>
     <string name="after_workout_custom">Custom</string>
+    <string name="home_more_content">More below</string>
 </resources>
