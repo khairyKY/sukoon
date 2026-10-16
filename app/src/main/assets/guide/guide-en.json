@@ -45,7 +45,8 @@
             { "steps": [
               { "text": "The big number is your newest reading; the arrow is where it's heading.", "path": "Now", "link": "now" },
               { "text": "The colour says low, in your range or high. The message under it says what matters now, and one next step." },
-              { "text": "The buttons at the top log food and insulin; “u active” is rapid insulin still working." }
+              { "text": "The buttons at the top log food and insulin; “u active” is rapid insulin still working." },
+              { "text": "Today (the sliders button) pauses alarms or starts a workout, a fast or a sick day. The chips under the header show what's on.", "path": "Now › Today", "link": "today" }
             ]}
           ],
           "tips": [
@@ -62,7 +63,7 @@
           "summary": "Alarms that reach you at 3 a.m. too.",
           "sections": [
             { "steps": [
-              { "text": "Allow everything the setup check lists.", "path": "You › Help & about › Setup check", "link": "help" },
+              { "text": "Allow everything Setup lists.", "path": "You › Help & about › Setup", "link": "help" },
               { "text": "On Samsung or Xiaomi, open the battery page it links and set Sukoon to Unrestricted or Never sleeping." },
               { "text": "Leave Sukoon's small notification on: it keeps Sukoon running and shows your number." }
             ]}
@@ -140,6 +141,24 @@
             "On Now, Alert my emergency contact texts, WhatsApps or calls them yourself."
           ],
           "related": ["alarms", "share"]
+        },
+        {
+          "id": "snooze", "icon": "ic_bell",
+          "title": "Snooze or pause?",
+          "for": "Quieting one alarm, or all of them for a while.",
+          "summary": "Quiet one alarm, or all of them for a while.",
+          "sections": [
+            { "steps": [
+              { "text": "Snooze quiets the alarm that's sounding, for the minutes set for it. The other alarms keep watching.", "path": "You › Alarms & sounds", "link": "alarms" },
+              { "text": "Pause quiets every alarm but urgent low, for 30 minutes to 4 hours: a workout, a meeting.", "path": "Now › Today › Pause alarms", "link": "today" },
+              { "text": "While they're paused, a chip on Now says until when. Tap it to turn them back on." }
+            ]}
+          ],
+          "tips": [
+            "Urgent low is never paused: it repeats every 5 minutes until you answer.",
+            "Under the parent lock, pausing asks for the PIN."
+          ],
+          "related": ["alarms", "modes"]
         }
       ]
     },
@@ -176,7 +195,7 @@
             { "steps": [
               { "text": "Log a dose: rapid or long-acting, the amount, and Where? if you like.", "path": "Now › Insulin", "link": "entry_insulin" },
               { "text": "“u active” on Now is rapid insulin still working (5 hours by default)." },
-              { "text": "For dose suggestions (beta), turn them on and fill your ratio per meal, correction factor, target and maximum.", "path": "You › Insulin & logbook", "link": "insulin" }
+              { "text": "For dose suggestions (beta), turn them on and fill your ratio per meal, correction factor, target and maximum.", "path": "You › Insulin & doses", "link": "insulin" }
             ]}
           ],
           "tips": [
@@ -194,7 +213,7 @@
           "summary": "What your meals say about your ratios.",
           "sections": [
             { "steps": [
-              { "text": "Open Learning.", "path": "You › Insulin & logbook › Learning", "link": "learning" },
+              { "text": "Open Learning.", "path": "You › Insulin & doses › Learning", "link": "learning" },
               { "text": "Each meal gets a verdict; clean ones teach a ratio per meal time." },
               { "text": "When a number is ready, Use moves yours toward it, by at most 20% at a time." }
             ]}
@@ -212,7 +231,7 @@
           "summary": "Never wonder “did I take it?”.",
           "sections": [
             { "steps": [
-              { "text": "Turn the reminder on and pick your time.", "path": "You › Insulin & logbook › Reminder", "link": "insulin" },
+              { "text": "Turn the reminder on and pick your time.", "path": "You › Insulin & doses › Reminder", "link": "insulin" },
               { "text": "If no long-acting was logged in the 12 hours before, a notification comes at that time." },
               { "text": "Took it logs your usual amount; In 30 min waits." }
             ]}
@@ -224,6 +243,39 @@
           "related": ["insulin", "widgets"]
         },
         {
+          "id": "voice", "icon": "ic_mic",
+          "title": "Say it",
+          "for": "Logging a meal, insulin or a workout by speaking, in your own words.",
+          "summary": "Log by speaking, in your own words.",
+          "sections": [
+            { "steps": [
+              { "text": "Add your free Gemini key once: Say it uses the AI assistant.", "path": "You › Apps & data › AI assistant", "link": "apps" },
+              { "text": "Tap + in the Logbook, then Say it.", "path": "Trends › Logbook › Say it", "link": "trends_logbook" },
+              { "text": "Say what you ate, took or did, like “koshari, a big plate, 6 units”. Check what it heard, correct anything, and Save." }
+            ]}
+          ],
+          "tips": [
+            "Nothing is saved until you press Save.",
+            "Carbs for a low are marked as a treatment."
+          ],
+          "related": ["meal", "insulin"]
+        },
+        {
+          "id": "supplies", "icon": "ic_box",
+          "title": "Supplies",
+          "for": "Knowing when your pens run out, and when to pick up more.",
+          "summary": "When your pens run out, and the next pickup.",
+          "sections": [
+            { "steps": [
+              { "text": "Enter how many pens of each kind you have.", "path": "You › Supplies", "link": "supplies" },
+              { "text": "Sukoon counts them down from the doses you log, as days left." },
+              { "text": "Set your next pickup and when to be reminded." }
+            ]}
+          ],
+          "tips": [ "When a kind runs low, a chip on Now says so." ],
+          "related": ["insulin", "reminder"]
+        },
+        {
           "id": "sites", "icon": "ic_eye",
           "title": "Injection sites",
           "for": "Moving your injections around, so insulin works the same every time.",
@@ -232,7 +284,7 @@
             { "steps": [
               { "text": "When you log insulin, tap Where? and the spot on the body map (your left is on the left)." },
               { "text": "The dashed ring is the spot that has rested longest: a good next choice." },
-              { "text": "See the last 30 days as a map.", "path": "You › Insulin & logbook", "link": "insulin" }
+              { "text": "See the last 30 days as a map.", "path": "You › Insulin & doses", "link": "insulin" }
             ]}
           ],
           "tips": [
@@ -269,13 +321,13 @@
           "summary": "Today, your goal, and the numbers behind them.",
           "sections": [
             { "heading": "Workouts", "steps": [
-              { "text": "Start a workout from Today: the low alarm sits at 100 while it lasts (Moser et al. 2020).", "path": "Now › Today" },
+              { "text": "Start a workout from Today: the low alarm sits at 100 while it lasts (Moser et al. 2020).", "path": "Now › Today", "link": "today" },
               { "text": "Lifting can raise glucose now and lower it for at least a day after (Riddell et al. 2017). After any workout, logged or started from Today, the low alarm sits at 80 overnight." },
               { "text": "Before starting: under 90, have 10–20 g and wait; 90–125, about 10 g; over 270, check ketones first (Riddell 2017)." },
               { "text": "Dose suggestions: the meal after a workout 50% lower by default; corrections during and just after halved (lifting rises, Moser 2020). Nothing is cut before lifting.", "path": "You › Fitness & food", "link": "fitness" }
             ]},
             { "heading": "Your goal", "steps": [
-              { "text": "Lean bulk: +100–300 kcal a day, protein 1.6–2.2 g/kg, gaining 0.25–0.5% of your weight a week (your research; Iraki et al. 2019).", "path": "You › Fitness & food", "link": "fitness" },
+              { "text": "Lean bulk: +100–300 kcal a day, protein 1.6–2.2 g/kg, gaining 0.25–0.5% of your weight a week (Iraki et al. 2019).", "path": "You › Fitness & food", "link": "fitness" },
               { "text": "Cut: at most 500 kcal under maintenance, losing 0.5–1% a week, protein 2.2–2.6 g/kg (Helms et al. 2014; Murphy & Koehler 2022). Eating less usually means less insulin: review your doses with your clinic." },
               { "text": "Maintain: protein 1.4–2.0 g/kg (ISSN 2017)." },
               { "text": "Maintenance is estimated from your weight, height, age and sex (Mifflin–St Jeor × 1.55). If you know yours, type it in." }
@@ -286,13 +338,13 @@
               { "text": "Suhoor meal dose suggested 30% lower; none during the fast. Long-acting: IDF-DAR says take it at iftar, 30–40% less (15–30% for Toujeo in its table). Agree any change with your doctor." }
             ]},
             { "heading": "Sick days", "steps": [
-              { "text": "Switch Sick day on in Today: a ketone reminder every 2 hours, and high alarms every hour.", "path": "Now › Today" },
+              { "text": "Switch Sick day on in Today: a ketone reminder every 2 hours, and high alarms every hour.", "path": "Now › Today", "link": "today" },
               { "text": "Never stop long-acting insulin; drink about 100 ml an hour (ISPAD 2022)." },
               { "text": "Ketones (mmol/L): under 0.6 normal; 0.6–1.4 check again in 1–2 h; 1.5–2.9 extra rapid insulin as your plan says; 3.0 or more, vomiting or fast breathing: urgent care." }
             ]}
           ],
           "tips": [
-            "Fat-heavy meals (tahina, eggs, oil) rise 3–5 hours later. Your research suggests a split dose for them: agree it with your doctor.",
+            "Fat-heavy meals (tahina, eggs, oil) rise 3–5 hours later. A split dose may suit them: agree it with your doctor.",
             "Creatine can make lows a little more likely and raises creatinine: ask for a cystatin-C kidney test.",
             "Sleep 7–8 hours: one short night cuts muscle building by about 18%."
           ],
@@ -359,7 +411,7 @@
           "summary": "Nudge the sensor toward your finger-pricks.",
           "sections": [
             { "steps": [
-              { "text": "Log finger-pricks while your glucose is steady.", "path": "Now › Finger-prick", "link": "entry_fingerstick" },
+              { "text": "Log finger-pricks while your glucose is steady.", "path": "Trends › Logbook › Finger-prick", "link": "entry_fingerstick" },
               { "text": "Turn calibration on.", "path": "You › Sensor › Calibration", "link": "sensor" }
             ]}
           ],
@@ -368,6 +420,21 @@
             "It uses up to 4 steady finger-pricks from the last 7 days, stays within ±20 mg/dL and ×0.8–1.25, and never raises a low."
           ],
           "related": ["sensor"]
+        },
+        {
+          "id": "clinic", "icon": "ic_clinic",
+          "title": "Clinic visit",
+          "for": "Getting the most out of your next appointment.",
+          "summary": "Your next visit, what to ask, your labs.",
+          "sections": [
+            { "steps": [
+              { "text": "Set the date of your next visit.", "path": "You › Clinic visit", "link": "clinic" },
+              { "text": "Questions to ask come from your insights and from labs that are due; add your own." },
+              { "text": "Log your lab results, like HbA1c." },
+              { "text": "Share the report with your doctor: it carries the questions and labs too.", "path": "Trends › Report", "link": "trends_report" }
+            ]}
+          ],
+          "related": ["trends", "insulin"]
         }
       ]
     },
@@ -402,7 +469,7 @@
             { "steps": [
               { "text": "Enter the code from their invite.", "path": "You › People › Enter a code", "link": "people" },
               { "text": "Now shows their number, chart and words; Trends shows their graph, insights and report.", "path": "Trends", "link": "trends_graph" },
-              { "text": "Turn on alerts for people you follow, and their alarms sound here with their name.", "path": "You › People", "link": "people" }
+              { "text": "Turn on Alert me about them, and their alarms sound here with their name.", "path": "You › People › Alert me about them", "link": "people" }
             ]}
           ],
           "tips": [ "Answering their alarm only snoozes it on your phone. Emergency texts are never sent from a follower's phone." ],
@@ -430,7 +497,7 @@
           "summary": "A child can't change what matters.",
           "sections": [
             { "steps": [
-              { "text": "Set a 4–8 digit PIN, typed twice.", "path": "You › Insulin & logbook › Parent lock", "link": "insulin" },
+              { "text": "Set a 4–8 digit PIN, typed twice.", "path": "You › your name at the top › Parent lock", "link": "profile" },
               { "text": "From then on, changing alarms, the range, doses or the profile asks for it, once per visit." }
             ]}
           ],
@@ -468,9 +535,9 @@
           "summary": "Never lose your history.",
           "sections": [
             { "steps": [
-              { "text": "Back up everything to one private file: readings, logbook, settings, sensor pairing and photos.", "path": "You › Reports › Back up everything", "link": "reports" },
+              { "text": "Back up everything to one private file: readings, logbook, settings, sensor pairing and photos.", "path": "You › Export & backup › Back up everything", "link": "reports" },
               { "text": "On a new phone, Restore that file and Sukoon opens as it was (widgets need adding again)." },
-              { "text": "Optional: a daily backup to Drive, OneDrive or Dropbox.", "path": "You › Reports", "link": "reports" }
+              { "text": "Optional: a daily backup to Drive, OneDrive or Dropbox.", "path": "You › Export & backup", "link": "reports" }
             ]}
           ],
           "tips": [
