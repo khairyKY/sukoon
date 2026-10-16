@@ -163,8 +163,10 @@ fun HomeScreen(
     layout: NowLayout = NowLayout(),
     /** Made-up readings (You › Sensor › Demo): Now says so instead of LIVE. */
     demo: Boolean = false,
+    /** Dose suggestions (beta) are on: Now can say why there's no correction. */
+    dosing: Boolean = false,
 ) {
-    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss, mealDose, onMealDose, onModes, status, layout, demo)) {
+    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss, mealDose, onMealDose, onModes, status, layout, demo, dosing)) {
         PullToSync(onSync, modifier) {
             HomeContent(state, brief, Modifier.fillMaxSize(), onTreated, onSnooze, onAlertEmergencyContact, onTroubleshoot, onPairSensor)
         }
@@ -189,6 +191,7 @@ private class Shortcuts(
     val status: List<StatusChip> = emptyList(),
     val layout: NowLayout = NowLayout(),
     val demo: Boolean = false,
+    val dosing: Boolean = false,
 )
 private val LocalShortcuts = staticCompositionLocalOf { Shortcuts({}, {}) }
 
@@ -792,8 +795,12 @@ private fun StatTile(stat: HomeStat, value: Double?, modifier: Modifier) {
 @Composable
 private fun NextCard(brief: Brief?) {
     if (brief == null || brief is Brief.Low || brief is Brief.Treated) return
-    val (title, body) = briefText(brief)
-    val step = brief.step
+    val s = LocalShortcuts.current
+    val (title, base) = briefText(brief)
+    val working = (brief as? Brief.VeryHighFor)?.insulin?.takeIf { it > 0 } ?: (brief as? Brief.InsulinWorking)?.units
+    // With insulin working: either the correction card below takes over, or it says why there is none.
+    val body = if (working != null && s.dosing && s.correction == null) base + " " + stringResource(R.string.home_no_correction_yet) else base
+    val step = brief.step?.takeUnless { it == Step.DONT_STACK && s.correction != null }
     Column(
         Modifier
             .padding(horizontal = 20.dp).padding(bottom = 14.dp)
@@ -922,7 +929,8 @@ private fun CorrectionCard(c: DoseAdvice.Suggestion, onLog: () -> Unit) {
             )
         }
         Text(
-            stringResource(R.string.home_correction_body, c.glucose ?: 0, c.target, String.format(Locale.getDefault(), "%.0f", c.factor ?: 0.0)),
+            stringResource(R.string.home_correction_body, c.glucose ?: 0, c.target, String.format(Locale.getDefault(), "%.0f", c.factor ?: 0.0)) +
+                if (c.onBoardUsed >= 0.05) " " + stringResource(R.string.home_correction_less_working, String.format(Locale.getDefault(), "%.1f", c.onBoardUsed)) else "",
             fontSize = 13.sp,
             color = CaptionMuted,
         )
@@ -965,7 +973,7 @@ internal fun briefLines(context: android.content.Context, brief: Brief): Pair<St
         ).joinToString(" ")
         is Brief.VeryHighFor -> context.getString(R.string.home_brief_very_high_title) to listOfNotNull(
             context.getString(R.string.home_brief_very_high_body, durationText(context, brief.minutes)),
-            if (brief.insulin > 0) context.getString(R.string.home_insulin_working, units(brief.insulin)) + " " + context.getString(R.string.home_no_correction_yet) else null,
+            if (brief.insulin > 0) context.getString(R.string.home_insulin_working, units(brief.insulin)) else null,
         ).joinToString(" ")
         is Brief.Rebound -> context.getString(R.string.home_brief_rebound_title) to context.getString(R.string.home_brief_rebound_body, HM.format(brief.lowAt))
         is Brief.InsulinWorking -> context.getString(R.string.home_brief_insulin_title) to context.getString(R.string.home_insulin_working, units(brief.units))

@@ -608,10 +608,16 @@ private fun EditorContent(
                 }
             }
             if (isMeal && (rapid != null || active == AmountField.RAPID)) {
-                ChoiceRow(
-                    listOf(stringResource(R.string.logbook_prebolus_with), stringResource(R.string.logbook_prebolus_min, 10), stringResource(R.string.logbook_prebolus_min, 20)),
-                    selected = listOf(0, 10, 20).indexOf(preBolus),
-                ) { preBolus = listOf(0, 10, 20)[it] }
+                // Before the meal, with it, or after it when it was forgotten (minutes before; negative is after).
+                val before = listOf(20, 10, 0)
+                val after = listOf(-15, -30, -60)
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    ChoiceRow(
+                        listOf(stringResource(R.string.logbook_prebolus_min, 20), stringResource(R.string.logbook_prebolus_min, 10), stringResource(R.string.logbook_prebolus_with)),
+                        selected = before.indexOf(preBolus),
+                    ) { preBolus = before[it] }
+                    ChoiceRow(after.map { stringResource(R.string.entry_dose_after, -it) }, selected = after.indexOf(preBolus)) { preBolus = after[it] }
+                }
             }
             if (type == LogEventType.FINGERSTICK && glucoseNow != null && existing == null) {
                 Text(stringResource(R.string.entry_sensor_now, String.format(Locale.getDefault(), "%d", glucoseNow.glucoseMgDl)), fontSize = 13.5.sp, color = CaptionMuted)

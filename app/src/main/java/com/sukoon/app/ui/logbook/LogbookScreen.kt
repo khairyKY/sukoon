@@ -162,6 +162,7 @@ fun LogbookScreen(
     var voicing by remember { mutableStateOf(false) }
     var mealGap by remember { mutableStateOf<com.sukoon.app.insulin.MealGap?>(null) }
     var deleting by remember { mutableStateOf<Pair<EventEntity, EventEntity>?>(null) }
+    var confirmDelete by remember { mutableStateOf<Pair<EventEntity, Boolean>?>(null) }
     val app = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container
     var editor by remember { mutableStateOf<EditorRequest?>(null) }
     var detail by remember { mutableStateOf<EventEntity?>(null) }
@@ -334,6 +335,17 @@ fun LogbookScreen(
             onDismiss = { if (gap.ateLess && (gap.ahead ?: 0) < 70) app.modes.startMealWatch(gap.by); mealGap = null },
         )
     }
+    confirmDelete?.let { (event, hide) ->
+        ConfirmDeleteSheet(
+            event, hide,
+            onDelete = {
+                confirmDelete = null
+                onDeleteEvent(event)
+                announce(context.getString(if (hide) R.string.toast_meal_hidden else R.string.toast_entry_deleted))
+            },
+            onDismiss = { confirmDelete = null },
+        )
+    }
     deleting?.let { (meal, dose) ->
         TookInsulinDialog(
             units = dose.value ?: 0.0,
@@ -398,13 +410,8 @@ fun LogbookScreen(
                 {
                     editor = null
                     val dose = if (event.logType == LogEventType.CARB) linkedDose(event, state.events) else null
-                    if (dose != null) {
-                        // Did you take the insulin? Its entry stays unless you say no.
-                        deleting = event to dose
-                    } else {
-                        onDeleteEvent(event)
-                        announce(context.getString(R.string.toast_entry_deleted))
-                    }
+                    // Did you take the insulin? (its entry stays unless you say no); anything else is confirmed first.
+                    if (dose != null) deleting = event to dose else confirmDelete = event to false
                 }
             },
             onDismiss = { editor = null },
@@ -437,8 +444,7 @@ fun LogbookScreen(
             },
             onHide = {
                 detail = null
-                onDeleteEvent(meal)
-                announce(context.getString(R.string.toast_meal_hidden))
+                confirmDelete = meal to true
             },
             onEdit = {
                 detail = null

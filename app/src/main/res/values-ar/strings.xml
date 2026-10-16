@@ -2367,7 +2367,7 @@
     <string name="home_more_below">اقتراح تجريبي في الأسفل</string>
     <string name="alarm_test_pause_all">اختبار: لم تُوقف تنبيهاتك.</string>
     <string name="alarm_urgent_snooze_only">الهبوط العاجل يمكن تأجيله فقط. تبقى تنبيهاتك الأخرى مفعّلة.</string>
-    <string name="home_no_correction_yet">لهذا لا يُقترح تصحيح بعد: الجرعات المتقاربة قد تتراكم وتسبب هبوطًا.</string>
+    <string name="home_no_correction_yet">ما تبقى منه يقارب ما تحتاجه، لذا لا يُقترح تصحيح الآن: الجرعات المتقاربة قد تتراكم وتسبب هبوطًا.</string>
     <string name="now_part_goal">السعرات والبروتين</string>
     <string name="now_part_goal_what">تقدّم اليوم نحو هدفك، كشارة</string>
     <string name="entry_now_suffix">الآن</string>
@@ -2390,4 +2390,13 @@
     <string name="fitness_after_meal_body">لوجبة خلال ساعتين من انتهاء التمرين، يقترح سكون أنسولين وجبة أقل بهذه النسبة. يقوّي التمرين مفعول الأنسولين لساعات، فتساعد الجرعة الأصغر على تجنّب الهبوط.</string>
     <string name="you_guide_summary">كيف يعمل سكون</string>
     <string name="help_privacy_body">ما يحفظه سكون، وما يغادر هاتفك</string>
+    <string name="home_correction_less_working">مطروحًا منها %1$s وحدة ما زالت تعمل.</string>
+    <string name="delete_title">حذف هذا الإدخال؟</string>
+    <string name="delete_body">سيُزال من سجلك وتقاريرك والاقتراحات. لا يمكن التراجع عن ذلك.</string>
+    <string name="delete_confirm">حذف</string>
+    <string name="delete_keep">أبقِه</string>
+    <string name="delete_cancel">لا تحذف شيئًا</string>
+    <string name="delete_hide_title">إخفاء هذه الوجبة؟</string>
+    <string name="delete_hide_body">تبقى في التطبيق الذي جاءت منه، لكنها تخرج من سجل سكون.</string>
+    <string name="delete_hide_confirm">إخفاء</string>
 </resources>

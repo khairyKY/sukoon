@@ -2228,7 +2228,7 @@
     <string name="alarm_test_pause_all">A test: your alarms were not paused.</string>
     <string name="alarm_urgent_snooze_only">Urgent lows can only be snoozed. Your other alarms stay on.</string>
     <string name="sotto_name" translatable="false">Sotto</string>
-    <string name="home_no_correction_yet">That is why no correction is suggested yet: doses close together can stack into a low.</string>
+    <string name="home_no_correction_yet">What it has left is about what you need, so no correction is suggested now: doses close together can stack into a low.</string>
     <string name="now_part_goal">Calories and protein</string>
     <string name="now_part_goal_what">Today\'s progress to your goal, as a chip</string>
     <string name="entry_now_suffix">now</string>
@@ -2251,4 +2251,13 @@
     <string name="fitness_after_meal_body">For a meal up to 2 hours after a workout ends, Sukoon suggests this much less meal insulin. Exercise makes insulin work harder for hours, so a smaller dose helps avoid a low.</string>
     <string name="you_guide_summary">How Sukoon works</string>
     <string name="help_privacy_body">What Sukoon keeps, and what leaves your phone</string>
+    <string name="home_correction_less_working">Less the %1$s u still working.</string>
+    <string name="delete_title">Delete this entry?</string>
+    <string name="delete_body">It\'s removed from your logbook, reports and suggestions. This can\'t be undone.</string>
+    <string name="delete_confirm">Delete</string>
+    <string name="delete_keep">Keep it</string>
+    <string name="delete_cancel">Don\'t delete anything</string>
+    <string name="delete_hide_title">Hide this meal?</string>
+    <string name="delete_hide_body">It stays in the app it came from, but leaves Sukoon\'s logbook.</string>
+    <string name="delete_hide_confirm">Hide</string>
 </resources>

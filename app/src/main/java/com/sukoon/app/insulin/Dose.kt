@@ -81,10 +81,14 @@ object Dose {
         slot: MealSlot,
         lowAt: java.time.Instant? = null,
         change: com.sukoon.app.modes.DoseChange? = null,
+        /** The last rapid dose: none is suggested within 2 h of it, before it has peaked. */
+        lastInsulinAt: java.time.Instant? = null,
     ): DoseAdvice.Suggestion? {
         if (!settings.enabled || settings.correctionFactor == null || glucose == null || readingAt == null) return null
-        if (java.time.Duration.between(readingAt, now) > java.time.Duration.ofMinutes(10) || glucose <= top || onBoard >= 0.5) return null
+        if (java.time.Duration.between(readingAt, now) > java.time.Duration.ofMinutes(10) || glucose <= top) return null
         if (lastCarbsAt != null && java.time.Duration.between(lastCarbsAt, now) < java.time.Duration.ofHours(2)) return null
+        if (lastInsulinAt != null && java.time.Duration.between(lastInsulinAt, now) < java.time.Duration.ofHours(2)) return null
+        // Insulin still working is taken off ([advise]); only what's left, a pen step or more, is suggested.
         return (advise(settings, slot, null, glucose, trend, onBoard, lowAt, now, change) as? DoseAdvice.Suggestion)?.takeIf { it.units >= settings.step }
     }
 

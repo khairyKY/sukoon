@@ -344,6 +344,7 @@ fun MainScaffold() {
                         slot = InsightEngine.slotFor(now.atZone(ZoneId.systemDefault()).hour),
                         lowAt = lowAt,
                         change = com.sukoon.app.modes.Modes.doseChange(home.modes.now(), now, null, ZoneId.systemDefault(), home.modes.afterWorkoutCut),
+                        lastInsulinAt = recentEvents.lastOrNull { it.logType == LogEventType.INSULIN && (it.value ?: 0.0) > 0 }?.let { Instant.ofEpochMilli(it.timestampMillis) },
                     )
                 }
                 // Beta: a meal in the last hour with no insulin logged and none working.
@@ -522,6 +523,7 @@ fun MainScaffold() {
                         chosenStats = chosenStats,
                         onChooseStats = { pickingStats = true },
                         layout = nowLayout,
+                        dosing = home.settings.doseSettings.enabled,
                         demo = source == SourceKind.SIMULATED,
                     )
                 }
