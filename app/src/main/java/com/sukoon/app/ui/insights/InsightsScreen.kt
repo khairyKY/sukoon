@@ -107,19 +107,24 @@ fun InsightsScreen(
             return@Column
         }
         val digest = state.digest ?: return@Column
-        FourteenDays(digest, state.insights.orEmpty())
-        when {
-            digest.oneThing != null -> OneThing(digest.oneThing, state.inEffect, state.insights.orEmpty(), onAction, showActions)
-            digest.notEnough != null -> NotEnoughYet(digest.notEnough, onAction)
-            else -> Calm()
+        // The cards stagger in as the tab shows (motion spec: list & card stagger).
+        Box(Modifier.fillMaxWidth().staggerIn(0)) { FourteenDays(digest, state.insights.orEmpty()) }
+        Box(Modifier.fillMaxWidth().staggerIn(1)) {
+            when {
+                digest.oneThing != null -> OneThing(digest.oneThing, state.inEffect, state.insights.orEmpty(), onAction, showActions)
+                digest.notEnough != null -> NotEnoughYet(digest.notEnough, onAction)
+                else -> Calm()
+            }
         }
         if (digest.alsoWorth.isNotEmpty()) {
+            Column(Modifier.fillMaxWidth().staggerIn(2), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Eyebrow(stringResource(R.string.in2_also), Modifier.padding(top = 8.dp, start = 4.dp))
             Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface)) {
                 digest.alsoWorth.forEachIndexed { i, f ->
                     if (i > 0) HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
                     FindingRow(f, state.insights.orEmpty())
                 }
+            }
             }
         }
         if (digest.more.isNotEmpty()) {

@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sukoon.app.ui.theme.Motion
 import com.sukoon.app.ui.theme.Sage
 
 /** Single-choice chip row that wraps — the settings pickers (graph range, alarm levels, intervals). */
@@ -36,21 +37,23 @@ fun <T> ChoiceChips(choices: List<T>, selected: T, label: @Composable (T) -> Str
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         choices.forEach { choice ->
             val isSelected = choice == selected
+            val filled = isSelected && enabled
+            // Selection crossfades fill, border and ink (motion spec: controls); reduced, capped at 90 ms.
             Text(
                 label(choice),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = when {
-                    !enabled -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f)
-                    isSelected -> Color.White
-                    else -> MaterialTheme.colorScheme.onBackground
-                },
+                color = Motion.tint(
+                    when {
+                        !enabled -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f)
+                        isSelected -> Color.White
+                        else -> MaterialTheme.colorScheme.onBackground
+                    },
+                ),
                 modifier = Modifier
                     .clip(RoundedCornerShape(10.dp))
-                    .then(
-                        if (isSelected && enabled) Modifier.background(Sage)
-                        else Modifier.border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f), RoundedCornerShape(10.dp)),
-                    )
+                    .background(Motion.tint(if (filled) Sage else Sage.copy(alpha = 0f)))
+                    .border(1.dp, Motion.tint(if (filled) Color.Transparent else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)), RoundedCornerShape(10.dp))
                     .clickable(enabled = enabled) { onPick(choice) }
                     .padding(horizontal = 14.dp, vertical = 9.dp),
             )

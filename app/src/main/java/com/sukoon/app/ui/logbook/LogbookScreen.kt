@@ -88,6 +88,7 @@ import com.sukoon.app.ui.theme.CanvasDark
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.HeadlineSerifFontFamily
 import com.sukoon.app.ui.theme.Motion.staggerIn
+import com.sukoon.app.ui.theme.Motion.arrivalGlow
 import com.sukoon.app.ui.theme.PillHighBg
 import com.sukoon.app.ui.theme.PillHighText
 import com.sukoon.app.ui.theme.PillLowBg
@@ -166,11 +167,14 @@ fun LogbookScreen(
     val app = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container
     var editor by remember { mutableStateOf<EditorRequest?>(null) }
     var detail by remember { mutableStateOf<EventEntity?>(null) }
-    var cascade by remember { mutableStateOf(true) }
-    LaunchedEffect(Unit) {
-        delay(1_500)
-        cascade = false
-    }
+    // Rows cascade in when a day first shows (and again on another day), sliding in from the arrow's side.
+    val cascade = Motion.firstShow(state.day)
+    val dayKey = state.day ?: java.time.LocalDate.now()
+    val lastDay = remember { arrayOf(dayKey) }
+    val dayShift = remember(dayKey) { dayKey.compareTo(lastDay[0]).coerceIn(-1, 1).also { lastDay[0] = dayKey } }
+    // An entry added while the day is open: it rises in and glows softly once (ids only grow).
+    var newestSeen by remember(state.day) { androidx.compose.runtime.mutableLongStateOf(-1L) }
+    LaunchedEffect(state.events) { if (newestSeen < 0 && state.events.isNotEmpty()) newestSeen = state.events.maxOf { it.id } }
     LaunchedEffect(openNewEntry) {
         if (openNewEntry != null) {
             val container = (context.applicationContext as com.sukoon.app.SukoonApp).container
@@ -229,7 +233,12 @@ fun LogbookScreen(
                 LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(bottom = 96.dp)) {
                     itemsIndexed(groups, key = { _, g -> g.main.id }) { i, group ->
                         // Only when the list first appears: rows scrolled back into view just show.
-                        Column(if (cascade) Modifier.staggerIn(i) else Modifier) {
+                        val added = newestSeen >= 0 && group.main.id > newestSeen
+                        Column(
+                            Modifier
+                                .then(if (Motion.reduced()) Modifier else Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null, placementSpec = tween(Motion.CALM, easing = Motion.Standard)))
+                                .then(if (cascade) Modifier.staggerIn(i, key = state.day, fromX = dayShift) else if (added) Modifier.staggerIn(0).arrivalGlow(Sage.copy(alpha = 0.14f)) else Modifier),
+                        ) {
                             val main = group.main
                             val mealAt = Instant.ofEpochMilli(main.timestampMillis)
                             EntryRow(
