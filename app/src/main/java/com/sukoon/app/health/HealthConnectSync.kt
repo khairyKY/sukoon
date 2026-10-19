@@ -330,11 +330,15 @@ class HealthConnectSync(
         val now = listOf(g(record.totalCarbohydrate), g(record.dietaryFiber), g(record.sugar), g(record.protein), g(record.totalFat), record.energy?.inKilocalories ?: 0.0)
         val prior = totals.optJSONObject(key)
         if (prior == null) {
-            // First seen: what today held so far is one entry (it can't be told apart into meals); earlier days are left out.
+            // First seen today. If Sukoon already looked earlier today and found nothing, this is what you
+            // logged since: a meal, with its dose. Otherwise (Sukoon just connected) it's everything so far,
+            // one "earlier in the day" entry that can't be told apart into meals. Earlier days are left out.
+            val midnight = java.time.LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
+            val watching = prefs.getLong(KEY_LAST_SYNC_AT, 0L) >= midnight
             val today = record.startTime.atZone(zone).toLocalDate() == java.time.LocalDate.now(zone)
             val sofar = if (today && (now[DayTotals.CARBS] >= 1 || now[DayTotals.KCAL] >= 20)) {
                 val at = minOf(record.metadata.lastModifiedTime, Instant.now())
-                EventEntity(timestampMillis = at.toEpochMilli(), type = LogEventType.CARB.name, source = MFP, summary = true).withSums(now).let { it.copy(id = logbook.insert(it)) }
+                EventEntity(timestampMillis = at.toEpochMilli(), type = LogEventType.CARB.name, source = MFP, summary = !watching).withSums(now).let { it.copy(id = logbook.insert(it)) }
             } else {
                 null
             }

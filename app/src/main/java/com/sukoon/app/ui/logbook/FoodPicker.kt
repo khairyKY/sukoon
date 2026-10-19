@@ -117,6 +117,36 @@ internal fun FoodPicker(
     var making by remember { mutableStateOf<Pair<String, String?>?>(null) } // a food of yours: its name, and the barcode it was scanned with
     var scanning by remember { mutableStateOf(scanFirst) }
     var notFound by remember { mutableStateOf<String?>(null) }
+    // A barcode Open Food Facts knows by name but not by carbs (most Egyptian products): its name and photo.
+    var known by remember { mutableStateOf<OpenFoodFacts.Lookup?>(null) }
+    var reading by remember { mutableStateOf(false) }
+    var readError by remember { mutableStateOf<String?>(null) }
+    val gemini = remember { (context.applicationContext as com.sukoon.app.SukoonApp).container.gemini }
+    val labelUri = remember { androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.files", com.sukoon.app.ai.MealPhoto.newCaptureFile(context)) }
+    /** The nutrition label, photographed and read by the AI: a food of yours under the scanned barcode, ready to weigh. */
+    val snapLabel = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.TakePicture()) { saved ->
+        val code = notFound ?: return@rememberLauncherForActivityResult
+        if (!saved) return@rememberLauncherForActivityResult
+        reading = true
+        readError = null
+        scope.launch {
+            runCatching {
+                val jpeg = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.sukoon.app.ai.MealPhoto.loadScaledJpeg(context, labelUri) }
+                val reply = gemini.generate(com.sukoon.app.ai.NutritionLabel.RULES, listOf(com.sukoon.app.ai.ChatTurn(fromUser = true, text = "Read this nutrition label.")), listOf(jpeg), jsonOutput = true)
+                com.sukoon.app.ai.NutritionLabel.parse(reply) ?: error(context.getString(R.string.food_label_unread))
+            }.onSuccess { facts ->
+                picked = Food(
+                    name = known?.name ?: facts.name ?: context.getString(R.string.food_label_unnamed),
+                    brand = known?.brand ?: context.getString(R.string.food_label_source),
+                    code = code,
+                    per100 = facts.per100,
+                    servingGrams = facts.servingGrams,
+                    imageUrl = known?.imageUrl,
+                )
+            }.onFailure { readError = it.message }
+            reading = false
+        }
+    }
     var asking by remember { mutableStateOf(false) }
     var askError by remember { mutableStateOf<String?>(null) }
     val arabic = java.util.Locale.getDefault().language == "ar"
@@ -150,10 +180,12 @@ internal fun FoodPicker(
         scanning = false
         mine.byCode(code)?.let { picked = it; return }
         loading = true
+        known = null
+        readError = null
         scope.launch {
-            val food = runCatching { OpenFoodFacts.barcode(code) }.getOrNull()
+            val found = runCatching { OpenFoodFacts.lookup(code) }.getOrNull()
             loading = false
-            if (food != null) picked = food else notFound = code
+            if (found?.food != null) picked = found.food else { notFound = code; known = found?.takeIf { it.name != null } }
         }
     }
 
@@ -234,8 +266,19 @@ internal fun FoodPicker(
                     val theirs = found.filter { f -> yours.none { it.key == f.key } }
                     LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(0.dp)) {
                         notFound?.let { code ->
-                            item { Text(stringResource(R.string.food_barcode_missing, code), fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(vertical = 10.dp)) }
-                            item { LinkRow(stringResource(R.string.food_make_own_scanned)) { making = "" to code } }
+                            val k = known
+                            item {
+                                Text(
+                                    if (k?.name != null) stringResource(R.string.food_barcode_no_carbs, k.name) else stringResource(R.string.food_barcode_missing, code),
+                                    fontSize = 14.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(vertical = 10.dp),
+                                )
+                            }
+                            // The label is the sure way: the AI reads its per-100 g column (needs a Gemini key).
+                            if (gemini.hasKey) item {
+                                LinkRow(stringResource(if (reading) R.string.food_label_reading else R.string.food_label_snap)) { if (!reading) snapLabel.launch(labelUri) }
+                            }
+                            readError?.let { item { Text(it, fontSize = 13.sp, color = com.sukoon.app.ui.theme.PillLowText, modifier = Modifier.padding(vertical = 6.dp)) } }
+                            item { LinkRow(stringResource(R.string.food_make_own_scanned)) { making = (k?.name ?: "") to code } }
                         }
                         if (yours.isNotEmpty()) item { Eyebrow(stringResource(if (query.isBlank()) R.string.food_your_usual else R.string.food_filter_yours), Modifier.padding(vertical = 8.dp)) }
                         items(yours, key = { "y" + it.key }) { f -> FoodRow(f, yours = true) { picked = f } }

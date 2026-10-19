@@ -89,26 +89,32 @@ object OpenFoodFacts {
     private const val FIELDS = "code,product_name,product_name_en,product_name_ar,brands,nutriments,serving_quantity,product_quantity,image_front_small_url"
     private const val AGENT = "Sukoon/0.7 (Android; github.com/khairyKY/sukoon)"
     private val searches = mutableMapOf<String, List<Food>>()
-    private val barcodes = mutableMapOf<String, Food?>()
+    private val lookups = mutableMapOf<String, Lookup>()
 
     suspend fun search(query: String, egyptOnly: Boolean): List<Food> {
-        val q = query.trim() + if (egyptOnly) " countries_tags:\"en:egypt\"" else ""
+        // Made in Egypt (barcodes 622…) counts too: about half of those aren't tagged with the country.
+        val q = query.trim() + if (egyptOnly) " (countries_tags:\"en:egypt\" OR code:622*)" else ""
         searches[q]?.let { return it }
-        val hits = runCatching {
-            // Arabic and English names alike: "فول" finds as much as "foul".
-            get("https://search.openfoodfacts.org/search?page_size=25&langs=ar,en&fields=$FIELDS&q=${enc(q)}").optJSONArray("hits")
-        }.getOrElse {
-            // ponytail: the older search (slower) when the new index is down; the Egypt filter is dropped there.
-            get("https://world.openfoodfacts.org/cgi/search.pl?search_simple=1&json=1&page_size=25&fields=$FIELDS&search_terms=${enc(query.trim())}").optJSONArray("products")
-        }
+        // Arabic and English names alike: "فول" finds as much as "foul". The older search is mostly down, so a hiccup gets one retry instead.
+        val url = "https://search.openfoodfacts.org/search?page_size=25&langs=ar,en&fields=$FIELDS&q=${enc(q)}"
+        val hits = runCatching { get(url) }.getOrElse { kotlinx.coroutines.delay(800); get(url) }.optJSONArray("hits")
         return parseAll(hits).also { searches[q] = it }
     }
 
-    /** The product with this barcode, or null when Open Food Facts doesn't have it (with carbs). */
-    suspend fun barcode(code: String): Food? {
-        if (code in barcodes) return barcodes[code]
+    /** What Open Food Facts has for a barcode: the food (with carbs), or only what it's called and looks like, or nothing. */
+    data class Lookup(val food: Food?, val name: String? = null, val brand: String? = null, val imageUrl: String? = null)
+
+    suspend fun lookup(code: String): Lookup {
+        lookups[code]?.let { return it }
         val json = get("https://world.openfoodfacts.org/api/v2/product/${enc(code)}?fields=$FIELDS")
-        return (if (json.optInt("status") == 1) json.optJSONObject("product")?.let(::parse) else null).also { barcodes[code] = it }
+        val p = json.optJSONObject("product")?.takeIf { json.optInt("status") == 1 }
+        val found = if (p == null) Lookup(null) else Lookup(
+            food = parse(p),
+            name = listOf("product_name", "product_name_ar", "product_name_en").map { p.optString(it).trim() }.firstOrNull { it.isNotEmpty() },
+            brand = p.optString("brands").substringBefore(',').trim().ifEmpty { null },
+            imageUrl = p.optString("image_front_small_url").ifEmpty { null },
+        )
+        return found.also { lookups[code] = it }
     }
 
     private fun parseAll(array: JSONArray?): List<Food> =

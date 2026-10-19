@@ -165,14 +165,20 @@ internal fun SourceLine(app: SourceApp, details: List<String>) {
     }
 }
 
-/** A meal's name: its meal type when an app gave one, else what it was called, else "Meal". */
+/**
+ * A meal's name: its meal type when an app gave one, else what it was called, else the meal of the
+ * day it was eaten in (Breakfast, Lunch…, the slots the carb ratios use): MyFitnessPal's day totals
+ * don't say which meal they were.
+ */
 @Composable
 internal fun mealTitle(meal: EventEntity): String = if (meal.summary) stringResource(R.string.meal_summary_title) else when (meal.mealType) {
     MealType.MEAL_TYPE_BREAKFAST -> stringResource(R.string.hc_meal_breakfast)
     MealType.MEAL_TYPE_LUNCH -> stringResource(R.string.hc_meal_lunch)
     MealType.MEAL_TYPE_DINNER -> stringResource(R.string.hc_meal_dinner)
     MealType.MEAL_TYPE_SNACK -> stringResource(R.string.hc_meal_snack)
-    else -> meal.note ?: stringResource(R.string.logbook_type_carb)
+    else -> meal.note ?: if (meal.source != null) com.sukoon.app.ui.insights.slot(
+        com.sukoon.app.insights.InsightEngine.slotFor(Instant.ofEpochMilli(meal.timestampMillis).atZone(java.time.ZoneId.systemDefault()).hour),
+    ) else stringResource(R.string.logbook_type_carb)
 }
 
 /** Carbs first and filled, then whatever else the meal carries. */
@@ -236,6 +242,8 @@ internal fun MealDetailSheet(
     onRename: (String) -> Unit = {},
     /** A meal logged in Sukoon: back to its editor. */
     onEdit: () -> Unit = {},
+    /** "Earlier in the day" that was really one meal: count it as one (it then gets a meal dose). */
+    onOneMeal: () -> Unit = {},
 ) {
     val imported = meal.source != null
     var naming by remember { mutableStateOf(false) }
@@ -273,6 +281,19 @@ internal fun MealDetailSheet(
             if (photos.isNotEmpty()) {
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     photos.forEach { PhotoThumb(it, Modifier.size(120.dp).clip(RoundedCornerShape(14.dp))) }
+                }
+            }
+            if (meal.summary) {
+                // Everything logged before Sukoon first looked; if it was one meal, it can be counted as one.
+                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(com.sukoon.app.ui.theme.SageMist).padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(stringResource(R.string.meal_summary_body, app.label), fontSize = 13.5.sp, lineHeight = 19.sp, color = MaterialTheme.colorScheme.onBackground)
+                    Text(
+                        stringResource(R.string.meal_summary_one),
+                        modifier = Modifier.clip(RoundedCornerShape(50)).clickable(onClick = onOneMeal).padding(vertical = 8.dp),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = SageDeep,
+                    )
                 }
             }
             if (imported) EatenAt(meal, app.label, onSetTime)

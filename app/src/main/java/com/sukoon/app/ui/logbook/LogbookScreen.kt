@@ -459,6 +459,11 @@ fun LogbookScreen(
                 detail = null
                 editor = EditorRequest(LogEventType.CARB, existing = meal)
             },
+            onOneMeal = {
+                val one = meal.copy(summary = false)
+                onUpdateEvent(one)
+                detail = one
+            },
             onDismiss = { detail = null },
         )
     }

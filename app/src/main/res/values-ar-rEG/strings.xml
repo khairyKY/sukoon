@@ -2416,4 +2416,12 @@
     <string name="widget_link_copied">اتنسخ</string>
     <string name="widget_link_private">أي حد معاه الرمز هيشوف السكر بتاعك. خليه على أجهزتك بس، واعمل واحد جديد لو اتسرّب.</string>
     <string name="widget_link_failed">معرفناش نعمل الرابط. شوف النت وجرب تاني.</string>
+    <string name="meal_summary_body">كل اللي سجّلته في %1$s النهارده قبل ما سكون يبص، في إدخال واحد: ممكن يكون أكتر من أكلة، علشان كده مفيش جرعة أكلة مقترحة ليه.</string>
+    <string name="meal_summary_one">كانت أكلة واحدة</string>
+    <string name="food_barcode_no_carbs">Open Food Facts عارف المنتج ده (%1$s) بس مش عارف النشويات بتاعته.</string>
+    <string name="food_label_snap">صوّر جدول القيم الغذائية</string>
+    <string name="food_label_reading">بنقرا الجدول…</string>
+    <string name="food_label_unread">معرفناش نقرا النشويات من الصورة. جرّب تاني من قريب والجدول كله باين.</string>
+    <string name="food_label_unnamed">من الليبل</string>
+    <string name="food_label_source">مقروء من الليبل: راجع النشويات</string>
 </resources>

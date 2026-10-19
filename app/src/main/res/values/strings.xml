@@ -2281,4 +2281,12 @@
     <string name="widget_link_copied">Copied</string>
     <string name="widget_link_private">Anyone with the token can see your glucose. Keep it to your own devices, and make a new one if it leaks.</string>
     <string name="widget_link_failed">Couldn\'t make the link. Check the internet and try again.</string>
+    <string name="meal_summary_body">Everything you had logged in %1$s today before Sukoon looked, in one entry: it may be more than one meal, so no meal dose is suggested for it.</string>
+    <string name="meal_summary_one">It was one meal</string>
+    <string name="food_barcode_no_carbs">Open Food Facts knows this one (%1$s) but not its carbs.</string>
+    <string name="food_label_snap">Photograph the nutrition label</string>
+    <string name="food_label_reading">Reading the label…</string>
+    <string name="food_label_unread">Couldn\'t read carbs from that photo. Try again closer, with the whole table in view.</string>
+    <string name="food_label_unnamed">From the label</string>
+    <string name="food_label_source">Read from the label: check the carbs</string>
 </resources>

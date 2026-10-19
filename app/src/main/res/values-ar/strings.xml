@@ -2420,4 +2420,12 @@
     <string name="widget_link_copied">تم النسخ</string>
     <string name="widget_link_private">من لديه الرمز يرى سكرك. احتفظ به لأجهزتك، وأنشئ رمزًا جديدًا إن تسرّب.</string>
     <string name="widget_link_failed">تعذّر إنشاء الرابط. تحقق من الإنترنت وحاول مجددًا.</string>
+    <string name="meal_summary_body">كل ما سجّلته في %1$s اليوم قبل أن ينظر سكون، في إدخال واحد: قد يكون أكثر من وجبة، لذا لا تُقترح له جرعة وجبة.</string>
+    <string name="meal_summary_one">كانت وجبة واحدة</string>
+    <string name="food_barcode_no_carbs">يعرف Open Food Facts هذا المنتج (%1$s) لكن ليس كربوهيدراته.</string>
+    <string name="food_label_snap">صوّر جدول القيم الغذائية</string>
+    <string name="food_label_reading">جارٍ قراءة الجدول…</string>
+    <string name="food_label_unread">تعذّرت قراءة الكربوهيدرات من الصورة. حاول مجددًا عن قرب والجدول كله ظاهر.</string>
+    <string name="food_label_unnamed">من الملصق</string>
+    <string name="food_label_source">مقروء من الملصق: تحقق من الكربوهيدرات</string>
 </resources>
