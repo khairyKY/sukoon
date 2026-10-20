@@ -281,6 +281,9 @@ class AppContainer(private val context: Context) {
     /** The next new entry treats a low (a low alarm's "Log what I ate"): its "Treating a low" starts on. */
     val requestedTreatment = MutableStateFlow(false)
 
+    /** A notification asked for a screen by its guide link ("trends_insights"): MainScaffold opens it once. */
+    val requestedLink = MutableStateFlow<String?>(null)
+
     /** Now's "fill the gap": You → Sensor opens ready to read the sensor's memory. */
     val requestedCheckSensor = MutableStateFlow(false)
 
@@ -288,6 +291,7 @@ class AppContainer(private val context: Context) {
         LibreNfc.appContext = context // sensor refusals read in the app's language
         glucoseRepository.start()
         BasalReminder.schedule(context, settings.basalReminder)
+        com.sukoon.app.reminders.MorningSummary.schedule(context, settings.morningSummary)
         // Every few hours, not just at start: the sensor service keeps Sukoon running for days, and a release
         // should still reach it (checkIfDue itself asks GitHub at most once a day).
         appScope.launch {

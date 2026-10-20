@@ -39,7 +39,21 @@ data class Followed(
     val basalMissedSince: Instant? = null,
     /** What they're doing (workout, fast, sick day, alarms paused), when they share it. */
     val modes: SharedModes? = null,
+    /** Their followers who said "I'm on it" in the last half hour, newest first. */
+    val onIt: List<OnIt> = emptyList(),
 )
+
+/** A follower's "I'm on it" ([kind]: the alarm they answered), from the responses table. */
+data class OnIt(val follower: String, val name: String, val kind: String, val at: Instant) {
+    companion object {
+        /** How long an "I'm on it" shows. */
+        val WINDOW: java.time.Duration = java.time.Duration.ofMinutes(30)
+
+        /** Newest per follower within [WINDOW] of [now], leaving out [me] (my own tap isn't news to me). */
+        fun recent(all: List<OnIt>, now: Instant, me: String? = null): List<OnIt> =
+            all.filter { it.follower != me && it.at > now.minus(WINDOW) }.sortedByDescending { it.at }.distinctBy { it.follower }
+    }
+}
 
 /**
  * Followers (A6) on Supabase. Sharing: this phone uploads its real-sensor readings, and anyone who
@@ -125,6 +139,25 @@ class Sharing(
         }
     }.getOrDefault(emptyMap())
 
+    private val _onItForMe = kotlinx.coroutines.flow.MutableStateFlow<List<OnIt>>(emptyList())
+
+    /** My followers' "I'm on it" (last half hour), refreshed with each upload: Now's low screen and my alarm screen. */
+    val onItForMe: kotlinx.coroutines.flow.StateFlow<List<OnIt>> = _onItForMe
+
+    /** Tells [owner] and their other followers this phone's person is on [type]. Before the 2026-10-21 migration this throws. */
+    suspend fun imOnIt(owner: String, type: AlarmType) {
+        supabase.post("responses", JSONObject().put("owner", owner).put("kind", type.name).toString(), prefer = "return=minimal")
+    }
+
+    /** The last half hour's "I'm on it" about each of [ids]. Before the migration the query fails: nobody. */
+    private suspend fun onItAbout(ids: List<String>): Map<String, List<OnIt>> = runCatching {
+        val since = URLEncoder.encode(Instant.now().minus(OnIt.WINDOW).toString(), "UTF-8")
+        val rows = JSONArray(supabase.get("responses?owner=in.(${ids.joinToString(",")})&at=gt.$since&order=at.desc&select=owner,follower,name,kind,at"))
+        (0 until rows.length()).map { rows.getJSONObject(it) }.groupBy({ it.getString("owner") }) {
+            OnIt(it.getString("follower"), it.optString("name"), it.optString("kind"), OffsetDateTime.parse(it.getString("at")).toInstant())
+        }
+    }.getOrDefault(emptyMap())
+
     fun start() {
         val retry = flow {
             while (true) {
@@ -136,7 +169,11 @@ class Sharing(
         scope.launch { supabase.session.filterNotNull().collect { runCatching { publishSharedAlarms() } } }
         scope.launch {
             // New reading → upload; plus a 5-minute retry tick. Failures wait for the next one.
-            merge(glucose.latestReading.map { }, retry).conflate().collect { runCatching { upload() } }
+            merge(glucose.latestReading.map { }, retry).conflate().collect {
+                runCatching { upload() }
+                // ponytail: one small query a reading while signed in; gate on a low if it ever costs.
+                _onItForMe.value = supabase.session.value?.let { s -> onItAbout(listOf(s.userId))[s.userId] }.orEmpty()
+            }
         }
     }
 
@@ -195,7 +232,8 @@ class Sharing(
             val alarms = sharedAlarmsOf(ids)
             val basal = if (ids.isEmpty()) emptyMap() else basalMissedOf(ids)
             val modes = if (ids.isEmpty()) emptyMap() else modesOf(ids)
-            ids.map { Followed(it, names[it].orEmpty(), latestOf(it), alarms = alarms[it] ?: ALL_ALARMS, basalMissedSince = basal[it], modes = modes[it]) }
+            val onIt = if (ids.isEmpty()) emptyMap() else onItAbout(ids)
+            ids.map { Followed(it, names[it].orEmpty(), latestOf(it), alarms = alarms[it] ?: ALL_ALARMS, basalMissedSince = basal[it], modes = modes[it], onIt = onIt[it].orEmpty()) }
         }
         val others = listOf(runCatching { libreLinkUp.followed() }, runCatching { dexcom.followed() })
         val all = mine + others.flatMap { it.getOrDefault(emptyList()) }
@@ -249,6 +287,9 @@ class Sharing(
         private const val KEY_SHARED_ALARMS = "shared_alarms"
 
         val ALL_ALARMS: Set<AlarmType> = AlarmType.entries.toSet()
+
+        /** Only people followed through Sukoon can hear "I'm on it" (LibreLinkUp and Dexcom have nowhere to put it). */
+        fun canSayOnIt(owner: String) = !LibreLinkUp.owns(owner) && !DexcomShare.owns(owner)
 
         /** Alarm names to types: unknown names are dropped, and urgent low is always in. */
         fun alarmsFrom(names: Collection<String>): Set<AlarmType> =

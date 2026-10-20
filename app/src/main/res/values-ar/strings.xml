@@ -2435,4 +2435,20 @@
     <string name="meal_reminder_log">سجّل الأنسولين</string>
     <string name="meal_reminder_setting">ذكّرني عندما تكون الوجبة بلا أنسولين</string>
     <string name="meal_reminder_setting_body">بعد 20 دقيقة من وجبة 10 غ أو أكثر بلا أنسولين سريع مسجّل. ليس لعلاج الهبوط.</string>
+    <string name="on_it_action">سأتولى الأمر</string>
+    <string name="on_it_one">%1$s: «سأتولى الأمر» · %2$s</string>
+    <string name="on_it_many">%1$s: «سأتولى الأمر» · %2$s</string>
+    <string name="on_it_sent">أُرسل إلى %1$s</string>
+    <string name="on_it_failed">تعذّر الإرسال. تحقّق من اتصالك بالإنترنت، أو اتصل.</string>
+    <string name="morning_channel">ملخص الصباح</string>
+    <string name="morning_title">أمس: %1$d%% ضمن النطاق</string>
+    <string name="morning_lows">الانخفاضات: %1$d، أدناها %2$d</string>
+    <string name="morning_no_lows">لا انخفاضات</string>
+    <string name="morning_highs">فوق ١٨٠: %1$s</string>
+    <string name="morning_no_highs">لا ارتفاعات</string>
+    <string name="morning_insight">يستحق النظر: %1$s</string>
+    <string name="morning_setting">ملخص الصباح</string>
+    <string name="morning_setting_on">كل صباح الساعة %1$s: نسبة الوقت ضمن النطاق أمس، والانخفاضات، والارتفاعات، وأمر واحد يستحق النظر.</string>
+    <string name="morning_setting_off">يومك السابق في إشعار هادئ واحد كل صباح.</string>
+    <string name="morning_pick">الملخص الساعة</string>
 </resources>

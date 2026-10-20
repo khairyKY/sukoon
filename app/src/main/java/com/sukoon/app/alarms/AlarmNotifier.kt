@@ -125,6 +125,16 @@ class AlarmNotifier(private val context: Context, private val log: AlarmLog) {
             .setDeleteIntent(actionIntent(alert.type, minutes = 0, requestCode = alert.type.ordinal + 100, person = person))
             .addAction(0, snoozeLabel, actionIntent(alert.type, snoozeMinutes, requestCode = alert.type.ordinal, person = person, treated = treating && !test))
             .setFullScreenIntent(PendingIntent.getActivity(context, 1, screen, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT), true)
+        if (person != null && !test && com.sukoon.app.sharing.Sharing.canSayOnIt(person)) {
+            builder.addAction(0, context.getString(R.string.on_it_action), PendingIntent.getBroadcast(
+                context, 300 + alert.type.ordinal,
+                Intent(context, AlarmActionReceiver::class.java).setAction(AlarmActionReceiver.ACTION_ON_IT)
+                    .setData(Uri.parse("sukoon://onit/$person/${alert.type.name}"))
+                    .putExtra(AlarmActionReceiver.EXTRA_TYPE, alert.type.name)
+                    .putExtra(AlarmActionReceiver.EXTRA_PERSON, person),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            ))
+        }
         if (treating && !test) {
             builder.addAction(0, context.getString(R.string.alarm_action_log_food), PendingIntent.getActivity(context, 200 + alert.type.ordinal, MainActivity.logTreatment(context), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
         }

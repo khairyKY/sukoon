@@ -169,7 +169,8 @@ class BasalReminder : BroadcastReceiver() {
         private fun pending(context: Context, code: Int, intent: Intent): PendingIntent =
             PendingIntent.getBroadcast(context, code, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
-        private fun at(context: Context, at: Instant, wake: PendingIntent) {
+        /** Exact when the phone allows it, else inexact (the morning summary uses it too). */
+        internal fun at(context: Context, at: Instant, wake: PendingIntent) {
             val alarms = context.getSystemService(AlarmManager::class.java)
             runCatching {
                 if (Build.VERSION.SDK_INT < 31 || alarms.canScheduleExactAlarms()) alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at.toEpochMilli(), wake)

@@ -33,6 +33,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sukoon.app.R
 import com.sukoon.app.SukoonApp
+import com.sukoon.app.reminders.MorningSummary
+import com.sukoon.app.reminders.MorningSummarySettings
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
 import com.sukoon.app.ui.theme.CaptionMuted
 import com.sukoon.app.ui.theme.Sage
 import com.sukoon.app.ui.theme.SageDeep
@@ -66,5 +70,50 @@ internal fun GentleChecks() {
             )
         }
         Text(stringResource(R.string.workout_check_mfp), fontSize = 12.sp, color = CaptionMuted, modifier = Modifier.padding(horizontal = 4.dp))
+        MorningSummaryRow()
+    }
+}
+
+/** The morning summary's switch; turning it on asks for the time (08:00 first). */
+@Composable
+private fun MorningSummaryRow() {
+    val context = LocalContext.current
+    val settings = (context.applicationContext as SukoonApp).container.settings
+    var summary by remember { mutableStateOf(settings.morningSummary) }
+    var picking by remember { mutableStateOf(false) }
+    fun set(value: MorningSummarySettings) {
+        summary = value
+        settings.morningSummary = value
+        MorningSummary.schedule(context, value)
+    }
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surface).padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(36.dp).clip(CircleShape).background(SageMist), contentAlignment = Alignment.Center) {
+            Icon(painterResource(R.drawable.ic_bell), null, tint = SageDeep, modifier = Modifier.size(18.dp))
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.morning_setting), fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+            Text(
+                if (summary.enabled) stringResource(R.string.morning_setting_on, minuteLabel(summary.minuteOfDay)) else stringResource(R.string.morning_setting_off),
+                fontSize = 12.5.sp, lineHeight = 17.sp, color = CaptionMuted,
+            )
+            if (summary.enabled) Text(
+                stringResource(R.string.reminder_basal_change, minuteLabel(summary.minuteOfDay)),
+                fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = SageDeep,
+                modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable { picking = true }.heightIn(min = 40.dp).padding(vertical = 10.dp),
+            )
+        }
+        Switch(
+            checked = summary.enabled,
+            onCheckedChange = { on -> if (on) picking = true else set(summary.copy(enabled = false)) },
+            colors = SwitchDefaults.colors(checkedTrackColor = Sage),
+        )
+    }
+    if (picking) TimePickDialog(stringResource(R.string.morning_pick), summary.minuteOfDay, onDismiss = { picking = false }) {
+        picking = false
+        set(MorningSummarySettings(enabled = true, minuteOfDay = it))
     }
 }

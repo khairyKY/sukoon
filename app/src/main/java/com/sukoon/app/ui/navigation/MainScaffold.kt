@@ -229,6 +229,8 @@ fun MainScaffold() {
             "entry_fingerstick" -> appContainer.requestedEntry.value = LogEventType.FINGERSTICK
         }
     }
+    val requestedLink by appContainer.requestedLink.collectAsStateWithLifecycle()
+    LaunchedEffect(requestedLink) { requestedLink?.let { appContainer.requestedLink.value = null; openLink(it) } }
     // An announcement everyone must see (web/notices.json "kind"), over everything.
     com.sukoon.app.ui.components.ForcedNotice()
     if (showGuide) HelpDialog(onClose = { showGuide = false; guideTopic = null }, onLink = { showGuide = false; guideTopic = null; openLink(it) }, startTopic = guideTopic)
