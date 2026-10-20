@@ -131,3 +131,23 @@ internal fun todayTotals(events: List<EventEntity>, now: Instant, zone: ZoneId):
 
 /** Lots of fat or protein: the rise can come 3 to 5 hours later (a rule of thumb, shown for awareness). */
 internal fun slowMeal(fat: Double?, protein: Double?): Boolean = InsightEngine.richMeal(fat, protein)
+
+/**
+ * What was said in one go as one meal: the foods (not a treatment for a low) become one meal with
+ * their carbs and nutrients added up and their names listed, and one rapid dose said with them is
+ * that meal's insulin. Everything else (a treatment, long-acting, a walk, a second dose) stays as said.
+ */
+internal fun oneMeal(drafts: List<EntryDraft>): List<EntryDraft> {
+    val foods = drafts.filter { it.type == LogEventType.CARB && !it.treatment }
+    if (foods.size < 2 && drafts.none { it.type == LogEventType.INSULIN }) return drafts
+    if (foods.isEmpty()) return drafts
+    fun sum(f: (Nutrients) -> Double?) = foods.mapNotNull { it.nutrients?.let(f) }.takeIf { it.isNotEmpty() }?.sum()
+    val dose = drafts.singleOrNull { it.type == LogEventType.INSULIN }
+    val meal = foods.first().copy(
+        amount = foods.sumOf { it.amount ?: 0.0 },
+        note = foods.mapNotNull { it.note?.trim()?.takeIf(String::isNotEmpty) }.distinct().joinToString(", ").ifEmpty { null },
+        nutrients = Nutrients(fiber = sum { it.fiber }, sugar = sum { it.sugar }, protein = sum { it.protein }, fat = sum { it.fat }, kcal = sum { it.kcal }).takeIf { it != Nutrients() },
+        insulin = dose?.amount,
+    )
+    return listOf(meal) + drafts.filter { it !in foods && it !== dose }
+}

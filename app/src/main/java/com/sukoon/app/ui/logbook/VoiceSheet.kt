@@ -208,7 +208,8 @@ internal fun VoiceSheet(glucoseNow: Int?, onSave: (List<EntryDraft>) -> Unit, on
                     stringResource(R.string.voice_save_all), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White,
                     modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Sage).clickable {
                         val now = Instant.now()
-                        onSave(entries.mapIndexedNotNull { i, e ->
+                        // One meal for everything eaten, its dose with it (not five entries for five foods).
+                        onSave(oneMeal(entries.mapIndexedNotNull { i, e ->
                             val amount = if (e.amount == null) null else amounts[i].toDoubleOrNull() ?: return@mapIndexedNotNull null
                             val note = when (e.type) {
                                 LogEventType.ACTIVITY -> kinds(e.name, e.effort)
@@ -220,7 +221,7 @@ internal fun VoiceSheet(glucoseNow: Int?, onSave: (List<EntryDraft>) -> Unit, on
                                 nutrients = Nutrients(protein = e.protein, fat = e.fat, kcal = e.kcal).takeIf { e.type == LogEventType.CARB && it != Nutrients() },
                                 treatment = e.type == LogEventType.CARB && (e.treatment || (glucoseNow ?: 999) < 70),
                             )
-                        })
+                        }))
                     }.heightIn(min = 54.dp).padding(16.dp),
                 )
             }

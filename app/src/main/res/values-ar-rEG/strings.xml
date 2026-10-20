@@ -2424,4 +2424,11 @@
     <string name="food_label_unread">معرفناش نقرا النشويات من الصورة. جرّب تاني من قريب والجدول كله باين.</string>
     <string name="food_label_unnamed">من الليبل</string>
     <string name="food_label_source">مقروء من الليبل: راجع النشويات</string>
+    <string name="meal_reminder_channel">أكل من غير إنسولين</string>
+    <string name="meal_reminder_title">لسه مفيش إنسولين للأكلة</string>
+    <string name="meal_reminder_body">%1$s · %2$s جم الساعة %3$s. من غير إنسولين السكر هيعلى. خدته؟ سجّله هنا.</string>
+    <string name="meal_reminder_meal">أكلتك</string>
+    <string name="meal_reminder_log">سجّل الإنسولين</string>
+    <string name="meal_reminder_setting">فكّرني لو الأكلة مالهاش إنسولين</string>
+    <string name="meal_reminder_setting_body">بعد 20 دقيقة من أكلة 10 جم أو أكتر من غير إنسولين سريع متسجّل. مش لعلاج الهبوط.</string>
 </resources>

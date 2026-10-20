@@ -162,6 +162,13 @@ fun MainScaffold() {
             }
         }.getOrElse { syncContext.getString(R.string.sync_failed, it.message ?: it.javaClass.simpleName) }
     }
+    val requestedMeal by appContainer.requestedMealInsulin.collectAsStateWithLifecycle()
+    LaunchedEffect(requestedMeal) {
+        val meal = requestedMeal ?: return@LaunchedEffect
+        pendingMealInsulin = meal
+        navController.navigateToTab(SukoonTab.TRENDS)
+        appContainer.requestedMealInsulin.value = null
+    }
     val requested by appContainer.requestedEntry.collectAsStateWithLifecycle()
     LaunchedEffect(requested) {
         val type = requested ?: return@LaunchedEffect

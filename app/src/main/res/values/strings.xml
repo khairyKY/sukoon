@@ -2289,4 +2289,11 @@
     <string name="food_label_unread">Couldn\'t read carbs from that photo. Try again closer, with the whole table in view.</string>
     <string name="food_label_unnamed">From the label</string>
     <string name="food_label_source">Read from the label: check the carbs</string>
+    <string name="meal_reminder_channel">Meals without insulin</string>
+    <string name="meal_reminder_title">No insulin for your meal yet</string>
+    <string name="meal_reminder_body">%1$s · %2$s g at %3$s. Without insulin your glucose will rise. Took it? Log it here.</string>
+    <string name="meal_reminder_meal">Your meal</string>
+    <string name="meal_reminder_log">Log insulin</string>
+    <string name="meal_reminder_setting">Remind me when a meal has no insulin</string>
+    <string name="meal_reminder_setting_body">20 minutes after a meal of 10 g or more with no rapid insulin logged. Not for low treatments.</string>
 </resources>

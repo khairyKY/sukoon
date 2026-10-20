@@ -135,6 +135,11 @@ class SettingsPrefs(context: Context) {
         set(value) = prefs.edit().putInt(KEY_INSULIN_PEAK, value.peakMinutes).putInt(KEY_INSULIN_DURATION, value.durationMinutes).apply()
 
     /** You → Insulin: the long-acting reminder. */
+    /** "You ate but logged no insulin": a reminder 20 minutes after such a meal. On unless turned off. */
+    var mealReminder: Boolean
+        get() = prefs.getBoolean("meal_reminder", true)
+        set(value) = prefs.edit().putBoolean("meal_reminder", value).apply()
+
     var basalReminder: BasalReminderSettings
         get() = BasalReminderSettings(prefs.getBoolean(KEY_BASAL_REMINDER, false), prefs.getInt(KEY_BASAL_MINUTE, 22 * 60).coerceIn(0, 1439))
         set(value) = prefs.edit().putBoolean(KEY_BASAL_REMINDER, value.enabled).putInt(KEY_BASAL_MINUTE, value.minuteOfDay).apply()

@@ -2428,4 +2428,11 @@
     <string name="food_label_unread">تعذّرت قراءة الكربوهيدرات من الصورة. حاول مجددًا عن قرب والجدول كله ظاهر.</string>
     <string name="food_label_unnamed">من الملصق</string>
     <string name="food_label_source">مقروء من الملصق: تحقق من الكربوهيدرات</string>
+    <string name="meal_reminder_channel">وجبات بلا أنسولين</string>
+    <string name="meal_reminder_title">لا أنسولين لوجبتك بعد</string>
+    <string name="meal_reminder_body">%1$s · %2$s غ الساعة %3$s. دون أنسولين سيرتفع السكر. أخذته؟ سجّله هنا.</string>
+    <string name="meal_reminder_meal">وجبتك</string>
+    <string name="meal_reminder_log">سجّل الأنسولين</string>
+    <string name="meal_reminder_setting">ذكّرني عندما تكون الوجبة بلا أنسولين</string>
+    <string name="meal_reminder_setting_body">بعد 20 دقيقة من وجبة 10 غ أو أكثر بلا أنسولين سريع مسجّل. ليس لعلاج الهبوط.</string>
 </resources>
