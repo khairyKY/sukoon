@@ -2317,4 +2317,13 @@
     <string name="finish_extras">Extras: meals from MyFitnessPal</string>
     <string name="finish_dose">Dose suggestions (beta)</string>
     <string name="ob_ready_later">Sharing, emergency contacts and the extras can wait. Once your first reading is in, Now lists them.</string>
+    <string name="eat_title">What did you eat?</string>
+    <string name="eat_hint">Like: 2 ful sandwiches and tea</string>
+    <string name="eat_send">Work it out</string>
+    <string name="eat_scan">Barcode</string>
+    <string name="eat_wrote">You wrote: “%1$s”</string>
+    <string name="eat_total">%1$s g carbs in all</string>
+    <string name="eat_insulin">With %1$s u of rapid insulin</string>
+    <string name="eat_also">Saved with the meal</string>
+    <string name="eat_log_meal">Log meal · %1$s g</string>
 </resources>

@@ -2456,4 +2456,13 @@
     <string name="finish_extras">إضافات: الوجبات من MyFitnessPal</string>
     <string name="finish_dose">اقتراحات الجرعات (تجريبي)</string>
     <string name="ob_ready_later">المشاركة وجهات اتصال الطوارئ والإضافات يمكنها الانتظار. بعد وصول أول قراءة، ستجدها في الآن.</string>
+    <string name="eat_title">ماذا أكلت؟</string>
+    <string name="eat_hint">مثل: سندويتشا فول وشاي</string>
+    <string name="eat_send">احسبها</string>
+    <string name="eat_scan">الرمز الشريطي</string>
+    <string name="eat_wrote">كتبت: «%1$s»</string>
+    <string name="eat_total">%1$s غ كربوهيدرات إجمالًا</string>
+    <string name="eat_insulin">مع %1$s و من الأنسولين السريع</string>
+    <string name="eat_also">يُحفظ مع الوجبة</string>
+    <string name="eat_log_meal">سجّل الوجبة · %1$s غ</string>
 </resources>

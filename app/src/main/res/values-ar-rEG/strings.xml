@@ -2452,4 +2452,13 @@
     <string name="finish_extras">حاجات زيادة: الأكل من MyFitnessPal</string>
     <string name="finish_dose">اقتراح الجرعات (تجريبي)</string>
     <string name="ob_ready_later">المشاركة وجهات الطوارئ والحاجات الزيادة ممكن تستنى. أول ما توصل أول قراية، هتلاقيهم في دلوقتي.</string>
+    <string name="eat_title">كلت إيه؟</string>
+    <string name="eat_hint">زي: 2 ساندوتش فول وشاي</string>
+    <string name="eat_send">احسبهالي</string>
+    <string name="eat_scan">باركود</string>
+    <string name="eat_wrote">كتبت: «%1$s»</string>
+    <string name="eat_total">%1$s جم كارب في الأكلة كلها</string>
+    <string name="eat_insulin">مع %1$s وحدة إنسولين سريع</string>
+    <string name="eat_also">هيتحفظ مع الأكلة</string>
+    <string name="eat_log_meal">سجّل الأكلة · %1$s جم</string>
 </resources>
