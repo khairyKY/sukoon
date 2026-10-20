@@ -2431,4 +2431,13 @@
     <string name="meal_reminder_log">سجّل الإنسولين</string>
     <string name="meal_reminder_setting">فكّرني لو الأكلة مالهاش إنسولين</string>
     <string name="meal_reminder_setting_body">بعد 20 دقيقة من أكلة 10 جم أو أكتر من غير إنسولين سريع متسجّل. مش لعلاج الهبوط.</string>
+    <string name="eat_title">كلت إيه؟</string>
+    <string name="eat_hint">زي: 2 ساندوتش فول وشاي</string>
+    <string name="eat_send">احسبهالي</string>
+    <string name="eat_scan">باركود</string>
+    <string name="eat_wrote">كتبت: «%1$s»</string>
+    <string name="eat_total">%1$s جم كارب في الأكلة كلها</string>
+    <string name="eat_insulin">مع %1$s وحدة إنسولين سريع</string>
+    <string name="eat_also">هيتحفظ مع الأكلة</string>
+    <string name="eat_log_meal">سجّل الأكلة · %1$s جم</string>
 </resources>

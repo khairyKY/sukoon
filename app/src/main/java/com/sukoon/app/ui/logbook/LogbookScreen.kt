@@ -154,13 +154,13 @@ fun LogbookScreen(
     mealRecord: suspend (Long) -> HealthConnectSync.MealRecord? = { null },
 ) {
     val context = LocalContext.current
-    // Say it and the AI estimate need a Gemini key: without one they aren't offered (the key is in You → Apps & data).
+    // The eat box's mic and photo, and the AI estimate, need a Gemini key: without one they aren't offered (the key is in You → Apps & data).
     val hasAiKey = (context.applicationContext as com.sukoon.app.SukoonApp).container.gemini.hasKey
     val view = LocalView.current
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
     var adding by remember { mutableStateOf(false) }
-    var voicing by remember { mutableStateOf(false) }
+    var eating by remember { mutableStateOf<EatInput?>(null) }
     var mealGap by remember { mutableStateOf<com.sukoon.app.insulin.MealGap?>(null) }
     var deleting by remember { mutableStateOf<Pair<EventEntity, EventEntity>?>(null) }
     var confirmDelete by remember { mutableStateOf<Pair<EventEntity, Boolean>?>(null) }
@@ -306,7 +306,8 @@ fun LogbookScreen(
             showKetones = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.modes.active.value.sick || (state.glucoseNow?.glucoseMgDl ?: 0) > 250,
             repeats = remember(state.events) { recentRepeats(state.events) },
             usual = remember(state.events) { usualMeals(state.events, java.time.Instant.now()) },
-            onVoice = if (hasAiKey) ({ adding = false; voicing = true }) else null,
+            ai = hasAiKey && onEstimateCarbs != null,
+            onEat = { adding = false; eating = it },
             glucoseNow = state.glucoseNow,
             insulinOnBoard = state.insulinOnBoard,
             mealsFromApps = state.events.any { it.source != null },
@@ -374,17 +375,19 @@ fun LogbookScreen(
             onDismiss = { deleting = null },
         )
     }
-    if (voicing) {
-        VoiceSheet(
-            glucoseNow = state.glucoseNow?.glucoseMgDl,
+    eating?.let { input ->
+        EatSheet(
+            start = input,
+            estimate = onEstimateCarbs.takeIf { hasAiKey },
+            onMeal = { eating = null; editor = it },
             onSave = { drafts ->
-                voicing = false
+                eating = null
                 scope.launch {
                     val ids = drafts.flatMap { onSaveEntry(it).await() }
                     announce(context.resources.getQuantityString(R.plurals.voice_saved, drafts.size, drafts.size), ids)
                 }
             },
-            onDismiss = { voicing = false },
+            onDismiss = { eating = null },
         )
     }
     editor?.let { request ->
@@ -401,8 +404,9 @@ fun LogbookScreen(
             onEstimateCarbs = onEstimateCarbs.takeIf { hasAiKey },
             onSave = { draft ->
                 editor = null
-                val saving = onSaveEntry(draft)
-                scope.launch { announce(savedMessage(context, draft), saving.await()) }
+                // What else the eat box heard (long-acting, a walk) is saved with the meal, under one undo.
+                val saving = (listOf(draft) + request.extras).map(onSaveEntry)
+                scope.launch { announce(savedMessage(context, draft), saving.flatMap { it.await() }) }
             },
             onUpdate = { event, photos ->
                 editor = null

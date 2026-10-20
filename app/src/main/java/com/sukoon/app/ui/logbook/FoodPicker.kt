@@ -104,11 +104,13 @@ internal fun FoodPicker(
     onDismiss: () -> Unit,
     /** The AI's carb estimate, for anything not found (null without an AI key). */
     estimate: (suspend (String, List<ByteArray>) -> CarbEstimate)? = null,
+    /** Words to search for at once (the eat box's, without the AI). */
+    startQuery: String = "",
 ) {
     val context = LocalContext.current
     val mine = remember { MyFoods.get(context) }
     val scope = rememberCoroutineScope()
-    var query by remember { mutableStateOf("") }
+    var query by remember { mutableStateOf(startQuery) }
     var filter by remember { mutableStateOf(FoodFilter.ALL) }
     var found by remember { mutableStateOf<List<Food>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }

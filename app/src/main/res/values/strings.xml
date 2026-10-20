@@ -2296,4 +2296,13 @@
     <string name="meal_reminder_log">Log insulin</string>
     <string name="meal_reminder_setting">Remind me when a meal has no insulin</string>
     <string name="meal_reminder_setting_body">20 minutes after a meal of 10 g or more with no rapid insulin logged. Not for low treatments.</string>
+    <string name="eat_title">What did you eat?</string>
+    <string name="eat_hint">Like: 2 ful sandwiches and tea</string>
+    <string name="eat_send">Work it out</string>
+    <string name="eat_scan">Barcode</string>
+    <string name="eat_wrote">You wrote: “%1$s”</string>
+    <string name="eat_total">%1$s g carbs in all</string>
+    <string name="eat_insulin">With %1$s u of rapid insulin</string>
+    <string name="eat_also">Saved with the meal</string>
+    <string name="eat_log_meal">Log meal · %1$s g</string>
 </resources>
