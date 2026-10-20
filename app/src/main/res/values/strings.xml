@@ -2310,4 +2310,11 @@
     <string name="dose_check_setting">Check in after insulin</string>
     <string name="dose_check_setting_body">30 min after a dose with no food logged ("Did you eat?"), and 2 h after a correction (how it went).</string>
     <string name="home_correction_taken">I already took insulin: log it first</string>
+    <string name="finish_eyebrow">Finish setting up</string>
+    <string name="finish_title">The rest, whenever you have a minute</string>
+    <string name="finish_account">Account and sharing (only to share or be followed)</string>
+    <string name="finish_emergency">Emergency contacts</string>
+    <string name="finish_extras">Extras: meals from MyFitnessPal</string>
+    <string name="finish_dose">Dose suggestions (beta)</string>
+    <string name="ob_ready_later">Sharing, emergency contacts and the extras can wait. Once your first reading is in, Now lists them.</string>
 </resources>

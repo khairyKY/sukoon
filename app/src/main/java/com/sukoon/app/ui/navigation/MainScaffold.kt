@@ -398,9 +398,14 @@ fun MainScaffold() {
                         app.settings.gettingStartedDismissed = true
                         startDismissed = true
                     }
-                    val showStart = !startDismissed && !startSteps.all { it }
+                    // After onboarding's first reading: what it no longer asks; it stands in for the card and banner.
+                    val finishing = com.sukoon.app.ui.help.FinishSetupCard(startSteps, ::openLink, onDismiss = {
+                        app.settings.gettingStartedDismissed = true
+                        startDismissed = true
+                    })
+                    val showStart = !startDismissed && !startSteps.all { it } && !finishing
                     // The banner or the card, never both.
-                    if (missingSetup.isNotEmpty() && !setupLater && !showStart) {
+                    if (missingSetup.isNotEmpty() && !setupLater && !showStart && !finishing) {
                         SetupBanner(missingSetup, onFix = { openYou(YouPage.HELP) }, onLater = { setupLater = true })
                     }
                     if (showStart) {

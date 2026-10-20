@@ -2449,4 +2449,11 @@
     <string name="dose_check_setting">تابعني بعد الأنسولين</string>
     <string name="dose_check_setting_body">بعد 30 دقيقة من جرعة بلا طعام مسجّل («هل أكلت؟»)، وبعد ساعتين من التصحيح (كيف كانت النتيجة).</string>
     <string name="home_correction_taken">أخذت أنسولين بالفعل: سجّله أولًا</string>
+    <string name="finish_eyebrow">أكمل الإعداد</string>
+    <string name="finish_title">الباقي، متى سمح وقتك</string>
+    <string name="finish_account">الحساب والمشاركة (للمشاركة أو ليتابعك أحد فقط)</string>
+    <string name="finish_emergency">جهات اتصال الطوارئ</string>
+    <string name="finish_extras">إضافات: الوجبات من MyFitnessPal</string>
+    <string name="finish_dose">اقتراحات الجرعات (تجريبي)</string>
+    <string name="ob_ready_later">المشاركة وجهات اتصال الطوارئ والإضافات يمكنها الانتظار. بعد وصول أول قراءة، ستجدها في الآن.</string>
 </resources>

@@ -4,25 +4,15 @@ import com.sukoon.app.sharing.InviteCode
 import com.sukoon.app.ui.components.CodeBoxes
 import com.sukoon.app.ui.components.PasteCodeChip
 
-import com.sukoon.app.platform.ParentLock
-import com.sukoon.app.ui.settings.PinDialog
-import com.sukoon.app.ui.settings.SuggestRatios
-import com.sukoon.app.ui.settings.ProfileFields
 import com.sukoon.app.ui.settings.RangeCard
-import com.sukoon.app.ui.logbook.formatAmountLocalized
-import com.sukoon.app.insights.MealSlot
-import com.sukoon.app.insulin.DoseSettings
 import com.sukoon.app.ui.components.NumberChips
 import androidx.compose.runtime.mutableIntStateOf
-import android.Manifest
 import android.app.LocaleManager
 import android.content.ClipboardManager
 import android.content.Intent
 import android.os.Build
 import android.os.LocaleList
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -41,7 +31,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -87,13 +76,9 @@ import com.sukoon.app.R
 import com.sukoon.app.data.prefs.UserRole
 import com.sukoon.app.data.source.libre.SensorLife
 import com.sukoon.app.di.AppContainer
-import com.sukoon.app.emergency.EmergencyContact
-import com.sukoon.app.emergency.PhoneNumbers
-import com.sukoon.app.insulin.InsulinAction
 import com.sukoon.app.platform.SetupItem
 import com.sukoon.app.sharing.SupabaseException
 import com.sukoon.app.ui.components.SukoonMark
-import com.sukoon.app.ui.settings.HealthConnectSection
 import com.sukoon.app.ui.settings.SensorCard
 import com.sukoon.app.ui.settings.SetupChecklist
 import com.sukoon.app.ui.theme.CaptionMuted
@@ -107,17 +92,20 @@ import com.sukoon.app.ui.theme.StateHigh
 import com.sukoon.app.ui.theme.StateLow
 import java.util.Locale
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.collectAsState
 
-private enum class Step { WELCOME, ROLE, ACCOUNT, SENSOR, PERMISSIONS, ALARMS, EMERGENCY, EXTRAS, DOSE, CODE, FOLLOW_ALERTS, READY }
+internal enum class Step { WELCOME, ROLE, ACCOUNT, SENSOR, PERMISSIONS, ALARMS, CODE, FOLLOW_ALERTS, READY }
 
-/** Each role's steps: a wearer sets up the sensor and its safety net, a follower just finds the person. */
-private fun path(role: UserRole): List<Step> = buildList {
+/**
+ * Each role's steps, the first number soonest: a wearer pairs and lets alarms through, the rest waits
+ * for Now's Finish setting up card; a follower needs the account to find the person. "I have an
+ * account" ([haveAccount]) signs in right after the role.
+ */
+internal fun path(role: UserRole, haveAccount: Boolean = false): List<Step> = buildList {
     add(Step.WELCOME)
     add(Step.ROLE)
-    add(Step.ACCOUNT)
-    if (role.wears) addAll(listOf(Step.SENSOR, Step.PERMISSIONS, Step.ALARMS, Step.EMERGENCY, Step.EXTRAS, Step.DOSE))
-    if (role.follows) addAll(listOf(Step.CODE, Step.FOLLOW_ALERTS))
+    if (haveAccount) add(Step.ACCOUNT)
+    if (role.wears) addAll(listOf(Step.SENSOR, Step.PERMISSIONS, Step.ALARMS))
+    if (role.follows) addAll(listOfNotNull(Step.ACCOUNT.takeUnless { haveAccount }, Step.CODE, Step.FOLLOW_ALERTS))
     if (role.wears) add(Step.READY)
 }
 
@@ -126,8 +114,8 @@ private val FOLLOWER_SETUP = setOf(SetupItem.NOTIFICATIONS, SetupItem.FULL_SCREE
 
 /**
  * First run (design "Getting in", "Wearer setup", "Follower setup"): welcome with the disclaimer,
- * the role, an account (optional for a wearer), then only what that role needs, each step saying
- * what it needs and why. Every step can be revisited in You later.
+ * the role, then only what that role needs ([path]), each step saying what it needs and why. A
+ * wearer's account, contacts, extras and dose wait for Now's Finish setting up card.
  */
 @Composable
 fun Onboarding(container: AppContainer, onDone: (UserRole) -> Unit) {
@@ -135,10 +123,11 @@ fun Onboarding(container: AppContainer, onDone: (UserRole) -> Unit) {
     var step by rememberSaveable { mutableStateOf(Step.WELCOME) }
     var signIn by rememberSaveable { mutableStateOf(false) }
     var followed by rememberSaveable { mutableStateOf("") }
-    val steps = path(role)
+    val steps = path(role, signIn)
     fun finish() {
         container.settings.role = role
         container.role.value = role
+        container.settings.followUps = role.wears
         container.settings.onboarded = true
         onDone(role)
     }
@@ -171,9 +160,6 @@ fun Onboarding(container: AppContainer, onDone: (UserRole) -> Unit) {
                 onPrimary = ::next,
             ) { SetupChecklist(only = WEARER_SETUP) }
             Step.ALARMS -> AlarmsStep(container, progress, onBack = ::back, onDone = ::next)
-            Step.EMERGENCY -> EmergencyStep(container, progress, onBack = ::back, onDone = ::next)
-            Step.EXTRAS -> ExtrasStep(container, progress, onBack = ::back, onDone = ::next)
-            Step.DOSE -> DoseStep(container, progress, onBack = ::back, onDone = ::next)
             Step.CODE -> CodeStep(container, progress, onBack = ::back, onFollowed = { followed = it; next() })
             Step.FOLLOW_ALERTS -> FollowAlertsStep(container, followed, progress, onDone = ::next)
             Step.READY -> ReadyStep(container, onDone = ::finish)
@@ -313,7 +299,7 @@ private fun RoleCard(
     }
 }
 
-/** An account: optional for a wearer (only needed to share), required to follow someone. */
+/** An account: asked of a wearer only on "I have an account" (then optional), required to follow someone. */
 @Composable
 private fun AccountStep(container: AppContainer, role: UserRole, startWithSignIn: Boolean, progress: Pair<Int, Int>, onBack: () -> Unit, onDone: () -> Unit) {
     val context = LocalContext.current
@@ -419,7 +405,7 @@ private fun AccountStep(container: AppContainer, role: UserRole, startWithSignIn
 }
 
 // ---------------------------------------------------------------------------------------------
-// Wearer: sensor · permissions · alarms · emergency · extras · ready
+// Wearer: sensor · permissions · alarms · ready
 // ---------------------------------------------------------------------------------------------
 
 @Composable
@@ -538,165 +524,8 @@ private fun AlarmRow(dot: Color?, title: String, body: String, checked: Boolean?
 }
 
 @Composable
-private fun EmergencyStep(container: AppContainer, progress: Pair<Int, Int>, onBack: () -> Unit, onDone: () -> Unit) {
-    var name by rememberSaveable { mutableStateOf("") }
-    var phone by rememberSaveable { mutableStateOf("") }
-    // Texts and the call need these; asked here, once the person is saved.
-    val askTextAndCall = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { onDone() }
-    Page(
-        progress = progress,
-        onBack = onBack,
-        trailing = stringResource(R.string.ob_skip) to onDone,
-        title = stringResource(R.string.ob_emergency_title),
-        body = null,
-        primary = if (name.isBlank()) stringResource(R.string.ob_add_contact) else stringResource(R.string.ob_add_named, name.trim()),
-        primaryEnabled = name.isNotBlank() && phone.count { it.isDigit() } >= 7,
-        onPrimary = {
-            val settings = container.settings.emergency
-            container.settings.emergency = settings.copy(
-                contacts = settings.contacts + EmergencyContact(name.trim(), PhoneNumbers.normalize(phone, container.emergency.callingCode())),
-            ).sanitized()
-            askTextAndCall.launch(arrayOf(Manifest.permission.SEND_SMS, Manifest.permission.CALL_PHONE))
-        },
-    ) {
-        Card {
-            Timeline(StateLow, stringResource(R.string.ob_emergency_t1, container.settings.emergency.afterMinutes), last = false)
-            Timeline(StateHigh, stringResource(R.string.ob_emergency_t2), last = false)
-            Timeline(MaterialTheme.colorScheme.onBackground, stringResource(R.string.ob_emergency_t3), last = true)
-        }
-        Field(name, { name = it }, stringResource(R.string.ob_contact_name))
-        Field(phone, { phone = it }, stringResource(R.string.ob_contact_phone), keyboard = KeyboardType.Phone)
-        Text(stringResource(R.string.ob_emergency_permissions), fontSize = 13.sp, color = CaptionMuted)
-    }
-}
-
-@Composable
-private fun Timeline(dot: Color, text: String, last: Boolean) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(Modifier.padding(top = 4.dp).size(12.dp).clip(CircleShape).background(dot))
-            if (!last) Box(Modifier.padding(vertical = 4.dp).width(2.dp).height(30.dp).background(outline()))
-        }
-        Text(text, fontSize = 14.5.sp, lineHeight = 21.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(bottom = if (last) 0.dp else 10.dp))
-    }
-}
-
-/** The two extras: which rapid insulin (so "still working" matches it) and meals from MyFitnessPal. */
-/** Beta dose suggestions (design "You · Dose suggestions"): about you, starting ratios, the switch. Skippable. */
-@Composable
-private fun DoseStep(container: AppContainer, progress: Pair<Int, Int>, onBack: () -> Unit, onDone: () -> Unit) {
-    var profile by remember { mutableStateOf(container.settings.profile) }
-    var dose by remember { mutableStateOf(container.settings.doseSettings) }
-    var settingPin by remember { mutableStateOf(false) }
-    val mgdl = stringResource(R.string.home_unit_mgdl)
-    fun saveDose(changed: DoseSettings) {
-        container.settings.doseSettings = changed
-        dose = changed
-    }
-    Page(
-        progress = progress,
-        onBack = onBack,
-        trailing = stringResource(R.string.ob_skip) to onDone,
-        title = stringResource(R.string.ob_dose_title),
-        body = stringResource(R.string.ob_dose_body),
-        primary = stringResource(R.string.ob_finish),
-        onPrimary = onDone,
-    ) {
-        ProfileFields(profile) { changed ->
-            container.settings.profile = changed
-            profile = changed
-        }
-        Card {
-            Text(stringResource(R.string.dose_ratio_label), fontSize = 16.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-            Text(
-                if (dose.carbRatio.isEmpty() && dose.correctionFactor == null) stringResource(R.string.ob_dose_unknown)
-                else MealSlot.entries.joinToString(" · ") { s -> dose.carbRatio[s]?.let { "1 : " + formatAmountLocalized(it) } ?: "—" } +
-                    (dose.correctionFactor?.let { "  ·  " + formatAmountLocalized(it) + " " + mgdl } ?: ""),
-                fontSize = 13.5.sp,
-                color = CaptionMuted,
-            )
-            SuggestRatios(dose, profile, null, ::saveDose)
-        }
-        Card {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.dose_switch), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                    Text(stringResource(R.string.dose_warning), fontSize = 12.5.sp, color = PillHighText)
-                }
-                Switch(
-                    checked = dose.enabled,
-                    onCheckedChange = { on ->
-                        // A child's suggestions only go on behind a parent lock.
-                        if (on && (profile.ageYears ?: 99) < 18 && container.settings.parentPin == null) settingPin = true else saveDose(dose.copy(enabled = on))
-                    },
-                    colors = SwitchDefaults.colors(checkedTrackColor = Sage),
-                )
-            }
-            if ((profile.ageYears ?: 99) < 18) Text(stringResource(R.string.dose_off_child), fontSize = 12.5.sp, color = CaptionMuted)
-        }
-    }
-    if (settingPin) PinDialog(setting = true, stored = null, onDone = { pin ->
-        container.settings.parentPin = ParentLock.encode(pin)
-        saveDose(dose.copy(enabled = true))
-        settingPin = false
-    }, onDismiss = { settingPin = false })
-}
-
-@Composable
-private fun ExtrasStep(container: AppContainer, progress: Pair<Int, Int>, onBack: () -> Unit, onDone: () -> Unit) {
-    var action by remember { mutableStateOf(container.settings.insulinAction) }
-    Page(
-        progress = progress,
-        onBack = onBack,
-        trailing = stringResource(R.string.ob_skip) to onDone,
-        title = stringResource(R.string.ob_extras_title),
-        body = stringResource(R.string.ob_extras_body),
-        primary = stringResource(R.string.ob_finish),
-        onPrimary = onDone,
-    ) {
-        Card {
-            Text(stringResource(R.string.ob_insulin_title), fontSize = 16.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-            Text(stringResource(R.string.ob_insulin_body), fontSize = 13.5.sp, color = CaptionMuted)
-            listOf(
-                InsulinAction(peakMinutes = 75, durationMinutes = 300) to (R.string.ob_insulin_rapid to R.string.ob_insulin_rapid_body),
-                InsulinAction(peakMinutes = 55, durationMinutes = 300) to (R.string.ob_insulin_ultra to R.string.ob_insulin_ultra_body),
-            ).forEach { (choice, labels) ->
-                val on = action.peakMinutes == choice.peakMinutes && action.durationMinutes == choice.durationMinutes
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 56.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (on) Sage.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface)
-                        .border(if (on) 2.dp else 1.dp, if (on) Sage else outline(), RoundedCornerShape(12.dp))
-                        .clickable {
-                            container.settings.insulinAction = choice
-                            action = container.settings.insulinAction
-                        }
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Box(Modifier.size(20.dp).clip(CircleShape).border(2.dp, if (on) Sage else CaptionMuted.copy(alpha = 0.5f), CircleShape), contentAlignment = Alignment.Center) {
-                        if (on) Box(Modifier.size(9.dp).clip(CircleShape).background(Sage))
-                    }
-                    Column {
-                        Text(stringResource(labels.first), fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                        Text(stringResource(labels.second), fontSize = 12.5.sp, color = CaptionMuted)
-                    }
-                }
-            }
-        }
-        Text(stringResource(R.string.ob_food_title), fontSize = 16.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 4.dp))
-        Text(stringResource(R.string.ob_food_body), fontSize = 13.5.sp, lineHeight = 19.sp, color = CaptionMuted)
-        HealthConnectSection(container.healthConnect)
-    }
-}
-
-@Composable
 private fun ReadyStep(container: AppContainer, onDone: () -> Unit) {
     val life = remember { container.sensorLife() }
-    val contacts = container.settings.emergency.contacts
     Column(Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 28.dp)) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
             if (life is SensorLife.WarmingUp) {
@@ -728,10 +557,8 @@ private fun ReadyStep(container: AppContainer, onDone: () -> Unit) {
             Card {
                 Done(life != null && life !is SensorLife.Ended, stringResource(R.string.ob_done_sensor))
                 Done(com.sukoon.app.ui.help.startDone()[1], stringResource(R.string.ob_done_alarms)) // the same check as Now's card
-                Done(contacts.isNotEmpty(), if (contacts.isNotEmpty()) stringResource(R.string.ob_done_contact, contacts.first().name) else stringResource(R.string.ob_done_no_contact))
-                val session by container.sharing.supabase.session.collectAsState()
-                Done(session != null, stringResource(R.string.ob_done_sharing))
             }
+            Text(stringResource(R.string.ob_ready_later), fontSize = 14.sp, lineHeight = 20.sp, color = CaptionMuted, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 14.dp))
         }
         PrimaryButton(stringResource(R.string.ob_go_home), onClick = onDone)
     }
