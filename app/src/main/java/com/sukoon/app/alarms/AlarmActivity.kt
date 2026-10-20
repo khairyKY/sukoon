@@ -96,6 +96,9 @@ class AlarmActivity : ComponentActivity() {
         setContent {
             val phase by container.alarms.escalation.collectAsState()
             val names = container.emergency.contacts.joinToString { it.name }
+            // Followers who said "I'm on it": shown, never a reason to stop the countdown or the texts.
+            val forMe by container.sharing.onItForMe.collectAsState()
+            val myNote = com.sukoon.app.ui.home.onItLine(forMe)
             when (val p = phase) {
                 is EscalationPhase.Countdown -> {
                     val seconds by produceState(secondsUntil(p.endsAt), p) {
@@ -109,6 +112,7 @@ class AlarmActivity : ComponentActivity() {
                         big = String.format(Locale.getDefault(), "%d", seconds),
                         body = stringResource(R.string.emergency_screen_countdown, names),
                         action = stringResource(R.string.emergency_im_ok),
+                        note = myNote,
                     ) { answer { container.alarms.imOk() } }
                 }
                 is EscalationPhase.Sent -> Takeover(
@@ -116,6 +120,7 @@ class AlarmActivity : ComponentActivity() {
                     big = TIME.format(p.at),
                     body = stringResource(R.string.emergency_screen_sent, p.to.joinToString().ifBlank { names }),
                     action = stringResource(R.string.emergency_screen_tell_ok),
+                    note = myNote,
                 ) { answer { container.alarms.imOk() } }
                 EscalationPhase.Idle -> when (val s = shown) {
                     // Opened for a countdown that has already been answered: nothing left to show.
@@ -127,6 +132,11 @@ class AlarmActivity : ComponentActivity() {
                         LaunchedEffect(on) { if (!on) finish() } // over (back in range, signal back): nothing to answer
                         val settings = container.settings.alarmSettings
                         val treatable = s.person == null && (s.type == AlarmType.URGENT_LOW || s.type == AlarmType.LOW)
+                        // About someone followed through Sukoon: "I'm on it" tells them and their other followers.
+                        val onIt = s.person != null && !s.test && com.sukoon.app.sharing.Sharing.canSayOnIt(s.person)
+                        val people by container.followerWatch.people.collectAsState()
+                        val note = if (s.person == null) myNote.takeIf { !s.test }
+                        else com.sukoon.app.ui.home.onItLine(people.firstOrNull { it.id == s.person }?.onIt.orEmpty(), container.sharing.supabase.session.value?.userId)
                         fun snooze(minutes: Int, treated: Boolean) = answer {
                             when {
                                 s.test -> container.alarms.endTest(s.type)
@@ -146,7 +156,12 @@ class AlarmActivity : ComponentActivity() {
                             color = s.type.screenColor,
                             snoozes = s.type.snoozeChoices,
                             onSnooze = { snooze(it, treated = false) },
-                            secondary = if (treatable && !s.test) stringResource(R.string.alarm_action_log_food) else null,
+                            secondary = when {
+                                treatable && !s.test -> stringResource(R.string.alarm_action_log_food)
+                                onIt -> stringResource(R.string.on_it_action)
+                                else -> null
+                            },
+                            note = note,
                             // Your own alarms, not urgent low, and not behind the parent lock. A test shows the
                             // switch as it will be, but pausing from it leaves your real alarms on.
                             pauseAll = if (s.person == null && s.type != AlarmType.URGENT_LOW && !lockedAlarms(container)) {
@@ -155,8 +170,11 @@ class AlarmActivity : ComponentActivity() {
                             } else null,
                             urgent = s.type == AlarmType.URGENT_LOW,
                             onSecondary = {
-                                startActivity(com.sukoon.app.MainActivity.logTreatment(this@AlarmActivity))
-                                finish()
+                                if (onIt) answer { sayOnIt(this@AlarmActivity, s.person!!, s.type) }
+                                else {
+                                    startActivity(com.sukoon.app.MainActivity.logTreatment(this@AlarmActivity))
+                                    finish()
+                                }
                             },
                         ) { snooze(s.type.defaultSnooze(settings), treated = treatable) }
                     }
@@ -264,6 +282,8 @@ private fun Takeover(
     pauseAll: ((Int) -> Unit)? = null,
     /** Urgent low: only this alarm can be snoozed, and the screen says why. */
     urgent: Boolean = false,
+    /** "Mum is on it · 2 min ago", under the message. */
+    note: String? = null,
     onAction: () -> Unit,
 ) {
     // Motion spec: scales in from 93 % over 560 ms; the reading breathes with the live-dot rhythm.
@@ -294,6 +314,12 @@ private fun Takeover(
         Text(title, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
         Text(big, color = Color.White, fontSize = 120.sp, fontFamily = HeadlineSerifFontFamily, modifier = Modifier.graphicsLayer { alpha = if (reduced) 1f else breath })
         Text(body, color = Color.White, fontSize = 17.sp, textAlign = TextAlign.Center)
+        note?.let {
+            Text(
+                it, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 14.dp).clip(RoundedCornerShape(14.dp)).background(Color.White.copy(alpha = 0.16f)).padding(horizontal = 14.dp, vertical = 8.dp),
+            )
+        }
         Spacer(Modifier.height(if (snoozes.isEmpty()) 48.dp else 36.dp))
         Box(
             Modifier

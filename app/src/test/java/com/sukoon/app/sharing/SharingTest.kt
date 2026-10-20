@@ -48,4 +48,15 @@ class SharingTest {
         org.junit.Assert.assertEquals(setOf(urgent), Sharing.alarmsFrom(emptyList()))
         org.junit.Assert.assertEquals(com.sukoon.app.alarms.AlarmType.entries.toSet(), Sharing.ALL_ALARMS)
     }
+
+    @Test
+    fun `on it shows the newest per follower in the last half hour, never my own`() {
+        val now = Instant.parse("2026-10-21T08:00:00Z")
+        val mum = OnIt("mum", "Mum", "LOW", now.minusSeconds(60))
+        val mumEarlier = OnIt("mum", "Mum", "URGENT_LOW", now.minusSeconds(600))
+        val dad = OnIt("dad", "Dad", "LOW", now.minusSeconds(120))
+        val old = OnIt("gran", "Gran", "LOW", now.minus(java.time.Duration.ofMinutes(31)))
+        assertEquals(listOf(mum, dad), OnIt.recent(listOf(dad, mumEarlier, old, mum), now))
+        assertEquals(listOf(dad), OnIt.recent(listOf(dad, mum), now, me = "mum"))
+    }
 }

@@ -79,6 +79,7 @@ button { font: 600 16px var(--sans); cursor: pointer; }
 .people button[aria-pressed="true"] { background: var(--deep); color: #fff; border-color: transparent; }
 .foot { margin-top: 24px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; }
 .hidden { display: none !important; }
+.onit { border-radius: 14px; padding: 10px 14px; margin-top: 14px; background: var(--mist); color: var(--deep); font-weight: 600; font-size: 14px; }
 #install ol { margin: 8px 0 4px; padding-inline-start: 20px; line-height: 1.6; }
 #install strong { font-size: 15px; }
 .mark { width: 56px; height: 56px; }
@@ -141,6 +142,9 @@ button { font: 600 16px var(--sans); cursor: pointer; }
     <div class="chart" id="chart"></div>
     <div class="caption" data-t="chartCaption"></div>
     <div class="words"><h2 id="title"></h2><p id="detail"></p></div>
+    <div class="onit hidden" id="onIt"></div>
+    <button class="primary hidden" id="onItGo" type="button" data-t="onItGo"></button>
+    <p class="muted small hidden" id="onItSaid" role="status"></p>
     <div class="card small hidden" id="soundCard">
       <div class="row"><span data-t="soundBody"></span><button class="link" id="soundOn" type="button" data-t="soundOn"></button></div>
     </div>
@@ -168,6 +172,8 @@ const T = {
     chartCaption: 'Last 3 hours · the band is the 70–180 target', addPerson: 'Follow someone else',
     soundBody: 'Sound an alarm here when they go low.', soundOn: 'Turn on',
     footNote: "Alarms sound only while this page is open. Keep their Sukoon's emergency contacts set for when it isn't.",
+    onItGo: "I'm on it", onItOne: (n, a) => `${n} is on it · ${a}`, onItMany: (n, a) => `${n} are on it · ${a}`,
+    onItSent: (n) => `Sent to ${n}`, onItFailed: "Couldn't send it. Check your internet, or call.",
     inRange: 'In range', high: 'High', low: 'Low', veryLow: 'Very low', noSignal: 'No readings',
     mgdl: 'mg/dL', now: 'just now', minAgo: n => `${n} min ago`,
     steady: n => `${n} is steady.`, isHigh: n => `${n} is high.`, isLow: n => `${n} is low.`, isVeryLow: n => `${n} is very low.`,
@@ -192,6 +198,8 @@ const T = {
     chartCaption: 'آخر ٣ ساعات · الشريط هو المعدل ٧٠–١٨٠', addPerson: 'تابع حد تاني',
     soundBody: 'يرن هنا لما السكر يوطى.', soundOn: 'شغّل',
     footNote: 'المنبّه بيرن بس والصفحة مفتوحة. خلّي جهات الطوارئ في سكون بتاعهم متظبطة للباقي.',
+    onItGo: 'هتصرّف', onItOne: (n, a) => `${n}: «هتصرّف» · ${a}`, onItMany: (n, a) => `${n}: «هتصرّف» · ${a}`,
+    onItSent: (n) => `اتبعت لـ${n}`, onItFailed: 'مبعتش. شوف النت عندك، أو اتصل.',
     inRange: 'في المعدل', high: 'عالي', low: 'واطي', veryLow: 'واطي جدًا', noSignal: 'مفيش قرايات',
     mgdl: 'مجم/دل', now: 'دلوقتي', minAgo: n => `من ${n} دقيقة`,
     steady: n => `سكر ${n} مستقر.`, isHigh: n => `سكر ${n} عالي.`, isLow: n => `سكر ${n} واطي.`, isVeryLow: n => `سكر ${n} واطي جدًا.`,
@@ -345,6 +353,13 @@ async function loadReadings(id) {
   return last.map((r) => ({ at: Date.parse(r.ts), v: r.mg_dl, trend: r.trend }));
 }
 
+// "I'm on it" (responses): the last half hour's, about the person on screen. Before the migration: none.
+async function loadOnIt(id) {
+  const since = new Date(Date.now() - 30 * 60000).toISOString();
+  try { return await call(`/rest/v1/responses?owner=eq.${id}&at=gt.${encodeURIComponent(since)}&order=at.desc&select=follower,name,kind,at`); } catch (e) { return []; }
+}
+let onItSent = null; // the person this page said "I'm on it" about, and whether it went: {id, ok}
+
 async function start() {
   if (DEMO) { people = [{ id: 'demo', name: lang === 'ar' ? 'ماما' : 'Mum' }]; current = { person: people[0], readings: demoReadings() }; show('home'); render(); return; }
   const pending = localStorage.getItem('pendingCode');
@@ -375,7 +390,7 @@ async function refresh() {
   if (DEMO || !session || !people.length) return;
   const person = people.find((p) => p.id === chosen) || people[0];
   try {
-    current = { person, readings: await loadReadings(person.id) };
+    current = { person, readings: await loadReadings(person.id), onIt: await loadOnIt(person.id) };
     $('banner').classList.remove('on');
   } catch (e) { if (e.status === 401) return signOut(); }
   render();
@@ -434,6 +449,29 @@ function render() {
   else { $('title').textContent = t('steady')(name); $('detail').textContent = ''; }
 
   $('chart').innerHTML = chart(readings);
+
+  // Who else is on it (newest per follower, not me), and while they're low the button to say so.
+  const seen = new Set();
+  const others = (current.onIt || []).filter((r) => r.follower !== (session && session.user) && !seen.has(r.follower) && seen.add(r.follower));
+  if (others.length) {
+    const m = Math.max(0, Math.round((Date.now() - Date.parse(others[0].at)) / 60000));
+    $('onIt').textContent = t(others.length > 1 ? 'onItMany' : 'onItOne')(others.map((r) => r.name || '…').join(lang === 'ar' ? '، ' : ', '), m < 1 ? t('now') : t('minAgo')(m));
+  }
+  $('onIt').classList.toggle('hidden', !others.length);
+  const lowNow = (kind === 'urgent' || kind === 'low') && !DEMO && !!session;
+  const said = onItSent && onItSent.id === person.id ? onItSent : null;
+  $('onItGo').classList.toggle('hidden', !lowNow || (said && said.ok));
+  $('onItGo').onclick = async () => {
+    $('onItGo').disabled = true;
+    try {
+      await call('/rest/v1/responses', { method: 'POST', body: { owner: person.id, kind: kind === 'urgent' ? 'URGENT_LOW' : 'LOW' } });
+      onItSent = { id: person.id, ok: true };
+    } catch (e) { onItSent = { id: person.id, ok: false }; }
+    $('onItGo').disabled = false;
+    render();
+  };
+  $('onItSaid').classList.toggle('hidden', !said || !lowNow);
+  if (said) $('onItSaid').textContent = said.ok ? t('onItSent')(name) : t('onItFailed');
   // Urgent low always sounds; low and heading low only if they share them with followers.
   const shares = (type) => !person.alarms || person.alarms.includes(type);
   alarm(kind === 'urgent' || (kind === 'low' && shares('LOW')) || (!!headingIn && shares('GOING_LOW')), kind);

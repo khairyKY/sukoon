@@ -2461,4 +2461,20 @@
     <string name="eat_insulin">مع %1$s وحدة إنسولين سريع</string>
     <string name="eat_also">هيتحفظ مع الأكلة</string>
     <string name="eat_log_meal">سجّل الأكلة · %1$s جم</string>
+    <string name="on_it_action">هتصرّف</string>
+    <string name="on_it_one">%1$s: «هتصرّف» · %2$s</string>
+    <string name="on_it_many">%1$s: «هتصرّف» · %2$s</string>
+    <string name="on_it_sent">اتبعت لـ%1$s</string>
+    <string name="on_it_failed">مبعتش. شوف النت عندك، أو اتصل.</string>
+    <string name="morning_channel">ملخص الصبح</string>
+    <string name="morning_title">امبارح: %1$d%% في المعدل</string>
+    <string name="morning_lows">الهبوط: %1$d مرة، أوطى قراية %2$d</string>
+    <string name="morning_no_lows">مفيش هبوط</string>
+    <string name="morning_highs">فوق ١٨٠: %1$s</string>
+    <string name="morning_no_highs">مفيش ارتفاع</string>
+    <string name="morning_insight">حاجة تستاهل تبص عليها: %1$s</string>
+    <string name="morning_setting">ملخص الصبح</string>
+    <string name="morning_setting_on">كل يوم الصبح الساعة %1$s: امبارح كان كام في المعدل، الهبوط، الارتفاع، وحاجة واحدة تستاهل تبص عليها.</string>
+    <string name="morning_setting_off">امبارح في إشعار هادي واحد كل صبح.</string>
+    <string name="morning_pick">الملخص الساعة</string>
 </resources>

@@ -2326,4 +2326,20 @@
     <string name="eat_insulin">With %1$s u of rapid insulin</string>
     <string name="eat_also">Saved with the meal</string>
     <string name="eat_log_meal">Log meal · %1$s g</string>
+    <string name="on_it_action">I\'m on it</string>
+    <string name="on_it_one">%1$s is on it · %2$s</string>
+    <string name="on_it_many">%1$s are on it · %2$s</string>
+    <string name="on_it_sent">Sent to %1$s</string>
+    <string name="on_it_failed">Couldn\'t send it. Check your internet, or call.</string>
+    <string name="morning_channel">Morning summary</string>
+    <string name="morning_title">Yesterday: %1$d%% in range</string>
+    <string name="morning_lows">Lows: %1$d, lowest %2$d</string>
+    <string name="morning_no_lows">No lows</string>
+    <string name="morning_highs">Above 180: %1$s</string>
+    <string name="morning_no_highs">No highs</string>
+    <string name="morning_insight">Worth a look: %1$s</string>
+    <string name="morning_setting">Morning summary</string>
+    <string name="morning_setting_on">Every morning at %1$s: yesterday\'s time in range, lows, highs and one thing worth a look.</string>
+    <string name="morning_setting_off">Yesterday in one quiet notification each morning.</string>
+    <string name="morning_pick">Summary at</string>
 </resources>

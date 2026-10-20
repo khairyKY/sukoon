@@ -145,6 +145,10 @@ class SettingsPrefs(context: Context) {
         get() = prefs.getBoolean("meal_reminder", true)
         set(value) = prefs.edit().putBoolean("meal_reminder", value).apply()
 
+    var morningSummary: com.sukoon.app.reminders.MorningSummarySettings
+        get() = com.sukoon.app.reminders.MorningSummarySettings(prefs.getBoolean(KEY_MORNING_SUMMARY, false), prefs.getInt(KEY_MORNING_MINUTE, 8 * 60).coerceIn(0, 1439))
+        set(value) = prefs.edit().putBoolean(KEY_MORNING_SUMMARY, value.enabled).putInt(KEY_MORNING_MINUTE, value.minuteOfDay).apply()
+
     var basalReminder: BasalReminderSettings
         get() = BasalReminderSettings(prefs.getBoolean(KEY_BASAL_REMINDER, false), prefs.getInt(KEY_BASAL_MINUTE, 22 * 60).coerceIn(0, 1439))
         set(value) = prefs.edit().putBoolean(KEY_BASAL_REMINDER, value.enabled).putInt(KEY_BASAL_MINUTE, value.minuteOfDay).apply()
@@ -336,6 +340,8 @@ class SettingsPrefs(context: Context) {
         private const val KEY_DOSE_STEP = "dose_step"
         private const val KEY_BASAL_REMINDER = "basal_reminder_on"
         private const val KEY_BASAL_MINUTE = "basal_reminder_minute"
+        private const val KEY_MORNING_SUMMARY = "morning_summary_on"
+        private const val KEY_MORNING_MINUTE = "morning_summary_minute"
         private const val KEY_START_DISMISSED = "getting_started_dismissed"
         private const val KEY_QUIET_FROM = "alarm_quiet_highs_from"
         private const val KEY_QUIET_TO = "alarm_quiet_highs_to"

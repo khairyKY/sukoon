@@ -308,60 +308,64 @@ private fun actionCaption(action: InsightAction): String = stringResource(
 
 /** A finding in words: one sentence, and what it's from. */
 @Composable
-private fun words(f: Finding): Pair<String, String> {
+private fun words(f: Finding): Pair<String, String> =
+    findingWords(androidx.compose.ui.platform.LocalContext.current, f, (f.insight as? Insight.Rotation)?.let { siteName(it.site) })
+
+/** The same words outside a screen (the morning summary); [site] names a Rotation's site, else it has none. */
+internal fun findingWords(context: android.content.Context, f: Finding, site: String? = null): Pair<String, String> {
     val i = f.insight
     return when (i) {
         is LowsStory -> {
             val cause = when (i.cause) {
-                LowCause.WORKOUTS -> stringResource(R.string.in2_cause_workouts)
-                LowCause.STACKING -> stringResource(R.string.in2_cause_stacking)
+                LowCause.WORKOUTS -> context.getString(R.string.in2_cause_workouts)
+                LowCause.STACKING -> context.getString(R.string.in2_cause_stacking)
                 null -> null
             }
             val r = i.recurring
             val sentence = when {
-                r != null -> stringResource(R.string.in2_lows_cluster, clock(r.fromHour), clock(r.toHour))
-                i.nightsWithLows >= 2 -> stringResource(R.string.in2_lows_nights, i.nightsWithLows, i.nights)
-                i.totalLows > 0 -> stringResource(R.string.in2_lows_count, i.totalLows)
-                else -> stringResource(R.string.in2_lows_often)
+                r != null -> context.getString(R.string.in2_lows_cluster, clock(r.fromHour), clock(r.toHour))
+                i.nightsWithLows >= 2 -> context.getString(R.string.in2_lows_nights, i.nightsWithLows, i.nights)
+                i.totalLows > 0 -> context.getString(R.string.in2_lows_count, i.totalLows)
+                else -> context.getString(R.string.in2_lows_often)
             }
             val base = when {
-                r != null -> stringResource(R.string.in2_ev_days, r.days)
-                i.totalLows > 0 -> stringResource(R.string.in2_ev_lows, i.totalLows)
-                else -> stringResource(R.string.in2_ev_goal)
+                r != null -> context.getString(R.string.in2_ev_days, r.days)
+                i.totalLows > 0 -> context.getString(R.string.in2_ev_lows, i.totalLows)
+                else -> context.getString(R.string.in2_ev_goal)
             }
             sentence to listOfNotNull(base, cause).joinToString(" · ")
         }
         is Insight.MealOutcomes -> when {
-            i.lowWithin4h >= 2 -> stringResource(R.string.in2_meal_low, i.lowWithin4h, i.meals, slot(i.slot).lowercase())
-            f.priority >= 60 -> stringResource(R.string.in2_meal_hard, slot(i.slot), i.averagePeak)
-            else -> stringResource(R.string.in2_meal_rise, slot(i.slot), i.averagePeak)
-        } to stringResource(R.string.in2_ev_meals, i.meals)
-        is Insight.RecurringHighs -> stringResource(R.string.in2_highs, clock(i.fromHour), clock(i.toHour)) to stringResource(R.string.in2_ev_percent_days, i.percentOfDays)
-        is Insight.Rebounds -> stringResource(R.string.in2_rebound) to stringResource(R.string.in2_ev_of_lows, i.rebounds, i.lows)
-        is Insight.BasalDrift -> stringResource(
+            i.lowWithin4h >= 2 -> context.getString(R.string.in2_meal_low, i.lowWithin4h, i.meals, slotName(context, i.slot).lowercase())
+            f.priority >= 60 -> context.getString(R.string.in2_meal_hard, slotName(context, i.slot), i.averagePeak)
+            else -> context.getString(R.string.in2_meal_rise, slotName(context, i.slot), i.averagePeak)
+        } to context.getString(R.string.in2_ev_meals, i.meals)
+        is Insight.RecurringHighs -> context.getString(R.string.in2_highs, clock(i.fromHour), clock(i.toHour)) to context.getString(R.string.in2_ev_percent_days, i.percentOfDays)
+        is Insight.Rebounds -> context.getString(R.string.in2_rebound) to context.getString(R.string.in2_ev_of_lows, i.rebounds, i.lows)
+        is Insight.BasalDrift -> context.getString(
             when {
                 i.level == Level.GOOD -> R.string.in2_basal_ok
                 i.medianDrift > 0 -> R.string.in2_basal_up
                 else -> R.string.in2_basal_down
             },
             kotlin.math.abs(i.medianDrift),
-        ) to stringResource(R.string.in2_ev_basal, i.drifting, i.nights)
+        ) to context.getString(R.string.in2_ev_basal, i.drifting, i.nights)
         is Insight.BasalHabits -> when {
-            i.meanAfterMissed != null && i.days - i.logged >= 2 -> stringResource(R.string.in2_basal_missed, i.meanAfterMissed, i.meanUsual)
-            i.spreadMinutes > 180 -> stringResource(R.string.in2_basal_spread, i.spreadMinutes / 60)
-            else -> stringResource(R.string.in2_basal_steady)
-        } to stringResource(R.string.in2_ev_basal_days, i.logged, i.days)
-        is Insight.ActivityEffects -> i.kinds.first().let { k -> stringResource(R.string.in2_activity, k.kind, signed(k.change)) to stringResource(R.string.in2_ev_activity, k.count) }
-        is Insight.LowTreatments -> stringResource(R.string.in2_treatments, i.medianGrams) to stringResource(R.string.in2_ev_of_lows, i.rebounds, i.lows)
-        is Insight.MeterAgreement -> stringResource(if (i.level == Level.GOOD) R.string.in2_meter_ok else R.string.in2_meter_off) to stringResource(R.string.in2_ev_checks, i.agreeing, i.checks)
-        is Insight.DawnRise -> stringResource(R.string.in2_dawn, i.medianRise) to stringResource(R.string.in2_ev_mornings, i.nightsWithRise, i.nights)
-        is Insight.Variability -> stringResource(if (i.level == Level.GOOD) R.string.in2_cv_ok else R.string.in2_cv_high) to stringResource(R.string.in2_ev_cv, i.cvPercent)
-        is Insight.Rotation -> stringResource(R.string.in2_rotation, siteName(i.site), i.count, i.total) to stringResource(R.string.in2_ev_rotation)
-        is Insight.RichMeals -> stringResource(R.string.in2_rich) to stringResource(R.string.in2_ev_rich, signed(i.richAt4h), signed(i.leanAt4h))
-        is Insight.PreBolus -> stringResource(R.string.in2_prebolus, i.earlyRise, i.lateRise) to stringResource(R.string.in2_ev_prebolus, i.earlyMeals, i.lateMeals)
-        is Insight.CarbDays -> stringResource(R.string.in2_carbdays, i.higherTir, i.lowerTir) to stringResource(R.string.in2_ev_carbdays, i.splitGrams, i.days)
-        is Insight.CarbResponse -> stringResource(R.string.in2_carb_response, slot(i.slots.maxBy { it.per10g }.slot)) to stringResource(R.string.in2_ev_peak, i.peakMinutes)
-        is Insight.Nights -> stringResource(if (i.withLows >= 2) R.string.in2_lows_nights else R.string.in2_nights_ok, i.withLows, i.nights) to stringResource(R.string.in2_ev_nights, i.inRange, i.nights)
+            i.meanAfterMissed != null && i.days - i.logged >= 2 -> context.getString(R.string.in2_basal_missed, i.meanAfterMissed, i.meanUsual)
+            i.spreadMinutes > 180 -> context.getString(R.string.in2_basal_spread, i.spreadMinutes / 60)
+            else -> context.getString(R.string.in2_basal_steady)
+        } to context.getString(R.string.in2_ev_basal_days, i.logged, i.days)
+        is Insight.ActivityEffects -> i.kinds.first().let { k -> context.getString(R.string.in2_activity, k.kind, signed(k.change)) to context.getString(R.string.in2_ev_activity, k.count) }
+        is Insight.LowTreatments -> context.getString(R.string.in2_treatments, i.medianGrams) to context.getString(R.string.in2_ev_of_lows, i.rebounds, i.lows)
+        is Insight.MeterAgreement -> context.getString(if (i.level == Level.GOOD) R.string.in2_meter_ok else R.string.in2_meter_off) to context.getString(R.string.in2_ev_checks, i.agreeing, i.checks)
+        is Insight.DawnRise -> context.getString(R.string.in2_dawn, i.medianRise) to context.getString(R.string.in2_ev_mornings, i.nightsWithRise, i.nights)
+        is Insight.Variability -> context.getString(if (i.level == Level.GOOD) R.string.in2_cv_ok else R.string.in2_cv_high) to context.getString(R.string.in2_ev_cv, i.cvPercent)
+        is Insight.Rotation -> context.getString(R.string.in2_rotation, site ?: return "" to "", i.count, i.total) to context.getString(R.string.in2_ev_rotation)
+        is Insight.RichMeals -> context.getString(R.string.in2_rich) to context.getString(R.string.in2_ev_rich, signed(i.richAt4h), signed(i.leanAt4h))
+        is Insight.PreBolus -> context.getString(R.string.in2_prebolus, i.earlyRise, i.lateRise) to context.getString(R.string.in2_ev_prebolus, i.earlyMeals, i.lateMeals)
+        is Insight.CarbDays -> context.getString(R.string.in2_carbdays, i.higherTir, i.lowerTir) to context.getString(R.string.in2_ev_carbdays, i.splitGrams, i.days)
+        is Insight.CarbResponse -> context.getString(R.string.in2_carb_response, slotName(context, i.slots.maxBy { it.per10g }.slot)) to context.getString(R.string.in2_ev_peak, i.peakMinutes)
+        is Insight.Nights -> context.getString(if (i.withLows >= 2) R.string.in2_lows_nights else R.string.in2_nights_ok, i.withLows, i.nights) to context.getString(R.string.in2_ev_nights, i.inRange, i.nights)
         else -> "" to ""
     }
 }
@@ -615,7 +619,9 @@ private fun Compare(label: String, value: String, delta: Int, higherIsBetter: Bo
 private fun number(v: Double) = String.format(Locale.getDefault(), "%.1f", v)
 
 @Composable
-internal fun slot(slot: MealSlot) = stringResource(
+internal fun slot(slot: MealSlot) = slotName(androidx.compose.ui.platform.LocalContext.current, slot)
+
+internal fun slotName(context: android.content.Context, slot: MealSlot): String = context.getString(
     when (slot) {
         MealSlot.BREAKFAST -> R.string.meal_breakfast
         MealSlot.LUNCH -> R.string.meal_lunch
