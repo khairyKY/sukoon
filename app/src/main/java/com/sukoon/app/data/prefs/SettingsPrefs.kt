@@ -135,6 +135,11 @@ class SettingsPrefs(context: Context) {
         set(value) = prefs.edit().putInt(KEY_INSULIN_PEAK, value.peakMinutes).putInt(KEY_INSULIN_DURATION, value.durationMinutes).apply()
 
     /** You → Insulin: the long-acting reminder. */
+    /** After rapid insulin: "did you eat?" (30 min, no food) and how a correction went (2 h). On unless turned off. */
+    var doseCheckIns: Boolean
+        get() = prefs.getBoolean("dose_check_ins", true)
+        set(value) = prefs.edit().putBoolean("dose_check_ins", value).apply()
+
     /** "You ate but logged no insulin": a reminder 20 minutes after such a meal. On unless turned off. */
     var mealReminder: Boolean
         get() = prefs.getBoolean("meal_reminder", true)

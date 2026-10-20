@@ -96,8 +96,9 @@ class AppContainer(private val context: Context) {
         // A meal with no insulin: its reminder is lined up as it lands (here, by voice or from MyFitnessPal).
         appScope.launch {
             logbookRepository.eventsSince(System.currentTimeMillis() - java.time.Duration.ofHours(3).toMillis()).collect { events ->
-                if (!settings.mealReminder) return@collect
-                events.filter { it.type == com.sukoon.app.data.db.LogEventType.CARB.name }.forEach { com.sukoon.app.reminders.MealReminder.schedule(context, it) }
+                if (settings.mealReminder) events.filter { it.type == com.sukoon.app.data.db.LogEventType.CARB.name }.forEach { com.sukoon.app.reminders.MealReminder.schedule(context, it) }
+                // Rapid doses: "did you eat?" at 30 min, and how a correction went at 2 h.
+                if (settings.doseCheckIns) events.filter { it.type == com.sukoon.app.data.db.LogEventType.INSULIN.name }.forEach { com.sukoon.app.reminders.DoseCheck.schedule(context, it) }
             }
         }
     }

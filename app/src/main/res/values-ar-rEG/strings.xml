@@ -2431,4 +2431,18 @@
     <string name="meal_reminder_log">سجّل الإنسولين</string>
     <string name="meal_reminder_setting">فكّرني لو الأكلة مالهاش إنسولين</string>
     <string name="meal_reminder_setting_body">بعد 20 دقيقة من أكلة 10 جم أو أكتر من غير إنسولين سريع متسجّل. مش لعلاج الهبوط.</string>
+    <string name="dose_check_channel">بعد الإنسولين</string>
+    <string name="dose_check_food_title">كلت؟</string>
+    <string name="dose_check_food_body">الـ%1$s وحدة شغالين ومفيش أكل متسجّل. كُل أو سجّل اللي كلته علشان ماتوطّيش.</string>
+    <string name="dose_check_log_meal">سجّل الأكلة</string>
+    <string name="dose_check_not_eating">مش هاكل</string>
+    <string name="dose_check_down_title">بينزل</string>
+    <string name="dose_check_down_body">%1$s دلوقتي، من %2$s لما خدت التصحيح.</string>
+    <string name="dose_check_high_title">لسه عالي بعد التصحيح</string>
+    <string name="dose_check_high_body">%1$s دلوقتي. اعمل تحليل كيتونات لو معاك شرايط، وبُص على مكان الحقنة. «دلوقتي» هتقولك لو محتاج تاني.</string>
+    <string name="dose_check_drop_title">بينزل بسرعة بعد التصحيح</string>
+    <string name="dose_check_drop_body">%1$s ونازل. مراقبة الهبوط شغالة: جهّز حاجة مسكّرة.</string>
+    <string name="dose_check_setting">اطمن عليا بعد الإنسولين</string>
+    <string name="dose_check_setting_body">بعد 30 دقيقة من جرعة من غير أكل متسجّل («كلت؟»)، وبعد ساعتين من التصحيح (عمل إيه).</string>
+    <string name="home_correction_taken">خدت إنسولين خلاص: سجّله الأول</string>
 </resources>

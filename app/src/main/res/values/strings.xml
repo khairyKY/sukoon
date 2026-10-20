@@ -2296,4 +2296,18 @@
     <string name="meal_reminder_log">Log insulin</string>
     <string name="meal_reminder_setting">Remind me when a meal has no insulin</string>
     <string name="meal_reminder_setting_body">20 minutes after a meal of 10 g or more with no rapid insulin logged. Not for low treatments.</string>
+    <string name="dose_check_channel">After insulin</string>
+    <string name="dose_check_food_title">Did you eat?</string>
+    <string name="dose_check_food_body">Your %1$s u are working and no food is logged. Eat, or log what you ate, so you don\'t go low.</string>
+    <string name="dose_check_log_meal">Log meal</string>
+    <string name="dose_check_not_eating">I\'m not eating</string>
+    <string name="dose_check_down_title">Coming down</string>
+    <string name="dose_check_down_body">%1$s now, from %2$s when you took your correction.</string>
+    <string name="dose_check_high_title">Still high after your correction</string>
+    <string name="dose_check_high_body">%1$s now. Check ketones if you have strips, and the injection site. Now shows whether more is needed.</string>
+    <string name="dose_check_drop_title">Dropping after your correction</string>
+    <string name="dose_check_drop_body">%1$s and falling. The low watch is on: have fast carbs ready.</string>
+    <string name="dose_check_setting">Check in after insulin</string>
+    <string name="dose_check_setting_body">30 min after a dose with no food logged ("Did you eat?"), and 2 h after a correction (how it went).</string>
+    <string name="home_correction_taken">I already took insulin: log it first</string>
 </resources>

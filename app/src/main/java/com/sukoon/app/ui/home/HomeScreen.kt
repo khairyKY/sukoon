@@ -951,6 +951,13 @@ private fun CorrectionCard(c: DoseAdvice.Suggestion, onLog: () -> Unit) {
             )
         }
         Text(
+            stringResource(R.string.home_correction_taken),
+            modifier = Modifier.clip(RoundedCornerShape(50)).clickable(onClick = onLog).padding(vertical = 6.dp),
+            fontSize = 13.5.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = SageDeep,
+        )
+        Text(
             stringResource(R.string.home_correction_body, c.glucose ?: 0, c.target, String.format(Locale.getDefault(), "%.0f", c.factor ?: 0.0)) +
                 if (c.onBoardUsed >= 0.05) " " + stringResource(R.string.home_correction_less_working, String.format(Locale.getDefault(), "%.1f", c.onBoardUsed)) else "",
             fontSize = 13.sp,

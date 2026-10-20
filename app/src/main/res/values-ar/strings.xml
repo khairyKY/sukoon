@@ -2435,4 +2435,18 @@
     <string name="meal_reminder_log">سجّل الأنسولين</string>
     <string name="meal_reminder_setting">ذكّرني عندما تكون الوجبة بلا أنسولين</string>
     <string name="meal_reminder_setting_body">بعد 20 دقيقة من وجبة 10 غ أو أكثر بلا أنسولين سريع مسجّل. ليس لعلاج الهبوط.</string>
+    <string name="dose_check_channel">بعد الأنسولين</string>
+    <string name="dose_check_food_title">هل أكلت؟</string>
+    <string name="dose_check_food_body">وحداتك الـ%1$s تعمل ولا طعام مسجّل. كُل أو سجّل ما أكلته حتى لا تهبط.</string>
+    <string name="dose_check_log_meal">سجّل الوجبة</string>
+    <string name="dose_check_not_eating">لن آكل</string>
+    <string name="dose_check_down_title">ينخفض</string>
+    <string name="dose_check_down_body">%1$s الآن، من %2$s عند أخذ التصحيح.</string>
+    <string name="dose_check_high_title">ما زال مرتفعًا بعد التصحيح</string>
+    <string name="dose_check_high_body">%1$s الآن. افحص الكيتونات إن توفرت الشرائط، وموضع الحقن. شاشة «الآن» تبيّن إن كان يلزم المزيد.</string>
+    <string name="dose_check_drop_title">ينخفض بسرعة بعد التصحيح</string>
+    <string name="dose_check_drop_body">%1$s ويهبط. مراقبة الهبوط مفعّلة: جهّز سكريات سريعة.</string>
+    <string name="dose_check_setting">تابعني بعد الأنسولين</string>
+    <string name="dose_check_setting_body">بعد 30 دقيقة من جرعة بلا طعام مسجّل («هل أكلت؟»)، وبعد ساعتين من التصحيح (كيف كانت النتيجة).</string>
+    <string name="home_correction_taken">أخذت أنسولين بالفعل: سجّله أولًا</string>
 </resources>
