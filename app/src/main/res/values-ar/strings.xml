@@ -2435,4 +2435,11 @@
     <string name="meal_reminder_log">سجّل الأنسولين</string>
     <string name="meal_reminder_setting">ذكّرني عندما تكون الوجبة بلا أنسولين</string>
     <string name="meal_reminder_setting_body">بعد 20 دقيقة من وجبة 10 غ أو أكثر بلا أنسولين سريع مسجّل. ليس لعلاج الهبوط.</string>
+    <string name="finish_eyebrow">أكمل الإعداد</string>
+    <string name="finish_title">الباقي، متى سمح وقتك</string>
+    <string name="finish_account">الحساب والمشاركة (للمشاركة أو ليتابعك أحد فقط)</string>
+    <string name="finish_emergency">جهات اتصال الطوارئ</string>
+    <string name="finish_extras">إضافات: الوجبات من MyFitnessPal</string>
+    <string name="finish_dose">اقتراحات الجرعات (تجريبي)</string>
+    <string name="ob_ready_later">المشاركة وجهات اتصال الطوارئ والإضافات يمكنها الانتظار. بعد وصول أول قراءة، ستجدها في الآن.</string>
 </resources>

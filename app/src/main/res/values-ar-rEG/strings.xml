@@ -2431,4 +2431,11 @@
     <string name="meal_reminder_log">سجّل الإنسولين</string>
     <string name="meal_reminder_setting">فكّرني لو الأكلة مالهاش إنسولين</string>
     <string name="meal_reminder_setting_body">بعد 20 دقيقة من أكلة 10 جم أو أكتر من غير إنسولين سريع متسجّل. مش لعلاج الهبوط.</string>
+    <string name="finish_eyebrow">كمّل التجهيز</string>
+    <string name="finish_title">الباقي، وقت ما تفضى</string>
+    <string name="finish_account">الأكاونت والمشاركة (بس لو هتشارك أو حد هيتابعك)</string>
+    <string name="finish_emergency">جهات الطوارئ</string>
+    <string name="finish_extras">حاجات زيادة: الأكل من MyFitnessPal</string>
+    <string name="finish_dose">اقتراح الجرعات (تجريبي)</string>
+    <string name="ob_ready_later">المشاركة وجهات الطوارئ والحاجات الزيادة ممكن تستنى. أول ما توصل أول قراية، هتلاقيهم في دلوقتي.</string>
 </resources>

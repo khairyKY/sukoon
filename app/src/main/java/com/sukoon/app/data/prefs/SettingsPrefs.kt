@@ -265,6 +265,16 @@ class SettingsPrefs(context: Context) {
         get() = prefs.getBoolean(KEY_START_DISMISSED, false)
         set(value) = prefs.edit().putBoolean(KEY_START_DISMISSED, value).apply()
 
+    /** Now's Finish setting up card: on from a wearer's onboarding, off for good on "Got it" or once all is done (never for older installs). */
+    var followUps: Boolean
+        get() = prefs.getBoolean("follow_ups", false)
+        set(value) = prefs.edit().putBoolean("follow_ups", value).apply()
+
+    /** The card's Extras, opened once: optional, so looking counts as done. */
+    var extrasSeen: Boolean
+        get() = prefs.getBoolean("extras_seen", false)
+        set(value) = prefs.edit().putBoolean("extras_seen", value).apply()
+
     /** Gentle check 30 min after a logged workout: the number and its arrow (You → Alarms → Gentle checks). */
     var afterWorkoutCheck: Boolean
         get() = prefs.getBoolean(KEY_AFTER_WORKOUT, true)

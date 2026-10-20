@@ -2296,4 +2296,11 @@
     <string name="meal_reminder_log">Log insulin</string>
     <string name="meal_reminder_setting">Remind me when a meal has no insulin</string>
     <string name="meal_reminder_setting_body">20 minutes after a meal of 10 g or more with no rapid insulin logged. Not for low treatments.</string>
+    <string name="finish_eyebrow">Finish setting up</string>
+    <string name="finish_title">The rest, whenever you have a minute</string>
+    <string name="finish_account">Account and sharing (only to share or be followed)</string>
+    <string name="finish_emergency">Emergency contacts</string>
+    <string name="finish_extras">Extras: meals from MyFitnessPal</string>
+    <string name="finish_dose">Dose suggestions (beta)</string>
+    <string name="ob_ready_later">Sharing, emergency contacts and the extras can wait. Once your first reading is in, Now lists them.</string>
 </resources>
