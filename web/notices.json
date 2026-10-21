@@ -85,5 +85,16 @@
     "link": "https://github.com/khairyKY/sukoon/releases/latest",
     "until": "2026-10-31",
     "below": "0.19.0"
+  },
+  {
+    "id": "2026-10-21-sukoon-0.20.0",
+    "date": "2026-10-21",
+    "title": "Sukoon 0.20.0 is here",
+    "body": "Reminders when a meal has no insulin or insulin has no meal, a check-in after corrections, one box to log what you ate, and I'm on it for family. Tap to update.",
+    "title_ar": "سكون 0.20.0 وصل",
+    "body_ar": "تفكير لما الأكلة مالهاش إنسولين أو الإنسولين ماله أكل، ومتابعة بعد التصحيح، وخانة واحدة تسجّل فيها أكلك، و«هتصرّف» للعيلة. دوس للتحديث.",
+    "link": "https://github.com/khairyKY/sukoon/releases/latest",
+    "until": "2026-11-04",
+    "below": "0.20.0"
   }
 ]

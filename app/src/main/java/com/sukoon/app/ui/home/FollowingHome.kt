@@ -86,6 +86,7 @@ import java.util.Locale
 import kotlinx.coroutines.delay
 import com.sukoon.app.alarms.AlarmEngine
 import com.sukoon.app.alarms.AlarmSettings
+import com.sukoon.app.alarms.AlarmType
 import kotlin.math.roundToInt
 import androidx.compose.ui.res.pluralStringResource
 
@@ -266,6 +267,13 @@ private fun PersonView(sharing: Sharing, settings: SettingsPrefs, person: Follow
         Box(Modifier.size(7.dp).clip(CircleShape).background(if (calm) Sage else PillHighText))
         Text(stringResource(if (calm) R.string.home_nothing_to_do else R.string.follow_check_on, name), fontSize = 13.sp, color = CaptionMuted)
     }
+    val sounding = (context.applicationContext as com.sukoon.app.SukoonApp).container.followerWatch.active.collectAsState().value[person.id].orEmpty()
+    val value = latest?.glucoseMgDl?.takeIf { fresh }
+    OnItFor(sharing, person, name, alarm = sounding.minByOrNull { it.ordinal } ?: when {
+        value == null || value >= 70 -> null
+        value < AlarmSettings.URGENT_LOW_MG_DL -> AlarmType.URGENT_LOW
+        else -> AlarmType.LOW
+    })
 
     Spacer(Modifier.height(20.dp))
     val number = phone
@@ -289,6 +297,55 @@ private fun PersonView(sharing: Sharing, settings: SettingsPrefs, person: Follow
             askingPhone = false
         }, onDismiss = { askingPhone = false })
     }
+}
+
+/**
+ * "Dad is on it" (another follower answered), and while [alarm] is on (they're low, or an alarm about
+ * them is sounding) the "I'm on it" button, so two parents don't both call.
+ */
+@Composable
+private fun OnItFor(sharing: Sharing, person: Followed, name: String, alarm: AlarmType?) {
+    val me = sharing.supabase.session.collectAsState().value?.userId
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var sent by remember(person.id) { mutableStateOf<Boolean?>(null) } // null: not yet; false: it failed
+    onItLine(person.onIt, me)?.let { OnItPill(it, Modifier.padding(top = 12.dp)) }
+    if (alarm == null || !Sharing.canSayOnIt(person.id)) return
+    if (sent == true) {
+        Text(stringResource(R.string.on_it_sent, name), fontSize = 13.sp, color = CaptionMuted, modifier = Modifier.padding(start = 6.dp, top = 10.dp))
+        return
+    }
+    val app = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container
+    Box(
+        Modifier.padding(top = 12.dp).fillMaxWidth().heightIn(min = 52.dp).clip(RoundedCornerShape(14.dp)).background(Sage)
+            .clickable { scope.launch { sent = runCatching { sharing.imOnIt(person.id, alarm) }.isSuccess; if (sent == true) app.followerWatch.refreshNow() } },
+        contentAlignment = Alignment.Center,
+    ) { Text(stringResource(R.string.on_it_action), color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 16.sp) }
+    if (sent == false) Text(stringResource(R.string.on_it_failed), fontSize = 13.sp, color = PillHighText, modifier = Modifier.padding(start = 6.dp, top = 8.dp))
+}
+
+/** "Mum is on it · 2 min ago" for [all] (leaving out [me]); null when nobody is. */
+@Composable
+fun onItLine(all: List<com.sukoon.app.sharing.OnIt>, me: String? = null): String? {
+    val now by produceState(Instant.now()) { while (true) { delay(30_000); value = Instant.now() } }
+    val recent = com.sukoon.app.sharing.OnIt.recent(all, now, me)
+    if (recent.isEmpty()) return null
+    val minutes = Duration.between(recent.first().at, now).toMinutes().coerceAtLeast(0).toInt()
+    val ago = if (minutes < 1) stringResource(R.string.graph_just_now) else pluralStringResource(R.plurals.graph_min_ago, minutes, minutes)
+    return stringResource(if (recent.size == 1) R.string.on_it_one else R.string.on_it_many, recent.joinToString { it.name.ifBlank { "…" } }, ago)
+}
+
+@Composable
+private fun OnItPill(text: String, modifier: Modifier = Modifier) = Text(
+    text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = SageDeep,
+    modifier = modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(SageMist).padding(horizontal = 14.dp, vertical = 10.dp),
+)
+
+/** On the wearer's own low screens (Now): which followers are on it. */
+@Composable
+fun OnItNote() {
+    val sharing = (LocalContext.current.applicationContext as? com.sukoon.app.SukoonApp)?.container?.sharing ?: return
+    val all by sharing.onItForMe.collectAsState()
+    onItLine(all)?.let { OnItPill(it, Modifier.padding(top = 10.dp)) }
 }
 
 /**

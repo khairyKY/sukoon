@@ -135,6 +135,20 @@ class SettingsPrefs(context: Context) {
         set(value) = prefs.edit().putInt(KEY_INSULIN_PEAK, value.peakMinutes).putInt(KEY_INSULIN_DURATION, value.durationMinutes).apply()
 
     /** You → Insulin: the long-acting reminder. */
+    /** After rapid insulin: "did you eat?" (30 min, no food) and how a correction went (2 h). On unless turned off. */
+    var doseCheckIns: Boolean
+        get() = prefs.getBoolean("dose_check_ins", true)
+        set(value) = prefs.edit().putBoolean("dose_check_ins", value).apply()
+
+    /** "You ate but logged no insulin": a reminder 20 minutes after such a meal. On unless turned off. */
+    var mealReminder: Boolean
+        get() = prefs.getBoolean("meal_reminder", true)
+        set(value) = prefs.edit().putBoolean("meal_reminder", value).apply()
+
+    var morningSummary: com.sukoon.app.reminders.MorningSummarySettings
+        get() = com.sukoon.app.reminders.MorningSummarySettings(prefs.getBoolean(KEY_MORNING_SUMMARY, false), prefs.getInt(KEY_MORNING_MINUTE, 8 * 60).coerceIn(0, 1439))
+        set(value) = prefs.edit().putBoolean(KEY_MORNING_SUMMARY, value.enabled).putInt(KEY_MORNING_MINUTE, value.minuteOfDay).apply()
+
     var basalReminder: BasalReminderSettings
         get() = BasalReminderSettings(prefs.getBoolean(KEY_BASAL_REMINDER, false), prefs.getInt(KEY_BASAL_MINUTE, 22 * 60).coerceIn(0, 1439))
         set(value) = prefs.edit().putBoolean(KEY_BASAL_REMINDER, value.enabled).putInt(KEY_BASAL_MINUTE, value.minuteOfDay).apply()
@@ -260,6 +274,16 @@ class SettingsPrefs(context: Context) {
         get() = prefs.getBoolean(KEY_START_DISMISSED, false)
         set(value) = prefs.edit().putBoolean(KEY_START_DISMISSED, value).apply()
 
+    /** Now's Finish setting up card: on from a wearer's onboarding, off for good on "Got it" or once all is done (never for older installs). */
+    var followUps: Boolean
+        get() = prefs.getBoolean("follow_ups", false)
+        set(value) = prefs.edit().putBoolean("follow_ups", value).apply()
+
+    /** The card's Extras, opened once: optional, so looking counts as done. */
+    var extrasSeen: Boolean
+        get() = prefs.getBoolean("extras_seen", false)
+        set(value) = prefs.edit().putBoolean("extras_seen", value).apply()
+
     /** Gentle check 30 min after a logged workout: the number and its arrow (You → Alarms → Gentle checks). */
     var afterWorkoutCheck: Boolean
         get() = prefs.getBoolean(KEY_AFTER_WORKOUT, true)
@@ -316,6 +340,8 @@ class SettingsPrefs(context: Context) {
         private const val KEY_DOSE_STEP = "dose_step"
         private const val KEY_BASAL_REMINDER = "basal_reminder_on"
         private const val KEY_BASAL_MINUTE = "basal_reminder_minute"
+        private const val KEY_MORNING_SUMMARY = "morning_summary_on"
+        private const val KEY_MORNING_MINUTE = "morning_summary_minute"
         private const val KEY_START_DISMISSED = "getting_started_dismissed"
         private const val KEY_QUIET_FROM = "alarm_quiet_highs_from"
         private const val KEY_QUIET_TO = "alarm_quiet_highs_to"

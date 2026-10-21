@@ -84,4 +84,10 @@ class NoticesTest {
         val json = """[{"id":"old","title":"t","body":"b","below":"0.0.1"},{"id":"new","title":"t","body":"b","below":"99.0"},{"id":"all","title":"t","body":"b"}]"""
         org.junit.Assert.assertEquals(listOf("new", "all"), Notices.parse(json).map { it.id })
     }
+
+    @Test
+    fun `a notice below a version that links to the releases is the updater's to show`() {
+        val json = """[{"id":"rel","title":"t","body":"b","below":"99.0","link":"https://github.com/khairyKY/sukoon/releases/latest"},{"id":"news","title":"t","body":"b","link":"https://github.com/khairyKY/sukoon/releases/latest"},{"id":"other","title":"t","body":"b","below":"99.0","link":"https://khairyky.github.io/sukoon/"}]"""
+        org.junit.Assert.assertEquals(listOf(true, false, false), Notices.parse(json).map { it.release })
+    }
 }

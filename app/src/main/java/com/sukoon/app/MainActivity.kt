@@ -72,6 +72,12 @@ class MainActivity : ComponentActivity() {
      */
     private fun takeEntry(intent: Intent) {
         takeLink(intent)
+        intent.getStringExtra(EXTRA_LINK)?.let { intent.removeExtra(EXTRA_LINK); (application as SukoonApp).container.requestedLink.value = it }
+        intent.getLongExtra(EXTRA_MEAL_INSULIN, -1).takeIf { it >= 0 }?.let { meal ->
+            intent.removeExtra(EXTRA_MEAL_INSULIN)
+            (application as SukoonApp).container.requestedMealInsulin.value = meal
+            return
+        }
         val type = intent.getStringExtra(EXTRA_ENTRY)?.let { name -> LogEventType.entries.firstOrNull { it.name == name } } ?: return
         intent.removeExtra(EXTRA_ENTRY)
         val container = (application as SukoonApp).container
@@ -111,7 +117,11 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_ENTRY = "entry"
+        /** A meal's id: open the insulin entry for that meal (the meal reminder's "Log insulin"). */
+        const val EXTRA_MEAL_INSULIN = "meal_insulin"
         private const val EXTRA_TREATED = "treated_low"
+        /** A screen by its guide link (MainScaffold.openLink): the morning summary opens Trends › Insights. */
+        const val EXTRA_LINK = "link"
 
         /** A low alarm's "Log what I ate": answers it as treated, then opens a new meal. */
         fun logTreatment(context: android.content.Context): Intent =

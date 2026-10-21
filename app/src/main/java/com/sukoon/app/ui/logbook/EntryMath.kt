@@ -11,6 +11,10 @@ import kotlin.math.abs
 import com.sukoon.app.insights.InsightEngine
 import com.sukoon.app.insulin.Finger
 import com.sukoon.app.insulin.InjectionSite
+import com.sukoon.app.ai.CarbEstimate
+import com.sukoon.app.ai.VoiceEntry
+import com.sukoon.app.food.Food
+import com.sukoon.app.food.PlateItem
 
 /** A meal's nutrients beyond its carbs: MyFitnessPal brings them, and a meal can be given them by hand. */
 data class Nutrients(
@@ -131,3 +135,47 @@ internal fun todayTotals(events: List<EventEntity>, now: Instant, zone: ZoneId):
 
 /** Lots of fat or protein: the rise can come 3 to 5 hours later (a rule of thumb, shown for awareness). */
 internal fun slowMeal(fat: Double?, protein: Double?): Boolean = InsightEngine.richMeal(fat, protein)
+
+/** Every food's carbs, fibre, sugar, protein, fat and kcal added up, in [Food.per100]'s order. */
+internal fun plateSums(plate: List<PlateItem>): List<Double> = plate.fold(List(6) { 0.0 }) { acc, item -> acc.zip(item.sums, Double::plus) }
+
+/** One portion of a food the AI named: these carbs and, when it gave them, protein, fat and kcal. */
+internal fun portion(name: String, carbs: Double, protein: Double? = null, fat: Double? = null, kcal: Double? = null) =
+    PlateItem(Food(name, per100 = listOf(carbs, 0.0, 0.0, protein ?: 0.0, fat ?: 0.0, kcal ?: 0.0), own = true), 1.0)
+
+/** What the eat box understood: the foods on one plate, a single rapid dose as its insulin, and the rest as said. */
+internal data class EatPlan(val plate: List<PlateItem>, val insulin: Double?, val rest: List<VoiceEntry>)
+
+/**
+ * Words or speech as one meal: every food (not a treatment for a low) on the plate, and one rapid
+ * dose said with them is its insulin. A treatment, long-acting, a walk or a second dose stay as said.
+ */
+internal fun eatPlan(entries: List<VoiceEntry>, unnamed: String): EatPlan {
+    val foods = entries.filter { it.type == LogEventType.CARB && !it.treatment }
+    val dose = entries.singleOrNull { it.type == LogEventType.INSULIN }?.takeIf { foods.isNotEmpty() }
+    return EatPlan(
+        foods.map { portion(it.name ?: unnamed, it.amount ?: 0.0, it.protein, it.fat, it.kcal) },
+        dose?.amount,
+        entries.filter { it.type != LogEventType.CARB || it.treatment }.filter { it !== dose },
+    )
+}
+
+/** A photo's estimate as foods: each item it named, else the whole meal as one. */
+internal fun photoPlate(r: CarbEstimate): List<PlateItem> {
+    val items = r.items.filter { it.first.isNotBlank() }
+    val total = items.sumOf { it.second }.toDouble()
+    if (items.size < 2 || total <= 0) return listOf(portion(r.title, r.carbsGrams.toDouble(), r.proteinGrams?.toDouble(), r.fatGrams?.toDouble(), r.kcal?.toDouble()))
+    // ponytail: the model gives protein, fat and kcal for the whole meal, so each item carries its carbs' share;
+    // the totals stay right, one removed item's may not. Per-item nutrients in the prompt if that matters.
+    return items.map { (name, carbs) ->
+        val k = carbs / total
+        portion(name, carbs.toDouble(), r.proteinGrams?.let { it * k }, r.fatGrams?.let { it * k }, r.kcal?.let { it * k })
+    }
+}
+
+/** The food with [grams] of carbs: more or less of it (its other nutrients alike), or, holding none, one portion with them. */
+internal fun withCarbs(item: PlateItem, grams: Double): PlateItem {
+    val carbs = item.sums[Food.CARBS]
+    if (carbs > 0 && grams > 0) return item.copy(amount = item.amount * grams / carbs)
+    return PlateItem(item.food.copy(per100 = item.sums.toMutableList().also { it[Food.CARBS] = grams }, own = true, lastAmount = null), 1.0)
+}

@@ -162,6 +162,13 @@ fun MainScaffold() {
             }
         }.getOrElse { syncContext.getString(R.string.sync_failed, it.message ?: it.javaClass.simpleName) }
     }
+    val requestedMeal by appContainer.requestedMealInsulin.collectAsStateWithLifecycle()
+    LaunchedEffect(requestedMeal) {
+        val meal = requestedMeal ?: return@LaunchedEffect
+        pendingMealInsulin = meal
+        navController.navigateToTab(SukoonTab.TRENDS)
+        appContainer.requestedMealInsulin.value = null
+    }
     val requested by appContainer.requestedEntry.collectAsStateWithLifecycle()
     LaunchedEffect(requested) {
         val type = requested ?: return@LaunchedEffect
@@ -222,6 +229,8 @@ fun MainScaffold() {
             "entry_fingerstick" -> appContainer.requestedEntry.value = LogEventType.FINGERSTICK
         }
     }
+    val requestedLink by appContainer.requestedLink.collectAsStateWithLifecycle()
+    LaunchedEffect(requestedLink) { requestedLink?.let { appContainer.requestedLink.value = null; openLink(it) } }
     // An announcement everyone must see (web/notices.json "kind"), over everything.
     com.sukoon.app.ui.components.ForcedNotice()
     if (showGuide) HelpDialog(onClose = { showGuide = false; guideTopic = null }, onLink = { showGuide = false; guideTopic = null; openLink(it) }, startTopic = guideTopic)
@@ -391,9 +400,14 @@ fun MainScaffold() {
                         app.settings.gettingStartedDismissed = true
                         startDismissed = true
                     }
-                    val showStart = !startDismissed && !startSteps.all { it }
+                    // After onboarding's first reading: what it no longer asks; it stands in for the card and banner.
+                    val finishing = com.sukoon.app.ui.help.FinishSetupCard(startSteps, ::openLink, onDismiss = {
+                        app.settings.gettingStartedDismissed = true
+                        startDismissed = true
+                    })
+                    val showStart = !startDismissed && !startSteps.all { it } && !finishing
                     // The banner or the card, never both.
-                    if (missingSetup.isNotEmpty() && !setupLater && !showStart) {
+                    if (missingSetup.isNotEmpty() && !setupLater && !showStart && !finishing) {
                         SetupBanner(missingSetup, onFix = { openYou(YouPage.HELP) }, onLater = { setupLater = true })
                     }
                     if (showStart) {

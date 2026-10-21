@@ -93,6 +93,17 @@ class AppContainer(private val context: Context) {
     val themeMode = MutableStateFlow(settings.themeMode)
 
     init {
+        // A meal with no insulin: its reminder is lined up as it lands (here, by voice or from MyFitnessPal).
+        appScope.launch {
+            logbookRepository.eventsSince(System.currentTimeMillis() - java.time.Duration.ofHours(3).toMillis()).collect { events ->
+                if (settings.mealReminder) events.filter { it.type == com.sukoon.app.data.db.LogEventType.CARB.name }.forEach { com.sukoon.app.reminders.MealReminder.schedule(context, it) }
+                // Rapid doses: "did you eat?" at 30 min, and how a correction went at 2 h.
+                if (settings.doseCheckIns) events.filter { it.type == com.sukoon.app.data.db.LogEventType.INSULIN.name }.forEach { com.sukoon.app.reminders.DoseCheck.schedule(context, it) }
+            }
+        }
+    }
+
+    init {
         com.sukoon.app.ui.theme.Themes.current = settings.colorTheme
     }
 
@@ -110,7 +121,10 @@ class AppContainer(private val context: Context) {
     val updates = Updates(context, appScope)
 
     /** Messages from Sukoon's maker to every install (docs/notices.md). */
-    val notices = com.sukoon.app.platform.Notices(context, appScope)
+    val notices = com.sukoon.app.platform.Notices(context, appScope).apply {
+        // A release notice: the updater checks now and announces it, with its Update button.
+        releaseNoticed = { updates.checkAndAnnounce() }
+    }
 
     /** Dexcom Share: a Dexcom wearer's readings through Dexcom's servers. */
     val dexcom = DexcomShare(context)
@@ -250,6 +264,9 @@ class AppContainer(private val context: Context) {
     /** A new entry something outside the app asked for (a reminder's "Log it"); MainScaffold opens it. */
     val requestedEntry = MutableStateFlow<LogEventType?>(null)
 
+    /** The insulin entry for this meal, asked for from outside the app (the meal reminder's "Log insulin"). */
+    val requestedMealInsulin = MutableStateFlow<Long?>(null)
+
     /** An invite link tapped (sukoon://follow): Now offers to follow; onboarding's code step starts with it. */
     val pendingInvite = MutableStateFlow<String?>(null)
 
@@ -265,6 +282,9 @@ class AppContainer(private val context: Context) {
     /** The next new entry treats a low (a low alarm's "Log what I ate"): its "Treating a low" starts on. */
     val requestedTreatment = MutableStateFlow(false)
 
+    /** A notification asked for a screen by its guide link ("trends_insights"): MainScaffold opens it once. */
+    val requestedLink = MutableStateFlow<String?>(null)
+
     /** Now's "fill the gap": You → Sensor opens ready to read the sensor's memory. */
     val requestedCheckSensor = MutableStateFlow(false)
 
@@ -272,6 +292,7 @@ class AppContainer(private val context: Context) {
         LibreNfc.appContext = context // sensor refusals read in the app's language
         glucoseRepository.start()
         BasalReminder.schedule(context, settings.basalReminder)
+        com.sukoon.app.reminders.MorningSummary.schedule(context, settings.morningSummary)
         // Every few hours, not just at start: the sensor service keeps Sukoon running for days, and a release
         // should still reach it (checkIfDue itself asks GitHub at most once a day).
         appScope.launch {

@@ -65,6 +65,12 @@ class Updates(private val context: Context, private val scope: CoroutineScope) {
     fun checkIfDue() {
         if (!com.sukoon.app.BuildConfig.SELF_UPDATE) return // the Play build is updated by Play
         if (System.currentTimeMillis() - prefs.getLong(KEY_LAST_CHECK, 0) < TimeUnit.HOURS.toMillis(CHECK_EVERY_HOURS)) return
+        checkAndAnnounce()
+    }
+
+    /** A quiet check now, and the notification if there's a newer version (a release notice just arrived). */
+    fun checkAndAnnounce() {
+        if (!com.sukoon.app.BuildConfig.SELF_UPDATE) return
         scope.launch {
             check(quiet = true)
             (_state.value as? State.Available)?.release?.let(::announce)

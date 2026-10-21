@@ -153,26 +153,33 @@ fun BasalReminderCard(settings: BasalReminderSettings, onChange: (BasalReminderS
 
     if (picking) {
         val start = if (settings.enabled) settings.minuteOfDay else usual?.let { (it + 30) % 1440 } ?: (22 * 60)
-        val state = rememberTimePickerState(start / 60, start % 60, is24Hour = DateFormat.is24HourFormat(LocalContext.current))
-        // Its own dialog, sized to the clock: an alert dialog's padding squeezes the dial on narrow phones.
-        Dialog(onDismissRequest = { picking = false }) {
-            Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surface) {
-                Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        stringResource(R.string.reminder_basal_pick),
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
-                    )
-                    TimePicker(state)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = { picking = false }) { Text(stringResource(R.string.sensor_cancel)) }
-                        TextButton(onClick = {
-                            picking = false
-                            onChange(BasalReminderSettings(enabled = true, minuteOfDay = state.hour * 60 + state.minute))
-                        }) { Text(stringResource(R.string.reminder_basal_set)) }
-                    }
+        TimePickDialog(stringResource(R.string.reminder_basal_pick), start, onDismiss = { picking = false }) {
+            picking = false
+            onChange(BasalReminderSettings(enabled = true, minuteOfDay = it))
+        }
+    }
+}
+
+/** A time of day, as a minute of the day: the long-acting reminder and the morning summary. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun TimePickDialog(title: String, startMinute: Int, onDismiss: () -> Unit, onPick: (Int) -> Unit) {
+    val state = rememberTimePickerState(startMinute / 60, startMinute % 60, is24Hour = DateFormat.is24HourFormat(LocalContext.current))
+    // Its own dialog, sized to the clock: an alert dialog's padding squeezes the dial on narrow phones.
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surface) {
+            Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    title,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
+                )
+                TimePicker(state)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.sensor_cancel)) }
+                    TextButton(onClick = { onPick(state.hour * 60 + state.minute) }) { Text(stringResource(R.string.reminder_basal_set)) }
                 }
             }
         }

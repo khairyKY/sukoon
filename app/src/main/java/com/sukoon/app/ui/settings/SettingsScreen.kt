@@ -413,6 +413,10 @@ fun SettingsScreen(
                         YouPage.INSULIN -> {
                             SectionLabel(stringResource(R.string.reminder_basal_section))
                             BasalReminderCard(basalReminder, onBasalReminder, usualBasalMinute)
+                            Spacer(Modifier.height(10.dp))
+                            MealReminderRow()
+                            Spacer(Modifier.height(10.dp))
+                            DoseCheckRow()
                             Gap()
                             SectionLabel(stringResource(R.string.sites_title))
                             InjectionSitesCard(injectionSites)
@@ -1141,5 +1145,41 @@ private fun NowLayoutRow() {
             Text(stringResource(R.string.now_layout_row_body), fontSize = 12.5.sp, color = com.sukoon.app.ui.theme.CaptionMuted)
         }
         Text("›", fontSize = 20.sp, color = com.sukoon.app.ui.theme.CaptionMuted)
+    }
+}
+
+/** Insulin & doses: the "no insulin for your meal" reminder, on or off. */
+@Composable
+private fun MealReminderRow() {
+    val settings = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.settings
+    var on by remember { mutableStateOf(settings.mealReminder) }
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, outline(), RoundedCornerShape(18.dp))
+            .clickable { on = !on; settings.mealReminder = on }.heightIn(min = 64.dp).padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.meal_reminder_setting), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+            Text(stringResource(R.string.meal_reminder_setting_body), fontSize = 12.5.sp, lineHeight = 17.sp, color = com.sukoon.app.ui.theme.CaptionMuted)
+        }
+        androidx.compose.material3.Switch(checked = on, onCheckedChange = { on = it; settings.mealReminder = it }, colors = androidx.compose.material3.SwitchDefaults.colors(checkedTrackColor = com.sukoon.app.ui.theme.Sage))
+    }
+}
+
+/** Insulin & doses: the check-ins after rapid insulin, on or off. */
+@Composable
+private fun DoseCheckRow() {
+    val settings = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.settings
+    var on by remember { mutableStateOf(settings.doseCheckIns) }
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, outline(), RoundedCornerShape(18.dp))
+            .clickable { on = !on; settings.doseCheckIns = on }.heightIn(min = 64.dp).padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.dose_check_setting), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+            Text(stringResource(R.string.dose_check_setting_body), fontSize = 12.5.sp, lineHeight = 17.sp, color = com.sukoon.app.ui.theme.CaptionMuted)
+        }
+        androidx.compose.material3.Switch(checked = on, onCheckedChange = { on = it; settings.doseCheckIns = it }, colors = androidx.compose.material3.SwitchDefaults.colors(checkedTrackColor = com.sukoon.app.ui.theme.Sage))
     }
 }

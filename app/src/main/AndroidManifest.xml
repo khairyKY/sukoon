@@ -244,6 +244,18 @@
             android:exported="false" />
 
         <receiver
+            android:name=".reminders.MealReminder"
+            android:exported="false" />
+
+        <receiver
+            android:name=".reminders.DoseCheck"
+            android:exported="false" />
+
+        <receiver
+            android:name=".reminders.MorningSummary"
+            android:exported="false" />
+
+        <receiver
             android:name=".platform.BootReceiver"
             android:exported="false">
             <intent-filter>

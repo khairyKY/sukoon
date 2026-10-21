@@ -14,7 +14,7 @@ class AlarmActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val imOk = intent.action == ACTION_IM_OK
         val type = AlarmType.entries.firstOrNull { it.name == intent.getStringExtra(EXTRA_TYPE) }
-        if (!imOk && (intent.action != ACTION_SNOOZE || type == null)) return
+        if (!imOk && (intent.action !in setOf(ACTION_SNOOZE, ACTION_ON_IT) || type == null)) return
         val minutes = intent.getIntExtra(EXTRA_MINUTES, 0)
         val person = intent.getStringExtra(EXTRA_PERSON) // set on alerts about someone this phone follows
         val container = (context.applicationContext as SukoonApp).container
@@ -23,6 +23,7 @@ class AlarmActionReceiver : BroadcastReceiver() {
             try {
                 when {
                     imOk -> container.alarms.imOk()
+                    intent.action == ACTION_ON_IT && person != null -> sayOnIt(context, person, requireNotNull(type))
                     person != null -> container.followerWatch.acknowledge(person, requireNotNull(type), minutes)
                     else -> container.alarms.acknowledge(requireNotNull(type), minutes, treated = intent.getBooleanExtra(EXTRA_TREATED, false))
                 }
@@ -35,9 +36,23 @@ class AlarmActionReceiver : BroadcastReceiver() {
     companion object {
         const val ACTION_SNOOZE = "com.sukoon.app.alarms.SNOOZE"
         const val ACTION_IM_OK = "com.sukoon.app.alarms.IM_OK"
+        const val ACTION_ON_IT = "com.sukoon.app.alarms.ON_IT" // a follower's "I'm on it"
         const val EXTRA_TYPE = "type"
         const val EXTRA_MINUTES = "minutes"
         const val EXTRA_PERSON = "person"
         const val EXTRA_TREATED = "treated" // "I'm treating it": Home starts the 15-minute wait
     }
+}
+
+/** A follower's "I'm on it": silences the alarm as OK does, then tells the wearer and their followers (a toast if it can't). */
+internal suspend fun sayOnIt(context: Context, person: String, type: AlarmType) {
+    val container = (context.applicationContext as SukoonApp).container
+    container.followerWatch.acknowledge(person, type, type.defaultSnooze(container.settings.alarmSettings))
+    runCatching { container.sharing.imOnIt(person, type) }
+        .onSuccess { container.followerWatch.refreshNow() }
+        .onFailure {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                android.widget.Toast.makeText(context.applicationContext, com.sukoon.app.R.string.on_it_failed, android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
 }

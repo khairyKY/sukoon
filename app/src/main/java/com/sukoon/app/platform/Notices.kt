@@ -38,6 +38,9 @@ import org.json.JSONObject
  */
 class Notices(private val context: Context, private val scope: CoroutineScope) {
 
+    /** Set by AppContainer: a release notice arrived, so the updater checks now and announces it. */
+    var releaseNoticed: () -> Unit = {}
+
     data class Notice(
         val id: String,
         val title: String,
@@ -51,6 +54,8 @@ class Notices(private val context: Context, private val scope: CoroutineScope) {
         /** The day it was sent ("From Sukoon · today"); null when the file doesn't say. */
         val date: LocalDate? = null,
         val kind: Kind = Kind.NOTICE,
+        /** A release notice ("below" a version, linking to the releases): the updater says it, with its Update button and bar. */
+        val release: Boolean = false,
     ) {
         /**
          * NOTICE: a notification and the banner. MUST_READ: also full screen when Sukoon is in front,
@@ -132,7 +137,8 @@ class Notices(private val context: Context, private val scope: CoroutineScope) {
         val today = LocalDate.now()
         val fresh = toShow(all, seen, today)
         if (fresh.isEmpty()) return
-        fresh.forEach { notify(manager, it) }
+        // A release notice on a self-updating build: the updater announces it (Update button, download bar) instead.
+        fresh.forEach { if (it.release && com.sukoon.app.BuildConfig.SELF_UPDATE) releaseNoticed() else notify(manager, it) }
         prefs.edit().putStringSet(KEY_SEEN, seen + all.filter { it.liveOn(today) }.map { it.id }).apply()
     }
 
@@ -206,6 +212,7 @@ class Notices(private val context: Context, private val scope: CoroutineScope) {
                     link = row.text("link")?.takeIf { it.startsWith("https://") },
                     until = row.text("until")?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
                     date = row.text("date")?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
+                    release = row.text("below") != null && row.text("link")?.contains("/releases") == true,
                     kind = when (row.text("kind")) {
                         "must_read" -> Notice.Kind.MUST_READ
                         // A forced update needs "below": without it there's no telling who is behind.

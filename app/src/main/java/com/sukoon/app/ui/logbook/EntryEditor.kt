@@ -247,6 +247,11 @@ internal data class EditorRequest(
     val forMeal: EventEntity? = null,
     /** Opened to log what treated a low. */
     val treatment: Boolean = false,
+    /** From the eat box: its foods on the plate, the dose said with them, its photo, and what else was said (saved with the meal). */
+    val plate: List<PlateItem> = emptyList(),
+    val insulin: Double? = null,
+    val photos: List<ByteArray> = emptyList(),
+    val extras: List<EntryDraft> = emptyList(),
 )
 
 private val TILES = listOf(LogEventType.CARB, LogEventType.INSULIN, LogEventType.FINGERSTICK, LogEventType.BASAL, LogEventType.ACTIVITY, LogEventType.NOTE)
@@ -268,8 +273,9 @@ internal fun AddSheet(
     showKetones: Boolean = false,
     /** Meals you log by name, to start from. */
     usual: List<UsualMeal> = emptyList(),
-    /** Opens Say it (voice); null hides the button. */
-    onVoice: (() -> Unit)? = null,
+    /** The eat box's words, voice, photo or barcode; [ai] (a Gemini key) offers the mic and the photo. */
+    onEat: (EatInput) -> Unit = {},
+    ai: Boolean = false,
 ) {
     SukoonSheet(
         onDismissRequest = onDismiss,
@@ -278,9 +284,7 @@ internal fun AddSheet(
         Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
             Text(stringResource(R.string.logbook_sheet_title_new), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, lineHeight = 31.sp, color = MaterialTheme.colorScheme.onBackground)
             ContextPills(glucoseNow, insulinOnBoard, Modifier.padding(top = 8.dp))
-            onVoice?.let { voice ->
-                com.sukoon.app.ui.components.SottoBanner(stringResource(R.string.voice_title), stringResource(R.string.voice_hint), voice, Modifier.padding(top = 14.dp).fillMaxWidth())
-            }
+            EatBox(ai, onEat, Modifier.padding(top = 14.dp))
             if (usual.isNotEmpty()) {
                 Eyebrow(stringResource(R.string.entry_usual), Modifier.padding(top = 18.dp))
                 Row(Modifier.padding(top = 8.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -429,12 +433,13 @@ private fun EditorContent(
                 existing.fat?.let { put(AmountField.FAT, formatAmount(it)) }
                 existing.kcal?.let { put(AmountField.KCAL, formatAmount(it)) }
             }
+            request.insulin?.let { put(AmountField.RAPID, formatAmount(it)) }
         }
     }
     // A new meal starts from its foods (design "Meal · start from foods"): no pad until you want one.
     val freshMeal = request.type == LogEventType.CARB && existing == null && request.forMeal == null && request.prefill?.value == null
     var active by remember { mutableStateOf(if (request.forMeal != null) AmountField.RAPID else if (repeatedDose || freshMeal) null else mainField(request.type)) }
-    val plate = remember { mutableStateListOf<PlateItem>() }
+    val plate = remember { mutableStateListOf<PlateItem>().apply { addAll(request.plate) } }
     val myFoods = MyFoods.get(LocalContext.current)
     var picking by remember { mutableStateOf<Boolean?>(null) } // the food picker: false = search, true = scan first
     var plateNote by remember { mutableStateOf("") }
@@ -449,7 +454,7 @@ private fun EditorContent(
     var minutesAgo by remember { mutableIntStateOf(if (existing == null) 0 else -1) }
     var pickedAt by remember { mutableStateOf(existing?.let { Instant.ofEpochMilli(it.timestampMillis) } ?: Instant.now()) }
     // Every photo of the meal, as many as you like (the ones it had first); the AI estimate reads them all.
-    val photos = remember { mutableStateListOf<ByteArray>().apply { addAll(photoFiles.mapNotNull { runCatching { it.readBytes() }.getOrNull() }) } }
+    val photos = remember { mutableStateListOf<ByteArray>().apply { addAll(photoFiles.mapNotNull { runCatching { it.readBytes() }.getOrNull() }); addAll(request.photos) } }
     var photosChanged by remember { mutableStateOf(false) }
     var showMore by remember { mutableStateOf(existing?.let { it.fiber != null || it.protein != null || it.fat != null || it.kcal != null } ?: false) }
     var showAppMeals by remember { mutableStateOf(false) }
@@ -459,7 +464,7 @@ private fun EditorContent(
 
     /** The plate's sums into the amounts, and its foods as the meal's name (unless you named it). */
     fun platePut() {
-        val sums = plate.fold(List(6) { 0.0 }) { acc, item -> acc.zip(item.sums, Double::plus) }
+        val sums = plateSums(plate)
         fun put(field: AmountField, x: Double) { values[field] = if (x > 0) Math.round(x).toString() else "" }
         put(AmountField.CARBS, sums[Food.CARBS])
         put(AmountField.FIBER, sums[1])
@@ -470,6 +475,8 @@ private fun EditorContent(
         if (note.isBlank() || note == plateNote) note = names
         plateNote = names
     }
+    // The eat box's foods: their sums and names in the boxes before anything reads them.
+    remember { if (request.plate.isNotEmpty()) platePut() }
     fun at(): Instant = if (minutesAgo >= 0) Instant.now().minusSeconds(minutesAgo * 60L) else pickedAt
     val meal = forMeal
     val isMeal = type == LogEventType.CARB && meal == null
@@ -1118,21 +1125,35 @@ private fun MealStart(onSearch: () -> Unit, onScan: () -> Unit, onUsual: (PlateI
     }
 }
 
-/** What's on the plate: each food and its carbs, removable; and another. */
+/** What's on the plate: each food and its carbs (typed over with [onCarbs]), removable; and another. */
 @Composable
-private fun PlateCard(plate: List<PlateItem>, onRemove: (PlateItem) -> Unit, onAdd: () -> Unit) {
+internal fun PlateCard(plate: List<PlateItem>, onRemove: (PlateItem) -> Unit, onAdd: () -> Unit, onCarbs: ((Int, Double) -> Unit)? = null) {
     Column(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, outline(), RoundedCornerShape(18.dp)).padding(horizontal = 14.dp, vertical = 6.dp),
     ) {
         Eyebrow(stringResource(R.string.food_on_plate), Modifier.padding(vertical = 8.dp))
-        plate.forEach { item ->
+        plate.forEachIndexed { i, item ->
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 FoodImage(item.food, 40.dp)
                 Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
                     Text(item.food.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1)
                     Text(amountText(item.food, item.amount), fontSize = 13.sp, color = CaptionMuted)
                 }
-                Text(gramsText(item.sums[Food.CARBS]) + " " + stringResource(R.string.logbook_unit_grams).trim(), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                if (onCarbs != null) {
+                    var typed by remember(item.food) { mutableStateOf(formatAmount(Math.round(item.sums[Food.CARBS]).toDouble())) }
+                    androidx.compose.foundation.text.BasicTextField(
+                        typed, { v -> typed = v.filter { it.isDigit() || it == '.' }.take(5); typed.toDoubleOrNull()?.let { onCarbs(i, it) } },
+                        singleLine = true,
+                        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, textAlign = androidx.compose.ui.text.style.TextAlign.Center),
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+                        cursorBrush = androidx.compose.ui.graphics.SolidColor(Sage),
+                        modifier = Modifier.width(60.dp).heightIn(min = 48.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.background)
+                            .border(1.dp, outline(), RoundedCornerShape(10.dp)).padding(horizontal = 6.dp, vertical = 13.dp),
+                    )
+                    Text(stringResource(R.string.logbook_unit_grams).trim(), fontSize = 13.sp, color = CaptionMuted, modifier = Modifier.padding(start = 4.dp))
+                } else {
+                    Text(gramsText(item.sums[Food.CARBS]) + " " + stringResource(R.string.logbook_unit_grams).trim(), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                }
                 Box(Modifier.size(44.dp).clip(CircleShape).clickable { onRemove(item) }, contentAlignment = Alignment.Center) {
                     Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.food_remove, item.food.name), tint = CaptionMuted, modifier = Modifier.size(16.dp))
                 }

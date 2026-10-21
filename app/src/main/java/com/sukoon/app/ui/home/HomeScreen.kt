@@ -598,6 +598,7 @@ private fun ColumnScope.LowContent(state: HomeUiState.Low, brief: Brief?, onTrea
             Text(stringResource(R.string.home_low_break_fast), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = StateLow, modifier = Modifier.fillMaxWidth().padding(top = 10.dp))
         }
         InsulinStillWorking(brief)
+        OnItNote() // a follower said "I'm on it"
         Spacer(Modifier.weight(1f))
         Column(modifier = Modifier.padding(vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             if (brief is Brief.Treated) {
@@ -666,6 +667,7 @@ private fun ColumnScope.UrgentContent(state: HomeUiState.Urgent, brief: Brief?, 
             },
         )
         InsulinStillWorking(brief)
+        OnItNote() // a follower said "I'm on it"
         Spacer(Modifier.weight(1f))
         Column(modifier = Modifier.padding(vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
             if (brief is Brief.Treated) TreatedButton(brief.at)
@@ -950,6 +952,13 @@ private fun CorrectionCard(c: DoseAdvice.Suggestion, onLog: () -> Unit) {
                 fontSize = 15.sp,
             )
         }
+        Text(
+            stringResource(R.string.home_correction_taken),
+            modifier = Modifier.clip(RoundedCornerShape(50)).clickable(onClick = onLog).padding(vertical = 6.dp),
+            fontSize = 13.5.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = SageDeep,
+        )
         Text(
             stringResource(R.string.home_correction_body, c.glucose ?: 0, c.target, String.format(Locale.getDefault(), "%.0f", c.factor ?: 0.0)) +
                 if (c.onBoardUsed >= 0.05) " " + stringResource(R.string.home_correction_less_working, String.format(Locale.getDefault(), "%.1f", c.onBoardUsed)) else "",
