@@ -405,6 +405,7 @@ fun LogbookScreen(
             doseSettings = remember(request) { doseSettings() },
             lowAt = state.lowAt,
             onEstimateCarbs = onEstimateCarbs.takeIf { hasAiKey },
+            onVoice = if (hasAiKey) ({ editor = null; eating = EatInput.Voice }) else null,
             onSave = { draft ->
                 editor = null
                 // What else the eat box heard (long-acting, a walk) is saved with the meal, under one undo.
