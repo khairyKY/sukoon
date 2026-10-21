@@ -93,17 +93,6 @@ class AppContainer(private val context: Context) {
     val themeMode = MutableStateFlow(settings.themeMode)
 
     init {
-        // A meal with no insulin: its reminder is lined up as it lands (here, by voice or from MyFitnessPal).
-        appScope.launch {
-            logbookRepository.eventsSince(System.currentTimeMillis() - java.time.Duration.ofHours(3).toMillis()).collect { events ->
-                if (settings.mealReminder) events.filter { it.type == com.sukoon.app.data.db.LogEventType.CARB.name }.forEach { com.sukoon.app.reminders.MealReminder.schedule(context, it) }
-                // Rapid doses: "did you eat?" at 30 min, and how a correction went at 2 h.
-                if (settings.doseCheckIns) events.filter { it.type == com.sukoon.app.data.db.LogEventType.INSULIN.name }.forEach { com.sukoon.app.reminders.DoseCheck.schedule(context, it) }
-            }
-        }
-    }
-
-    init {
         com.sukoon.app.ui.theme.Themes.current = settings.colorTheme
     }
 
@@ -145,6 +134,18 @@ class AppContainer(private val context: Context) {
 
     /** Workout, fasting and sick-day modes: what alarms, dose suggestions and Now adjust for. */
     val modes = com.sukoon.app.modes.ModesKeeper(context, logbookRepository, appScope)
+
+    init {
+        // After logbookRepository: this coroutine starts at once on another thread (above it, 0.20.0 crashed at launch).
+        // A meal with no insulin: its reminder is lined up as it lands (here, by voice or from MyFitnessPal).
+        appScope.launch {
+            logbookRepository.eventsSince(System.currentTimeMillis() - java.time.Duration.ofHours(3).toMillis()).collect { events ->
+                if (settings.mealReminder) events.filter { it.type == com.sukoon.app.data.db.LogEventType.CARB.name }.forEach { com.sukoon.app.reminders.MealReminder.schedule(context, it) }
+                // Rapid doses: "did you eat?" at 30 min, and how a correction went at 2 h.
+                if (settings.doseCheckIns) events.filter { it.type == com.sukoon.app.data.db.LogEventType.INSULIN.name }.forEach { com.sukoon.app.reminders.DoseCheck.schedule(context, it) }
+            }
+        }
+    }
 
     /** Pens left and the insurance pickup (You → Supplies); checked daily at 10:00. */
     val supplies = com.sukoon.app.supplies.SuppliesStore(context).also { com.sukoon.app.supplies.SuppliesReminder.schedule(context) }
