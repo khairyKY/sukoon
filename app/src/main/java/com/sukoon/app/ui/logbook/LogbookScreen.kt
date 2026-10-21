@@ -178,7 +178,10 @@ fun LogbookScreen(
     LaunchedEffect(openNewEntry) {
         if (openNewEntry != null) {
             val container = (context.applicationContext as com.sukoon.app.SukoonApp).container
-            editor = EditorRequest(openNewEntry, treatment = openNewEntry == LogEventType.CARB && container.requestedTreatment.value)
+            val treating = openNewEntry == LogEventType.CARB && container.requestedTreatment.value
+            // A meal opens on "What did you eat?" (words, voice, photo, barcode); carbs for a low go straight to the quick editor.
+            if (openNewEntry == LogEventType.CARB && !treating) adding = true
+            else editor = EditorRequest(openNewEntry, treatment = treating)
             container.requestedTreatment.value = false
             onOpenedEntry()
         }
