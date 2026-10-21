@@ -96,5 +96,16 @@
     "link": "https://github.com/khairyKY/sukoon/releases/latest",
     "until": "2026-11-04",
     "below": "0.20.0"
+  },
+  {
+    "id": "2026-10-21-sukoon-0.20.1",
+    "date": "2026-10-21",
+    "title": "Sukoon 0.20.1 fixes a crash",
+    "body": "0.20.0 could close itself when it opened. This update fixes it. Tap to update.",
+    "title_ar": "سكون 0.20.1 بيصلّح قفلة",
+    "body_ar": "نسخة 0.20.0 كانت ممكن تقفل لوحدها وهي بتفتح. التحديث ده بيصلّحها. دوس للتحديث.",
+    "link": "https://github.com/khairyKY/sukoon/releases/latest",
+    "until": "2026-11-04",
+    "below": "0.20.1"
   }
 ]
