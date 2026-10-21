@@ -284,6 +284,8 @@ internal fun AddSheet(
         Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
             Text(stringResource(R.string.logbook_sheet_title_new), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, lineHeight = 31.sp, color = MaterialTheme.colorScheme.onBackground)
             ContextPills(glucoseNow, insulinOnBoard, Modifier.padding(top = 8.dp))
+            // Say it, in Sotto's colours (Kai's own dictation app), back where it was; the box below takes words, a photo or a barcode.
+            if (ai) com.sukoon.app.ui.components.SottoBanner(stringResource(R.string.voice_title), stringResource(R.string.voice_hint), { onEat(EatInput.Voice) }, Modifier.padding(top = 14.dp).fillMaxWidth())
             EatBox(ai, onEat, Modifier.padding(top = 14.dp))
             if (usual.isNotEmpty()) {
                 Eyebrow(stringResource(R.string.entry_usual), Modifier.padding(top = 18.dp))
@@ -393,10 +395,12 @@ internal fun EntryEditor(
     onUpdate: (EventEntity, List<ByteArray>?) -> Unit,
     onDelete: (() -> Unit)?,
     onDismiss: () -> Unit,
+    /** A new meal by voice instead (the eat box's Say it); null without a Gemini key. */
+    onVoice: (() -> Unit)? = null,
 ) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            EditorContent(request, glucoseNow, insulinOnBoard, appMeals, photoFiles, siteHistory, doseSettings, lowAt, onEstimateCarbs, onSave, onUpdate, onDelete, onDismiss)
+            EditorContent(request, glucoseNow, insulinOnBoard, appMeals, photoFiles, siteHistory, doseSettings, lowAt, onEstimateCarbs, onSave, onUpdate, onDelete, onDismiss, onVoice)
         }
     }
 }
@@ -417,6 +421,7 @@ private fun EditorContent(
     onUpdate: (EventEntity, List<ByteArray>?) -> Unit,
     onDelete: (() -> Unit)?,
     onDismiss: () -> Unit,
+    onVoice: (() -> Unit)? = null,
 ) {
     val existing = request.existing
     val base = existing ?: request.prefill
@@ -714,6 +719,7 @@ private fun EditorContent(
                     onEstimate = { showEstimate = true },
                     onAppMeals = { showAppMeals = true },
                     onMore = { showMore = !showMore },
+                    onVoice = onVoice.takeIf { existing == null },
                 )
             }
         }
@@ -999,6 +1005,7 @@ private fun MealActions(
     onEstimate: () -> Unit,
     onAppMeals: () -> Unit,
     onMore: () -> Unit,
+    onVoice: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -1052,6 +1059,8 @@ private fun MealActions(
                 StartTile(if (hasPhoto) R.drawable.ic_check else R.drawable.ic_camera, null, stringResource(R.string.entry_photo), Modifier.fillMaxWidth()) { photoMenu = true }
                 photoChoices()
             }
+            // Say it, where people look for it when they're already in the meal.
+            onVoice?.let { StartTile(R.drawable.ic_mic, null, stringResource(R.string.voice_title), Modifier.weight(1f), onClick = it) }
             app?.let { StartTile(null, it, it.label, Modifier.weight(1f), onClick = openApp) }
             StartTile(R.drawable.ic_keypad, null, stringResource(R.string.food_just_carbs), Modifier.weight(1f), onClick = onJustCarbs)
         }
