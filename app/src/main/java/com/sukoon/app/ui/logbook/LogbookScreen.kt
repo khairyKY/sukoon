@@ -1,5 +1,7 @@
 package com.sukoon.app.ui.logbook
 
+import com.sukoon.app.domain.metrics.FingerPricks.isPrick
+
 import com.sukoon.app.ui.components.DayBar
 import com.sukoon.app.platform.TimeFormat
 import com.sukoon.app.health.HealthConnectSync
@@ -178,7 +180,10 @@ fun LogbookScreen(
     LaunchedEffect(openNewEntry) {
         if (openNewEntry != null) {
             val container = (context.applicationContext as com.sukoon.app.SukoonApp).container
-            editor = EditorRequest(openNewEntry, treatment = openNewEntry == LogEventType.CARB && container.requestedTreatment.value)
+            val treating = openNewEntry == LogEventType.CARB && container.requestedTreatment.value
+            // A meal opens on "What did you eat?" (words, voice, photo, barcode); carbs for a low go straight to the quick editor.
+            if (openNewEntry == LogEventType.CARB && !treating) adding = true
+            else editor = EditorRequest(openNewEntry, treatment = treating)
             container.requestedTreatment.value = false
             onOpenedEntry()
         }
@@ -402,6 +407,7 @@ fun LogbookScreen(
             doseSettings = remember(request) { doseSettings() },
             lowAt = state.lowAt,
             onEstimateCarbs = onEstimateCarbs.takeIf { hasAiKey },
+            onVoice = if (hasAiKey) ({ editor = null; eating = EatInput.Voice }) else null,
             onSave = { draft ->
                 editor = null
                 // What else the eat box heard (long-acting, a walk) is saved with the meal, under one undo.
@@ -634,7 +640,7 @@ internal fun GlucosePill(reading: GlucoseReading, suffix: String? = null) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        com.sukoon.app.ui.components.NumberWithTrend(String.format(Locale.getDefault(), "%d", reading.glucoseMgDl), reading.trend, text, 12.sp, fontWeight = FontWeight.SemiBold)
+        com.sukoon.app.ui.components.NumberWithTrend(String.format(Locale.getDefault(), "%d", reading.glucoseMgDl), reading.trend.takeUnless { reading.isPrick }, text, 12.sp, fontWeight = FontWeight.SemiBold)
         suffix?.let { Text(it, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = text) }
     }
 }

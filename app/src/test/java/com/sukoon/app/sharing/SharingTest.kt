@@ -59,4 +59,13 @@ class SharingTest {
         assertEquals(listOf(mum, dad), OnIt.recent(listOf(dad, mumEarlier, old, mum), now))
         assertEquals(listOf(dad), OnIt.recent(listOf(dad, mum), now, me = "mum"))
     }
+
+    @Test
+    fun `a finger-prick goes up as trend 9 and comes back as a prick, with no arrow`() {
+        val prick = com.sukoon.app.domain.metrics.FingerPricks.asReading(com.sukoon.app.domain.metrics.FingerPricks.Prick(Instant.parse("2026-10-29T15:00:00Z"), 142))
+        assertEquals(9, Sharing.readingJson(prick).getInt("trend"))
+        val back = Sharing.parseReadings("""[{"ts":"2026-10-29T15:00:00+00:00","mg_dl":142,"trend":9}]""").single()
+        assertEquals(com.sukoon.app.data.source.SourceKind.NONE, back.source)
+        assertEquals(142, back.glucoseMgDl)
+    }
 }

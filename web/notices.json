@@ -107,5 +107,16 @@
     "link": "https://github.com/khairyKY/sukoon/releases/latest",
     "until": "2026-11-04",
     "below": "0.20.1"
+  },
+  {
+    "id": "2026-10-30-sukoon-0.21.0",
+    "date": "2026-10-30",
+    "title": "Sukoon 0.21.0: when the sensor ends",
+    "body": "Now keeps working on finger-pricks when the sensor ends, with reminders to prick and to log meals, your glucose meter over Bluetooth, and more for the gym. Tap to update.",
+    "title_ar": "سكون 0.21.0: لما السينسور يخلص",
+    "body_ar": "الشاشة بتكمّل على قياس الصباع لما السينسور يخلص، ومعاها تذكير تقيس وتسجّل أكلك، وجهاز القياس بالبلوتوث، وحاجات أكتر للجيم. دوس للتحديث.",
+    "link": "https://github.com/khairyKY/sukoon/releases/latest",
+    "until": "2026-11-13",
+    "below": "0.21.0"
   }
 ]

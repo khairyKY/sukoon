@@ -39,4 +39,18 @@ sealed interface HomeUiState {
 
     /** The paired sensor reached the end of its life: time for a new one. */
     data object SensorEnded : HomeUiState
+
+    /**
+     * Finger-prick mode: no sensor reading to show ([why]), so Now runs on the last prick ([last],
+     * null before the first one) and today's pricks ([today], oldest first).
+     */
+    data class FingerPrick(
+        val why: Why,
+        val last: com.sukoon.app.domain.metrics.FingerPricks.Prick?,
+        val today: List<com.sukoon.app.domain.metrics.FingerPricks.Prick>,
+        /** Minutes since the last sensor reading, for [Why.NO_READINGS]. */
+        val minutesSinceReading: Int? = null,
+    ) : HomeUiState {
+        enum class Why { SENSOR_ENDED, NO_READINGS, NO_SENSOR }
+    }
 }

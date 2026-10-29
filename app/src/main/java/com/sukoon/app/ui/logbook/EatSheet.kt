@@ -143,7 +143,6 @@ internal fun EatBox(ai: Boolean, onEat: (EatInput) -> Unit, modifier: Modifier =
             trailingIcon = sendButton.takeIf { text.isNotBlank() },
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (ai) EatButton(R.drawable.ic_mic, stringResource(R.string.voice_title), Modifier.weight(1f)) { onEat(EatInput.Voice) }
             if (ai) EatButton(R.drawable.ic_camera, stringResource(R.string.entry_photo), Modifier.weight(1f)) { takePhoto.launch(captureUri) }
             EatButton(R.drawable.ic_barcode, stringResource(R.string.eat_scan), Modifier.weight(1f)) { onEat(EatInput.Scan) }
         }

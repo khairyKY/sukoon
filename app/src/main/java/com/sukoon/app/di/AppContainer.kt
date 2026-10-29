@@ -132,6 +132,22 @@ class AppContainer(private val context: Context) {
 
     val logbookRepository: LogbookRepository = LogbookRepository(eventDao = database.eventDao())
 
+    /**
+     * For Ask: the sensor's state (ended, quiet, finger-prick mode) and the supplements, which the
+     * readings alone don't say.
+     */
+    fun askSituation(now: Instant = Instant.now()): String = buildList {
+        when (val life = sensorLife(now)) {
+            is SensorLife.Ended -> add("SENSOR: ended; no sensor readings since. Finger-prick (blood meter) entries in the logbook are the glucose now.")
+            is SensorLife.WarmingUp -> add("SENSOR: new, warming up (${life.minutesLeft} min left); first-hour readings aren't counted.")
+            else -> Unit
+        }
+        settings.supplements.takeIf { it.isNotBlank() }?.let { add("SUPPLEMENTS they take: $it") }
+    }.joinToString("\n")
+
+    /** A Bluetooth glucose meter (You → Glucose meter): its tests come in as finger-pricks. */
+    val meter = com.sukoon.app.meter.MeterSync(context, logbookRepository, appScope)
+
     /** Workout, fasting and sick-day modes: what alarms, dose suggestions and Now adjust for. */
     val modes = com.sukoon.app.modes.ModesKeeper(context, logbookRepository, appScope)
 
@@ -220,7 +236,7 @@ class AppContainer(private val context: Context) {
         scope = appScope,
         enabled = { _sourceKind.value.real },
         watchdog = { SignalWatchdog.arm(context, it) },
-        warmingUp = { sensorLife() is SensorLife.WarmingUp },
+        sensorQuiet = { sensorLife().let { it is SensorLife.WarmingUp || it is SensorLife.Ended } },
         modes = { modes.now() },
     )
 
@@ -303,12 +319,34 @@ class AppContainer(private val context: Context) {
             }
         }
         notices.start()
+        meter.start()
         com.sukoon.app.platform.AfterWorkoutCheck(context, settings, logbookRepository, glucoseRepository, appScope).start()
         // Once: the noise 0.8.1 saved from an unstarted sensor's memory (and any other impossible jump) goes.
         val prefs = context.getSharedPreferences("sukoon_prefs", Context.MODE_PRIVATE)
         if (!prefs.getBoolean(KEY_SPIKES_CLEANED, false)) appScope.launch {
             runCatching { glucoseRepository.removeSpikes(System.currentTimeMillis() - Duration.ofDays(30).toMillis()) }
                 .onSuccess { android.util.Log.i("Sukoon", "Removed $it impossible readings"); prefs.edit().putBoolean(KEY_SPIKES_CLEANED, true).apply() }
+        }
+        // Finger-prick checks and the missing-meal question: re-planned when the logbook or the sensor
+        // changes, and every 10 min (finger-prick mode starts 30 min after the last reading).
+        appScope.launch {
+            var lastPrick: Long? = null
+            kotlinx.coroutines.flow.combine(
+                logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofHours(30).toMillis()),
+                glucoseRepository.status,
+                kotlinx.coroutines.flow.flow { while (true) { emit(Unit); delay(Duration.ofMinutes(10).toMillis()) } },
+            ) { events, _, _ -> events.filter { it.type == com.sukoon.app.data.db.LogEventType.FINGERSTICK.name }.maxOfOrNull { it.timestampMillis } }
+                .collect { prick ->
+                    if (lastPrick != null && prick != null && prick != lastPrick) com.sukoon.app.reminders.Checks.clearPrickChecks(context)
+                    lastPrick = prick
+                    runCatching { com.sukoon.app.reminders.Checks.refresh(context, this@AppContainer) }
+                    // Pricks to followers (a sensor gap isn't a blank for them); waits for the 2026-10-29 migration.
+                    if (prick != null) runCatching { sharing.uploadPricks(com.sukoon.app.domain.metrics.FingerPricks.of(logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofDays(2).toMillis()).first())) }
+                }
+        }
+        // A new reading: "Did you eat?" when it's rising and nothing explains it.
+        appScope.launch {
+            glucoseRepository.latestReading.collect { r -> if (r != null && !r.warmup) runCatching { com.sukoon.app.reminders.Checks.rise(context, this@AppContainer) } }
         }
         // Long-acting logged anywhere clears its reminder.
         appScope.launch {

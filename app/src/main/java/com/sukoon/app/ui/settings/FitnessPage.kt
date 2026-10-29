@@ -5,6 +5,7 @@ import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import kotlinx.coroutines.flow.first
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -118,6 +119,8 @@ fun FitnessPage(keeper: ModesKeeper, profile: Profile, onEditProfile: () -> Unit
     Label(stringResource(R.string.fitness_training))
     AfterWorkoutCut(keeper, enabled = !locked)
     Small(stringResource(R.string.fitness_training_note, Modes.NIGHT_LOW), muted = true)
+    GymLogLine()
+    Supplements()
 
     Label(stringResource(R.string.fitness_ramadan))
     val active by keeper.active.collectAsState()
@@ -348,3 +351,46 @@ private fun cityName(city: com.sukoon.app.modes.PrayerTimes.City?): String = str
         else -> R.string.ramadan_city_cairo
     },
 )
+
+/** The last workout as a line for the training ledger (GymLog), with a Copy button. */
+@Composable
+private fun GymLogLine() {
+    val container = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container
+    val line by androidx.compose.runtime.produceState<String?>(null) {
+        val since = System.currentTimeMillis() - java.time.Duration.ofDays(2).toMillis()
+        val events = container.logbookRepository.eventsSince(since).first()
+        val glucose = container.glucoseRepository.readingsSince(since).first().map { it.timestamp to it.glucoseMgDl } +
+            com.sukoon.app.domain.metrics.FingerPricks.of(events).map { it.at to it.mgDl }
+        value = com.sukoon.app.modes.GymLog.line(events, glucose, java.time.ZoneId.systemDefault())
+    }
+    val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
+    val context = LocalContext.current
+    line?.let { l ->
+        Small(stringResource(R.string.fitness_log_line))
+        Text(l, fontSize = 12.5.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, color = MaterialTheme.colorScheme.onBackground)
+        Text(
+            stringResource(R.string.fitness_log_copy), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = com.sukoon.app.ui.theme.SageDeep,
+            modifier = Modifier.padding(top = 6.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(50))
+                .clickable { clipboard.setText(androidx.compose.ui.text.AnnotatedString(l)); android.widget.Toast.makeText(context, context.getString(R.string.fitness_log_copied), android.widget.Toast.LENGTH_SHORT).show() }
+                .padding(horizontal = 4.dp, vertical = 8.dp),
+        )
+    }
+}
+
+/** What you take (creatine, pre-workout…): Ask reads it; creatine and vitamin C get their notes. */
+@Composable
+private fun Supplements() {
+    val settings = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.settings
+    var text by remember { mutableStateOf(settings.supplements) }
+    SukoonTextField(
+        text,
+        { v -> text = v.take(300); settings.supplements = text },
+        label = stringResource(R.string.fitness_supplements),
+        placeholder = stringResource(R.string.fitness_supplements_hint),
+        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+    )
+    if (text.contains("creatin", ignoreCase = true) || text.contains("كرياتين")) Small(stringResource(R.string.fitness_creatine_note), muted = true)
+    Small(stringResource(R.string.fitness_vitamin_c_note), muted = true)
+}
+
+

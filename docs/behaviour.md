@@ -25,10 +25,10 @@ Picked first by the sensor's life, then by the newest reading. One state at a ti
 
 | State | When | What Home shows |
 |---|---|---|
-| **Sensor ended** | The sensor's life is up (15 days for a Libre 2 Plus) | "Sensor ended", how to start a new one |
+| **Finger-prick mode** | The sensor's life is up (15 days for a Libre 2 Plus); or no reading for **30 min**; or no sensor but a finger-prick in the last day. Off by itself when readings return | An amber line saying why (tap: the sensor page); the last finger-prick, its colour, how long ago and which finger; *Prick now*; insulin still working; today's pricks; dose cards from a prick under **15 min** old (a sensor reading counts for 10) |
 | **Warming up** | First 60 minutes of a new sensor, or the newest reading is from a sensor's first hour | Countdown ring to the first reading; a first-hour reading in grey, "not counted" |
 | **No sensor** | Nothing paired, or no reading ever | Pair a sensor / enter the code |
-| **Signal lost** | Newest reading older than 10 min | The last value greyed, how long ago, help to reconnect |
+| **Signal lost** | Newest reading 10 to 30 min old | The last value greyed, how long ago, help to reconnect |
 | **Urgent** | Under **55** | Red banner, big number, "Do this now: 15 g fast carbs", *I've treated it* / *Alert emergency contact* |
 | **Low** | 55 to 69 | Big number, "You're going low", *I've treated it* / *Snooze 15 min* |
 | **In range** | 70 to the top of your range (180 unless you set it lower, You → Alarms → Your range) | Number, last 3 hours as bars (one per 15 min, a low or high in it shows), your chosen stats, the message |
@@ -96,7 +96,7 @@ a high 10 below its line.
 | **Low** | Under your low line | 70 | Line 60 to 110, on/off | After its snooze (15 min) | Alarm stream, 30 s, volume lifted to at least 50% |
 | **Going low** | Heading under your low line within 20 min | On | On/off | Once per episode | Alarm stream, 8 s, volume lifted to at least 50% |
 | **High** | Over your high line | 180 | Line 120 to 400, on/off, quiet hours | After its snooze (60 min) | Notification stream, 8 s |
-| **No readings** | No reading for N min (held while the paired sensor warms up: it sends nothing to act on yet) | 20 min | 10 to 120, on/off | Every 30 min | Notification stream, 8 s |
+| **No readings** | No reading for N min (held while the paired sensor warms up or after it has ended: it sends nothing to act on) | 20 min | 10 to 120, on/off | Every 30 min | Notification stream, 8 s |
 | **Falling fast** | Dropping 2+ a minute (3 or 4 to choose) while still under your high line, and no low coming yet | On | Rate, on/off | Once per episode | Alarm stream, 8 s |
 | **Rising fast** | Climbing that fast, not already high | Off (meals do it) | Rate, on/off | Once per episode | Notification stream, 8 s |
 
@@ -189,6 +189,64 @@ offering 30 minutes after when you usually log long-acting (from the logbook), o
 | The time comes and it wasn't | A notification: *Took it · 20 U* (logs your last amount again, now), *In 30 min*, or tap to log it yourself |
 | Still not logged | The notification comes back every 30 minutes, 3 times |
 | You log it anywhere (the logbook, *Took it*) | The notification goes away and the repeats stop |
+
+**Finger-pricks and meals** (You → Reminders). One alarm, always set to the next reminder; re-planned
+whenever the logbook, the sensor or the settings change, and every 10 minutes.
+
+*Meal times*: for each of breakfast, lunch and dinner, Sun–Thu and Fri–Sat kept apart, the median time
+of that meal over the last 3 weeks (from 3 meals on; meals of 10 g or more, not low treatments, not an
+imported meal timed when it was logged). A time you set wins; *Set by you* goes back to the learned one.
+A meal with neither has no reminders.
+
+| Reminder | When | Only in finger-prick mode | Counts toward the daily cap | Skipped when |
+|---|---|---|---|---|
+| Before a meal | 15 min before its time | Yes | Yes | That meal is logged (from 90 min before its time), or a prick within an hour of it |
+| 2 h after a meal | 2 h after any logged meal | Yes | Yes | A prick from 90 min after the meal |
+| Bedtime | The time you set (23:30) | Yes | Yes | A prick within an hour of it |
+| After a low | 15 min after a prick under 70, again every 15 min, 4 times at most | Yes | No | A prick of 70 or more |
+| Meal missing | 20 min after a meal's time | No | No | That meal is logged |
+
+- **Daily cap**: 2 to 20, 12 to start; checks after a low and meal questions don't count.
+- Nothing at night after a workout (Kai's call); the late-low watch's alarms cover that with a sensor.
+- Buttons: *Log it* (the finger-prick entry), *In 15 min*, *Skip*; after a low *I ate more* (a low
+  treatment); a missing meal *The usual · ful + bread, 60 g* (logs it now: the meal reminder then asks
+  about insulin), *Something else*, *Didn't eat*. Each reminder comes once; missed by over 45 min
+  (phone off), it's dropped, not sent late. A prick logged anywhere takes the finger-prick ones away.
+- Finger-prick mode as on Now (§2). Now shows *Next check around 19:30* under *Prick now*.
+
+**Did you eat?** (with a sensor; part of *Ask when a meal is missing*). A rise of 30 or more over 20
+minutes, still rising over the last 10, now 120 or more, with no food or rapid insulin logged in 90
+minutes and no workout ended in the last 2 hours (lifting raises glucose). Twice a day at most, 3 hours
+apart: meal detectors catch a meal 20–40 min in with 0.4–2.8 false alarms a day (Brummer et al., Front
+Nutr 2023), so it asks and never logs for you. Buttons: *The usual*, *Something else*, *Not food*.
+
+**Today's gaps** (22:00, same setting): the meals whose time passed with nothing logged, unless you
+answered *Didn't eat*. *Fill in* opens a new meal; *Not today*.
+
+**Glucose meter** (You → Glucose meter). A Bluetooth meter with the standard Glucose Profile (GLS,
+service 0x1808), such as the CareSens S Fit BT. Pair once: meter off, hold its button until *bT*,
+*Find meter*, pick it, type the 6 digits from its screen when Android asks. After that Android keeps a
+background connection waiting; whenever the meter wakes and shows *SYNC*, Sukoon asks for the tests
+stored since the last sync (the first time: all of them) and logs each as a finger-prick at the
+meter's time, its before/after-meal, fasting or bedtime flag as the note. A test within 3 min of a
+prick you typed with the same value isn't doubled; one timed in the future (the meter's clock ahead)
+is skipped. The page shows what Sukoon found on the meter: the glucose service, how many tests it
+holds. Without the service it says so, and pricks stay typed by hand. Forget clears it here (the
+pairing in Android's Bluetooth settings stays).
+
+**Gym** (You → Fitness & food, and Now):
+- *Before a workout* (Today sheet and the activity entry) reads the arrow too (Moser 2020, Table 1):
+  under 126 and falling, carbs and wait; under 180 and falling, a small snack first. Without a sensor
+  it uses a prick from the last 15 min, with no arrow.
+- *A late rise may still come* (Now): a meal 2–5 h ago with 75 g+ protein or 40 g+ fat while glucose
+  isn't falling (Paterson 2016: whey 75–100 g raised glucose at 3–5 h; Bell 2015). Said, never dosed for.
+- *Last workout, for your training log*: the LOG.md line (date, session, last meal and rapid insulin
+  before it, BG before / after / +2 h from the sensor or pricks), *Copy LOG line*. "How it felt" stays
+  blank for you.
+- *Supplements*: free text Ask reads. Creatine shows its lab note (raises blood creatinine, so ask for
+  a cystatin C eGFR; no effect on Libre readings); the vitamin C note (over 500 mg a day can read
+  falsely high) always shows.
+- Ask also knows when the sensor has ended or is warming up, and each meal's protein and fat.
 
 ## 8. Injection sites
 

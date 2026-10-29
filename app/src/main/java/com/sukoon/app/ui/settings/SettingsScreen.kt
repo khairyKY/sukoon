@@ -59,6 +59,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sukoon.app.BuildConfig
@@ -134,6 +135,8 @@ enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
     ALARMS(R.string.you_alarms, R.drawable.ic_bell),
     PEOPLE(R.string.you_people, R.drawable.ic_people),
     INSULIN(R.string.you_insulin, R.drawable.ic_insulin),
+    REMINDERS(R.string.you_reminders, R.drawable.ic_clock),
+    METER(R.string.meter_title, R.drawable.ic_drop),
     SUPPLIES(R.string.you_supplies, R.drawable.ic_box),
     CLINIC(R.string.you_clinic, R.drawable.ic_clinic),
     FITNESS(R.string.you_fitness, R.drawable.ic_walk),
@@ -278,6 +281,8 @@ fun SettingsScreen(
                         YouPage.INSULIN to stringResource(R.string.you_insulin_summary, insulinAction.peakMinutes, formatHours(insulinAction.durationMinutes)),
                         YouPage.FITNESS to fitnessSummary(),
                         YouPage.SUPPLIES to suppliesSummary(),
+                        YouPage.REMINDERS to remindersSummary(),
+                        YouPage.METER to meterSummary(),
                         YouPage.CLINIC to clinicSummary(),
                         YouPage.APPS to stringResource(R.string.you_apps_summary),
                         YouPage.REPORTS to stringResource(R.string.you_reports_summary),
@@ -449,6 +454,8 @@ fun SettingsScreen(
                             }
                         }
                         YouPage.SUPPLIES -> SuppliesPage()
+                        YouPage.REMINDERS -> RemindersPage()
+                        YouPage.METER -> MeterPage()
                         YouPage.CLINIC -> ClinicPage(onOpenReports = { onLink("trends_report") })
                         YouPage.FITNESS -> FitnessPage(
                             (context.applicationContext as com.sukoon.app.SukoonApp).container.modes,
@@ -664,6 +671,22 @@ private fun suppliesSummary(): String {
 
 /** You hub: "Lean bulk · 2,980 kcal", or that there's no goal. */
 @Composable
+private fun meterSummary(): String {
+    val s by (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.meter.state.collectAsStateWithLifecycle()
+    return s.name ?: stringResource(R.string.meter_none)
+}
+
+@Composable
+private fun remindersSummary(): String {
+    val c = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.settings.checks
+    val pricks = c.beforeMeals || c.afterMeals || c.bedtime || c.afterLow
+    return listOfNotNull(
+        if (c.mealMissing) stringResource(R.string.you_reminders_meals) else null,
+        if (pricks) stringResource(R.string.you_reminders_pricks) else null,
+    ).joinToString(" · ").ifEmpty { stringResource(R.string.you_reminders_off) }
+}
+
+@Composable
 private fun fitnessSummary(): String {
     val container = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container
     val goal by container.modes.goalFlow.collectAsStateWithLifecycle()
@@ -683,6 +706,8 @@ private fun sectionHue(page: YouPage): androidx.compose.ui.graphics.Color = andr
         YouPage.PEOPLE -> 0xFF3A6E93
         YouPage.INSULIN -> 0xFF675CA6
         YouPage.SUPPLIES -> 0xFF8A6A2E
+        YouPage.REMINDERS -> 0xFF9A4F3A
+        YouPage.METER -> 0xFFA23F55
         YouPage.CLINIC -> 0xFFA44C78
         YouPage.FITNESS -> 0xFF4A7D3A
         YouPage.APPS -> 0xFF237A85
@@ -716,8 +741,9 @@ private fun SectionCard(page: YouPage, summary: String, modifier: Modifier, onCl
             Icon(painterResource(page.icon), contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
         }
         Column(Modifier.padding(top = 10.dp)) {
-            Text(stringResource(page.title), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1)
-            Text(summary, fontSize = 12.5.sp, color = CaptionMuted, maxLines = 1)
+            // Ellipsis, not the default clip: a clip drops whole words, so "MyFitnessPal, Nightscout, AI" showed as "MyFitnessPal,".
+            Text(stringResource(page.title), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(summary, fontSize = 12.5.sp, color = CaptionMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -826,7 +852,7 @@ private fun ServiceRow(title: String, summary: String, action: String, prominent
     Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Column(Modifier.weight(1f)) {
             Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-            Text(summary, fontSize = 12.5.sp, color = CaptionMuted, maxLines = 1, modifier = Modifier.padding(top = 2.dp))
+            Text(summary, fontSize = 12.5.sp, color = CaptionMuted, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
         }
         Box(
             Modifier

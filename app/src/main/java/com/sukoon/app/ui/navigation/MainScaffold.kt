@@ -14,6 +14,7 @@ import com.sukoon.app.ui.insights.slot
 import com.sukoon.app.data.db.logType
 import com.sukoon.app.domain.metrics.TargetRange
 import com.sukoon.app.insulin.Dose
+import com.sukoon.app.domain.metrics.FingerPricks
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -200,6 +201,8 @@ fun MainScaffold() {
             }
             "profile" -> openYou(YouPage.PROFILE)
             "supplies" -> openYou(YouPage.SUPPLIES)
+            "reminders" -> openYou(YouPage.REMINDERS)
+            "meter" -> openYou(YouPage.METER)
             "clinic" -> openYou(YouPage.CLINIC)
             "sensor" -> openYou(YouPage.SENSOR)
             "sensor_start" -> {
@@ -339,13 +342,17 @@ fun MainScaffold() {
                         recentEvents.filter { it.logType == LogEventType.FINGERSTICK }.mapNotNull { e -> e.value?.let { Instant.ofEpochMilli(e.timestampMillis) to kotlin.math.round(it).toInt() } },
                     Instant.now(),
                 )
-                val correction = latest?.let { r ->
+                // The number to dose on: a fresh sensor reading, else a finger-prick from the last 15 min.
+                val current = FingerPricks.current(latest, FingerPricks.of(recentEvents), Instant.now())
+                val fresh = if (current?.prick == true) FingerPricks.FRESH else Dose.FRESH
+                val correction = current?.let { r ->
                     val now = Instant.now()
                     Dose.correction(
                         settings = home.settings.doseSettings,
-                        glucose = r.glucoseMgDl,
+                        glucose = r.mgDl,
                         trend = r.trend,
-                        readingAt = r.timestamp,
+                        readingAt = r.at,
+                        fresh = fresh,
                         now = now,
                         top = TargetRange.high,
                         onBoard = insulinOnBoard,
@@ -357,7 +364,7 @@ fun MainScaffold() {
                     )
                 }
                 // Beta: a meal in the last hour with no insulin logged and none working.
-                val mealDose = latest?.let { r ->
+                val mealDose = current?.let { r ->
                     val now = Instant.now()
                     recentEvents.lastOrNull { it.logType == LogEventType.CARB && !it.treatment && (it.value ?: 0.0) >= 10 }?.takeUnless { it.summary }?.let { meal ->
                         val mealAt = Instant.ofEpochMilli(meal.timestampMillis)
@@ -369,9 +376,10 @@ fun MainScaffold() {
                             carbs = meal.value ?: 0.0,
                             mealAt = mealAt,
                             insulinSince = insulinSince,
-                            glucose = r.glucoseMgDl,
+                            glucose = r.mgDl,
                             trend = r.trend,
-                            readingAt = r.timestamp,
+                            readingAt = r.at,
+                            fresh = fresh,
                             now = now,
                             onBoard = insulinOnBoard,
                             slot = InsightEngine.slotFor(mealAt.atZone(ZoneId.systemDefault()).hour),
@@ -379,6 +387,10 @@ fun MainScaffold() {
                             change = com.sukoon.app.modes.Modes.doseChange(home.modes.now(), now, mealAt, ZoneId.systemDefault(), home.modes.afterWorkoutCut),
                         )?.let { meal to it }
                     }
+                }
+                // Finger-prick mode: when the next reminder to prick comes, asked again as the logbook changes.
+                val nextCheck by produceState<Instant?>(null, homeState is com.sukoon.app.ui.home.HomeUiState.FingerPrick, recentEvents) {
+                    value = if (homeState is com.sukoon.app.ui.home.HomeUiState.FingerPrick) runCatching { com.sukoon.app.reminders.Checks.nextPrick(context, home)?.at }.getOrNull() else null
                 }
                 if (askingForHelp) EmergencyActionsDialog(emergencyAlerts, latest, onDismiss = { askingForHelp = false })
                 var viewing by remember { mutableStateOf<String?>(null) }
@@ -484,7 +496,7 @@ fun MainScaffold() {
                     }
                     if (showModes) {
                         com.sukoon.app.ui.home.TodaySheet(
-                            home.modes, home.alarms, latest?.glucoseMgDl, lastKetones,
+                            home.modes, home.alarms, current?.mgDl, current?.trend, lastKetones,
                             askPin = if (lockedAlarms) { action -> pinFor = action } else null,
                             onLogKetones = { showModes = false; home.requestedEntry.value = LogEventType.KETONE },
                             onFitness = { showModes = false; openYou(YouPage.FITNESS) },
@@ -515,6 +527,8 @@ fun MainScaffold() {
                         },
                         onAddFood = { pendingEntry = LogEventType.CARB; navController.navigateToTab(SukoonTab.TRENDS) },
                         onAddInsulin = { pendingEntry = LogEventType.INSULIN; navController.navigateToTab(SukoonTab.TRENDS) },
+                        onPrick = { pendingEntry = LogEventType.FINGERSTICK; navController.navigateToTab(SukoonTab.TRENDS) },
+                        nextCheck = nextCheck,
                         onModes = { showModes = true },
                         status = chips,
                         insulinOnBoard = insulinOnBoard,
@@ -560,7 +574,7 @@ fun MainScaffold() {
                 val guideContext = LocalContext.current
                 val askGuide = remember { runCatching { com.sukoon.app.ui.help.GuideContent.load(guideContext).asText() }.getOrDefault("") }
                 val askViewModel: AskViewModel = viewModel(
-                    factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini, doseSettings = { container.settings.doseSettings }, profile = { container.settings.profile }, goal = { container.modes.goalLine(container.settings.profile) }, guide = { askGuide }) { container.settings.insulinAction },
+                    factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini, doseSettings = { container.settings.doseSettings }, profile = { container.settings.profile }, goal = { listOf(container.modes.goalLine(container.settings.profile), container.askSituation()).filter { it.isNotBlank() }.joinToString("\n") }, guide = { askGuide }) { container.settings.insulinAction },
                 )
                 val askState by askViewModel.uiState.collectAsStateWithLifecycle()
                 val insightsViewModel: InsightsViewModel = viewModel(

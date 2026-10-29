@@ -85,6 +85,10 @@ class ModesTest {
         assertEquals(Modes.BeforeWorkout.CARBS_AND_WAIT, Modes.beforeWorkout(85))
         assertEquals(Modes.BeforeWorkout.SMALL_CARBS, Modes.beforeWorkout(110))
         assertNull(Modes.beforeWorkout(150))
+        // Falling counts (Moser 2020): wait with carbs under 126, a small snack under 180.
+        assertEquals(Modes.BeforeWorkout.CARBS_AND_WAIT, Modes.beforeWorkout(110, com.sukoon.app.data.source.TrendDirection.FALLING))
+        assertEquals(Modes.BeforeWorkout.SMALL_CARBS, Modes.beforeWorkout(150, com.sukoon.app.data.source.TrendDirection.FALLING_FAST))
+        assertNull(Modes.beforeWorkout(150, com.sukoon.app.data.source.TrendDirection.RISING))
         assertEquals(Modes.BeforeWorkout.KETONES_FIRST, Modes.beforeWorkout(290))
         assertEquals(Modes.KetoneBand.NORMAL, Modes.ketoneBand(0.4))
         assertEquals(Modes.KetoneBand.HIGH, Modes.ketoneBand(1.8))

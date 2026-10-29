@@ -52,6 +52,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sukoon.app.R
@@ -233,7 +234,7 @@ private fun PersonView(sharing: Sharing, settings: SettingsPrefs, person: Follow
         Text(pillLabel, modifier = Modifier.clip(RoundedCornerShape(50)).background(pillBg).padding(horizontal = 12.dp, vertical = 5.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = pillText)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
             Text(v?.let { String.format(Locale.getDefault(), "%d", it) } ?: "- - -", fontFamily = HeadlineSerifFontFamily, fontWeight = FontWeight.Light, fontSize = 104.sp, color = if (fresh) MaterialTheme.colorScheme.onBackground else TextMuted)
-            if (latest != null && fresh) com.sukoon.app.ui.components.TrendArrow(latest.trend, MaterialTheme.colorScheme.onBackground, size = 34.dp, modifier = Modifier.padding(top = 22.dp))
+            if (latest != null && fresh && latest.source != com.sukoon.app.data.source.SourceKind.NONE) com.sukoon.app.ui.components.TrendArrow(latest.trend, MaterialTheme.colorScheme.onBackground, size = 34.dp, modifier = Modifier.padding(top = 22.dp))
         }
         if (minutesAgo != null) {
             Text(
@@ -501,7 +502,7 @@ private fun ActionButton(icon: Int, label: String, modifier: Modifier, onClick: 
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
     ) {
         Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(18.dp))
-        Text(label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1)
+        Text(label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -641,7 +642,7 @@ fun FollowingStrip(sharing: Sharing, onOpen: (Followed) -> Unit) {
                     ),
                 )
                 Text(p.name.ifBlank { "…" }, fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                if (fresh) com.sukoon.app.ui.components.NumberWithTrend(String.format(Locale.getDefault(), "%d", r!!.glucoseMgDl), r.trend, MaterialTheme.colorScheme.onBackground, 13.5.sp, fontWeight = FontWeight.SemiBold)
+                if (fresh) com.sukoon.app.ui.components.NumberWithTrend(String.format(Locale.getDefault(), "%d", r!!.glucoseMgDl), r.trend.takeIf { r.source != com.sukoon.app.data.source.SourceKind.NONE }, MaterialTheme.colorScheme.onBackground, 13.5.sp, fontWeight = FontWeight.SemiBold)
                 else Text("- - -", fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
             }
         }

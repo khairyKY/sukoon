@@ -54,6 +54,9 @@ sealed interface DoseAdvice {
 
 object Dose {
 
+    /** A sensor reading older than this is too old to dose on. */
+    val FRESH: java.time.Duration = java.time.Duration.ofMinutes(10)
+
     /** The choices for [DoseSettings.afterLowMinutes]: what the settings allow, and how far callers look back. */
     val AFTER_LOW_RANGE = 30..240
 
@@ -83,9 +86,11 @@ object Dose {
         change: com.sukoon.app.modes.DoseChange? = null,
         /** The last rapid dose: none is suggested within 2 h of it, before it has peaked. */
         lastInsulinAt: java.time.Instant? = null,
+        /** How old [readingAt] may be: [FRESH] for a sensor reading, longer for a finger-prick (FingerPricks.FRESH). */
+        fresh: java.time.Duration = FRESH,
     ): DoseAdvice.Suggestion? {
         if (!settings.enabled || settings.correctionFactor == null || glucose == null || readingAt == null) return null
-        if (java.time.Duration.between(readingAt, now) > java.time.Duration.ofMinutes(10) || glucose <= top) return null
+        if (java.time.Duration.between(readingAt, now) > fresh || glucose <= top) return null
         if (lastCarbsAt != null && java.time.Duration.between(lastCarbsAt, now) < java.time.Duration.ofHours(2)) return null
         if (lastInsulinAt != null && java.time.Duration.between(lastInsulinAt, now) < java.time.Duration.ofHours(2)) return null
         // Insulin still working is taken off ([advise]); only what's left, a pen step or more, is suggested.
@@ -111,11 +116,12 @@ object Dose {
         slot: MealSlot,
         lowAt: java.time.Instant? = null,
         change: com.sukoon.app.modes.DoseChange? = null,
+        fresh: java.time.Duration = FRESH,
     ): DoseAdvice.Suggestion? {
         if (!settings.enabled || carbs < 10 || insulinSince || onBoard >= 0.5 || glucose == null || readingAt == null) return null
         val since = java.time.Duration.between(mealAt, now)
         if (since.isNegative || since > java.time.Duration.ofHours(1)) return null
-        if (java.time.Duration.between(readingAt, now) > java.time.Duration.ofMinutes(10)) return null
+        if (java.time.Duration.between(readingAt, now) > fresh) return null
         return (advise(settings, slot, carbs, glucose, trend, onBoard, lowAt, now, change) as? DoseAdvice.Suggestion)?.takeIf { it.mealUnits != null && it.units >= settings.step }
     }
 

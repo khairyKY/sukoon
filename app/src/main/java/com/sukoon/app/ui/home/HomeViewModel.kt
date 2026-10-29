@@ -16,6 +16,7 @@ import com.sukoon.app.data.source.libre.SensorLife
 import kotlinx.coroutines.flow.map
 import com.sukoon.app.data.repository.LogbookRepository
 import com.sukoon.app.insulin.InsulinAction
+import com.sukoon.app.domain.metrics.FingerPricks
 import java.time.ZoneId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -51,13 +52,20 @@ class HomeViewModel(
         }
     }
 
+    // ponytail: the last day's window starts when Home opens and only grows while it stays open; the
+    // rules look back from now, so older rows only cost a little memory.
+    private val since = System.currentTimeMillis() - BRIEF_WINDOW_MS
+    private val dayReadings = repository.readingsSince(since).shareIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), replay = 1)
+    private val dayEvents = (logbook?.eventsSince(since) ?: flowOf(emptyList())).shareIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), replay = 1)
+
     val uiState: StateFlow<HomeUiState> = combine(
         repository.status,
         repository.latestReading,
         repository.recentReadings(WINDOW_SIZE),
+        dayEvents.map { FingerPricks.of(it) },
         ticker,
-    ) { status, latest, recent, _ ->
-        HomeUiStateMapper.map(status, latest, recent, Instant.now(), lifeOf())
+    ) { status, latest, recent, pricks, _ ->
+        HomeUiStateMapper.map(status, latest, recent, Instant.now(), lifeOf(), pricks)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
@@ -66,12 +74,8 @@ class HomeViewModel(
 
     /**
      * Home's message and next step ([HomeBriefs]) from the last day of readings and logbook, judged
-     * again on every reading and tick. ponytail: the window starts when Home opens and only grows
-     * while it stays open; the rules look back from now, so older rows only cost a little memory.
+     * again on every reading and tick.
      */
-    private val since = System.currentTimeMillis() - BRIEF_WINDOW_MS
-    private val dayReadings = repository.readingsSince(since).shareIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), replay = 1)
-    private val dayEvents = (logbook?.eventsSince(since) ?: flowOf(emptyList())).shareIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), replay = 1)
 
     val brief: StateFlow<Brief?> = combine(dayReadings, dayEvents, treatedAt, ticker) { readings, events, treated, _ ->
         HomeBriefs.of(readings, events, Instant.now(), ZoneId.systemDefault(), actionOf(), lifeOf(), treated, modesOf())

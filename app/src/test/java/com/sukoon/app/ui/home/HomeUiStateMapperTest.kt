@@ -9,6 +9,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import com.sukoon.app.data.source.libre.SensorLife
+import com.sukoon.app.domain.metrics.FingerPricks
 
 class HomeUiStateMapperTest {
 
@@ -23,7 +24,7 @@ class HomeUiStateMapperTest {
         val warming = HomeUiStateMapper.map(SourceStatus.Connecting, null, emptyList(), now, SensorLife.WarmingUp(42))
         assertEquals(HomeUiState.WarmingUp(42), warming)
         val ended = HomeUiStateMapper.map(SourceStatus.Error("Sensor has expired"), reading(140, now.minusSeconds(3600)), recent, now, SensorLife.Ended(now))
-        assertEquals(HomeUiState.SensorEnded, ended)
+        assertEquals(HomeUiState.FingerPrick(HomeUiState.FingerPrick.Why.SENSOR_ENDED, null, emptyList()), ended)
     }
 
     @Test
@@ -122,5 +123,30 @@ class HomeUiStateMapperTest {
         val warm = (3L downTo 1L).map { GlucoseReading(now.minusSeconds(it * 60), 64 - it.toInt(), TrendDirection.FALLING, SourceKind.LIBRE_BLE, warmup = true) }
         val state = HomeUiStateMapper.map(SourceStatus.Connected, warm.last(), warm, now, SensorLife.Running(now.minusSeconds(7200), now.plusSeconds(86_400)))
         assertEquals(HomeUiState.WarmingUp(0, provisionalMgDl = 63), state)
+    }
+
+    private val zone = java.time.ZoneOffset.UTC
+    private fun prick(minutesAgo: Long, mgDl: Int) = FingerPricks.Prick(now.minusSeconds(minutesAgo * 60), mgDl)
+
+    @Test
+    fun `finger-prick mode - on when the sensor ended, with the last prick and today's`() {
+        val pricks = listOf(prick(14 * 60, 90), prick(120, 171), prick(20, 142)) // the first is yesterday (UTC)
+        val state = HomeUiStateMapper.map(SourceStatus.Error("Sensor has expired"), null, emptyList(), now, SensorLife.Ended(now), pricks, zone)
+        assertEquals(HomeUiState.FingerPrick(HomeUiState.FingerPrick.Why.SENSOR_ENDED, pricks.last(), pricks.drop(1)), state)
+    }
+
+    @Test
+    fun `finger-prick mode - after 30 min without readings, not before`() {
+        val at29 = HomeUiStateMapper.map(SourceStatus.Stale, reading(104, now.minusSeconds(29 * 60)), recent, now, null, emptyList(), zone)
+        assertTrue(at29 is HomeUiState.Stale)
+        val at30 = HomeUiStateMapper.map(SourceStatus.Stale, reading(104, now.minusSeconds(30 * 60)), recent, now, null, emptyList(), zone)
+        assertEquals(HomeUiState.FingerPrick(HomeUiState.FingerPrick.Why.NO_READINGS, null, emptyList(), 30), at30)
+    }
+
+    @Test
+    fun `finger-prick mode - no sensor only once you've pricked in the last day, and off when readings return`() {
+        assertEquals(HomeUiState.NoSensor, HomeUiStateMapper.map(SourceStatus.Disconnected, null, emptyList(), now, null, listOf(prick(25 * 60, 120)), zone))
+        assertTrue(HomeUiStateMapper.map(SourceStatus.Disconnected, null, emptyList(), now, null, listOf(prick(60, 120)), zone) is HomeUiState.FingerPrick)
+        assertTrue(HomeUiStateMapper.map(SourceStatus.Connected, reading(120), recent, now, null, listOf(prick(5, 120)), zone) is HomeUiState.InRange)
     }
 }

@@ -46,8 +46,11 @@ class AlarmMonitor(
     private val enabled: () -> Boolean,
     /** Re-arms [SignalWatchdog] (wake Sukoon after this long without a reading). */
     private val watchdog: (Duration) -> Unit = {},
-    /** The paired sensor is in its first hour: it sends nothing to act on yet, so silence isn't "no readings". */
-    private val warmingUp: () -> Boolean = { false },
+    /**
+     * The paired sensor is in its first hour or has ended: it sends nothing to act on, so silence isn't
+     * "no readings" (the ended notice already said so, and Now switches to finger-pricks).
+     */
+    private val sensorQuiet: () -> Boolean = { false },
     /** Workout, fasting, sick day: they move alarm lines for a while (Modes.alarmSettings). */
     private val modes: () -> com.sukoon.app.modes.ActiveModes = { com.sukoon.app.modes.ActiveModes() },
 ) {
@@ -219,7 +222,7 @@ class AlarmMonitor(
         }
         // The newest reading always counts, however old: the 30-minute window alone would forget it and end
         // "no readings" (and its emergency escalation) half an hour after the sensor went quiet.
-        val alarmSettings = com.sukoon.app.modes.Modes.alarmSettings(settings.alarmSettings, modes()).let { if (warmingUp()) it.copy(signalLossEnabled = false) else it }
+        val alarmSettings = com.sukoon.app.modes.Modes.alarmSettings(settings.alarmSettings, modes()).let { if (sensorQuiet()) it.copy(signalLossEnabled = false) else it }
         // A pause that has run out: alarms are back (and anything still true fires below).
         if (_pausedUntil.value?.isAfter(now) == false) _pausedUntil.value = null
         val result = AlarmEngine.evaluate((recent.values + listOfNotNull(newest)).distinct(), now, alarmSettings, state, pausedUntil = _pausedUntil.value)
