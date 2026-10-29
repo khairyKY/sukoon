@@ -173,8 +173,10 @@ fun HomeScreen(
     dosing: Boolean = false,
     /** Finger-prick mode's "Prick now": the finger-prick entry. */
     onPrick: () -> Unit = {},
+    /** Finger-prick mode: when the next reminder to prick comes (You → Reminders). */
+    nextCheck: Instant? = null,
 ) {
-    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss, mealDose, onMealDose, onModes, status, layout, demo, dosing, onPrick), LocalEntrance provides Motion.firstShow()) {
+    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss, mealDose, onMealDose, onModes, status, layout, demo, dosing, onPrick, nextCheck), LocalEntrance provides Motion.firstShow()) {
         PullToSync(onSync, modifier) {
             HomeContent(state, brief, Modifier.fillMaxSize(), onTreated, onSnooze, onAlertEmergencyContact, onTroubleshoot, onPairSensor)
         }
@@ -201,6 +203,7 @@ private class Shortcuts(
     val demo: Boolean = false,
     val dosing: Boolean = false,
     val onPrick: () -> Unit = {},
+    val nextCheck: Instant? = null,
 )
 private val LocalShortcuts = staticCompositionLocalOf { Shortcuts({}, {}) }
 
@@ -1319,6 +1322,12 @@ private fun ColumnScope.FingerPrickContent(state: HomeUiState.FingerPrick, onPai
             }
             Spacer(Modifier.height(14.dp))
             ActionButton(stringResource(R.string.home_fp_prick_now), filled = true, onClick = s.onPrick)
+            s.nextCheck?.let { next ->
+                Text(
+                    stringResource(R.string.home_fp_next, next.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("HH:mm"))),
+                    fontSize = 13.sp, color = CaptionMuted, modifier = Modifier.padding(top = 10.dp).align(Alignment.CenterHorizontally),
+                )
+            }
             if (s.insulinOnBoard >= 0.05) {
                 Text(
                     stringResource(R.string.home_iob, String.format(Locale.getDefault(), "%.1f", s.insulinOnBoard)),

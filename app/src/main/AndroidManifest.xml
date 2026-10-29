@@ -256,6 +256,10 @@
             android:exported="false" />
 
         <receiver
+            android:name=".reminders.Checks"
+            android:exported="false" />
+
+        <receiver
             android:name=".platform.BootReceiver"
             android:exported="false">
             <intent-filter>

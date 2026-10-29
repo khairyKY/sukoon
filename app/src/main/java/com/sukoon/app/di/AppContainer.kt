@@ -310,6 +310,21 @@ class AppContainer(private val context: Context) {
             runCatching { glucoseRepository.removeSpikes(System.currentTimeMillis() - Duration.ofDays(30).toMillis()) }
                 .onSuccess { android.util.Log.i("Sukoon", "Removed $it impossible readings"); prefs.edit().putBoolean(KEY_SPIKES_CLEANED, true).apply() }
         }
+        // Finger-prick checks and the missing-meal question: re-planned when the logbook or the sensor
+        // changes, and every 10 min (finger-prick mode starts 30 min after the last reading).
+        appScope.launch {
+            var lastPrick: Long? = null
+            kotlinx.coroutines.flow.combine(
+                logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofHours(30).toMillis()),
+                glucoseRepository.status,
+                kotlinx.coroutines.flow.flow { while (true) { emit(Unit); delay(Duration.ofMinutes(10).toMillis()) } },
+            ) { events, _, _ -> events.filter { it.type == com.sukoon.app.data.db.LogEventType.FINGERSTICK.name }.maxOfOrNull { it.timestampMillis } }
+                .collect { prick ->
+                    if (lastPrick != null && prick != null && prick != lastPrick) com.sukoon.app.reminders.Checks.clearPrickChecks(context)
+                    lastPrick = prick
+                    runCatching { com.sukoon.app.reminders.Checks.refresh(context, this@AppContainer) }
+                }
+        }
         // Long-acting logged anywhere clears its reminder.
         appScope.launch {
             logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofHours(12).toMillis()).collect { events ->

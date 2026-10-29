@@ -149,6 +149,32 @@ class SettingsPrefs(context: Context) {
         get() = com.sukoon.app.reminders.MorningSummarySettings(prefs.getBoolean(KEY_MORNING_SUMMARY, false), prefs.getInt(KEY_MORNING_MINUTE, 8 * 60).coerceIn(0, 1439))
         set(value) = prefs.edit().putBoolean(KEY_MORNING_SUMMARY, value.enabled).putInt(KEY_MORNING_MINUTE, value.minuteOfDay).apply()
 
+    /** You → Reminders: finger-prick checks (finger-prick mode only) and the missing-meal question. */
+    var checks: com.sukoon.app.reminders.CheckSettings
+        get() = com.sukoon.app.reminders.CheckSettings(
+            beforeMeals = prefs.getBoolean("checks_before", true),
+            afterMeals = prefs.getBoolean("checks_after", true),
+            bedtime = prefs.getBoolean("checks_bed", true),
+            bedtimeMinute = prefs.getInt("checks_bed_minute", 23 * 60 + 30).coerceIn(0, 1439),
+            afterLow = prefs.getBoolean("checks_low", true),
+            cap = prefs.getInt("checks_cap", 12).coerceIn(com.sukoon.app.reminders.CheckSettings.CAP_RANGE),
+            mealMissing = prefs.getBoolean("checks_meal", true),
+            // "WEEK:LUNCH=870,WEEKEND:BREAKFAST=600"
+            fixed = prefs.getString("checks_fixed", "").orEmpty().split(',').mapNotNull { pair ->
+                pair.split('=').takeIf { it.size == 2 }?.let { (k, v) -> v.toIntOrNull()?.takeIf { it in 0..1439 }?.let { k to it } }
+            }.toMap(),
+        )
+        set(value) = prefs.edit()
+            .putBoolean("checks_before", value.beforeMeals)
+            .putBoolean("checks_after", value.afterMeals)
+            .putBoolean("checks_bed", value.bedtime)
+            .putInt("checks_bed_minute", value.bedtimeMinute)
+            .putBoolean("checks_low", value.afterLow)
+            .putInt("checks_cap", value.cap)
+            .putBoolean("checks_meal", value.mealMissing)
+            .putString("checks_fixed", value.fixed.entries.joinToString(",") { "${it.key}=${it.value}" })
+            .apply()
+
     var basalReminder: BasalReminderSettings
         get() = BasalReminderSettings(prefs.getBoolean(KEY_BASAL_REMINDER, false), prefs.getInt(KEY_BASAL_MINUTE, 22 * 60).coerceIn(0, 1439))
         set(value) = prefs.edit().putBoolean(KEY_BASAL_REMINDER, value.enabled).putInt(KEY_BASAL_MINUTE, value.minuteOfDay).apply()

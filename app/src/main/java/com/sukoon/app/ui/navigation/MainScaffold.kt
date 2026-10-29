@@ -201,6 +201,7 @@ fun MainScaffold() {
             }
             "profile" -> openYou(YouPage.PROFILE)
             "supplies" -> openYou(YouPage.SUPPLIES)
+            "reminders" -> openYou(YouPage.REMINDERS)
             "clinic" -> openYou(YouPage.CLINIC)
             "sensor" -> openYou(YouPage.SENSOR)
             "sensor_start" -> {
@@ -386,6 +387,10 @@ fun MainScaffold() {
                         )?.let { meal to it }
                     }
                 }
+                // Finger-prick mode: when the next reminder to prick comes, asked again as the logbook changes.
+                val nextCheck by produceState<Instant?>(null, homeState is com.sukoon.app.ui.home.HomeUiState.FingerPrick, recentEvents) {
+                    value = if (homeState is com.sukoon.app.ui.home.HomeUiState.FingerPrick) runCatching { com.sukoon.app.reminders.Checks.nextPrick(context, home)?.at }.getOrNull() else null
+                }
                 if (askingForHelp) EmergencyActionsDialog(emergencyAlerts, latest, onDismiss = { askingForHelp = false })
                 var viewing by remember { mutableStateOf<String?>(null) }
                 viewing?.let { id ->
@@ -522,6 +527,7 @@ fun MainScaffold() {
                         onAddFood = { pendingEntry = LogEventType.CARB; navController.navigateToTab(SukoonTab.TRENDS) },
                         onAddInsulin = { pendingEntry = LogEventType.INSULIN; navController.navigateToTab(SukoonTab.TRENDS) },
                         onPrick = { pendingEntry = LogEventType.FINGERSTICK; navController.navigateToTab(SukoonTab.TRENDS) },
+                        nextCheck = nextCheck,
                         onModes = { showModes = true },
                         status = chips,
                         insulinOnBoard = insulinOnBoard,

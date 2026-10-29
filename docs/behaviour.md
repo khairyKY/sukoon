@@ -190,6 +190,30 @@ offering 30 minutes after when you usually log long-acting (from the logbook), o
 | Still not logged | The notification comes back every 30 minutes, 3 times |
 | You log it anywhere (the logbook, *Took it*) | The notification goes away and the repeats stop |
 
+**Finger-pricks and meals** (You → Reminders). One alarm, always set to the next reminder; re-planned
+whenever the logbook, the sensor or the settings change, and every 10 minutes.
+
+*Meal times*: for each of breakfast, lunch and dinner, Sun–Thu and Fri–Sat kept apart, the median time
+of that meal over the last 3 weeks (from 3 meals on; meals of 10 g or more, not low treatments, not an
+imported meal timed when it was logged). A time you set wins; *Set by you* goes back to the learned one.
+A meal with neither has no reminders.
+
+| Reminder | When | Only in finger-prick mode | Counts toward the daily cap | Skipped when |
+|---|---|---|---|---|
+| Before a meal | 15 min before its time | Yes | Yes | That meal is logged (from 90 min before its time), or a prick within an hour of it |
+| 2 h after a meal | 2 h after any logged meal | Yes | Yes | A prick from 90 min after the meal |
+| Bedtime | The time you set (23:30) | Yes | Yes | A prick within an hour of it |
+| After a low | 15 min after a prick under 70, again every 15 min, 4 times at most | Yes | No | A prick of 70 or more |
+| Meal missing | 20 min after a meal's time | No | No | That meal is logged |
+
+- **Daily cap**: 2 to 20, 12 to start; checks after a low and meal questions don't count.
+- Nothing at night after a workout (Kai's call); the late-low watch's alarms cover that with a sensor.
+- Buttons: *Log it* (the finger-prick entry), *In 15 min*, *Skip*; after a low *I ate more* (a low
+  treatment); a missing meal *The usual · ful + bread, 60 g* (logs it now: the meal reminder then asks
+  about insulin), *Something else*, *Didn't eat*. Each reminder comes once; missed by over 45 min
+  (phone off), it's dropped, not sent late. A prick logged anywhere takes the finger-prick ones away.
+- Finger-prick mode as on Now (§2). Now shows *Next check around 19:30* under *Prick now*.
+
 ## 8. Injection sites
 
 Rapid and long-acting entries (and a meal's rapid insulin) ask **Where?**, optionally. Two figures,
