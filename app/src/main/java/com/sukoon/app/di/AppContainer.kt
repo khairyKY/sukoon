@@ -220,7 +220,7 @@ class AppContainer(private val context: Context) {
         scope = appScope,
         enabled = { _sourceKind.value.real },
         watchdog = { SignalWatchdog.arm(context, it) },
-        warmingUp = { sensorLife() is SensorLife.WarmingUp },
+        sensorQuiet = { sensorLife().let { it is SensorLife.WarmingUp || it is SensorLife.Ended } },
         modes = { modes.now() },
     )
 

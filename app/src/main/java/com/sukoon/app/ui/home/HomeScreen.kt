@@ -77,6 +77,8 @@ import com.sukoon.app.ui.widget.arrow
 import com.sukoon.app.ui.theme.TextMuted
 import com.sukoon.app.ui.theme.UiFontFamily
 import java.util.Locale
+import com.sukoon.app.domain.metrics.GlucoseMetrics
+import com.sukoon.app.domain.metrics.TargetRange
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -169,8 +171,10 @@ fun HomeScreen(
     demo: Boolean = false,
     /** Dose suggestions (beta) are on: Now can say why there's no correction. */
     dosing: Boolean = false,
+    /** Finger-prick mode's "Prick now": the finger-prick entry. */
+    onPrick: () -> Unit = {},
 ) {
-    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss, mealDose, onMealDose, onModes, status, layout, demo, dosing), LocalEntrance provides Motion.firstShow()) {
+    CompositionLocalProvider(LocalShortcuts provides Shortcuts(onAddFood, onAddInsulin, insulinOnBoard, stats, chosenStats, onChooseStats, correction, nudge, onNudge, onNudgeDismiss, mealDose, onMealDose, onModes, status, layout, demo, dosing, onPrick), LocalEntrance provides Motion.firstShow()) {
         PullToSync(onSync, modifier) {
             HomeContent(state, brief, Modifier.fillMaxSize(), onTreated, onSnooze, onAlertEmergencyContact, onTroubleshoot, onPairSensor)
         }
@@ -196,6 +200,7 @@ private class Shortcuts(
     val layout: NowLayout = NowLayout(),
     val demo: Boolean = false,
     val dosing: Boolean = false,
+    val onPrick: () -> Unit = {},
 )
 private val LocalShortcuts = staticCompositionLocalOf { Shortcuts({}, {}) }
 
@@ -227,6 +232,7 @@ private fun HomeContent(
             is HomeUiState.Stale -> StaleContent(state, onTroubleshoot)
             HomeUiState.NoSensor -> NoSensorContent(onPairSensor)
             HomeUiState.SensorEnded -> NoSensorContent(onPairSensor, ended = true)
+            is HomeUiState.FingerPrick -> FingerPrickContent(state, onPairSensor, onTroubleshoot)
         }
     }
 }
@@ -1245,6 +1251,118 @@ private fun ColumnScope.NoSensorContent(onPairSensor: () -> Unit, ended: Boolean
         }
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp)) {
             ActionButton(stringResource(if (ended) R.string.home_btn_new_sensor else R.string.home_btn_pair_sensor), filled = true, onClick = onPairSensor)
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Finger-prick mode: the sensor ended or went quiet, Now runs on your pricks
+// ---------------------------------------------------------------------------------------------
+
+@Composable
+private fun ColumnScope.FingerPrickContent(state: HomeUiState.FingerPrick, onPairSensor: () -> Unit, onTroubleshoot: () -> Unit) {
+    val s = LocalShortcuts.current
+    val now = Instant.now()
+    Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+        HomeAppBar()
+        // Why there's no sensor number, in amber (not an alarm): a tap goes where it gets fixed.
+        val (title, body) = when (state.why) {
+            HomeUiState.FingerPrick.Why.SENSOR_ENDED -> stringResource(R.string.home_fp_ended_title) to stringResource(R.string.home_fp_ended_body)
+            HomeUiState.FingerPrick.Why.NO_READINGS -> stringResource(R.string.home_fp_no_readings_title, state.minutesSinceReading ?: 0) to stringResource(R.string.home_fp_no_readings_body)
+            HomeUiState.FingerPrick.Why.NO_SENSOR -> stringResource(R.string.home_fp_no_sensor_title) to stringResource(R.string.home_fp_no_sensor_body)
+        }
+        Row(
+            Modifier.padding(horizontal = 16.dp).padding(top = 12.dp).fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(PillHighBg)
+                .clickable(onClick = if (state.why == HomeUiState.FingerPrick.Why.NO_READINGS) onTroubleshoot else onPairSensor)
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(title, fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = PillHighText)
+                Text(body, fontSize = 12.sp, color = PillHighText)
+            }
+            Text("›", fontSize = 20.sp, color = PillHighText)
+        }
+
+        Column(
+            Modifier.padding(horizontal = 16.dp).padding(top = 14.dp).fillMaxWidth().clip(RoundedCornerShape(22.dp))
+                .background(MaterialTheme.colorScheme.surface).padding(20.dp),
+        ) {
+            val last = state.last
+            Text(stringResource(R.string.home_fp_last), fontSize = 11.sp, letterSpacing = 1.2.sp, fontWeight = FontWeight.SemiBold, color = NeutralWarm)
+            if (last == null) {
+                Text(stringResource(R.string.home_fp_none), fontFamily = HeadlineSerifFontFamily, fontSize = 26.sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 6.dp))
+                Text(stringResource(R.string.home_fp_none_body), fontSize = 13.sp, lineHeight = 19.sp, color = CaptionMuted, modifier = Modifier.padding(top = 4.dp))
+            } else {
+                val color = when (GlucoseMetrics.bracketFor(last.mgDl, TargetRange.high)) {
+                    GlucoseMetrics.RangeBracket.VERY_LOW, GlucoseMetrics.RangeBracket.LOW -> StateLow
+                    GlucoseMetrics.RangeBracket.IN_RANGE -> MaterialTheme.colorScheme.onBackground
+                    else -> StateHigh
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    HeroNumber(digits(last.mgDl), trend = null, color = color, fontSize = 80.sp)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.home_unit_mgdl), fontSize = 14.sp, color = CaptionMuted, modifier = Modifier.weight(1f))
+                    when (color) {
+                        StateLow -> StatusPill(stringResource(R.string.home_pill_low), StateLow, PillLowBg, PillLowText)
+                        StateHigh -> StatusPill(stringResource(R.string.home_pill_high), StateHigh, PillHighBg, PillHighText)
+                        else -> StatusPill(stringResource(R.string.home_pill_in_range), com.sukoon.app.ui.theme.InRange, com.sukoon.app.ui.theme.InRangeMist, com.sukoon.app.ui.theme.InRangeDeep)
+                    }
+                }
+                val age = Duration.between(last.at, now).toMinutes().coerceAtLeast(0)
+                val ago = if (age < 60) stringResource(R.string.home_fp_ago_min, age.toInt()) else stringResource(R.string.home_fp_ago_h, (age / 60).toInt())
+                val finger = last.finger?.let { runCatching { com.sukoon.app.insulin.Finger.valueOf(it) }.getOrNull() }?.let { com.sukoon.app.ui.logbook.fingerName(it) }
+                Text(listOfNotNull(ago, finger).joinToString(" · "), fontSize = 13.5.sp, color = CaptionMuted)
+                // Fresh enough to dose on (FingerPricks.FRESH), or not: then it asks for a new one.
+                val fresh = Duration.between(last.at, now) <= com.sukoon.app.domain.metrics.FingerPricks.FRESH
+                Text(stringResource(if (fresh) R.string.home_fp_no_arrow else R.string.home_fp_old), fontSize = 12.5.sp, lineHeight = 18.sp, color = TextMuted, modifier = Modifier.padding(top = 2.dp))
+            }
+            Spacer(Modifier.height(14.dp))
+            ActionButton(stringResource(R.string.home_fp_prick_now), filled = true, onClick = s.onPrick)
+            if (s.insulinOnBoard >= 0.05) {
+                Text(
+                    stringResource(R.string.home_iob, String.format(Locale.getDefault(), "%.1f", s.insulinOnBoard)),
+                    fontSize = 13.sp, color = CaptionMuted, modifier = Modifier.padding(top = 10.dp).align(Alignment.CenterHorizontally),
+                )
+            }
+        }
+        if (state.today.isNotEmpty()) PricksToday(state.today)
+        Spacer(Modifier.height(14.dp))
+        DoseCards()
+    }
+}
+
+/** Today's pricks as rings on the in-range band, the newest filled. ponytail: evenly spaced, not to scale in time; the last 8. */
+@Composable
+private fun PricksToday(pricks: List<com.sukoon.app.domain.metrics.FingerPricks.Prick>) {
+    val shown = pricks.takeLast(8)
+    val zone = ZoneId.systemDefault()
+    val time = remember { DateTimeFormatter.ofPattern("H:mm") }
+    Column(
+        Modifier.padding(horizontal = 16.dp).padding(top = 12.dp).fillMaxWidth().clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surface).padding(horizontal = 16.dp, vertical = 14.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.home_fp_today), fontSize = 11.sp, letterSpacing = 1.2.sp, fontWeight = FontWeight.SemiBold, color = NeutralWarm, modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.home_fp_today_summary, pricks.size, kotlin.math.round(pricks.map { it.mgDl }.average()).toInt()), fontSize = 12.5.sp, color = CaptionMuted)
+        }
+        val band = SageMist
+        val ink = Sage
+        val description = shown.joinToString(", ") { "${it.mgDl} ${it.at.atZone(zone).format(time)}" }
+        Canvas(Modifier.fillMaxWidth().height(72.dp).padding(top = 8.dp).semantics { contentDescription = description }) {
+            fun y(mgDl: Int) = size.height * (1f - ((mgDl.coerceIn(40, 300) - 40) / 260f))
+            drawRect(band.copy(alpha = 0.6f), Offset(0f, y(180)), androidx.compose.ui.geometry.Size(size.width, y(70) - y(180)))
+            val step = size.width / shown.size
+            shown.forEachIndexed { i, p ->
+                val c = Offset(step * (i + 0.5f), y(p.mgDl))
+                if (i == shown.lastIndex) drawCircle(ink, 6.dp.toPx(), c)
+                else drawCircle(ink, 6.dp.toPx(), c, style = Stroke(2.5.dp.toPx()))
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
+            shown.forEach { p ->
+                Text(p.at.atZone(zone).format(time), fontSize = 10.5.sp, color = TextMuted, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.weight(1f))
+            }
         }
     }
 }

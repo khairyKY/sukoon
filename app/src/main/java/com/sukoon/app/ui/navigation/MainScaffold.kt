@@ -14,6 +14,7 @@ import com.sukoon.app.ui.insights.slot
 import com.sukoon.app.data.db.logType
 import com.sukoon.app.domain.metrics.TargetRange
 import com.sukoon.app.insulin.Dose
+import com.sukoon.app.domain.metrics.FingerPricks
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -339,13 +340,17 @@ fun MainScaffold() {
                         recentEvents.filter { it.logType == LogEventType.FINGERSTICK }.mapNotNull { e -> e.value?.let { Instant.ofEpochMilli(e.timestampMillis) to kotlin.math.round(it).toInt() } },
                     Instant.now(),
                 )
-                val correction = latest?.let { r ->
+                // The number to dose on: a fresh sensor reading, else a finger-prick from the last 15 min.
+                val current = FingerPricks.current(latest, FingerPricks.of(recentEvents), Instant.now())
+                val fresh = if (current?.prick == true) FingerPricks.FRESH else Dose.FRESH
+                val correction = current?.let { r ->
                     val now = Instant.now()
                     Dose.correction(
                         settings = home.settings.doseSettings,
-                        glucose = r.glucoseMgDl,
+                        glucose = r.mgDl,
                         trend = r.trend,
-                        readingAt = r.timestamp,
+                        readingAt = r.at,
+                        fresh = fresh,
                         now = now,
                         top = TargetRange.high,
                         onBoard = insulinOnBoard,
@@ -357,7 +362,7 @@ fun MainScaffold() {
                     )
                 }
                 // Beta: a meal in the last hour with no insulin logged and none working.
-                val mealDose = latest?.let { r ->
+                val mealDose = current?.let { r ->
                     val now = Instant.now()
                     recentEvents.lastOrNull { it.logType == LogEventType.CARB && !it.treatment && (it.value ?: 0.0) >= 10 }?.takeUnless { it.summary }?.let { meal ->
                         val mealAt = Instant.ofEpochMilli(meal.timestampMillis)
@@ -369,9 +374,10 @@ fun MainScaffold() {
                             carbs = meal.value ?: 0.0,
                             mealAt = mealAt,
                             insulinSince = insulinSince,
-                            glucose = r.glucoseMgDl,
+                            glucose = r.mgDl,
                             trend = r.trend,
-                            readingAt = r.timestamp,
+                            readingAt = r.at,
+                            fresh = fresh,
                             now = now,
                             onBoard = insulinOnBoard,
                             slot = InsightEngine.slotFor(mealAt.atZone(ZoneId.systemDefault()).hour),
@@ -515,6 +521,7 @@ fun MainScaffold() {
                         },
                         onAddFood = { pendingEntry = LogEventType.CARB; navController.navigateToTab(SukoonTab.TRENDS) },
                         onAddInsulin = { pendingEntry = LogEventType.INSULIN; navController.navigateToTab(SukoonTab.TRENDS) },
+                        onPrick = { pendingEntry = LogEventType.FINGERSTICK; navController.navigateToTab(SukoonTab.TRENDS) },
                         onModes = { showModes = true },
                         status = chips,
                         insulinOnBoard = insulinOnBoard,

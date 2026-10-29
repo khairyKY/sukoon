@@ -25,10 +25,10 @@ Picked first by the sensor's life, then by the newest reading. One state at a ti
 
 | State | When | What Home shows |
 |---|---|---|
-| **Sensor ended** | The sensor's life is up (15 days for a Libre 2 Plus) | "Sensor ended", how to start a new one |
+| **Finger-prick mode** | The sensor's life is up (15 days for a Libre 2 Plus); or no reading for **30 min**; or no sensor but a finger-prick in the last day. Off by itself when readings return | An amber line saying why (tap: the sensor page); the last finger-prick, its colour, how long ago and which finger; *Prick now*; insulin still working; today's pricks; dose cards from a prick under **15 min** old (a sensor reading counts for 10) |
 | **Warming up** | First 60 minutes of a new sensor, or the newest reading is from a sensor's first hour | Countdown ring to the first reading; a first-hour reading in grey, "not counted" |
 | **No sensor** | Nothing paired, or no reading ever | Pair a sensor / enter the code |
-| **Signal lost** | Newest reading older than 10 min | The last value greyed, how long ago, help to reconnect |
+| **Signal lost** | Newest reading 10 to 30 min old | The last value greyed, how long ago, help to reconnect |
 | **Urgent** | Under **55** | Red banner, big number, "Do this now: 15 g fast carbs", *I've treated it* / *Alert emergency contact* |
 | **Low** | 55 to 69 | Big number, "You're going low", *I've treated it* / *Snooze 15 min* |
 | **In range** | 70 to the top of your range (180 unless you set it lower, You → Alarms → Your range) | Number, last 3 hours as bars (one per 15 min, a low or high in it shows), your chosen stats, the message |
@@ -96,7 +96,7 @@ a high 10 below its line.
 | **Low** | Under your low line | 70 | Line 60 to 110, on/off | After its snooze (15 min) | Alarm stream, 30 s, volume lifted to at least 50% |
 | **Going low** | Heading under your low line within 20 min | On | On/off | Once per episode | Alarm stream, 8 s, volume lifted to at least 50% |
 | **High** | Over your high line | 180 | Line 120 to 400, on/off, quiet hours | After its snooze (60 min) | Notification stream, 8 s |
-| **No readings** | No reading for N min (held while the paired sensor warms up: it sends nothing to act on yet) | 20 min | 10 to 120, on/off | Every 30 min | Notification stream, 8 s |
+| **No readings** | No reading for N min (held while the paired sensor warms up or after it has ended: it sends nothing to act on) | 20 min | 10 to 120, on/off | Every 30 min | Notification stream, 8 s |
 | **Falling fast** | Dropping 2+ a minute (3 or 4 to choose) while still under your high line, and no low coming yet | On | Rate, on/off | Once per episode | Alarm stream, 8 s |
 | **Rising fast** | Climbing that fast, not already high | Off (meals do it) | Rate, on/off | Once per episode | Notification stream, 8 s |
 

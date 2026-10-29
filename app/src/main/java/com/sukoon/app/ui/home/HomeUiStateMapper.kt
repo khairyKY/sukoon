@@ -9,6 +9,8 @@ import java.time.Duration
 import java.time.Instant
 import com.sukoon.app.data.source.libre.SensorLife
 import com.sukoon.app.alarms.AlarmSettings
+import com.sukoon.app.domain.metrics.FingerPricks
+import java.time.ZoneId
 
 /**
  * Pure mapping from raw source signals (status + latest reading + recent window) to [HomeUiState].
@@ -32,11 +34,33 @@ object HomeUiStateMapper {
         now: Instant,
         /** The paired sensor's life (null on demo data): the real warm-up countdown, and "ended". */
         life: SensorLife? = null,
-    ): HomeUiState = when (life) {
-        is SensorLife.Ended -> HomeUiState.SensorEnded
-        is SensorLife.WarmingUp -> HomeUiState.WarmingUp(life.minutesLeft, provisional(latest, recent, now))
-        // A first-hour reading is never shown as a real one, whatever the countdown says.
-        else -> if (latest?.warmup == true) HomeUiState.WarmingUp(0, provisional(latest, recent, now)) else byStatus(status, latest, recent, now)
+        /** The logbook's finger-pricks, oldest first: Now runs on them when the sensor has nothing. */
+        pricks: List<FingerPricks.Prick> = emptyList(),
+        zone: ZoneId = ZoneId.systemDefault(),
+    ): HomeUiState {
+        val base = when (life) {
+            is SensorLife.Ended -> HomeUiState.SensorEnded
+            is SensorLife.WarmingUp -> HomeUiState.WarmingUp(life.minutesLeft, provisional(latest, recent, now))
+            // A first-hour reading is never shown as a real one, whatever the countdown says.
+            else -> if (latest?.warmup == true) HomeUiState.WarmingUp(0, provisional(latest, recent, now)) else byStatus(status, latest, recent, now)
+        }
+        return fingerPrick(base, pricks, now, zone) ?: base
+    }
+
+    /**
+     * Finger-prick mode, on by itself: the sensor ended, its readings stopped [FingerPricks.MODE_AFTER]
+     * ago, or there's no sensor but you've pricked in the last day. Off by itself once readings return.
+     */
+    private fun fingerPrick(base: HomeUiState, pricks: List<FingerPricks.Prick>, now: Instant, zone: ZoneId): HomeUiState? {
+        val past = pricks.filter { !it.at.isAfter(now) }
+        val why = when {
+            base is HomeUiState.SensorEnded -> HomeUiState.FingerPrick.Why.SENSOR_ENDED
+            base is HomeUiState.Stale && base.minutesAgo >= FingerPricks.MODE_AFTER.toMinutes() -> HomeUiState.FingerPrick.Why.NO_READINGS
+            base is HomeUiState.NoSensor && past.any { Duration.between(it.at, now) <= Duration.ofDays(1) } -> HomeUiState.FingerPrick.Why.NO_SENSOR
+            else -> return null
+        }
+        val today = now.atZone(zone).toLocalDate()
+        return HomeUiState.FingerPrick(why, past.lastOrNull(), past.filter { it.at.atZone(zone).toLocalDate() == today }, (base as? HomeUiState.Stale)?.minutesAgo)
     }
 
     private fun byStatus(status: SourceStatus, latest: GlucoseReading?, recent: List<GlucoseReading>, now: Instant): HomeUiState = when (status) {
