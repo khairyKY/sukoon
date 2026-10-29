@@ -2466,6 +2466,10 @@
     <string name="nfc_no_answer">السينسور مردّش. حط ضهر الموبايل على السينسور وجرّب تاني.</string>
     <string name="nfc_odd_answer">رد السينسور اتقطع. خلّي الموبايل ثابت عليه وجرّب تاني.</string>
     <string name="nfc_only_libre2">سكون بيشتغل مع سينسورات Libre 2 و2 Plus (الأوروبية) بس.</string>
+    <string name="nfc_other_title">سكون مش هيقدر يقرا السينسور ده مباشرة</string>
+    <string name="nfc_other_libre">ده سينسور ليبري، بس مش ليبري 2 أو 2 بلس الأوروبي اللي سكون بيكلّمه (كود السينسور %1$s): غالبًا من بلد تانية، أو ليبري 3. تقدر تستخدم سكون برضه: شغّل المشاركة (LibreLinkUp) في أبلكيشن ليبري بتاع Abbott، وبعدين ادخل من حسابي › الناس › LibreLinkUp واختاره مصدر السكر.</string>
+    <string name="nfc_other_libre_silent">السينسور رفض أول سؤال من سكون. غالبًا ده ليبري 2 بلس من برّه أوروبا أو ليبري 3، وسكون لسه مش بيقراه مباشرة. تقدر تستخدم سكون برضه: شغّل المشاركة (LibreLinkUp) في أبلكيشن ليبري بتاع Abbott، وبعدين ادخل من حسابي › الناس › LibreLinkUp واختاره مصدر السكر.</string>
+    <string name="nfc_use_llu">استخدم LibreLinkUp</string>
     <string name="nfc_unreadable">ذاكرة السينسور ده متقريتش كويس، فسكون مش هيغيّر فيه حاجة. جرّب تاني.</string>
     <string name="nfc_refused_start">السينسور رفض يشتغل. حط ضهر الموبايل على السينسور وجرّب تاني.</string>
     <string name="nfc_didnt_start">السينسور مشتغلش. حط ضهر الموبايل على السينسور وجرّب تاني.</string>

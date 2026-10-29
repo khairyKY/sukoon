@@ -2330,6 +2330,10 @@
     <string name="nfc_no_answer">The sensor didn\'t answer. Hold the back of your phone flat on the sensor and try again.</string>
     <string name="nfc_odd_answer">The sensor\'s answer was cut short. Keep the phone still on it and try again.</string>
     <string name="nfc_only_libre2">Sukoon works with Libre 2 and 2 Plus (EU) sensors only.</string>
+    <string name="nfc_other_title">Sukoon can\'t read this sensor directly</string>
+    <string name="nfc_other_libre">It\'s a Libre, but not the European Libre 2 or 2 Plus Sukoon talks to (sensor code %1$s): likely from another region, or a Libre 3. You can still use Sukoon: turn on sharing (LibreLinkUp) in Abbott\'s Libre app, then sign in under You › People › LibreLinkUp and pick it as your glucose source.</string>
+    <string name="nfc_other_libre_silent">The sensor refused Sukoon\'s first question. It\'s likely a Libre 2 Plus from outside Europe or a Libre 3, which Sukoon can\'t read directly yet. You can still use Sukoon: turn on sharing (LibreLinkUp) in Abbott\'s Libre app, then sign in under You › People › LibreLinkUp and pick it as your glucose source.</string>
+    <string name="nfc_use_llu">Use LibreLinkUp</string>
     <string name="nfc_unreadable">This sensor\'s memory didn\'t read cleanly, so Sukoon won\'t touch it. Try again.</string>
     <string name="nfc_refused_start">The sensor refused to start. Hold the back of your phone flat on the sensor and try again.</string>
     <string name="nfc_didnt_start">The sensor didn\'t start. Hold the back of your phone flat on the sensor and try again.</string>

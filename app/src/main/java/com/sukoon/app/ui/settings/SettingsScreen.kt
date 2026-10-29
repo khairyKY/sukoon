@@ -308,6 +308,7 @@ fun SettingsScreen(
                                 sensorSelected = sourceKind == SourceKind.LIBRE_BLE,
                                 status = status,
                                 onPaired = onPaired,
+                                onLibreLinkUp = { page = YouPage.PEOPLE },
                                 onForget = {
                                     onForgetSensor()
                                     context.toast(context.getString(R.string.toast_sensor_forgotten))
