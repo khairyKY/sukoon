@@ -21,7 +21,7 @@ class CheckPlanTest {
     private val lunch = mapOf("WEEK:LUNCH" to 14 * 60 + 30)
 
     private fun plan(now: Instant, events: List<EventEntity> = emptyList(), fp: Boolean = true, settings: CheckSettings = CheckSettings(bedtime = false), sent: Map<String, Instant> = emptyMap()) =
-        CheckPlan.plan(now, zone, events, fp, settings, lunch, sent)
+        CheckPlan.plan(now, zone, events, fp, settings, lunch, sent).filter { it.kind != CheckKind.DAY_GAPS }
 
     @Test
     fun `meal times - the median of 3 or more, weekdays and Fri-Sat apart, yours win`() {
@@ -80,6 +80,16 @@ class CheckPlanTest {
         assertTrue(plan(t("14:16"), sent = mapOf("pre:2026-10-29:LUNCH" to t("14:15"))).none { it.kind == CheckKind.BEFORE_MEAL })
         assertTrue(plan(t("15:01")).none { it.kind == CheckKind.BEFORE_MEAL })
         assertFalse(plan(t("15:01")).none { it.kind == CheckKind.MEAL_MISSING })
+    }
+
+    @Test
+    fun `in the evening - the meals that passed with nothing logged, unless you said you didn't eat`() {
+        fun gaps(sent: Map<String, Instant> = emptyMap(), events: List<EventEntity> = emptyList()) =
+            CheckPlan.plan(t("21:50"), zone, events, false, CheckSettings(), lunch, sent).filter { it.kind == CheckKind.DAY_GAPS }
+        assertEquals(listOf(MealSlot.LUNCH), gaps().single().gaps)
+        assertEquals(t("22:00"), gaps().single().at)
+        assertTrue(gaps(sent = mapOf("no:meal:2026-10-29:LUNCH" to t("14:55"))).isEmpty())
+        assertTrue(gaps(events = listOf(meal(t("15:10")))).isEmpty())
     }
 
     @Test

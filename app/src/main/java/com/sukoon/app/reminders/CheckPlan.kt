@@ -83,14 +83,23 @@ object MealTimes {
 }
 
 enum class CheckKind {
-    BEFORE_MEAL, AFTER_MEAL, BEDTIME, AFTER_LOW, MEAL_MISSING;
+    BEFORE_MEAL, AFTER_MEAL, BEDTIME, AFTER_LOW, MEAL_MISSING, DAY_GAPS;
 
     /** Counted against the daily cap. */
     val capped: Boolean get() = this == BEFORE_MEAL || this == AFTER_MEAL || this == BEDTIME
 }
 
 /** One reminder: [key] names it once (a day's meal, a meal's 2 h, a low), so it's never sent twice. */
-data class Due(val kind: CheckKind, val at: Instant, val key: String, val slot: MealSlot? = null, val mgDl: Int? = null, val since: Instant? = null)
+data class Due(
+    val kind: CheckKind,
+    val at: Instant,
+    val key: String,
+    val slot: MealSlot? = null,
+    val mgDl: Int? = null,
+    val since: Instant? = null,
+    /** [CheckKind.DAY_GAPS]: today's meals with nothing logged. */
+    val gaps: List<MealSlot> = emptyList(),
+)
 
 /**
  * When to remind, from the logbook (pure; [Checks] posts them). Finger-prick checks follow the ADA's
@@ -107,6 +116,8 @@ object CheckPlan {
     private val MEAL_EARLY: Duration = Duration.ofMinutes(90)
     /** A prick this close to a check's time already answers it. */
     private val PRICK_COVERS: Duration = Duration.ofMinutes(60)
+    /** Today's gaps: meals that passed with nothing logged, asked about once in the evening. */
+    const val GAPS_MINUTE = 22 * 60
     /** Missed by more than this (phone off, app killed): dropped, not sent late. */
     val GRACE: Duration = Duration.ofMinutes(45)
     const val LOW = 70
@@ -134,6 +145,15 @@ object CheckPlan {
 
         val due = mutableListOf<Due>()
         val today = now.atZone(zone).toLocalDate()
+        // The evening's look back: meals whose time passed with nothing logged, unless you said you didn't eat.
+        if (settings.mealMissing) {
+            val evening = today.atStartOfDay(zone).plusMinutes(GAPS_MINUTE.toLong()).toInstant()
+            val gaps = MealTimes.times(DayKind.of(today), learned, settings.fixed).filter { (slot, minute) ->
+                val mealAt = today.atStartOfDay(zone).plusMinutes(minute.toLong()).toInstant()
+                mealAt.isBefore(evening) && !mealBetween(mealAt.minus(MEAL_EARLY), evening) && "no:meal:$today:$slot" !in sent
+            }.keys.toList()
+            if (gaps.isNotEmpty()) due += Due(CheckKind.DAY_GAPS, evening, "gaps:$today", gaps = gaps)
+        }
         for (date in listOf(today.minusDays(1), today, today.plusDays(1))) {
             val times = MealTimes.times(DayKind.of(date), learned, settings.fixed)
             for ((slot, minute) in times) {
@@ -169,4 +189,43 @@ object CheckPlan {
     }
 
     private fun capped(key: String) = key.startsWith("pre:") || key.startsWith("post:") || key.startsWith("bed:")
+}
+
+/**
+ * "Did you eat?" on a rise nothing explains (sensor on): asked, never logged for you. Meal
+ * detectors catch a meal 20–40 min in and raise 0.4–2.8 false alarms a day (Brummer et al.,
+ * Front Nutr 2023), so this one is strict and asks twice a day at most.
+ */
+object RiseCheck {
+    /** Up this much over [WINDOW], still going up over its last half, and at least [FROM]. */
+    const val RISE = 30
+    const val FROM = 120
+    val WINDOW: Duration = Duration.ofMinutes(20)
+    /** Food or rapid insulin logged this recently explains it; a workout (lifting raises glucose) too. */
+    private val EXPLAINED: Duration = Duration.ofMinutes(90)
+    private val AFTER_WORKOUT: Duration = Duration.ofHours(2)
+    const val PER_DAY = 2
+    val APART: Duration = Duration.ofHours(3)
+
+    /** [readings] (time, mg/dL) of the last half hour or so; [asked] when it was asked before. */
+    fun unexplained(readings: List<Pair<Instant, Int>>, events: List<EventEntity>, now: Instant, zone: ZoneId, asked: List<Instant>): Boolean {
+        val fresh = readings.filter { !it.first.isAfter(now) }.sortedBy { it.first }
+        val latest = fresh.lastOrNull()?.takeIf { Duration.between(it.first, now) <= Duration.ofMinutes(10) } ?: return false
+        fun at(back: Duration) = fresh.lastOrNull { !it.first.isAfter(latest.first.minus(back)) }
+        val start = at(WINDOW)?.takeIf { Duration.between(it.first, latest.first) <= WINDOW.plusMinutes(5) } ?: return false
+        val half = at(WINDOW.dividedBy(2)) ?: return false
+        if (latest.second < FROM || latest.second - start.second < RISE || latest.second <= half.second) return false
+        val explained = events.any { e ->
+            val t = Instant.ofEpochMilli(e.timestampMillis)
+            !t.isAfter(now) && when (e.logType) {
+                LogEventType.CARB, LogEventType.INSULIN -> Duration.between(t, now) <= EXPLAINED
+                LogEventType.ACTIVITY -> Duration.between(t.plus(Duration.ofMinutes((e.value ?: 0.0).toLong())), now) <= AFTER_WORKOUT
+                else -> false
+            }
+        }
+        if (explained) return false
+        val today = now.atZone(zone).toLocalDate()
+        if (asked.count { it.atZone(zone).toLocalDate() == today } >= PER_DAY) return false
+        return asked.none { Duration.between(it, now) < APART }
+    }
 }

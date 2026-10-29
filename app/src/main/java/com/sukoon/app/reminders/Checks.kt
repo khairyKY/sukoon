@@ -48,7 +48,11 @@ class Checks : BroadcastReceiver() {
                         manager.cancel(notificationId(key))
                         store(context).edit { sent.remove(key); snoozed[key] = Instant.now().plus(LATER) }
                     }
-                    ACTION_DONE -> if (key != null) manager.cancel(notificationId(key)) // Skip, Didn't eat: it stays sent
+                    ACTION_DONE -> if (key != null) {
+                        manager.cancel(notificationId(key)) // Skip, Didn't eat, Not food: it stays sent
+                        // "Didn't eat": that meal isn't a gap tonight.
+                        if (key.startsWith("meal:")) store(context).edit { sent["no:$key"] = Instant.now() }
+                    }
                     ACTION_USUAL -> if (key != null) {
                         manager.cancel(notificationId(key))
                         val note = intent.getStringExtra(EXTRA_NOTE)
@@ -96,6 +100,22 @@ class Checks : BroadcastReceiver() {
             return CheckPlan.plan(now, zone, day, mode, container.settings.checks, MealTimes.learned(events, now, zone), state.sent, state.snoozed)
         }
 
+        /** A new sensor reading: "Did you eat?" if it's rising and nothing explains it ([RiseCheck]). */
+        suspend fun rise(context: Context, container: AppContainer) = lock.withLock {
+            if (!container.settings.checks.mealMissing || !container.settings.sourceKind.real) return@withLock
+            val now = Instant.now()
+            val readings = container.glucoseRepository.readingsSince(now.minus(Duration.ofMinutes(40)).toEpochMilli()).first().map { it.timestamp to it.glucoseMgDl }
+            val events = container.logbookRepository.eventsSince(now.minus(Duration.ofDays(60)).toEpochMilli()).first()
+            val state = store(context)
+            val asked = state.sent.filterKeys { it.startsWith("rise:") }.values.toList()
+            val zone = ZoneId.systemDefault()
+            if (!RiseCheck.unexplained(readings, events, now, zone, asked)) return@withLock
+            val due = Due(CheckKind.MEAL_MISSING, now, "rise:${now.toEpochMilli()}", com.sukoon.app.insights.InsightEngine.slotFor(now.atZone(zone).hour), mgDl = readings.maxBy { it.first }.second)
+            state.edit { sent[due.key] = now }
+            val start = readings.lastOrNull { !it.first.isAfter(now.minus(RiseCheck.WINDOW)) }?.second ?: readings.first().second
+            notify(context, due, null, MealTimes.usual(events, due.slot!!, now, zone), riseBy = (due.mgDl ?: 0) - start)
+        }
+
         /** The next finger-prick check (not a meal question), for Now's "Next check" line. */
         suspend fun nextPrick(context: Context, container: AppContainer): Due? =
             plan(context, container, Instant.now()).firstOrNull { it.kind != CheckKind.MEAL_MISSING }
@@ -123,7 +143,7 @@ class Checks : BroadcastReceiver() {
 
         private fun notificationId(key: String) = 9_000 + (key.hashCode() and 0x3FF)
 
-        private fun notify(context: Context, due: Due, lastPrick: FingerPricks.Prick?, usual: UsualMeal?) {
+        private fun notify(context: Context, due: Due, lastPrick: FingerPricks.Prick?, usual: UsualMeal?, riseBy: Int? = null) {
             val manager = context.getSystemService(NotificationManager::class.java)
             if (!manager.areNotificationsEnabled()) return
             manager.createNotificationChannel(NotificationChannel(CHANNEL, context.getString(R.string.checks_channel), NotificationManager.IMPORTANCE_HIGH))
@@ -145,8 +165,10 @@ class Checks : BroadcastReceiver() {
                 CheckKind.AFTER_MEAL -> context.getString(R.string.checks_after_title) to context.getString(R.string.checks_after_body, time.format(due.since ?: due.at))
                 CheckKind.BEDTIME -> context.getString(R.string.checks_bed_title) to last
                 CheckKind.AFTER_LOW -> context.getString(R.string.checks_low_title) to context.getString(R.string.checks_low_body, due.mgDl ?: 0, time.format(due.since ?: due.at))
-                CheckKind.MEAL_MISSING -> context.getString(R.string.checks_meal_title, slotName(context, due.slot)) to
-                    context.getString(R.string.checks_meal_body, time.format(due.at.minus(CheckPlan.MEAL_WAIT)))
+                CheckKind.MEAL_MISSING -> if (riseBy != null) context.getString(R.string.checks_rise_title) to context.getString(R.string.checks_rise_body, due.mgDl ?: 0, riseBy)
+                else context.getString(R.string.checks_meal_title, slotName(context, due.slot)) to context.getString(R.string.checks_meal_body, time.format(due.at.minus(CheckPlan.MEAL_WAIT)))
+                CheckKind.DAY_GAPS -> context.getString(R.string.checks_gaps_title) to
+                    context.getString(R.string.checks_gaps_body, due.gaps.joinToString(context.getString(R.string.checks_list_sep)) { slotName(context, it) })
             }
             val b = NotificationCompat.Builder(context, CHANNEL)
                 .setSmallIcon(R.drawable.ic_stat_sukoon)
@@ -156,7 +178,10 @@ class Checks : BroadcastReceiver() {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
             body?.let { b.setContentText(it).setStyle(NotificationCompat.BigTextStyle().bigText(it)) }
-            if (due.kind == CheckKind.MEAL_MISSING) {
+            if (due.kind == CheckKind.DAY_GAPS) {
+                val fill = open(LogEventType.CARB, 0)
+                b.setContentIntent(fill).addAction(0, context.getString(R.string.checks_fill_in), fill).addAction(0, context.getString(R.string.checks_not_today), action(ACTION_DONE, 2))
+            } else if (due.kind == CheckKind.MEAL_MISSING) {
                 val other = open(LogEventType.CARB, 0)
                 b.setContentIntent(other)
                 usual?.let { u ->
@@ -164,7 +189,7 @@ class Checks : BroadcastReceiver() {
                     b.addAction(0, context.getString(R.string.checks_usual, u.note, grams), action(ACTION_USUAL, 1) { putExtra(EXTRA_NOTE, u.note); putExtra(EXTRA_CARBS, u.carbs) })
                 }
                 b.addAction(0, context.getString(R.string.checks_something_else), other)
-                b.addAction(0, context.getString(R.string.checks_didnt_eat), action(ACTION_DONE, 2))
+                b.addAction(0, context.getString(if (riseBy != null) R.string.checks_not_food else R.string.checks_didnt_eat), action(ACTION_DONE, 2))
             } else {
                 val log = open(LogEventType.FINGERSTICK, 0)
                 b.setContentIntent(log).addAction(0, context.getString(R.string.checks_log_it), log)

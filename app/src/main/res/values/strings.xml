@@ -2064,6 +2064,14 @@
     <string name="checks_not_yet">Not enough meals yet</string>
     <string name="checks_meals_note">Learned from your last 3 weeks. Tap a meal to set your own time; tap \"Set by you\" to go back to the learned one.</string>
     <string name="checks_meal_time">Usual time</string>
+    <string name="checks_rise_title">Rising with nothing logged · did you eat?</string>
+    <string name="checks_rise_body">%1$d now, up %2$d in 20 min</string>
+    <string name="checks_not_food">Not food</string>
+    <string name="checks_gaps_title">Today’s log has gaps</string>
+    <string name="checks_gaps_body">Nothing logged for %1$s. Add it now while you remember.</string>
+    <string name="checks_list_sep">", "</string>
+    <string name="checks_fill_in">Fill in</string>
+    <string name="checks_not_today">Not today</string>
     <string name="supply_summary_days">%1$s %2$d days</string>
     <string name="supply_summary_pickup">pickup %1$s</string>
     <string name="supply_summary_none">Pens and pickups</string>

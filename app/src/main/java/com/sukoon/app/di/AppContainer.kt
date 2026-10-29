@@ -329,6 +329,10 @@ class AppContainer(private val context: Context) {
                     runCatching { com.sukoon.app.reminders.Checks.refresh(context, this@AppContainer) }
                 }
         }
+        // A new reading: "Did you eat?" when it's rising and nothing explains it.
+        appScope.launch {
+            glucoseRepository.latestReading.collect { r -> if (r != null && !r.warmup) runCatching { com.sukoon.app.reminders.Checks.rise(context, this@AppContainer) } }
+        }
         // Long-acting logged anywhere clears its reminder.
         appScope.launch {
             logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofHours(12).toMillis()).collect { events ->

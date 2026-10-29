@@ -214,6 +214,15 @@ A meal with neither has no reminders.
   (phone off), it's dropped, not sent late. A prick logged anywhere takes the finger-prick ones away.
 - Finger-prick mode as on Now (§2). Now shows *Next check around 19:30* under *Prick now*.
 
+**Did you eat?** (with a sensor; part of *Ask when a meal is missing*). A rise of 30 or more over 20
+minutes, still rising over the last 10, now 120 or more, with no food or rapid insulin logged in 90
+minutes and no workout ended in the last 2 hours (lifting raises glucose). Twice a day at most, 3 hours
+apart: meal detectors catch a meal 20–40 min in with 0.4–2.8 false alarms a day (Brummer et al., Front
+Nutr 2023), so it asks and never logs for you. Buttons: *The usual*, *Something else*, *Not food*.
+
+**Today's gaps** (22:00, same setting): the meals whose time passed with nothing logged, unless you
+answered *Didn't eat*. *Fill in* opens a new meal; *Not today*.
+
 **Glucose meter** (You → Glucose meter). A Bluetooth meter with the standard Glucose Profile (GLS,
 service 0x1808), such as the CareSens S Fit BT. Pair once: meter off, hold its button until *bT*,
 *Find meter*, pick it, type the 6 digits from its screen when Android asks. After that Android keeps a

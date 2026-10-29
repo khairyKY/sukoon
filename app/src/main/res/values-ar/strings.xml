@@ -2192,6 +2192,14 @@
     <string name="checks_not_yet">لا توجد وجبات كافية بعد</string>
     <string name="checks_meals_note">مُتعلَّم من آخر 3 أسابيع. اضغط على وجبة لتحدد موعدك، واضغط «حددته أنت» للعودة إلى الموعد المُتعلَّم.</string>
     <string name="checks_meal_time">الموعد المعتاد</string>
+    <string name="checks_rise_title">ارتفاع دون تسجيل · هل أكلت؟</string>
+    <string name="checks_rise_body">%1$d الآن، بزيادة %2$d خلال 20 دقيقة</string>
+    <string name="checks_not_food">ليس أكلًا</string>
+    <string name="checks_gaps_title">سجل اليوم ناقص</string>
+    <string name="checks_gaps_body">لم يُسجَّل شيء لـ%1$s. أضِفه الآن ما دمت تتذكر.</string>
+    <string name="checks_list_sep">"، "</string>
+    <string name="checks_fill_in">أكمِل</string>
+    <string name="checks_not_today">ليس اليوم</string>
     <string name="supply_summary_days">%1$s %2$d يومًا</string>
     <string name="supply_summary_pickup">الاستلام %1$s</string>
     <string name="supply_summary_none">الأقلام والاستلام</string>

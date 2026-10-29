@@ -2188,6 +2188,14 @@
     <string name="checks_not_yet">لسه مفيش أكل كفاية</string>
     <string name="checks_meals_note">متعلّم من آخر ٣ أسابيع. دوس على وجبة تحدد ميعادك، ودوس «إنت اللي حددته» ترجع للمتعلّم.</string>
     <string name="checks_meal_time">الميعاد المعتاد</string>
+    <string name="checks_rise_title">السكر طالع ومفيش حاجة متسجّلة · كلت؟</string>
+    <string name="checks_rise_body">%1$d دلوقتي، زاد %2$d في ٢٠ دقيقة</string>
+    <string name="checks_not_food">مش أكل</string>
+    <string name="checks_gaps_title">سجل النهارده ناقص</string>
+    <string name="checks_gaps_body">مفيش حاجة متسجّلة لـ%1$s. ضيفها دلوقتي وإنت فاكر.</string>
+    <string name="checks_list_sep">"، "</string>
+    <string name="checks_fill_in">كمّل</string>
+    <string name="checks_not_today">مش النهارده</string>
     <string name="supply_summary_days">%1$s %2$d يوم</string>
     <string name="supply_summary_pickup">الاستلام %1$s</string>
     <string name="supply_summary_none">الأقلام والاستلام</string>
