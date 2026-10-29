@@ -69,6 +69,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -161,7 +162,7 @@ internal fun AppIcon(app: SourceApp, size: Dp) {
 internal fun SourceLine(app: SourceApp, details: List<String>) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         AppIcon(app, 16.dp)
-        Text((listOf(app.label) + details).joinToString(" · "), fontSize = 12.5.sp, color = CaptionMuted, maxLines = 1)
+        Text((listOf(app.label) + details).joinToString(" · "), fontSize = 12.5.sp, color = CaptionMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
