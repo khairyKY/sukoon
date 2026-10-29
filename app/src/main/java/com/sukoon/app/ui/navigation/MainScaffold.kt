@@ -202,6 +202,7 @@ fun MainScaffold() {
             "profile" -> openYou(YouPage.PROFILE)
             "supplies" -> openYou(YouPage.SUPPLIES)
             "reminders" -> openYou(YouPage.REMINDERS)
+            "meter" -> openYou(YouPage.METER)
             "clinic" -> openYou(YouPage.CLINIC)
             "sensor" -> openYou(YouPage.SENSOR)
             "sensor_start" -> {

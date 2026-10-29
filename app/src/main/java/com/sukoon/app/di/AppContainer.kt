@@ -132,6 +132,9 @@ class AppContainer(private val context: Context) {
 
     val logbookRepository: LogbookRepository = LogbookRepository(eventDao = database.eventDao())
 
+    /** A Bluetooth glucose meter (You → Glucose meter): its tests come in as finger-pricks. */
+    val meter = com.sukoon.app.meter.MeterSync(context, logbookRepository, appScope)
+
     /** Workout, fasting and sick-day modes: what alarms, dose suggestions and Now adjust for. */
     val modes = com.sukoon.app.modes.ModesKeeper(context, logbookRepository, appScope)
 
@@ -303,6 +306,7 @@ class AppContainer(private val context: Context) {
             }
         }
         notices.start()
+        meter.start()
         com.sukoon.app.platform.AfterWorkoutCheck(context, settings, logbookRepository, glucoseRepository, appScope).start()
         // Once: the noise 0.8.1 saved from an unstarted sensor's memory (and any other impossible jump) goes.
         val prefs = context.getSharedPreferences("sukoon_prefs", Context.MODE_PRIVATE)

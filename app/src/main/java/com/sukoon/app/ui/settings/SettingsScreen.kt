@@ -136,6 +136,7 @@ enum class YouPage(@StringRes val title: Int, @DrawableRes val icon: Int) {
     PEOPLE(R.string.you_people, R.drawable.ic_people),
     INSULIN(R.string.you_insulin, R.drawable.ic_insulin),
     REMINDERS(R.string.you_reminders, R.drawable.ic_clock),
+    METER(R.string.meter_title, R.drawable.ic_drop),
     SUPPLIES(R.string.you_supplies, R.drawable.ic_box),
     CLINIC(R.string.you_clinic, R.drawable.ic_clinic),
     FITNESS(R.string.you_fitness, R.drawable.ic_walk),
@@ -281,6 +282,7 @@ fun SettingsScreen(
                         YouPage.FITNESS to fitnessSummary(),
                         YouPage.SUPPLIES to suppliesSummary(),
                         YouPage.REMINDERS to remindersSummary(),
+                        YouPage.METER to meterSummary(),
                         YouPage.CLINIC to clinicSummary(),
                         YouPage.APPS to stringResource(R.string.you_apps_summary),
                         YouPage.REPORTS to stringResource(R.string.you_reports_summary),
@@ -453,6 +455,7 @@ fun SettingsScreen(
                         }
                         YouPage.SUPPLIES -> SuppliesPage()
                         YouPage.REMINDERS -> RemindersPage()
+                        YouPage.METER -> MeterPage()
                         YouPage.CLINIC -> ClinicPage(onOpenReports = { onLink("trends_report") })
                         YouPage.FITNESS -> FitnessPage(
                             (context.applicationContext as com.sukoon.app.SukoonApp).container.modes,
@@ -668,6 +671,12 @@ private fun suppliesSummary(): String {
 
 /** You hub: "Lean bulk · 2,980 kcal", or that there's no goal. */
 @Composable
+private fun meterSummary(): String {
+    val s by (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.meter.state.collectAsStateWithLifecycle()
+    return s.name ?: stringResource(R.string.meter_none)
+}
+
+@Composable
 private fun remindersSummary(): String {
     val c = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.settings.checks
     val pricks = c.beforeMeals || c.afterMeals || c.bedtime || c.afterLow
@@ -698,6 +707,7 @@ private fun sectionHue(page: YouPage): androidx.compose.ui.graphics.Color = andr
         YouPage.INSULIN -> 0xFF675CA6
         YouPage.SUPPLIES -> 0xFF8A6A2E
         YouPage.REMINDERS -> 0xFF9A4F3A
+        YouPage.METER -> 0xFFA23F55
         YouPage.CLINIC -> 0xFFA44C78
         YouPage.FITNESS -> 0xFF4A7D3A
         YouPage.APPS -> 0xFF237A85

@@ -214,6 +214,17 @@ A meal with neither has no reminders.
   (phone off), it's dropped, not sent late. A prick logged anywhere takes the finger-prick ones away.
 - Finger-prick mode as on Now (§2). Now shows *Next check around 19:30* under *Prick now*.
 
+**Glucose meter** (You → Glucose meter). A Bluetooth meter with the standard Glucose Profile (GLS,
+service 0x1808), such as the CareSens S Fit BT. Pair once: meter off, hold its button until *bT*,
+*Find meter*, pick it, type the 6 digits from its screen when Android asks. After that Android keeps a
+background connection waiting; whenever the meter wakes and shows *SYNC*, Sukoon asks for the tests
+stored since the last sync (the first time: all of them) and logs each as a finger-prick at the
+meter's time, its before/after-meal, fasting or bedtime flag as the note. A test within 3 min of a
+prick you typed with the same value isn't doubled; one timed in the future (the meter's clock ahead)
+is skipped. The page shows what Sukoon found on the meter: the glucose service, how many tests it
+holds. Without the service it says so, and pricks stay typed by hand. Forget clears it here (the
+pairing in Android's Bluetooth settings stays).
+
 ## 8. Injection sites
 
 Rapid and long-acting entries (and a meal's rapid insulin) ask **Where?**, optionally. Two figures,
