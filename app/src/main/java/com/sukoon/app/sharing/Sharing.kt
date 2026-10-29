@@ -190,6 +190,24 @@ class Sharing(
         return readings.size
     }
 
+    /**
+     * Finger-pricks to followers, so a sensor gap isn't a blank for them. Apart from [upload]: until
+     * supabase/migrations/20261029000000_finger_pricks.sql runs the table refuses them, and only this
+     * fails (the cursor waits, so they go once it has run).
+     */
+    suspend fun uploadPricks(pricks: List<com.sukoon.app.domain.metrics.FingerPricks.Prick>): Int {
+        val session = supabase.session.value ?: return 0
+        if (!shareOn) return 0
+        val cursorKey = KEY_PRICK_CURSOR + session.userId
+        val since = maxOf(prefs.getLong(cursorKey, 0L), System.currentTimeMillis() - BACKFILL_MS)
+        val new = pricks.filter { it.at.toEpochMilli() > since && !it.at.isAfter(java.time.Instant.now()) }.take(MAX_BATCH)
+        if (new.isEmpty()) return 0
+        val rows = new.map { readingJson(com.sukoon.app.domain.metrics.FingerPricks.asReading(it)) }
+        supabase.post("readings", JSONArray(rows).toString(), prefer = "resolution=ignore-duplicates,return=minimal")
+        prefs.edit().putLong(cursorKey, new.last().at.toEpochMilli()).apply()
+        return new.size
+    }
+
     /** A one-time code, valid for 24 h, that lets one person follow you. */
     suspend fun createInvite(): String {
         val code = (1..InviteCode.LENGTH).map { InviteCode.ALPHABET[random.nextInt(InviteCode.ALPHABET.length)] }.joinToString("")
@@ -280,6 +298,7 @@ class Sharing(
 
     companion object {
         private const val KEY_SHARE = "share_readings_on"
+        private const val KEY_PRICK_CURSOR = "prick_cursor_"
         private const val KEY_TELL_BASAL = "tell_followers_basal"
         private const val KEY_SHARE_MODES = "share_modes_on"
         private const val KEY_BASAL_MARKED = "basal_missed_marked"
@@ -318,10 +337,13 @@ class Sharing(
             else -> TrendDirection.RISING_FAST
         }
 
+        /** A finger-prick's trend code (supabase/migrations/20261029000000_finger_pricks.sql): no arrow. */
+        const val PRICK_TREND = 9
+
         fun readingJson(r: GlucoseReading): JSONObject = JSONObject()
             .put("ts", r.timestamp.toString())
             .put("mg_dl", r.glucoseMgDl)
-            .put("trend", trendCode(r.trend))
+            .put("trend", if (r.source == SourceKind.NONE) PRICK_TREND else trendCode(r.trend))
 
         /** Postgres sends timestamptz with an offset ("+00:00"), which Instant.parse doesn't take on older Androids. */
         fun parseReadings(json: String): List<GlucoseReading> {
@@ -331,8 +353,9 @@ class Sharing(
                 GlucoseReading(
                     timestamp = OffsetDateTime.parse(row.getString("ts")).toInstant(),
                     glucoseMgDl = row.getInt("mg_dl"),
-                    trend = trendFrom(row.optInt("trend")),
-                    source = SourceKind.LIBRE_BLE,
+                    trend = row.optInt("trend").let { if (it == PRICK_TREND) TrendDirection.STEADY else trendFrom(it) },
+                    // A finger-prick reads as one (FingerPricks.isPrick): no arrow on the follower's screen.
+                    source = if (row.optInt("trend") == PRICK_TREND) SourceKind.NONE else SourceKind.LIBRE_BLE,
                 )
             }
         }

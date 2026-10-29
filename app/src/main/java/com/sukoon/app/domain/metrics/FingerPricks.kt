@@ -27,6 +27,12 @@ object FingerPricks {
     /** The glucose to act on: [trend] null for a prick (one drop has no direction). */
     data class Current(val mgDl: Int, val trend: TrendDirection?, val at: Instant, val prick: Boolean)
 
+    /** A prick where a sensor reading is expected (the entry editor's "now"): no arrow, [isPrick]. */
+    fun asReading(p: Prick) = GlucoseReading(p.at, p.mgDl, TrendDirection.STEADY, com.sukoon.app.data.source.SourceKind.NONE)
+
+    /** A reading made by [asReading]: its trend means nothing. */
+    val GlucoseReading.isPrick: Boolean get() = source == com.sukoon.app.data.source.SourceKind.NONE
+
     /** The logbook's finger-pricks, oldest first. */
     fun of(events: List<EventEntity>): List<Prick> = events
         .filter { it.logType == LogEventType.FINGERSTICK && it.value != null }

@@ -93,7 +93,10 @@ class LogbookViewModel(
                     month.filter { it.logType == LogEventType.FINGERSTICK }.mapNotNull { e -> e.value?.let { Instant.ofEpochMilli(e.timestampMillis) to it.roundToInt() } },
                 Instant.now(),
             ),
-            glucoseNow = readings.lastOrNull()?.takeIf { Duration.between(it.timestamp, Instant.now()) <= HomeUiStateMapper.STALE_AFTER },
+            // A fresh sensor reading, else a finger-prick from the last 15 min (no sensor): what the editor doses on.
+            glucoseNow = readings.lastOrNull()?.takeIf { Duration.between(it.timestamp, Instant.now()) <= HomeUiStateMapper.STALE_AFTER }
+                ?: com.sukoon.app.domain.metrics.FingerPricks.of(month).lastOrNull { Duration.between(it.at, Instant.now()) in Duration.ZERO..com.sukoon.app.domain.metrics.FingerPricks.FRESH }
+                    ?.let(com.sukoon.app.domain.metrics.FingerPricks::asReading),
             readings = readings,
             day = past?.first,
         )

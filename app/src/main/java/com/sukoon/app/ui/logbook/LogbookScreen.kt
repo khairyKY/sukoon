@@ -1,5 +1,7 @@
 package com.sukoon.app.ui.logbook
 
+import com.sukoon.app.domain.metrics.FingerPricks.isPrick
+
 import com.sukoon.app.ui.components.DayBar
 import com.sukoon.app.platform.TimeFormat
 import com.sukoon.app.health.HealthConnectSync
@@ -638,7 +640,7 @@ internal fun GlucosePill(reading: GlucoseReading, suffix: String? = null) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        com.sukoon.app.ui.components.NumberWithTrend(String.format(Locale.getDefault(), "%d", reading.glucoseMgDl), reading.trend, text, 12.sp, fontWeight = FontWeight.SemiBold)
+        com.sukoon.app.ui.components.NumberWithTrend(String.format(Locale.getDefault(), "%d", reading.glucoseMgDl), reading.trend.takeUnless { reading.isPrick }, text, 12.sp, fontWeight = FontWeight.SemiBold)
         suffix?.let { Text(it, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = text) }
     }
 }

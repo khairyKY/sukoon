@@ -327,6 +327,8 @@ class AppContainer(private val context: Context) {
                     if (lastPrick != null && prick != null && prick != lastPrick) com.sukoon.app.reminders.Checks.clearPrickChecks(context)
                     lastPrick = prick
                     runCatching { com.sukoon.app.reminders.Checks.refresh(context, this@AppContainer) }
+                    // Pricks to followers (a sensor gap isn't a blank for them); waits for the 2026-10-29 migration.
+                    if (prick != null) runCatching { sharing.uploadPricks(com.sukoon.app.domain.metrics.FingerPricks.of(logbookRepository.eventsSince(System.currentTimeMillis() - Duration.ofDays(2).toMillis()).first())) }
                 }
         }
         // A new reading: "Did you eat?" when it's rising and nothing explains it.

@@ -1,5 +1,7 @@
 package com.sukoon.app.ui.logbook
 
+import com.sukoon.app.domain.metrics.FingerPricks.isPrick
+
 import kotlinx.coroutines.flow.first
 import com.sukoon.app.ui.theme.PillLowBg
 
@@ -503,7 +505,7 @@ private fun EditorContent(
         val keeper = (LocalContext.current.applicationContext as com.sukoon.app.SukoonApp).container.modes
         val mealAt = if (meal != null) Instant.ofEpochMilli(meal.timestampMillis) else if (isMeal) at() else null
         val change = com.sukoon.app.modes.Modes.doseChange(keeper.now(), Instant.now(), mealAt, ZoneId.systemDefault(), keeper.afterWorkoutCut)
-        Dose.advise(doseSettings, InsightEngine.slotFor(hour), carbs, glucoseNow?.glucoseMgDl, glucoseNow?.trend, insulinOnBoard, lowAt, change = change)
+        Dose.advise(doseSettings, InsightEngine.slotFor(hour), carbs, glucoseNow?.glucoseMgDl, glucoseNow?.trend?.takeUnless { glucoseNow.isPrick }, insulinOnBoard, lowAt, change = change)
     } else {
         null
     }
@@ -634,7 +636,7 @@ private fun EditorContent(
                     ChoiceRow(after.map { stringResource(R.string.entry_dose_after, -it) }, selected = after.indexOf(preBolus)) { preBolus = after[it] }
                 }
             }
-            if (type == LogEventType.FINGERSTICK && glucoseNow != null && existing == null) {
+            if (type == LogEventType.FINGERSTICK && glucoseNow != null && !glucoseNow.isPrick && existing == null) {
                 Text(stringResource(R.string.entry_sensor_now, String.format(Locale.getDefault(), "%d", glucoseNow.glucoseMgDl)), fontSize = 13.5.sp, color = CaptionMuted)
             }
             val field = active

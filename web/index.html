@@ -179,7 +179,7 @@ const T = {
     steady: n => `${n} is steady.`, isHigh: n => `${n} is high.`, isLow: n => `${n} is low.`, isVeryLow: n => `${n} is very low.`,
     headingLow: n => `${n} is heading low.`, quiet: n => `No readings from ${n}.`,
     lastSeen: (v, m) => `Last reading ${v}, ${m} min ago.`, callNow: 'Call them now.', couldBe: m => `Could be under 70 in about ${m} min.`,
-    trend: { '-2': 'falling fast', '-1': 'falling', '0': 'steady', '1': 'rising', '2': 'rising fast' },
+    trend: { '-2': 'falling fast', '-1': 'falling', '0': 'steady', '1': 'rising', '2': 'rising fast', '9': 'finger-prick' },
     wrongLogin: "That email and password don't match.", confirmEmail: 'Check your email to confirm the account, then sign in.',
     badCode: 'That code is wrong, used or expired.', offline: "Can't reach Sukoon. Check the internet.", lang: 'العربية',
     forgot: 'Forgot password?', needEmail: 'Type your email above first.', resetSent: (e) => `If ${e} has a Sukoon account, a link to choose a new password is on its way.`,
@@ -205,7 +205,7 @@ const T = {
     steady: n => `سكر ${n} مستقر.`, isHigh: n => `سكر ${n} عالي.`, isLow: n => `سكر ${n} واطي.`, isVeryLow: n => `سكر ${n} واطي جدًا.`,
     headingLow: n => `سكر ${n} نازل ناحية الهبوط.`, quiet: n => `مفيش قرايات من ${n}.`,
     lastSeen: (v, m) => `آخر قراية ${v}، من ${m} دقيقة.`, callNow: 'اتصل دلوقتي.', couldBe: m => `ممكن يبقى تحت ٧٠ في حوالي ${m} دقيقة.`,
-    trend: { '-2': 'نازل بسرعة', '-1': 'نازل', '0': 'ثابت', '1': 'طالع', '2': 'طالع بسرعة' },
+    trend: { '-2': 'نازل بسرعة', '-1': 'نازل', '0': 'ثابت', '1': 'طالع', '2': 'طالع بسرعة', '9': 'قياس صباع' },
     wrongLogin: 'الإيميل والباسورد مش متطابقين.', confirmEmail: 'افتح إيميلك وأكّد الحساب، وبعدين ادخل.',
     badCode: 'الكود غلط أو اتستخدم أو انتهى.', offline: 'مش قادر أوصل لسكون. اتأكد من النت.', lang: 'English',
     forgot: 'نسيت كلمة السر؟', needEmail: 'اكتب إيميلك فوق الأول.', resetSent: (e) => `لو ${e} ليه حساب على سكون، لينك تختار بيه كلمة سر جديدة في الطريق.`,
@@ -424,7 +424,7 @@ function render() {
   $('value').className = 'value ' + cls;
   $('value').textContent = fresh ? v : '–';
   $('arrow').className = 'arrow ' + cls;
-  $('arrow').textContent = fresh ? ['↓', '↘', '→', '↗', '↑'][last.trend + 2] : '';
+  $('arrow').textContent = fresh ? (['↓', '↘', '→', '↗', '↑'][last.trend + 2] ?? '') : ''; // 9: a finger-prick, no arrow
   $('meta').textContent = fresh ? `${t('mgdl')} · ${t('trend')[String(last.trend)]} · ${minutes < 1 ? t('now') : t('minAgo')(minutes)}` : '';
   $('liveDot').classList.toggle('pulse', !!fresh);
   $('liveDot').style.background = fresh ? '' : 'var(--muted)';
