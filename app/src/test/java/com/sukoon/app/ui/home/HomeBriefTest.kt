@@ -112,4 +112,14 @@ class HomeBriefTest {
         assertNull(brief(series(List(10) { 110 }, now.minusSeconds(11 * 60))))
         assertNull(brief(emptyList()))
     }
+
+    @Test
+    fun `a big protein meal 2 to 5 h ago - a late rise may still come, said not dosed`() {
+        val shake = event(LogEventType.CARB, 30.0, 180).copy(protein = 80.0)
+        assertEquals(Brief.LateRise(now.minusSeconds(180 * 60), 80, null), brief(series(listOf(150, 152, 155), trend = TrendDirection.RISING), listOf(shake)))
+        // Falling: nothing late is coming. An hour in: too early. A plain meal: not rich.
+        assertTrue(brief(series(listOf(160, 150, 140), trend = TrendDirection.FALLING), listOf(shake)) !is Brief.LateRise)
+        assertTrue(brief(series(listOf(150, 152, 155), trend = TrendDirection.RISING), listOf(event(LogEventType.CARB, 30.0, 60).copy(protein = 80.0))) !is Brief.LateRise)
+        assertTrue(brief(series(listOf(150, 152, 155), trend = TrendDirection.RISING), listOf(event(LogEventType.CARB, 30.0, 180).copy(protein = 30.0))) !is Brief.LateRise)
+    }
 }

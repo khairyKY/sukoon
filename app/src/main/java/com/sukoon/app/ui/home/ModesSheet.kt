@@ -71,6 +71,8 @@ fun TodaySheet(
     keeper: ModesKeeper,
     alarms: AlarmMonitor,
     glucose: Int?,
+    /** [glucose]'s arrow (null for a finger-prick). */
+    trend: com.sukoon.app.data.source.TrendDirection? = null,
     lastKetones: Pair<Double, Instant>?,
     /** Under the parent lock: pausing asks for the PIN first. */
     askPin: ((() -> Unit) -> Unit)?,
@@ -123,7 +125,7 @@ fun TodaySheet(
                 },
             ) { if (until != null) Action(stringResource(R.string.today_end)) { keeper.endWorkout() } }
             if (until == null) {
-                Modes.beforeWorkout(glucose)?.let { advice ->
+                Modes.beforeWorkout(glucose, trend)?.let { advice ->
                     Callout(
                         stringResource(
                             when (advice) {

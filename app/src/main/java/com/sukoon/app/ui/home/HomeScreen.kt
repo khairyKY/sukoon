@@ -1023,6 +1023,14 @@ internal fun briefLines(context: android.content.Context, brief: Brief): Pair<St
             if (brief.grams != null) context.getString(R.string.home_brief_meal_body_grams, brief.grams, HM.format(brief.at))
             else context.getString(R.string.home_brief_meal_body, HM.format(brief.at))
             )
+        is Brief.LateRise -> context.getString(R.string.home_brief_late_title) to context.getString(
+            when {
+                brief.protein != null && brief.fat != null -> R.string.home_brief_late_both
+                brief.protein != null -> R.string.home_brief_late_protein
+                else -> R.string.home_brief_late_fat
+            },
+            HM.format(brief.at), brief.protein ?: brief.fat ?: 0, brief.fat ?: 0,
+        )
         is Brief.BackFromLow -> context.getString(R.string.home_brief_back_title) to context.getString(R.string.home_brief_back_body, HM.format(brief.lowAt))
         Brief.DawnRise -> context.getString(R.string.home_brief_dawn_title) to context.getString(R.string.home_brief_dawn_body)
         Brief.RisingNoMeal -> context.getString(R.string.home_brief_rising_title) to context.getString(R.string.home_brief_rising_body)

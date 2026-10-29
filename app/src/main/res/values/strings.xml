@@ -515,6 +515,10 @@
     <string name="home_fp_next">Next check around %1$s</string>
     <string name="home_fp_today">TODAY FROM YOUR FINGER</string>
     <string name="home_fp_today_summary">%1$d checks · average %2$d</string>
+    <string name="home_brief_late_title">A late rise may still come</string>
+    <string name="home_brief_late_protein">Your %1$s meal had %2$d g of protein: big protein meals often raise glucose 3 to 5 h later. Worth a look before you correct.</string>
+    <string name="home_brief_late_fat">Your %1$s meal had %2$d g of fat: fat slows the rise, so it can come 3 to 5 h later. Worth a look before you correct.</string>
+    <string name="home_brief_late_both">Your %1$s meal had %2$d g of protein and %3$d g of fat: its rise can come 3 to 5 h later. Worth a look before you correct.</string>
     <string name="banner_sensor_ending">Sensor ends %1$s (in %2$s). Have a new one ready.</string>
     <string name="life_in_days">%1$d d %2$d h</string>
     <string name="sensor_life_running">Ends %1$s (in %2$s).</string>

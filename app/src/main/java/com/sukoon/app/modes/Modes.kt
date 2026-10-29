@@ -143,13 +143,21 @@ object Modes {
         }
     }
 
-    /** What to do before lifting at [mgDl] (Riddell 2017 / Moser 2020); null when nothing is needed. */
-    fun beforeWorkout(mgDl: Int?): BeforeWorkout? = when {
-        mgDl == null -> null
-        mgDl < 90 -> BeforeWorkout.CARBS_AND_WAIT // 10–20 g, and wait
-        mgDl < 126 -> BeforeWorkout.SMALL_CARBS // about 10 g
-        mgDl > 270 -> BeforeWorkout.KETONES_FIRST
-        else -> null
+    /**
+     * What to do before lifting at [mgDl] (Riddell 2017 / Moser 2020); null when nothing is needed.
+     * A falling [trend] counts too (Moser 2020, Table 1): under 126 and falling, wait with carbs; under
+     * 180 and falling, a small snack first. A finger-prick has no trend (null): the number alone.
+     */
+    fun beforeWorkout(mgDl: Int?, trend: com.sukoon.app.data.source.TrendDirection? = null): BeforeWorkout? {
+        val falling = trend == com.sukoon.app.data.source.TrendDirection.FALLING || trend == com.sukoon.app.data.source.TrendDirection.FALLING_FAST
+        return when {
+            mgDl == null -> null
+            mgDl < 90 -> BeforeWorkout.CARBS_AND_WAIT // 10–20 g, and wait
+            mgDl < 126 -> if (falling) BeforeWorkout.CARBS_AND_WAIT else BeforeWorkout.SMALL_CARBS // about 10 g
+            mgDl > 270 -> BeforeWorkout.KETONES_FIRST
+            mgDl < 180 && falling -> BeforeWorkout.SMALL_CARBS
+            else -> null
+        }
     }
 
     enum class BeforeWorkout { CARBS_AND_WAIT, SMALL_CARBS, KETONES_FIRST }

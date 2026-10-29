@@ -496,7 +496,7 @@ fun MainScaffold() {
                     }
                     if (showModes) {
                         com.sukoon.app.ui.home.TodaySheet(
-                            home.modes, home.alarms, latest?.glucoseMgDl, lastKetones,
+                            home.modes, home.alarms, current?.mgDl, current?.trend, lastKetones,
                             askPin = if (lockedAlarms) { action -> pinFor = action } else null,
                             onLogKetones = { showModes = false; home.requestedEntry.value = LogEventType.KETONE },
                             onFitness = { showModes = false; openYou(YouPage.FITNESS) },

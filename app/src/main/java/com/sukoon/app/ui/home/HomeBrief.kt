@@ -72,6 +72,11 @@ sealed interface Brief {
 
     // Nothing to do.
     data class AfterMeal(val grams: Int?, val at: Instant) : Brief { override val step: Step? = null }
+    /**
+     * A meal 2–5 h ago with 75 g+ protein or 40 g+ fat: its rise can come late (Paterson et al. 2016:
+     * whey 75–100 g raised glucose at 3–5 h; Bell et al. 2015). Said, never dosed for.
+     */
+    data class LateRise(val at: Instant, val protein: Int?, val fat: Int?) : Brief { override val step: Step? = null }
     data object DawnRise : Brief { override val step: Step? = null }
     data object QuietNight : Brief { override val step: Step? = null }
     data object GoodNight : Brief { override val step: Step? = null }
@@ -88,6 +93,9 @@ sealed interface Brief {
 object HomeBriefs {
 
     const val STEADY_VARIANTS = 4
+    /** A meal this rich in protein or fat (g) gets the late-rise note. */
+    const val RICH_PROTEIN = 75
+    const val RICH_FAT = 40
     private const val MIN_UNITS = 0.5 // less rapid insulin than this isn't worth mentioning
     private val GAP = Duration.ofMinutes(20)
     private val TREATMENT_WAIT = Duration.ofMinutes(15)
@@ -125,6 +133,7 @@ object HomeBriefs {
         val projected = AlarmEngine.projected(readings.takeLast(60), latest)
         val lastLow = InsightEngine.lowEpisodes(readings.filter { it.timestamp >= ago(180) }).lastOrNull()
         val meal = events.lastOrNull { it.logType == LogEventType.CARB && !it.treatment && (it.value ?: 1.0) > 0 && it.at() in ago(180)..now }
+        val rich = events.lastOrNull { it.logType == LogEventType.CARB && !it.treatment && it.at() in ago(300)..ago(120) && ((it.protein ?: 0.0) >= RICH_PROTEIN || (it.fat ?: 0.0) >= RICH_FAT) }
 
         val ketones = if (modes.sick) events.lastOrNull { it.logType == LogEventType.KETONE && it.value != null && it.at() in ago(240)..now } else null
         val ketoneBand = ketones?.value?.let(com.sukoon.app.modes.Modes::ketoneBand)
@@ -139,6 +148,7 @@ object HomeBriefs {
             v > 250 && run(readings) { it > 250 } >= 120 -> Brief.VeryHighFor(run(readings) { it > 250 }, insulin)
             v > top && lastLow != null -> Brief.Rebound(lastLow.start)
             v > top && insulin > 0 -> Brief.InsulinWorking(insulin)
+            rich != null && !falling -> Brief.LateRise(rich.at(), rich.protein?.roundToInt()?.takeIf { it >= RICH_PROTEIN }, rich.fat?.roundToInt()?.takeIf { it >= RICH_FAT })
             meal != null && (v > top || rising) -> Brief.AfterMeal(meal.value?.roundToInt()?.takeIf { it > 0 }, meal.at())
             v > top -> Brief.HighFor(run(readings) { it > top }, over250 = v > 250)
             // In range from here on.

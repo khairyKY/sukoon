@@ -515,6 +515,10 @@
     <string name="home_fp_next">القياس التالي نحو الساعة %1$s</string>
     <string name="home_fp_today">قياسات الإصبع اليوم</string>
     <string name="home_fp_today_summary">عدد القياسات %1$d · المتوسط %2$d</string>
+    <string name="home_brief_late_title">قد يأتي ارتفاع متأخر</string>
+    <string name="home_brief_late_protein">وجبة الساعة %1$s فيها %2$d غ بروتين: الوجبات الغنية بالبروتين ترفع السكر غالبًا بعد 3 إلى 5 ساعات. انتبه قبل التصحيح.</string>
+    <string name="home_brief_late_fat">وجبة الساعة %1$s فيها %2$d غ دهون: الدهون تؤخر الارتفاع إلى 3–5 ساعات. انتبه قبل التصحيح.</string>
+    <string name="home_brief_late_both">وجبة الساعة %1$s فيها %2$d غ بروتين و%3$d غ دهون: قد يأتي ارتفاعها بعد 3 إلى 5 ساعات. انتبه قبل التصحيح.</string>
     <string name="banner_sensor_ending">ينتهي المستشعر %1$s (بعد %2$s). جهّز مستشعرًا جديدًا.</string>
     <string name="life_in_days">%1$d ي %2$d س</string>
     <string name="sensor_life_running">ينتهي %1$s (بعد %2$s).</string>

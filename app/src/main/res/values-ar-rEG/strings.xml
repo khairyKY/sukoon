@@ -515,6 +515,10 @@
     <string name="home_fp_next">القياس الجاي على %1$s</string>
     <string name="home_fp_today">قياسات الصباع النهارده</string>
     <string name="home_fp_today_summary">%1$d قياسات · المتوسط %2$d</string>
+    <string name="home_brief_late_title">ممكن السكر يعلى متأخر</string>
+    <string name="home_brief_late_protein">أكلة الساعة %1$s كان فيها %2$d جم بروتين: الأكل اللي فيه بروتين كتير بيعلّي السكر غالبًا بعد ٣ لـ٥ ساعات. خد بالك قبل ما تصحّح.</string>
+    <string name="home_brief_late_fat">أكلة الساعة %1$s كان فيها %2$d جم دهون: الدهون بتأخّر الطلعة لـ٣–٥ ساعات. خد بالك قبل ما تصحّح.</string>
+    <string name="home_brief_late_both">أكلة الساعة %1$s كان فيها %2$d جم بروتين و%3$d جم دهون: ممكن تعلّي بعد ٣ لـ٥ ساعات. خد بالك قبل ما تصحّح.</string>
     <string name="banner_sensor_ending">السينسور هيخلص %1$s (بعد %2$s). جهّز واحد جديد.</string>
     <string name="life_in_days">%1$d يوم و%2$d ساعة</string>
     <string name="sensor_life_running">هيخلص %1$s (بعد %2$s).</string>
