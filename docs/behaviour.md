@@ -234,6 +234,20 @@ is skipped. The page shows what Sukoon found on the meter: the glucose service, 
 holds. Without the service it says so, and pricks stay typed by hand. Forget clears it here (the
 pairing in Android's Bluetooth settings stays).
 
+**Gym** (You → Fitness & food, and Now):
+- *Before a workout* (Today sheet and the activity entry) reads the arrow too (Moser 2020, Table 1):
+  under 126 and falling, carbs and wait; under 180 and falling, a small snack first. Without a sensor
+  it uses a prick from the last 15 min, with no arrow.
+- *A late rise may still come* (Now): a meal 2–5 h ago with 75 g+ protein or 40 g+ fat while glucose
+  isn't falling (Paterson 2016: whey 75–100 g raised glucose at 3–5 h; Bell 2015). Said, never dosed for.
+- *Last workout, for your training log*: the LOG.md line (date, session, last meal and rapid insulin
+  before it, BG before / after / +2 h from the sensor or pricks), *Copy LOG line*. "How it felt" stays
+  blank for you.
+- *Supplements*: free text Ask reads. Creatine shows its lab note (raises blood creatinine, so ask for
+  a cystatin C eGFR; no effect on Libre readings); the vitamin C note (over 500 mg a day can read
+  falsely high) always shows.
+- Ask also knows when the sensor has ended or is warming up, and each meal's protein and fat.
+
 ## 8. Injection sites
 
 Rapid and long-acting entries (and a meal's rapid insulin) ask **Where?**, optionally. Two figures,

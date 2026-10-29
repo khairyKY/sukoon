@@ -2038,6 +2038,13 @@
     <string name="fitness_as_usual">الجرعة نفسها</string>
     <string name="fitness_less">أقل بـ%1$d%%</string>
     <string name="fitness_training_note">ليلًا بعد التمرين يكون تنبيه الهبوط عند %1$d.</string>
+    <string name="fitness_log_line">آخر تمرين، لسجل تمارينك</string>
+    <string name="fitness_log_copy">انسخ سطر السجل</string>
+    <string name="fitness_log_copied">تم النسخ</string>
+    <string name="fitness_supplements">المكملات</string>
+    <string name="fitness_supplements_hint">كرياتين 5 غ منذ 20 أكتوبر، قبل التمرين…</string>
+    <string name="fitness_creatine_note">الكرياتين يرفع كرياتينين الدم، فقد يبدو فحص الكلى السنوي (eGFR) أسوأ من حقيقته. أخبر طبيبك واطلب eGFR بالسيستاتين C. لا يغيّر قراءات ليبري.</string>
+    <string name="fitness_vitamin_c_note">فيتامين C أكثر من 500 ملغ يوميًا (في بعض مكملات ما قبل التمرين والمناعة) قد يجعل ليبري يقرأ أعلى من الحقيقة؛ والكافيين قبل تمرين مسائي قد يسبب انخفاضًا ليلًا.</string>
     <string name="fitness_ramadan">رمضان</string>
     <string name="fitness_fajr">نهاية السحور (الفجر)</string>
     <string name="fitness_maghrib">الإفطار (المغرب)</string>

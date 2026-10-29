@@ -149,6 +149,11 @@ class SettingsPrefs(context: Context) {
         get() = com.sukoon.app.reminders.MorningSummarySettings(prefs.getBoolean(KEY_MORNING_SUMMARY, false), prefs.getInt(KEY_MORNING_MINUTE, 8 * 60).coerceIn(0, 1439))
         set(value) = prefs.edit().putBoolean(KEY_MORNING_SUMMARY, value.enabled).putInt(KEY_MORNING_MINUTE, value.minuteOfDay).apply()
 
+    /** You → Fitness & food: what you take (creatine 5 g since…, pre-workout); Ask reads it. */
+    var supplements: String
+        get() = prefs.getString("supplements", "").orEmpty()
+        set(value) = prefs.edit().putString("supplements", value.take(300)).apply()
+
     /** You → Reminders: finger-prick checks (finger-prick mode only) and the missing-meal question. */
     var checks: com.sukoon.app.reminders.CheckSettings
         get() = com.sukoon.app.reminders.CheckSettings(

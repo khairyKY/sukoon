@@ -2034,6 +2034,13 @@
     <string name="fitness_as_usual">نفس الجرعة</string>
     <string name="fitness_less">أقل %1$d%%</string>
     <string name="fitness_training_note">بالليل بعد التمرين تنبيه الهبوط بيبقى عند %1$d.</string>
+    <string name="fitness_log_line">آخر تمرين، لسجل التمرين بتاعك</string>
+    <string name="fitness_log_copy">انسخ سطر السجل</string>
+    <string name="fitness_log_copied">اتنسخ</string>
+    <string name="fitness_supplements">المكملات</string>
+    <string name="fitness_supplements_hint">كرياتين ٥ جم من ٢٠ أكتوبر، بري ووركاوت…</string>
+    <string name="fitness_creatine_note">الكرياتين بيعلّي الكرياتينين في الدم، فتحليل الكلى السنوي (eGFR) ممكن يطلع أوحش من الحقيقة. قول للدكتور إنك بتاخده واطلب eGFR بالسيستاتين C. مش بيغيّر قرايات الليبري.</string>
+    <string name="fitness_vitamin_c_note">فيتامين C أكتر من ٥٠٠ مجم في اليوم (في بعض البري ووركاوت ومكملات المناعة) ممكن يخلّي الليبري يقرا أعلى من الحقيقة؛ والكافيين قبل تمرين بالليل ممكن يجيب هبوط بالليل.</string>
     <string name="fitness_ramadan">رمضان</string>
     <string name="fitness_fajr">آخر السحور (الفجر)</string>
     <string name="fitness_maghrib">الفطار (المغرب)</string>

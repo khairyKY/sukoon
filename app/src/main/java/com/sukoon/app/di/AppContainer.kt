@@ -132,6 +132,19 @@ class AppContainer(private val context: Context) {
 
     val logbookRepository: LogbookRepository = LogbookRepository(eventDao = database.eventDao())
 
+    /**
+     * For Ask: the sensor's state (ended, quiet, finger-prick mode) and the supplements, which the
+     * readings alone don't say.
+     */
+    fun askSituation(now: Instant = Instant.now()): String = buildList {
+        when (val life = sensorLife(now)) {
+            is SensorLife.Ended -> add("SENSOR: ended; no sensor readings since. Finger-prick (blood meter) entries in the logbook are the glucose now.")
+            is SensorLife.WarmingUp -> add("SENSOR: new, warming up (${life.minutesLeft} min left); first-hour readings aren't counted.")
+            else -> Unit
+        }
+        settings.supplements.takeIf { it.isNotBlank() }?.let { add("SUPPLEMENTS they take: $it") }
+    }.joinToString("\n")
+
     /** A Bluetooth glucose meter (You → Glucose meter): its tests come in as finger-pricks. */
     val meter = com.sukoon.app.meter.MeterSync(context, logbookRepository, appScope)
 

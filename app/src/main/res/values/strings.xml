@@ -1910,6 +1910,13 @@
     <string name="fitness_as_usual">Same dose</string>
     <string name="fitness_less">%1$d%% less</string>
     <string name="fitness_training_note">Overnight after a workout, the low alarm sits at %1$d.</string>
+    <string name="fitness_log_line">Last workout, for your training log</string>
+    <string name="fitness_log_copy">Copy LOG line</string>
+    <string name="fitness_log_copied">Copied</string>
+    <string name="fitness_supplements">Supplements</string>
+    <string name="fitness_supplements_hint">Creatine 5 g since 20 Oct, pre-workout…</string>
+    <string name="fitness_creatine_note">Creatine raises blood creatinine, so the yearly kidney test (eGFR) can look worse than your kidneys are. Tell your doctor you take it and ask for a cystatin C eGFR. It doesn\'t change Libre readings.</string>
+    <string name="fitness_vitamin_c_note">Vitamin C over 500 mg a day (some pre-workouts and immune products) can make the Libre read falsely high; caffeine before an evening session can bring a low that night.</string>
     <string name="fitness_ramadan">Ramadan</string>
     <string name="fitness_fajr">Suhoor ends (Fajr)</string>
     <string name="fitness_maghrib">Iftar (Maghrib)</string>

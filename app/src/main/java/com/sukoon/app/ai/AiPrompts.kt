@@ -191,7 +191,10 @@ object AiPrompts {
                     LogEventType.WEIGHT -> " kg body weight"
                 }
                 "${if (v % 1.0 == 0.0) v.toLong() else v}$unit"
-            }.orEmpty()
+            }.orEmpty() + if (event.logType == LogEventType.CARB) listOfNotNull(
+                event.protein?.let { String.format(Locale.US, ", %.0f g protein", it) },
+                event.fat?.let { String.format(Locale.US, ", %.0f g fat", it) },
+            ).joinToString("") else ""
             val glucose = readings.nearestTo(event.timestampMillis)?.let { "sensor ${it.glucoseMgDl} ${it.trend.name.lowercase().replace('_', ' ')}" }.orEmpty()
             val site = event.injectionSite?.let { "injected in ${siteLabel(it)}" }.orEmpty()
             appendLine(

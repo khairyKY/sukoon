@@ -574,7 +574,7 @@ fun MainScaffold() {
                 val guideContext = LocalContext.current
                 val askGuide = remember { runCatching { com.sukoon.app.ui.help.GuideContent.load(guideContext).asText() }.getOrDefault("") }
                 val askViewModel: AskViewModel = viewModel(
-                    factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini, doseSettings = { container.settings.doseSettings }, profile = { container.settings.profile }, goal = { container.modes.goalLine(container.settings.profile) }, guide = { askGuide }) { container.settings.insulinAction },
+                    factory = AskViewModel.factory(container.glucoseRepository, container.logbookRepository, container.gemini, doseSettings = { container.settings.doseSettings }, profile = { container.settings.profile }, goal = { listOf(container.modes.goalLine(container.settings.profile), container.askSituation()).filter { it.isNotBlank() }.joinToString("\n") }, guide = { askGuide }) { container.settings.insulinAction },
                 )
                 val askState by askViewModel.uiState.collectAsStateWithLifecycle()
                 val insightsViewModel: InsightsViewModel = viewModel(
