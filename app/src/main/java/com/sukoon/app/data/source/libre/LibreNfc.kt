@@ -99,9 +99,19 @@ object LibreNfc {
      * A final answer, from the sensor or from Sukoon's own checks: reading again won't change it.
      * [message] is [text] in the app's language, for the person; [detail] (hex and all) is for the log.
      */
-    open class NfcException(@StringRes val text: Int, val detail: String = "") : IOException(detail) {
-        override val message: String get() = appContext?.getString(text) ?: detail
+    open class NfcException(@StringRes val text: Int, val detail: String = "", private val args: List<Any> = emptyList()) : IOException(detail) {
+        override val message: String get() = appContext?.getString(text, *args.toTypedArray()) ?: detail
     }
+
+    /**
+     * A Libre Sukoon can't read directly: one from outside Europe or a Libre 3, which refuse the EU
+     * sensor's commands. [code] is its patch info when it gave one. LibreLinkUp still reads it.
+     */
+    class OtherSensorException(val code: String?) : NfcException(
+        if (code != null) R.string.nfc_other_libre else R.string.nfc_other_libre_silent,
+        "Not a Libre 2 EU (patch info ${code ?: "refused"})",
+        listOfNotNull(code),
+    )
 
     /** Pair asked of a sensor nobody has started: the card offers to start it instead. */
     class NotStartedException(@StringRes text: Int) : NfcException(text, "not started")
@@ -170,8 +180,16 @@ object LibreNfc {
 
             val uid = tag.id
             // Its last two bytes key the memory's encryption and can differ from one tap to the next.
-            var patchInfo = send(CMD_PATCH_INFO)
+            // A Libre 2 or 2 Plus from Europe always answers this; one that refuses it every time is
+            // another kind (another region's Libre 2 Plus, a Libre 3), not a phone held badly.
+            var patchInfo = try {
+                send(CMD_PATCH_INFO)
+            } catch (e: NfcException) {
+                throw OtherSensorException(null)
+            }
             if (patchInfo.size < 6) throw NfcException(R.string.nfc_odd_answer, "Unexpected patch info (${patchInfo.hex()})")
+            // Before reading its memory, which those sensors refuse too: say what it is instead.
+            if (!Libre2.isLibre2Eu(patchInfo) && !Libre2.isLibre1(patchInfo)) throw OtherSensorException(patchInfo.hex())
 
             /** Raw FRAM, and the decrypted copy when its CRCs validate. */
             fun readFram(): Pair<ByteArray, ByteArray?> {

@@ -132,7 +132,8 @@ private sealed interface SensorStep {
     /** A read-only check's findings. */
     data class Checked(val check: LibreNfc.Check) : SensorStep
     /** A final no, worded for the person: what happened and what to try. */
-    data class Refused(val reason: String) : SensorStep
+    /** [otherSensor]: a Libre Sukoon can't read directly; the card offers LibreLinkUp. */
+    data class Refused(val reason: String, val otherSensor: Boolean = false) : SensorStep
 }
 
 /** The action the reader is listening for, if any. */
@@ -164,6 +165,8 @@ fun SensorCard(
     status: SourceStatus,
     onPaired: (LibreNfc.SensorRead, Long) -> Unit,
     onForget: () -> Unit,
+    /** A sensor Sukoon can't read directly: open You › People to follow it through LibreLinkUp. */
+    onLibreLinkUp: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
@@ -259,7 +262,7 @@ fun SensorCard(
                                 }
                                 when {
                                     check != null -> settle(SensorStep.Checked(check), describe(context, check))
-                                    !read.supported -> context.getString(R.string.sensor_unsupported, read.patchInfo.hex()).let { settle(SensorStep.Refused(it), it) }
+                                    !read.supported -> context.getString(R.string.nfc_other_libre, read.patchInfo.hex()).let { settle(SensorStep.Refused(it, otherSensor = true), it) }
                                     else -> context.getString(R.string.sensor_memory_bad).let { settle(SensorStep.Refused(it), it) }
                                 }
                             }
@@ -268,7 +271,7 @@ fun SensorCard(
                                 // Pair again on a sensor nobody started: offer to start it, it's what's needed.
                                 is LibreNfc.NotStartedException -> step = SensorStep.Confirm
                                 // Sukoon's own sentences already say what happened and what to do.
-                                is LibreNfc.NfcException -> settle(SensorStep.Refused(it.message.orEmpty()), it.message.orEmpty())
+                                is LibreNfc.NfcException -> settle(SensorStep.Refused(it.message.orEmpty(), otherSensor = it is LibreNfc.OtherSensorException), it.message.orEmpty())
                                 else -> context.getString(R.string.sensor_failed, it.message ?: it.javaClass.simpleName).let { message -> settle(SensorStep.Refused(message), message) }
                             }
                         }
@@ -413,7 +416,11 @@ fun SensorCard(
                     CheckCard(s.check)
                     if (s.check.stage == LibreNfc.Stage.NOT_STARTED && !notStarted) StartRow { step = SensorStep.Confirm }
                 }
-                is SensorStep.Refused -> Issue(danger = true, title = stringResource(R.string.sensor_refused_title), body = s.reason)
+                is SensorStep.Refused -> if (s.otherSensor) {
+                    Issue(danger = false, title = stringResource(R.string.nfc_other_title), body = s.reason, action = stringResource(R.string.nfc_use_llu), onAction = onLibreLinkUp)
+                } else {
+                    Issue(danger = true, title = stringResource(R.string.sensor_refused_title), body = s.reason)
+                }
                 else -> Unit
             }
         }

@@ -118,5 +118,16 @@
     "link": "https://github.com/khairyKY/sukoon/releases/latest",
     "until": "2026-11-13",
     "below": "0.21.0"
+  },
+  {
+    "id": "2026-10-30-sukoon-0.21.1",
+    "date": "2026-10-30",
+    "title": "Sukoon 0.21.1",
+    "body": "A Libre Sukoon can't read directly (another region's, or a Libre 3) now says so, and takes you to LibreLinkUp to use it anyway. Tap to update.",
+    "title_ar": "سكون 0.21.1",
+    "body_ar": "لو السينسور ليبري سكون مش بيقراه مباشرة (من بلد تانية أو ليبري 3)، هيقولك كده ويوديك لـLibreLinkUp علشان تستخدمه برضه. دوس للتحديث.",
+    "link": "https://github.com/khairyKY/sukoon/releases/latest",
+    "until": "2026-11-13",
+    "below": "0.21.1"
   }
 ]
